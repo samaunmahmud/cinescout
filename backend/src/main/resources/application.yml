@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: cinescout
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cinescout}
+    username: ${DB_USERNAME:cinescout}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false        # no lazy loading leaking into the (reactive) web layer
+    hibernate:
+      ddl-auto: validate       # Flyway owns the schema; Hibernate only checks the mapping
+  flyway:
+    enabled: true
+
+server:
+  port: ${PORT:8081}           # 8080 is used by the Node prototype
