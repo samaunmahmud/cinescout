@@ -22,6 +22,7 @@
         <maven.compiler.release>21</maven.compiler.release>
         <victools.version>4.38.0</victools.version>
         <wiremock.version>3.13.2</wiremock.version>
+        <resilience4j.version>2.4.0</resilience4j.version>
     </properties>
 
     <dependencies>
@@ -64,6 +65,18 @@
             <groupId>com.github.victools</groupId>
             <artifactId>jsonschema-module-jakarta-validation</artifactId>
             <version>${victools.version}</version>
+        </dependency>
+
+        <!-- Circuit breaker for the LLM and search dependencies (retry uses Reactor's own backoff) -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-circuitbreaker</artifactId>
+            <version>${resilience4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-reactor</artifactId>
+            <version>${resilience4j.version}</version>
         </dependency>
 
         <!-- Test -->
