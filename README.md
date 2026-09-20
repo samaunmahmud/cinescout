@@ -42,10 +42,27 @@ Configuration comes from the environment:
 | `DB_PASSWORD` | none, must be set |
 | `PORT` | `8081` |
 
+The LLM client (IBM watsonx.ai) is only created when `WATSONX_API_KEY` is set, so the app
+still starts without IBM credentials. When it is set, the other two are required:
+
+| Variable | Default |
+|---|---|
+| `WATSONX_API_KEY` | none, IBM Cloud API key |
+| `WATSONX_PROJECT_ID` | none, must be set with the key |
+| `WATSONX_MODEL_ID` | none, must be set with the key |
+| `WATSONX_URL` | `https://us-south.ml.cloud.ibm.com` |
+
+To check the client against the real service (skipped by default, billed to your project):
+
+```bash
+WATSONX_LIVE_TEST=true WATSONX_API_KEY=... WATSONX_PROJECT_ID=... WATSONX_MODEL_ID=... \
+  mvn test -Dtest=WatsonxLiveSmokeTest
+```
+
 ## Status
 
 1. Schema and design - done
 2. Domain models and DTOs - done
-3. External API clients (LLM and search) - next
+3. External API clients: LLM (watsonx.ai) - implemented, live check pending; search (Parallel) - next
 4. Orchestration service (extract, search, score)
 5. REST controllers, validation and OpenAPI docs
