@@ -194,6 +194,20 @@ class WatsonxLlmClientTest {
     }
 
     @Test
+    void anExtractionWithoutASettingTypeOrWithANegativeCrewIsRejectedAsUnusable() {
+        stubAnswer("{\"settingType\": null, \"visualMood\": \"moody\", \"lightingNeeds\": null, \"timeOfDay\": null,"
+                + " \"acousticSensitivity\": null, \"estimatedCastAndCrewSize\": 5}");
+        LlmException noSetting = failureOf(() -> client().generate("s", USER_PROMPT, SceneRequirements.class).block());
+        assertThat(noSetting.kind()).isEqualTo(Kind.INVALID_OUTPUT);
+        assertThat(noSetting.getMessage()).contains("settingType");
+
+        stubAnswer("{\"settingType\": \"warehouse\", \"visualMood\": null, \"lightingNeeds\": null, \"timeOfDay\": null,"
+                + " \"acousticSensitivity\": null, \"estimatedCastAndCrewSize\": -3}");
+        LlmException negativeCrew = failureOf(() -> client().generate("s", USER_PROMPT, SceneRequirements.class).block());
+        assertThat(negativeCrew.getMessage()).contains("estimatedCastAndCrewSize");
+    }
+
+    @Test
     void toleratesAMarkdownFenceAroundTheJson() {
         stubAnswer("```json\n" + VALID_ASSESSMENT + "\n```");
 

@@ -1,6 +1,7 @@
 package com.cinescout.llm;
 
 import com.cinescout.ai.LocationAssessment;
+import com.cinescout.domain.AcousticSensitivity;
 import com.cinescout.domain.SceneRequirements;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
@@ -49,17 +50,31 @@ class JsonSchemasTest {
         assertThat(props.path("fitScore").toString()).doesNotContain("null");
     }
 
+    /** No constraints anywhere, so every property must come out nullable. */
+    record Loose(String text, Integer number, AcousticSensitivity sensitivity) {
+    }
+
     @Test
     void aTypeWithoutAnnotationsIsFullyNullable() {
-        JsonNode schema = schemas.schemaFor(SceneRequirements.class);
+        JsonNode schema = schemas.schemaFor(Loose.class);
 
-        assertThat(names(schema.path("required"))).containsExactlyInAnyOrder(
-                "settingType", "visualMood", "lightingNeeds", "timeOfDay", "acousticSensitivity", "estimatedCastAndCrewSize");
+        assertThat(names(schema.path("required"))).containsExactlyInAnyOrder("text", "number", "sensitivity");
+        assertThat(schema.path("properties").path("text").toString()).contains("null");
         // A nullable enum is expressed as anyOf: [null, enum].
-        JsonNode acoustic = schema.path("properties").path("acousticSensitivity");
-        assertThat(acoustic.path("anyOf").toString()).contains("\"type\":\"null\"");
-        assertThat(names(acoustic.findValue("enum"))).containsExactly("LOW", "MEDIUM", "HIGH");
-        assertThat(schema.path("properties").path("settingType").toString()).contains("null");
+        JsonNode sensitivity = schema.path("properties").path("sensitivity");
+        assertThat(sensitivity.path("anyOf").toString()).contains("\"type\":\"null\"");
+        assertThat(names(sensitivity.findValue("enum"))).containsExactly("LOW", "MEDIUM", "HIGH");
+    }
+
+    @Test
+    void sceneRequirementsMustNameASettingButEverythingElseIsOptional() {
+        JsonNode props = schemas.schemaFor(SceneRequirements.class).path("properties");
+
+        assertThat(props.path("settingType").toString()).doesNotContain("null");
+        assertThat(props.path("settingType").path("minLength").asInt(0)).isPositive();
+        assertThat(props.path("visualMood").toString()).contains("null");
+        assertThat(props.path("estimatedCastAndCrewSize").toString()).contains("null");
+        assertThat(props.path("estimatedCastAndCrewSize").path("minimum").asInt(-1)).isZero();
     }
 
     @Test
