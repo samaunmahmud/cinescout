@@ -82,6 +82,21 @@ without them the app still starts but has no scouting beans. Optional tuning, al
 | `cinescout.resilience.breaker-failure-rate-percent` | `50` |
 | `cinescout.resilience.breaker-open-duration` | `30s` |
 
+## Authentication
+
+Every endpoint needs a login except `POST /api/auth/register`. Authentication is HTTP Basic (email
+and password) against the `users` table, so there is no session and no token to manage yet:
+
+```bash
+curl -X POST localhost:8081/api/auth/register -H 'Content-Type: application/json' \
+  -d '{"email":"ada@example.com","password":"a-long-password","displayName":"Ada"}'
+curl -u ada@example.com:a-long-password localhost:8081/api/auth/me
+```
+
+Errors are RFC 9457 problems (`application/problem+json`). Set `cinescout.security.registration-open=false`
+to stop new accounts being created on a deployment that should not be public. HTTP Basic sends the
+password on every request, so run it behind HTTPS; tokens are the planned replacement for browsers.
+
 ## Status
 
 1. Schema and design - done
