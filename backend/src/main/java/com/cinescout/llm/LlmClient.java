@@ -12,6 +12,9 @@ import reactor.core.publisher.Mono;
  */
 public interface LlmClient {
 
+    /** The id of the model that answers, recorded next to what it wrote (e.g. on an outreach draft). */
+    String modelId();
+
     /**
      * Asks the model for a JSON answer matching {@code responseType} and returns it parsed
      * and bean-validated. Model output is untrusted: anything malformed, truncated or failing

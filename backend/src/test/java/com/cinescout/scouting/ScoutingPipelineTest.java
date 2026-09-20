@@ -48,6 +48,11 @@ class ScoutingPipelineTest {
         Function<Call, Mono<?>> handler = call -> Mono.error(new IllegalStateException("no handler"));
 
         @Override
+        public String modelId() {
+            return "fake-model";
+        }
+
+        @Override
         @SuppressWarnings("unchecked")
         public <T> Mono<T> generate(String systemPrompt, String userPrompt, Class<T> responseType) {
             Call call = new Call(systemPrompt, userPrompt, responseType);

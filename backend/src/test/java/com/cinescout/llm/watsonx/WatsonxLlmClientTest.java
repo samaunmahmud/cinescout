@@ -124,6 +124,11 @@ class WatsonxLlmClientTest {
     // --- happy path and wire format -----------------------------------------------------------
 
     @Test
+    void reportsTheConfiguredModelId() {
+        assertThat(client().modelId()).isEqualTo("ibm/test-model");
+    }
+
+    @Test
     void returnsTheParsedAndValidatedAnswer() {
         stubAnswer(VALID_ASSESSMENT);
 

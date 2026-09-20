@@ -71,6 +71,11 @@ public class WatsonxLlmClient implements LlmClient {
     }
 
     @Override
+    public String modelId() {
+        return props.modelId();
+    }
+
+    @Override
     public <T> Mono<T> generate(String systemPrompt, String userPrompt, Class<T> responseType) {
         return Mono.defer(() -> {
                     if (userPrompt == null || userPrompt.isBlank()) {

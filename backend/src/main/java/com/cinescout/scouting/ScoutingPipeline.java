@@ -5,6 +5,7 @@ import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.llm.LlmClient;
 import com.cinescout.llm.LlmException;
+import com.cinescout.llm.LlmGuards;
 import com.cinescout.resilience.Guard;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.search.LocationSearchClient;
@@ -44,14 +45,7 @@ public class ScoutingPipeline {
         this.llm = llm;
         this.search = search;
         this.assessmentConcurrency = props.assessmentConcurrency();
-        // Only outages trip a breaker: a model that returns unusable JSON, or a request the vendor
-        // rejects, means "no" to this call, not "down". Unusable output is still worth a retry.
-        this.llmGuard = guards.create("llm",
-                error -> error instanceof LlmException e && e.isRetryable(),
-                error -> error instanceof LlmException e
-                        && (e.kind() == LlmException.Kind.UNAVAILABLE || e.kind() == LlmException.Kind.RATE_LIMITED),
-                open -> new LlmException(LlmException.Kind.UNAVAILABLE,
-                        "The LLM circuit breaker is open; the call was not made", open));
+        this.llmGuard = LlmGuards.create(guards);
         this.searchGuard = guards.create("search",
                 error -> error instanceof SearchException e && e.isRetryable(),
                 error -> error instanceof SearchException e
