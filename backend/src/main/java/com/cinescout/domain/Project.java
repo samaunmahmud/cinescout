@@ -22,6 +22,10 @@ public class Project extends BaseEntity {
 
     private String description;
 
+    /** Free-text region scouting searches in, e.g. "Brooklyn, New York"; null until set. */
+    @Column(name = "location_area")
+    private String locationArea;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectStatus status = ProjectStatus.ACTIVE;
@@ -38,9 +42,16 @@ public class Project extends BaseEntity {
     public User getOwner() { return owner; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
+    public String getLocationArea() { return locationArea; }
     public ProjectStatus getStatus() { return status; }
 
     public void setTitle(String title) { this.title = title; }
     public void setDescription(String description) { this.description = description; }
+
+    /** Blank means "not set": it is stored as null, which the database constraint requires. */
+    public void setLocationArea(String locationArea) {
+        this.locationArea = locationArea == null || locationArea.isBlank() ? null : locationArea.strip();
+    }
+
     public void setStatus(ProjectStatus status) { this.status = status; }
 }

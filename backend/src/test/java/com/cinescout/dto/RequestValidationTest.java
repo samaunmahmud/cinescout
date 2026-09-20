@@ -76,15 +76,23 @@ class RequestValidationTest {
 
     @Test
     void createProjectRequiresANonBlankTitle() {
-        assertThat(invalidProperties(new CreateProjectRequest("Neon Nights", null))).isEmpty();
-        assertThat(invalidProperties(new CreateProjectRequest("  ", null))).containsExactly("title");
-        assertThat(invalidProperties(new CreateProjectRequest(repeat(201), null))).containsExactly("title");
+        assertThat(invalidProperties(new CreateProjectRequest("Neon Nights", null, null))).isEmpty();
+        assertThat(invalidProperties(new CreateProjectRequest("  ", null, null))).containsExactly("title");
+        assertThat(invalidProperties(new CreateProjectRequest(repeat(201), null, null))).containsExactly("title");
+    }
+
+    @Test
+    void projectLocationAreaIsOptionalButBounded() {
+        assertThat(invalidProperties(new CreateProjectRequest("Neon Nights", null, "Brooklyn, New York"))).isEmpty();
+        assertThat(invalidProperties(new CreateProjectRequest("Neon Nights", null, repeat(201)))).containsExactly("locationArea");
+        assertThat(invalidProperties(new UpdateProjectRequest("Neon Nights", null, repeat(201), ProjectStatus.ACTIVE)))
+                .containsExactly("locationArea");
     }
 
     @Test
     void updateProjectRequiresTitleAndStatus() {
-        assertThat(invalidProperties(new UpdateProjectRequest("Neon Nights", null, ProjectStatus.ARCHIVED))).isEmpty();
-        assertThat(invalidProperties(new UpdateProjectRequest("", null, null)))
+        assertThat(invalidProperties(new UpdateProjectRequest("Neon Nights", null, null, ProjectStatus.ARCHIVED))).isEmpty();
+        assertThat(invalidProperties(new UpdateProjectRequest("", null, null, null)))
                 .containsExactlyInAnyOrder("title", "status");
     }
 

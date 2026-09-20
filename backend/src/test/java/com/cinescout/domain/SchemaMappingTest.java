@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Runs the real Flyway migrations against PostgreSQL and lets Hibernate validate
@@ -102,6 +103,32 @@ class SchemaMappingTest {
         assertThat(loaded.requirements().estimatedCastAndCrewSize()).isEqualTo(25);
         assertThat(loaded.getRequirementsJson().get("extra").size()).isEqualTo(2);
         assertThat(loaded.getParsedAt()).isNotNull();
+    }
+
+    @Test
+    void projectLocationAreaRoundTripsAndBlankIsStoredAsNull() throws Exception {
+        Project project = persistChain().getScene().getProject();
+        assertThat(project.getLocationArea()).isNull();
+
+        project.setLocationArea("  Brooklyn, New York ");
+        em.flush();
+        em.clear();
+        assertThat(em.find(Project.class, project.getId()).getLocationArea()).isEqualTo("Brooklyn, New York");
+
+        Project loaded = em.find(Project.class, project.getId());
+        loaded.setLocationArea("   ");
+        em.flush();
+        em.clear();
+        assertThat(em.find(Project.class, project.getId()).getLocationArea()).isNull();
+    }
+
+    @Test
+    void theDatabaseItselfRejectsABlankLocationArea() throws Exception {
+        Project project = persistChain().getScene().getProject();
+
+        assertThatThrownBy(() -> em.createNativeQuery("UPDATE projects SET location_area = '  ' WHERE id = :id")
+                .setParameter("id", project.getId()).executeUpdate())
+                .hasMessageContaining("ck_projects_location_area_not_blank");
     }
 
     @Test

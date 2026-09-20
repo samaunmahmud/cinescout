@@ -10,6 +10,7 @@ public record ProjectResponse(
         UUID id,
         String title,
         String description,
+        String locationArea,
         ProjectStatus status,
         Instant createdAt,
         Instant updatedAt
@@ -17,6 +18,6 @@ public record ProjectResponse(
 
     public static ProjectResponse from(Project project) {
         return new ProjectResponse(project.getId(), project.getTitle(), project.getDescription(),
-                project.getStatus(), project.getCreatedAt(), project.getUpdatedAt());
+                project.getLocationArea(), project.getStatus(), project.getCreatedAt(), project.getUpdatedAt());
     }
 }

@@ -45,7 +45,9 @@ class ResponseMappingTest {
     }
 
     private static Project project() {
-        return withDbFields(new Project(user(), "Neon Nights", "A neo-noir short"));
+        Project project = new Project(user(), "Neon Nights", "A neo-noir short");
+        project.setLocationArea("Brooklyn, New York");
+        return withDbFields(project);
     }
 
     private static Scene scene() {
@@ -83,7 +85,7 @@ class ResponseMappingTest {
         ProjectResponse response = ProjectResponse.from(project);
 
         assertThat(response).isEqualTo(new ProjectResponse(project.getId(), "Neon Nights", "A neo-noir short",
-                project.getStatus(), CREATED, UPDATED));
+                "Brooklyn, New York", project.getStatus(), CREATED, UPDATED));
     }
 
     @Test
