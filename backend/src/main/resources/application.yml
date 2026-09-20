@@ -12,5 +12,13 @@ spring:
   flyway:
     enabled: true
 
+cinescout:
+  llm:
+    watsonx:                   # the LLM client is only created when WATSONX_API_KEY is set
+      api-key: ${WATSONX_API_KEY:}
+      project-id: ${WATSONX_PROJECT_ID:}
+      model-id: ${WATSONX_MODEL_ID:}
+      base-url: ${WATSONX_URL:https://us-south.ml.cloud.ibm.com}
+
 server:
   port: ${PORT:8081}           # 8080 is used by the Node prototype
