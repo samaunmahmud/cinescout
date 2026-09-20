@@ -70,10 +70,22 @@ Likewise the search client (Parallel) is only created when `PARALLEL_API_KEY` is
 PARALLEL_LIVE_TEST=true PARALLEL_API_KEY=... mvn test -Dtest=ParallelLiveSmokeTest
 ```
 
+Scouting (extract requirements, search, assess venues, save candidates) needs **both** keys, so
+without them the app still starts but has no scouting beans. Optional tuning, all with defaults:
+
+| Property | Default |
+|---|---|
+| `cinescout.scouting.assessment-concurrency` | `4` venues assessed by the LLM at once |
+| `cinescout.resilience.max-attempts` | `3` tries per LLM or search call |
+| `cinescout.resilience.initial-backoff` / `max-backoff` | `500ms` / `5s` |
+| `cinescout.resilience.breaker-window-size` / `-minimum-calls` | `10` / `5` |
+| `cinescout.resilience.breaker-failure-rate-percent` | `50` |
+| `cinescout.resilience.breaker-open-duration` | `30s` |
+
 ## Status
 
 1. Schema and design - done
 2. Domain models and DTOs - done
 3. External API clients: LLM (watsonx.ai) and search (Parallel) - implemented, live checks pending
-4. Orchestration service (extract, search, score)
+4. Orchestration service (extract, search, assess, save) with retry and circuit breaker - done
 5. REST controllers, validation and OpenAPI docs

@@ -35,6 +35,14 @@ erDiagram
 - **The search area lives on the project** (`projects.location_area`, free text such as
   "Brooklyn, New York"): a film usually shoots in one region and every scene inherits it.
   It is nullable, and scouting asks for it rather than guessing a place to search.
+- **Scouting is a pipeline plus a persistence service.** `ScoutingPipeline` (no database) extracts a
+  scene's requirements, searches the project's area and has the model assess each venue; every
+  LLM and search call runs through a `Guard` (retry with back-off inside a circuit breaker).
+  `SceneScoutingService` stores the results. Database work runs on `boundedElastic` in short
+  transactions that never span a model or search call, and every step re-checks scene ownership.
+  Only outages trip a breaker; a model that answers badly is retried but never counted as down.
+- **Re-scouting is additive**: a page already saved for the scene is left alone, so a user's
+  shortlist and notes survive. A venue the model cannot assess is dropped and counted, never guessed at.
 - **Module B results are cached on the location** (`logistics_json`,
   `logistics_fetched_at`) so viewing a location does not re-hit the solar,
   weather and places APIs.
