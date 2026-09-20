@@ -1,0 +1,89 @@
+package com.cinescout.service;
+
+import com.cinescout.domain.Project;
+import com.cinescout.domain.Scene;
+import com.cinescout.dto.SceneRequest;
+import com.cinescout.dto.SceneResponse;
+import com.cinescout.persistence.BlockingTransactions;
+import com.cinescout.repository.ProjectRepository;
+import com.cinescout.repository.SceneRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * The scenes of a user's projects. Requirements extraction is separate ({@code SceneScoutingService});
+ * here a scene is just its script, number and shoot window.
+ */
+@Service
+public class SceneService {
+
+    private final SceneRepository scenes;
+    private final ProjectRepository projects;
+    private final BlockingTransactions db;
+
+    public SceneService(SceneRepository scenes, ProjectRepository projects, BlockingTransactions db) {
+        this.scenes = scenes;
+        this.projects = projects;
+        this.db = db;
+    }
+
+    /** @throws ConflictException (as an error signal) if the project already has a scene with that number */
+    public Mono<SceneResponse> create(UUID ownerId, UUID projectId, SceneRequest request) {
+        return db.call(() -> {
+                    Project project = projects.findByIdAndOwnerId(projectId, ownerId)
+                            .orElseThrow(() -> new NotFoundException("Project", projectId));
+                    Scene scene = new Scene(project, request.title().strip(), request.sourceText().strip());
+                    apply(scene, request);
+                    return SceneResponse.from(scenes.saveAndFlush(scene));
+                })
+                .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
+    }
+
+    /** In script order: numbered scenes by number, then unnumbered ones by creation. */
+    public Mono<List<SceneResponse>> list(UUID ownerId, UUID projectId) {
+        return db.call(() -> {
+            projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            return scenes.findOwnedByProject(projectId, ownerId).stream().map(SceneResponse::from).toList();
+        });
+    }
+
+    public Mono<SceneResponse> get(UUID ownerId, UUID sceneId) {
+        return db.call(() -> SceneResponse.from(owned(ownerId, sceneId)));
+    }
+
+    /**
+     * Full replacement of the editable fields. If the script changed, the extracted requirements no
+     * longer describe it, so they are dropped and the scene goes back to needing a parse.
+     */
+    public Mono<SceneResponse> update(UUID ownerId, UUID sceneId, SceneRequest request) {
+        return db.call(() -> {
+                    Scene scene = owned(ownerId, sceneId);
+                    if (!scene.getSourceText().equals(request.sourceText().strip())) {
+                        scene.resetRequirements();
+                    }
+                    scene.setTitle(request.title().strip());
+                    scene.setSourceText(request.sourceText().strip());
+                    apply(scene, request);
+                    return SceneResponse.from(scenes.saveAndFlush(scene));
+                })
+                .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
+    }
+
+    public Mono<Void> delete(UUID ownerId, UUID sceneId) {
+        return db.run(() -> scenes.delete(owned(ownerId, sceneId)));
+    }
+
+    private static void apply(Scene scene, SceneRequest request) {
+        scene.setSceneNumber(request.sceneNumber());
+        scene.setShootDateStart(request.shootDateStart());
+        scene.setShootDateEnd(request.shootDateEnd());
+    }
+
+    private Scene owned(UUID ownerId, UUID sceneId) {
+        return scenes.findOwned(sceneId, ownerId).orElseThrow(() -> new NotFoundException("Scene", sceneId));
+    }
+}

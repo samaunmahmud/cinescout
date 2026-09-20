@@ -15,6 +15,7 @@ import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmException.Kind;
+import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
 import jakarta.persistence.EntityManager;
@@ -105,7 +106,8 @@ class SceneScoutingServiceTest {
     void setUp() {
         setup = new TransactionTemplate(transactionManager);
         serviceTx = new RecordingTransactions(transactionManager);
-        service = new SceneScoutingService(pipeline, scenes, locations, serviceTx, Jackson2ObjectMapperBuilder.json().build());
+        service = new SceneScoutingService(pipeline, scenes, locations, new BlockingTransactions(serviceTx),
+                Jackson2ObjectMapperBuilder.json().build());
     }
 
     @AfterEach

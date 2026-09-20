@@ -1,6 +1,7 @@
 package com.cinescout.scouting;
 
 import com.cinescout.llm.LlmClient;
+import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.resilience.GuardFactory;
@@ -10,7 +11,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Wires scouting. It needs both external clients, which exist only when their API keys are set, so
@@ -31,7 +31,7 @@ class ScoutingConfig {
 
     @Bean
     SceneScoutingService sceneScoutingService(ScoutingPipeline pipeline, SceneRepository scenes,
-                                              LocationRepository locations, TransactionTemplate tx, ObjectMapper mapper) {
-        return new SceneScoutingService(pipeline, scenes, locations, tx, mapper);
+                                              LocationRepository locations, BlockingTransactions db, ObjectMapper mapper) {
+        return new SceneScoutingService(pipeline, scenes, locations, db, mapper);
     }
 }

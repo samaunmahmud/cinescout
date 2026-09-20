@@ -91,6 +91,19 @@ public class Scene extends BaseEntity {
         this.parsedAt = Instant.now();
     }
 
+    /** Forgets the extracted requirements, e.g. because the script they came from has changed. */
+    public void resetRequirements() {
+        this.settingType = null;
+        this.visualMood = null;
+        this.lightingNeeds = null;
+        this.timeOfDay = null;
+        this.acousticSensitivity = null;
+        this.estimatedCrewSize = null;
+        this.requirementsJson = null;
+        this.parsedAt = null;
+        this.parseStatus = ParseStatus.PENDING;
+    }
+
     public void markParseFailed() {
         this.parseStatus = ParseStatus.FAILED;
     }

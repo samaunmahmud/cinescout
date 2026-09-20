@@ -1,6 +1,7 @@
 package com.cinescout.scouting;
 
 import com.cinescout.llm.watsonx.WatsonxLlmClient;
+import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.search.parallel.ParallelSearchClient;
@@ -10,7 +11,6 @@ import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -32,7 +32,7 @@ class ScoutingConfigTest {
             // The persistence beans come from JPA, which this slice does not load.
             .withBean(SceneRepository.class, () -> mock(SceneRepository.class))
             .withBean(LocationRepository.class, () -> mock(LocationRepository.class))
-            .withBean(TransactionTemplate.class, () -> mock(TransactionTemplate.class));
+            .withBean(BlockingTransactions.class, () -> mock(BlockingTransactions.class));
 
     /** The wiring classes are deliberately package-private, so tests in other packages load them by name. */
     private static Class<?> configClass(String name) {

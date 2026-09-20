@@ -8,22 +8,22 @@ import com.cinescout.domain.SceneRequirements;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.llm.LlmException;
+import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.scouting.ScoutingException.Kind;
+import com.cinescout.service.Conflicts;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.dao.DataIntegrityViolationException;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 /**
  * Scouting for a persisted scene: runs the {@link ScoutingPipeline} and stores what it finds.
@@ -34,8 +34,8 @@ import java.util.function.Supplier;
  * reassigned mid-run fails cleanly instead of being written to.
  *
  * <p>Two runs racing on the same scene can both pass the "already saved" check; the loser then
- * fails on the unique (scene, source url) index with a {@code DataIntegrityViolationException},
- * saving nothing twice. Callers should report that as a conflict.
+ * fails on the unique (scene, source url) index, which surfaces as a {@code ConflictException}, so
+ * nothing is saved twice.
  */
 public class SceneScoutingService {
 
@@ -44,15 +44,15 @@ public class SceneScoutingService {
     private final ScoutingPipeline pipeline;
     private final SceneRepository scenes;
     private final LocationRepository locations;
-    private final TransactionTemplate tx;
+    private final BlockingTransactions db;
     private final ObjectMapper mapper;
 
     public SceneScoutingService(ScoutingPipeline pipeline, SceneRepository scenes, LocationRepository locations,
-                                TransactionTemplate tx, ObjectMapper mapper) {
+                                BlockingTransactions db, ObjectMapper mapper) {
         this.pipeline = pipeline;
         this.scenes = scenes;
         this.locations = locations;
-        this.tx = tx;
+        this.db = db;
         this.mapper = mapper;
     }
 
@@ -62,7 +62,7 @@ public class SceneScoutingService {
      * scene is left as it was, since nothing is known about the scene itself.
      */
     public Mono<SceneResponse> parseScene(UUID ownerId, UUID sceneId) {
-        return inTransaction(() -> load(ownerId, sceneId).getSourceText())
+        return db.call(() -> load(ownerId, sceneId).getSourceText())
                 .flatMap(sourceText -> extractAndStore(ownerId, sceneId, sourceText));
     }
 
@@ -75,10 +75,11 @@ public class SceneScoutingService {
      *                           has no location area
      */
     public Mono<ScoutingResult> scout(UUID ownerId, UUID sceneId, int maxResults) {
-        return inTransaction(() -> prepare(ownerId, sceneId))
+        return db.call(() -> prepare(ownerId, sceneId))
                 .flatMap(target -> requirementsFor(ownerId, sceneId, target)
                         .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults))
-                        .flatMap(outcome -> inTransaction(() -> saveVenues(ownerId, sceneId, outcome))));
+                        .flatMap(outcome -> db.call(() -> saveVenues(ownerId, sceneId, outcome))
+                                .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate)));
     }
 
     // --- steps ----------------------------------------------------------------------------------
@@ -105,7 +106,7 @@ public class SceneScoutingService {
 
     private Mono<SceneResponse> extractAndStore(UUID ownerId, UUID sceneId, String sourceText) {
         return pipeline.extractRequirements(sourceText)
-                .flatMap(requirements -> inTransaction(() -> storeRequirements(ownerId, sceneId, requirements)))
+                .flatMap(requirements -> db.call(() -> storeRequirements(ownerId, sceneId, requirements)))
                 .onErrorResume(LlmException.class, error -> error.kind() == LlmException.Kind.INVALID_OUTPUT
                         ? markParseFailed(ownerId, sceneId).then(Mono.error(error))
                         : Mono.error(error));
@@ -120,7 +121,7 @@ public class SceneScoutingService {
 
     /** Best effort: failing to record the failure must not hide the failure that caused it. */
     private Mono<Void> markParseFailed(UUID ownerId, UUID sceneId) {
-        return inTransaction(() -> {
+        return db.call(() -> {
                     Scene scene = load(ownerId, sceneId);
                     scene.markParseFailed();
                     scenes.saveAndFlush(scene);
@@ -165,9 +166,5 @@ public class SceneScoutingService {
     private Scene load(UUID ownerId, UUID sceneId) {
         return scenes.findOwned(sceneId, ownerId)
                 .orElseThrow(() -> new ScoutingException(Kind.SCENE_NOT_FOUND, "Scene " + sceneId + " not found"));
-    }
-
-    private <T> Mono<T> inTransaction(Supplier<T> work) {
-        return Mono.fromCallable(() -> tx.execute(status -> work.get())).subscribeOn(Schedulers.boundedElastic());
     }
 }
