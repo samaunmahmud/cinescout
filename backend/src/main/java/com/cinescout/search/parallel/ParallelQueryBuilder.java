@@ -1,0 +1,88 @@
+package com.cinescout.search.parallel;
+
+import com.cinescout.domain.SceneRequirements;
+import com.cinescout.search.LocationSearchRequest;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Turns scene requirements into the two things Parallel wants: a natural-language
+ * {@code objective} (what a good result is) and a few short keyword {@code search_queries}
+ * (what to look for). Requirement fields are LLM output, so each is whitespace-normalised and
+ * length-capped before it is put into a query.
+ */
+final class ParallelQueryBuilder {
+
+    /** Parallel's documented limits: 5000 characters of objective, 200 per query. */
+    static final int MAX_OBJECTIVE_CHARS = 5000;
+    static final int MAX_QUERY_CHARS = 200;
+    private static final int MAX_FIELD_CHARS = 120;
+
+    private ParallelQueryBuilder() {
+    }
+
+    static String objective(LocationSearchRequest request) {
+        SceneRequirements r = request.requirements();
+        StringBuilder objective = new StringBuilder()
+                .append("Find real venues in ").append(clean(request.area()))
+                .append(" that a film crew could hire or get permission to shoot in, for a scene set in: ")
+                .append(clean(r.settingType())).append('.');
+
+        append(objective, " Visual mood: ", r.visualMood());
+        append(objective, " Lighting needs: ", r.lightingNeeds());
+        append(objective, " Scene time of day: ", r.timeOfDay());
+        if (r.acousticSensitivity() != null) {
+            objective.append(switch (r.acousticSensitivity()) {
+                case HIGH -> " The scene is dialogue-heavy, so the venue must be quiet, with little traffic or ambient noise.";
+                case MEDIUM -> " Moderate ambient noise is acceptable.";
+                case LOW -> " Ambient noise is not a concern.";
+            });
+        }
+        if (r.estimatedCastAndCrewSize() != null && r.estimatedCastAndCrewSize() > 0) {
+            objective.append(" The venue must accommodate about ").append(r.estimatedCastAndCrewSize()).append(" cast and crew.");
+        }
+        objective.append(" Prefer the venue's own website or a location-hire listing that shows how to enquire about filming"
+                + " or hire. Avoid articles, listicles and news pages.");
+
+        return objective.length() > MAX_OBJECTIVE_CHARS ? objective.substring(0, MAX_OBJECTIVE_CHARS) : objective.toString();
+    }
+
+    /** Two or three distinct short queries, each within Parallel's per-query limit. */
+    static List<String> queries(LocationSearchRequest request) {
+        String setting = clean(request.requirements().settingType());
+        String area = clean(request.area());
+
+        List<String> queries = new ArrayList<>();
+        queries.add(fit(setting + " " + area + " film location hire"));
+        queries.add(fit(setting + " " + area + " venue hire filming"));
+        String mood = clean(request.requirements().visualMood());
+        if (mood != null) {
+            queries.add(fit(mood + " " + setting + " " + area));
+        }
+        return queries;
+    }
+
+    private static void append(StringBuilder out, String label, String value) {
+        String cleaned = clean(value);
+        if (cleaned != null) {
+            out.append(label).append(cleaned).append('.');
+        }
+    }
+
+    /** Collapses whitespace and caps the length; null for null or blank input. */
+    private static String clean(String value) {
+        if (value == null) {
+            return null;
+        }
+        String collapsed = value.strip().replaceAll("\\s+", " ");
+        if (collapsed.isEmpty()) {
+            return null;
+        }
+        return collapsed.length() > MAX_FIELD_CHARS ? collapsed.substring(0, MAX_FIELD_CHARS).strip() : collapsed;
+    }
+
+    private static String fit(String query) {
+        return query.length() > MAX_QUERY_CHARS ? query.substring(0, MAX_QUERY_CHARS).strip() : query;
+    }
+}

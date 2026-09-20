@@ -59,10 +59,21 @@ WATSONX_LIVE_TEST=true WATSONX_API_KEY=... WATSONX_PROJECT_ID=... WATSONX_MODEL_
   mvn test -Dtest=WatsonxLiveSmokeTest
 ```
 
+Likewise the search client (Parallel) is only created when `PARALLEL_API_KEY` is set:
+
+| Variable | Default |
+|---|---|
+| `PARALLEL_API_KEY` | none, Parallel API key |
+| `PARALLEL_URL` | `https://api.parallel.ai` |
+
+```bash
+PARALLEL_LIVE_TEST=true PARALLEL_API_KEY=... mvn test -Dtest=ParallelLiveSmokeTest
+```
+
 ## Status
 
 1. Schema and design - done
 2. Domain models and DTOs - done
-3. External API clients: LLM (watsonx.ai) - implemented, live check pending; search (Parallel) - next
+3. External API clients: LLM (watsonx.ai) and search (Parallel) - implemented, live checks pending
 4. Orchestration service (extract, search, score)
 5. REST controllers, validation and OpenAPI docs
