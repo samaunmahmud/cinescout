@@ -71,7 +71,8 @@ PARALLEL_LIVE_TEST=true PARALLEL_API_KEY=... mvn test -Dtest=ParallelLiveSmokeTe
 ```
 
 Scouting (extract requirements, search, assess venues, save candidates) needs **both** keys, so
-without them the app still starts but has no scouting beans. Optional tuning, all with defaults:
+without them the app still starts but has no scouting beans. Outreach email generation needs only the
+watsonx.ai key. Optional tuning, all with defaults:
 
 | Property | Default |
 |---|---|
@@ -109,9 +110,12 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}` |
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
+| Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
-`PUT` is a full replacement. Someone else's resource is always a `404`. The two scouting routes call
-paid services and can take many seconds; they answer `503` when the server has no AI keys.
+`PUT` is a full replacement. Someone else's resource is always a `404`. The two scouting routes and
+`generate` call paid services and can take many seconds; they answer `503` when the server has no
+AI keys (`generate` needs only the watsonx.ai key). Listing, editing and deleting drafts always works.
+The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
 
 ## Status
 
@@ -120,5 +124,6 @@ paid services and can take many seconds; they answer `503` when the server has n
 3. External API clients: LLM (watsonx.ai) and search (Parallel) - implemented, live checks pending
 4. Orchestration service (extract, search, assess, save) with retry and circuit breaker - done
 5. REST controllers, authentication, validation and OpenAPI docs - done
+6. Outreach email generator and draft management (module C) - done
 
-Not built yet: outreach email drafting (its DTOs exist), the environmental/logistics module, and the frontend.
+Not built yet: the environmental/logistics module and the frontend.

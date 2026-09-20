@@ -1,6 +1,7 @@
 package com.cinescout;
 
 import com.cinescout.llm.LlmClient;
+import com.cinescout.outreach.OutreachGenerationService;
 import com.cinescout.scouting.SceneScoutingService;
 import com.cinescout.scouting.ScoutingPipeline;
 import com.cinescout.search.LocationSearchClient;
@@ -42,5 +43,6 @@ class ApplicationStartsWithScoutingTest {
         assertThat(context.getBean(LocationSearchClient.class)).isNotNull();
         assertThat(context.getBean(ScoutingPipeline.class)).isNotNull();
         assertThat(context.getBean(SceneScoutingService.class)).isNotNull();
+        assertThat(context.getBean(OutreachGenerationService.class)).isNotNull();
     }
 }

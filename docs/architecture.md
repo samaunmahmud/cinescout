@@ -41,6 +41,13 @@ erDiagram
   `SceneScoutingService` stores the results. Database work runs on `boundedElastic` in short
   transactions that never span a model or search call, and every step re-checks scene ownership.
   Only outages trip a breaker; a model that answers badly is retried but never counted as down.
+- **Outreach reuses the same shape.** `OutreachGenerationService` reads a small `OutreachBrief` in one
+  transaction, calls the model through the shared `llm` guard (so one breaker covers scouting and
+  outreach), and saves the draft in another, re-checking ownership at both ends. The brief is
+  deliberately short: the script, the project description, the user's private notes and the fit score
+  never reach the model, so they cannot appear in an email to a stranger. Several drafts per location
+  are allowed; `sent_at` is stamped when a draft first leaves `DRAFT` and cleared if it goes back.
+  The API never sends email.
 - **Re-scouting is additive**: a page already saved for the scene is left alone, so a user's
   shortlist and notes survive. A venue the model cannot assess is dropped and counted, never guessed at.
 - **The web layer is thin.** Controllers validate and delegate; services own the transactions and

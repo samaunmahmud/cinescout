@@ -76,7 +76,22 @@ public class OutreachDraft extends BaseEntity {
     public void setRecipientEmail(String recipientEmail) { this.recipientEmail = recipientEmail; }
     public void setSubject(String subject) { this.subject = subject; }
     public void setBody(String body) { this.body = body; }
+    public void setTone(OutreachTone tone) { this.tone = tone; }
     public void setGeneratedBy(String generatedBy) { this.generatedBy = generatedBy; }
     public void setStatus(OutreachStatus status) { this.status = status; }
     public void setSentAt(Instant sentAt) { this.sentAt = sentAt; }
+
+    /**
+     * Moves the draft to {@code next} and keeps {@code sentAt} consistent with it: stamped when the
+     * draft first leaves {@code DRAFT}, cleared when it goes back. The user reports what happened;
+     * nothing here sends an email.
+     */
+    public void changeStatus(OutreachStatus next) {
+        this.status = next;
+        if (next == OutreachStatus.DRAFT) {
+            this.sentAt = null;
+        } else if (this.sentAt == null) {
+            this.sentAt = Instant.now();
+        }
+    }
 }

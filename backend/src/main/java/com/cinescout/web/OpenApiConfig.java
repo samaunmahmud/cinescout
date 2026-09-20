@@ -23,7 +23,7 @@ class OpenApiConfig {
                         .description("""
                                 AI production and location scouting. A filmmaker adds scenes to a project, the API extracts \
                                 each scene's filming requirements, finds and assesses real venues in the project's area, \
-                                and keeps the shortlist.
+                                keeps the shortlist and drafts the outreach emails to venue owners.
 
                                 **Authentication.** Register once, then send the email and password as HTTP Basic \
                                 credentials with every request.

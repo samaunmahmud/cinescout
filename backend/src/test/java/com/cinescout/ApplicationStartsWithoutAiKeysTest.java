@@ -1,6 +1,7 @@
 package com.cinescout;
 
 import com.cinescout.llm.LlmClient;
+import com.cinescout.outreach.OutreachGenerationService;
 import com.cinescout.scouting.SceneScoutingService;
 import com.cinescout.search.LocationSearchClient;
 import org.junit.jupiter.api.Test;
@@ -31,5 +32,6 @@ class ApplicationStartsWithoutAiKeysTest {
         assertThat(context.getBeansOfType(LlmClient.class)).isEmpty();
         assertThat(context.getBeansOfType(LocationSearchClient.class)).isEmpty();
         assertThat(context.getBeansOfType(SceneScoutingService.class)).isEmpty();
+        assertThat(context.getBeansOfType(OutreachGenerationService.class)).isEmpty();
     }
 }
