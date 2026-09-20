@@ -43,6 +43,13 @@ erDiagram
   Only outages trip a breaker; a model that answers badly is retried but never counted as down.
 - **Re-scouting is additive**: a page already saved for the scene is left alone, so a user's
   shortlist and notes survive. A venue the model cannot assess is dropped and counted, never guessed at.
+- **The web layer is thin.** Controllers validate and delegate; services own the transactions and
+  return DTOs. Every failure leaves as an RFC 9457 problem: domain errors keep their safe messages,
+  provider failures map by kind (503 + `Retry-After` or 502, with a `retryable` flag) and never quote
+  the underlying message, and anything unexpected is a fixed 500.
+- **Authentication is HTTP Basic** against the `users` table (BCrypt, stateless), isolated in
+  `SecurityConfig` so tokens can replace it later without touching controllers, which only receive an
+  `AuthenticatedUser`. Registration always creates a `USER` and can be closed by configuration.
 - **Module B results are cached on the location** (`logistics_json`,
   `logistics_fetched_at`) so viewing a location does not re-hit the solar,
   weather and places APIs.

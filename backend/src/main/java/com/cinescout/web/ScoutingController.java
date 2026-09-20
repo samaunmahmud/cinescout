@@ -5,6 +5,9 @@ import com.cinescout.scouting.SceneScoutingService;
 import com.cinescout.scouting.ScoutingResult;
 import com.cinescout.search.LocationSearchRequest;
 import com.cinescout.security.AuthenticatedUser;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,6 +28,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/scenes/{sceneId}")
+@Tag(name = "Scouting", description = "AI-backed endpoints. They call paid external services and can take many seconds.")
 class ScoutingController {
 
     private final ObjectProvider<SceneScoutingService> scouting;
@@ -34,6 +38,9 @@ class ScoutingController {
     }
 
     /** Extracts the scene's physical filming requirements from its script, replacing any earlier ones. */
+    @Operation(summary = "Extract a scene's filming requirements")
+    @ApiResponse(responseCode = "502", description = "The model returned an unusable answer (the scene is marked FAILED) or a provider key is misconfigured")
+    @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
     @PostMapping("/parse")
     Mono<SceneResponse> parse(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {
         return service().flatMap(s -> s.parseScene(user.id(), sceneId));
@@ -46,6 +53,11 @@ class ScoutingController {
      *
      * @param maxResults how many venues to look for
      */
+    @Operation(summary = "Scout venues for a scene",
+            description = "Searches the project's location area, assesses each venue against the scene and saves the new ones as suggested locations.")
+    @ApiResponse(responseCode = "409", description = "The scene's project has no location area yet")
+    @ApiResponse(responseCode = "502", description = "The model returned an unusable answer or a provider key is misconfigured")
+    @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
     @PostMapping("/scout")
     Mono<ScoutingResult> scout(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                @RequestParam(defaultValue = "" + LocationSearchRequest.DEFAULT_MAX_RESULTS)

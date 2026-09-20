@@ -97,10 +97,28 @@ Errors are RFC 9457 problems (`application/problem+json`). Set `cinescout.securi
 to stop new accounts being created on a deployment that should not be public. HTTP Basic sends the
 password on every request, so run it behind HTTPS; tokens are the planned replacement for browsers.
 
+## API
+
+Once running, the interactive documentation is at `/swagger-ui.html` and the OpenAPI description at
+`/v3/api-docs` (turn both off with `springdoc.api-docs.enabled=false`). Routes, all under `/api`:
+
+| Area | Routes |
+|---|---|
+| Accounts | `POST /auth/register` (public), `GET /auth/me` |
+| Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}` |
+| Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}` |
+| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}` |
+| Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
+
+`PUT` is a full replacement. Someone else's resource is always a `404`. The two scouting routes call
+paid services and can take many seconds; they answer `503` when the server has no AI keys.
+
 ## Status
 
 1. Schema and design - done
 2. Domain models and DTOs - done
 3. External API clients: LLM (watsonx.ai) and search (Parallel) - implemented, live checks pending
 4. Orchestration service (extract, search, assess, save) with retry and circuit breaker - done
-5. REST controllers, validation and OpenAPI docs
+5. REST controllers, authentication, validation and OpenAPI docs - done
+
+Not built yet: outreach email drafting (its DTOs exist), the environmental/logistics module, and the frontend.

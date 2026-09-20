@@ -4,6 +4,9 @@ import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.SceneService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +28,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Scenes", description = "A scene's script, number and shoot window. Its filming requirements are extracted by POST /api/scenes/{sceneId}/parse.")
 class SceneController {
 
     private final SceneService scenes;
@@ -33,6 +37,8 @@ class SceneController {
         this.scenes = scenes;
     }
 
+    @Operation(summary = "Add a scene to a project", description = "A scene number, when given, must be unique within the project (409 otherwise).")
+    @ApiResponse(responseCode = "201", description = "Created; the Location header points at the new scene")
     @PostMapping("/projects/{projectId}/scenes")
     Mono<ResponseEntity<SceneResponse>> create(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
                                                @Valid @RequestBody SceneRequest request) {
@@ -41,23 +47,27 @@ class SceneController {
     }
 
     /** The project's scenes in script order: numbered ones by number, then unnumbered ones. */
+    @Operation(summary = "List a project's scenes in script order")
     @GetMapping("/projects/{projectId}/scenes")
     Mono<List<SceneResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
         return scenes.list(user.id(), projectId);
     }
 
+    @Operation(summary = "Get a scene")
     @GetMapping("/scenes/{sceneId}")
     Mono<SceneResponse> get(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {
         return scenes.get(user.id(), sceneId);
     }
 
     /** Full replacement. Changing the script discards the requirements extracted from the old one. */
+    @Operation(summary = "Replace a scene", description = "Full replacement. Changing the script discards the requirements extracted from the old one.")
     @PutMapping("/scenes/{sceneId}")
     Mono<SceneResponse> update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                @Valid @RequestBody SceneRequest request) {
         return scenes.update(user.id(), sceneId, request);
     }
 
+    @Operation(summary = "Delete a scene", description = "Also deletes its locations.")
     @DeleteMapping("/scenes/{sceneId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> delete(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {

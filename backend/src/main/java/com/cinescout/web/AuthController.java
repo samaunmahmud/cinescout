@@ -5,6 +5,9 @@ import com.cinescout.dto.UserResponse;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.security.SecurityProperties;
 import com.cinescout.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Accounts. Every other endpoint needs HTTP Basic credentials.")
 class AuthController {
 
     private final UserService users;
@@ -30,6 +34,9 @@ class AuthController {
     }
 
     /** Creates an account. Public; there is no login step, clients then send HTTP Basic credentials. */
+    @Operation(summary = "Register an account",
+            description = "Creates a regular account. There is no login step: send the email and password as HTTP Basic credentials afterwards.")
+    @SecurityRequirements
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     Mono<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -40,6 +47,7 @@ class AuthController {
     }
 
     /** The account the credentials belong to. */
+    @Operation(summary = "The current account")
     @GetMapping("/me")
     Mono<UserResponse> me(@AuthenticationPrincipal AuthenticatedUser principal) {
         return users.get(principal.id());

@@ -6,6 +6,9 @@ import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects")
+@Tag(name = "Projects", description = "A film or production. A project's location area is where its scenes are scouted.")
 class ProjectController {
 
     private final ProjectService projects;
@@ -36,6 +40,8 @@ class ProjectController {
         this.projects = projects;
     }
 
+    @Operation(summary = "Create a project")
+    @ApiResponse(responseCode = "201", description = "Created; the Location header points at the new project")
     @PostMapping
     Mono<ResponseEntity<ProjectResponse>> create(@AuthenticationPrincipal AuthenticatedUser user,
                                                  @Valid @RequestBody CreateProjectRequest request) {
@@ -44,18 +50,21 @@ class ProjectController {
     }
 
     /** The caller's projects, newest first; {@code status} narrows the list. */
+    @Operation(summary = "List the caller's projects")
     @GetMapping
     Mono<List<ProjectResponse>> list(@AuthenticationPrincipal AuthenticatedUser user,
                                      @RequestParam(required = false) ProjectStatus status) {
         return projects.list(user.id(), status);
     }
 
+    @Operation(summary = "Get a project")
     @GetMapping("/{projectId}")
     Mono<ProjectResponse> get(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
         return projects.get(user.id(), projectId);
     }
 
     /** Full replacement: a missing description or location area clears it. */
+    @Operation(summary = "Replace a project", description = "Full replacement: an omitted description or location area is cleared.")
     @PutMapping("/{projectId}")
     Mono<ProjectResponse> update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
                                  @Valid @RequestBody UpdateProjectRequest request) {
@@ -63,6 +72,7 @@ class ProjectController {
     }
 
     /** Deletes the project with all its scenes, locations and drafts. */
+    @Operation(summary = "Delete a project", description = "Also deletes its scenes, locations and outreach drafts.")
     @DeleteMapping("/{projectId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> delete(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {

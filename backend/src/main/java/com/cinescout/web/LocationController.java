@@ -5,6 +5,9 @@ import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.LocationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Locations", description = "Candidate venues for a scene: found by scouting or added by hand.")
 class LocationController {
 
     private final LocationService locations;
@@ -35,12 +39,15 @@ class LocationController {
     }
 
     /** The scene's candidate locations, best fit first; venues added by hand (no score) come last. */
+    @Operation(summary = "List a scene's candidate locations, best fit first")
     @GetMapping("/scenes/{sceneId}/locations")
     Mono<List<LocationResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {
         return locations.list(user.id(), sceneId);
     }
 
     /** Adds a venue the user found themselves. Venues found by scouting are saved by the scout endpoint. */
+    @Operation(summary = "Add a venue by hand", description = "The same page can only be saved once per scene (409 otherwise).")
+    @ApiResponse(responseCode = "201", description = "Created; the Location header points at the new location")
     @PostMapping("/scenes/{sceneId}/locations")
     Mono<ResponseEntity<LocationResponse>> create(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                                   @Valid @RequestBody CreateLocationRequest request) {
@@ -48,18 +55,21 @@ class LocationController {
                 .map(location -> ResponseEntity.created(URI.create("/api/locations/" + location.id())).body(location));
     }
 
+    @Operation(summary = "Get a location")
     @GetMapping("/locations/{locationId}")
     Mono<LocationResponse> get(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {
         return locations.get(user.id(), locationId);
     }
 
     /** Full replacement of the user's own workflow fields (status, notes); the assessment is not editable. */
+    @Operation(summary = "Update a location's status and notes", description = "Only the user's own workflow fields are editable; the assessment is not.")
     @PutMapping("/locations/{locationId}")
     Mono<LocationResponse> update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                   @Valid @RequestBody UpdateLocationRequest request) {
         return locations.update(user.id(), locationId, request);
     }
 
+    @Operation(summary = "Delete a location")
     @DeleteMapping("/locations/{locationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> delete(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {

@@ -50,6 +50,8 @@ class SecurityConfig {
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(new ProblemAuthenticationEntryPoint(mapper)))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        // The API description and Swagger UI. Turn them off with springdoc.api-docs.enabled=false.
+                        .pathMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
                         .anyExchange().authenticated())
                 .build();
     }
