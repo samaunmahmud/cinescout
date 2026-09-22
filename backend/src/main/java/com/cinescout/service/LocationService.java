@@ -4,6 +4,7 @@ import com.cinescout.domain.Location;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
+import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
@@ -69,6 +70,18 @@ public class LocationService {
             Location location = owned(ownerId, locationId);
             location.setStatus(request.status());
             location.setNotes(blankToNull(request.notes()));
+            return LocationResponse.from(locations.saveAndFlush(location));
+        });
+    }
+
+    /**
+     * Sets where the venue is, e.g. because it could not be geocoded or the pin was wrong. Its cached
+     * logistics are dropped, as they were for the old spot.
+     */
+    public Mono<LocationResponse> relocate(UUID ownerId, UUID locationId, UpdateCoordinatesRequest request) {
+        return db.call(() -> {
+            Location location = owned(ownerId, locationId);
+            location.relocate(request.latitude(), request.longitude());
             return LocationResponse.from(locations.saveAndFlush(location));
         });
     }

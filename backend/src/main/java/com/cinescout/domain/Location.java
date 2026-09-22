@@ -85,6 +85,14 @@ public class Location extends BaseEntity {
         this.name = name;
     }
 
+    /** Moves the location, dropping the cached logistics: they were worked out for the old spot. */
+    public void relocate(BigDecimal latitude, BigDecimal longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.logisticsJson = null;
+        this.logisticsFetchedAt = null;
+    }
+
     public void cacheLogistics(JsonNode logistics) {
         this.logisticsJson = logistics;
         this.logisticsFetchedAt = Instant.now();

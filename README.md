@@ -12,7 +12,9 @@ outreach to venue owners.
 - Java 21, Spring Boot 3.5, Spring WebFlux
 - PostgreSQL, Spring Data JPA, Flyway (Flyway owns the schema; Hibernate only validates it)
 - JUnit 5, Mockito, WireMock, Testcontainers
-- Planned: Spring Security, OpenAPI docs, resilience (retry / circuit breaker), a React frontend
+- Spring Security, springdoc OpenAPI, Resilience4j
+- Open-Meteo (weather) and OpenStreetMap via Overpass and Nominatim (places, geocoding), all keyless
+- Planned: a React frontend
 
 ## Layout
 
@@ -83,6 +85,18 @@ watsonx.ai key. Optional tuning, all with defaults:
 | `cinescout.resilience.breaker-failure-rate-percent` | `50` |
 | `cinescout.resilience.breaker-open-duration` | `30s` |
 
+Shoot logistics (sun, weather, noise, nearby services) use free public services that need no keys, so
+they are always on. Their usage policies ask for an identifying User-Agent and light use; anything beyond
+that should point the base URLs at a private or commercial instance:
+
+| Property | Default |
+|---|---|
+| `cinescout.logistics.user-agent` | `CineScout/0.1 (+https://github.com/samaunmahmud/cinescout)`; a deployment should put its own contact here |
+| `cinescout.logistics.max-days` | `14` shoot days per report |
+| `cinescout.logistics.open-meteo.forecast-url` / `archive-url` | `https://api.open-meteo.com` / `https://archive-api.open-meteo.com` (weather; free for non-commercial use) |
+| `cinescout.logistics.overpass.base-url` | `https://overpass-api.de` (OpenStreetMap places) |
+| `cinescout.logistics.nominatim.base-url` | `https://nominatim.openstreetmap.org` (geocoding, at most one request a second) |
+
 ## Authentication
 
 Every endpoint needs a login except `POST /api/auth/register`. Authentication is HTTP Basic (email
@@ -108,7 +122,8 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Accounts | `POST /auth/register` (public), `GET /auth/me` |
 | Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}` |
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}` |
-| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}` |
+| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates` |
+| Logistics | `POST`/`GET /locations/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
 | Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
@@ -116,6 +131,15 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 `generate` call paid services and can take many seconds; they answer `503` when the server has no
 AI keys (`generate` needs only the watsonx.ai key). Listing, editing and deleting drafts always works.
 The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
+
+`POST /locations/{id}/logistics` works out a location's shoot logistics and caches them on it (`GET` returns
+the cached report, `404` before the first run). For each shoot day it gives sunrise, sunset, golden and blue
+hours and the windows matching the scene's time of day (computed locally), the weather (a forecast up to
+about two weeks ahead; beyond that the weather recorded on the same date in an earlier year, labelled as
+such), a noise risk weighed against the scene's acoustic sensitivity, and the nearest services (hospital,
+parking, food, toilets...). A venue without coordinates is geocoded first (`409` if it cannot be found:
+set them with `PUT /locations/{id}/coordinates`). If the weather or map service is down, the report still
+comes back with that section marked `UNAVAILABLE`.
 
 ## Status
 
@@ -125,5 +149,6 @@ The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is
 4. Orchestration service (extract, search, assess, save) with retry and circuit breaker - done
 5. REST controllers, authentication, validation and OpenAPI docs - done
 6. Outreach email generator and draft management (module C) - done
+7. Shoot logistics: solar windows, weather, noise risk and nearby services (module B) - done
 
-Not built yet: the environmental/logistics module and the frontend.
+Not built yet: the frontend.

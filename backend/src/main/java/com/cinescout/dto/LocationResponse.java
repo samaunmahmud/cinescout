@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * {@code logistics} is the cached Module B output, passed through as raw JSON until
- * that module defines a typed shape. It is null until logistics have been fetched.
+ * {@code logistics} is the cached Module B output, a {@code LogisticsReport} passed through exactly as it
+ * was stored (so its local times keep their offsets). It is null until logistics have been worked out.
  */
 public record LocationResponse(
         UUID id,

@@ -1,6 +1,7 @@
 package com.cinescout.web;
 
 import com.cinescout.llm.LlmException;
+import com.cinescout.logistics.LogisticsException;
 import com.cinescout.scouting.ScoutingException;
 import com.cinescout.search.SearchException;
 import com.cinescout.service.ConflictException;
@@ -111,6 +112,18 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             case UNAVAILABLE -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The search service is unavailable; try again shortly", true);
             case AUTHENTICATION, INVALID_REQUEST ->
                     upstream(HttpStatus.BAD_GATEWAY, "The search service rejected our request; this is a server configuration problem", false);
+        };
+    }
+
+    /** Only geocoding reaches here: a report whose weather or map lookup fails still returns, marked unavailable. */
+    @ExceptionHandler(LogisticsException.class)
+    ResponseEntity<ProblemDetail> logistics(LogisticsException e) {
+        log.warn("Logistics call failed ({}, retryable={}): {}", e.kind(), e.isRetryable(), e.getMessage());
+        return switch (e.kind()) {
+            case RATE_LIMITED -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The map service is busy; try again shortly", true);
+            case UNAVAILABLE -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The map service is unavailable; try again shortly", true);
+            case INVALID_REQUEST ->
+                    upstream(HttpStatus.BAD_GATEWAY, "The map service rejected our request; this is a server configuration problem", false);
         };
     }
 

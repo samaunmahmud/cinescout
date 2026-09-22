@@ -2,6 +2,7 @@ package com.cinescout.web;
 
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
+import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.LocationService;
@@ -67,6 +68,15 @@ class LocationController {
     Mono<LocationResponse> update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                   @Valid @RequestBody UpdateLocationRequest request) {
         return locations.update(user.id(), locationId, request);
+    }
+
+    /** Sets where the venue is. Its cached logistics are dropped, as they were worked out for the old spot. */
+    @Operation(summary = "Set a location's coordinates",
+            description = "For a venue that could not be found on the map, or whose pin is wrong. Drops its cached logistics.")
+    @PutMapping("/locations/{locationId}/coordinates")
+    Mono<LocationResponse> relocate(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
+                                    @Valid @RequestBody UpdateCoordinatesRequest request) {
+        return locations.relocate(user.id(), locationId, request);
     }
 
     @Operation(summary = "Delete a location")

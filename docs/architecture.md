@@ -57,9 +57,27 @@ erDiagram
 - **Authentication is HTTP Basic** against the `users` table (BCrypt, stateless), isolated in
   `SecurityConfig` so tokens can replace it later without touching controllers, which only receive an
   `AuthenticatedUser`. Registration always creates a `USER` and can be closed by configuration.
-- **Module B results are cached on the location** (`logistics_json`,
-  `logistics_fetched_at`) so viewing a location does not re-hit the solar,
-  weather and places APIs.
+- **Logistics (module B) run on demand per location and are cached on it** (`logistics_json`,
+  `logistics_fetched_at`, the report exactly as returned), so viewing a location never re-hits the
+  providers, and scouting ten venues does not fire forty calls at free public services. Moving a location
+  (`PUT .../coordinates`) drops its cache.
+- **Solar times are computed locally** (NOAA equations), not fetched: sunrise, sunset, golden hour
+  (sun -4 to 6 degrees) and blue hour (-6 to -4), plus the windows that match the scene's time of day.
+  They are shown in the location's time zone, which the weather provider resolves.
+- **Weather is honest about what it is.** A forecast reaches about two weeks; a shoot further out gets
+  the weather recorded on the same date in an earlier year, labelled `PAST_YEAR`, never passed off as a
+  forecast.
+- **Each logistics provider sits behind a neutral interface** (`WeatherClient`, `PlacesClient`,
+  `Geocoder`), like the LLM and search clients, with Open-Meteo, Overpass and Nominatim behind them. Weather
+  and places are fetched at the same time and each may fail without failing the report: the section is
+  marked `UNAVAILABLE` or `PARTIAL`. Places are tried once (a busy Overpass server answers slowly, and
+  retrying only adds to its load); weather and geocoding are retried. A venue without coordinates is
+  geocoded from its address, or its name in the project's area, and the result is kept.
+- **Noise risk is a rule of thumb from the map**, not a measurement: each nearby source (airport, railway,
+  major road, construction, school, nightlife...) scores its loudness plus its proximity within a
+  kind-specific radius; the location's risk is the loudest source, shifted by the scene's acoustic
+  sensitivity. The report carries the attribution the data licences require (OpenStreetMap ODbL,
+  Open-Meteo CC BY).
 - **Provenance is stored**: `source_url`, `source_provider` and
   `source_excerpt` record where each venue came from. `source_provider` is a
   plain string so the search backend can change without touching the schema.
