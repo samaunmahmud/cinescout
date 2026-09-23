@@ -1,0 +1,238 @@
+import { act, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+import type { Project, User } from '../api/types'
+import { fakeServer, json, problem } from '../test/fakeServer'
+import { renderApp } from '../test/renderApp'
+import { basicAuthorization } from '../api/client'
+
+const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
+const PASSWORD = 'a-long-password'
+
+function project(overrides: Partial<Project> = {}): Project {
+  return {
+    id: 'p1',
+    title: 'Night Shift',
+    description: 'A thriller set in a hospital.',
+    locationArea: 'Brooklyn, New York',
+    status: 'ACTIVE',
+    createdAt: '2026-09-01T10:00:00Z',
+    updatedAt: '2026-09-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+async function logIn(user = userEvent.setup()) {
+  await user.type(screen.getByLabelText('Email'), ada.email)
+  await user.type(screen.getByLabelText('Password'), PASSWORD)
+  await user.click(screen.getByRole('button', { name: 'Log in' }))
+  return user
+}
+
+describe('logging in', () => {
+  it('sends a logged-out visitor to the login page and back to where they were going', async () => {
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+    })
+    const { router } = renderApp('/projects/p1')
+
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    await logIn()
+
+    expect(await screen.findByRole('heading', { name: 'Night Shift' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/projects/p1')
+    expect(requests.every((r) => r.headers.Authorization === basicAuthorization({ email: ada.email, password: PASSWORD }))).toBe(true)
+  })
+
+  it('says so when the email or password is wrong', async () => {
+    fakeServer({ 'GET /api/auth/me': () => problem(401, 'Unauthorized', 'Valid credentials are required') })
+    renderApp('/login')
+
+    await logIn()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.')
+    expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+  })
+
+  it('logs out, forgetting the credentials', async () => {
+    fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE': () => json([]) })
+    const { router } = renderApp('/login')
+    const user = await logIn()
+    await screen.findByText(/No projects yet/)
+
+    await user.click(screen.getByRole('button', { name: 'Log out' }))
+
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    await act(() => router.navigate('/projects'))
+    expect(router.state.location.pathname).toBe('/login')
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+  })
+
+  it('goes back to the login page when the server stops accepting the credentials', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE': () => problem(401, 'Unauthorized', 'Valid credentials are required'),
+    })
+    renderApp('/login')
+
+    await logIn()
+
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+  })
+})
+
+describe('registering', () => {
+  async function fillIn(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(screen.getByLabelText('Name'), 'Ada')
+    await user.type(screen.getByLabelText('Email'), ` ${ada.email} `)
+    await user.type(screen.getByLabelText('Password'), PASSWORD)
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+  }
+
+  it('creates the account and logs straight in', async () => {
+    const { requests } = fakeServer({
+      'POST /api/auth/register': () => json(ada, 201),
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE': () => json([]),
+    })
+    renderApp('/register')
+
+    await fillIn(userEvent.setup())
+
+    expect(await screen.findByRole('heading', { name: 'Projects' })).toBeInTheDocument()
+    expect(requests[0].body).toEqual({ displayName: 'Ada', email: ada.email, password: PASSWORD })
+    expect(requests[1].headers.Authorization).toBe(basicAuthorization({ email: ada.email, password: PASSWORD }))
+  })
+
+  it('shows the server-side validation message next to the field', async () => {
+    fakeServer({
+      'POST /api/auth/register': () =>
+        problem(400, 'Validation failed', 'The request is invalid', { errors: [{ field: 'email', message: 'must be a well-formed email address' }] }),
+    })
+    renderApp('/register')
+
+    await fillIn(userEvent.setup())
+
+    expect(await screen.findByText('must be a well-formed email address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('shows a taken email as the server explains it', async () => {
+    fakeServer({ 'POST /api/auth/register': () => problem(409, 'Conflict', 'An account with this email already exists') })
+    renderApp('/register')
+
+    await fillIn(userEvent.setup())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('An account with this email already exists')
+  })
+})
+
+describe('projects', () => {
+  it('lists active projects and switches to archived ones', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE': () => json([project(), project({ id: 'p2', title: 'Day Break', locationArea: null, description: null })]),
+      'GET /api/projects?status=ARCHIVED': () => json([project({ id: 'p3', title: 'Old Film', status: 'ARCHIVED' })]),
+    })
+    renderApp('/login')
+    const user = await logIn()
+
+    const list = await screen.findByRole('list')
+    expect(within(list).getByRole('link', { name: /Night Shift/ })).toHaveAttribute('href', '/projects/p1')
+    expect(within(list).getByText('No location area set')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: 'Archived' }))
+    expect(await screen.findByRole('link', { name: /Old Film/ })).toBeInTheDocument()
+    expect(screen.queryByText('Night Shift')).not.toBeInTheDocument()
+  })
+
+  it('creates a project, sending blank optional fields as null, and opens it', async () => {
+    const created = project({ id: 'p9', title: 'New Film', description: null, locationArea: null })
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE': () => json([]),
+      'POST /api/projects': () => json(created, 201),
+    })
+    const { router } = renderApp('/login')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'New project' }))
+    await user.type(screen.getByLabelText('Title'), '  New Film  ')
+    await user.type(screen.getByLabelText('Location area'), '   ')
+    await user.click(screen.getByRole('button', { name: 'Create project' }))
+
+    expect(await screen.findByRole('heading', { name: 'New Film' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/projects/p9')
+    expect(requests.find((r) => r.method === 'POST')?.body).toEqual({ title: 'New Film', description: null, locationArea: null })
+  })
+
+  it('edits a project with a full replacement that keeps its status', async () => {
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project({ status: 'ARCHIVED' })),
+      'PUT /api/projects/p1': (req) => json(project(req.body as Partial<Project>)),
+    })
+    renderApp('/projects/p1')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Edit' }))
+    const title = screen.getByLabelText('Title')
+    await user.clear(title)
+    await user.type(title, 'Night Shift II')
+    await user.clear(screen.getByLabelText('Description'))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByRole('heading', { name: 'Night Shift II' })).toBeInTheDocument()
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({
+      title: 'Night Shift II',
+      description: null,
+      locationArea: 'Brooklyn, New York',
+      status: 'ARCHIVED',
+    })
+  })
+
+  it('archives and restores a project', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'PUT /api/projects/p1': (req) => json(project(req.body as Partial<Project>)),
+    })
+    renderApp('/projects/p1')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Archive' }))
+    expect(await screen.findByText('Archived')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Restore' }))
+    await waitFor(() => expect(screen.queryByText('Archived')).not.toBeInTheDocument())
+  })
+
+  it('deletes a project only after confirmation', async () => {
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'DELETE /api/projects/p1': () => new Response(null, { status: 204 }),
+      'GET /api/projects?status=ACTIVE': () => json([]),
+    })
+    const { router } = renderApp('/projects/p1')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    expect(requests.some((r) => r.method === 'DELETE')).toBe(false)
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete project' }))
+
+    expect(await screen.findByText(/No projects yet/)).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/projects')
+  })
+
+  it("shows another user's project as not found", async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => problem(404, 'Not Found', 'Project not found'),
+    })
+    renderApp('/projects/p1')
+    await logIn()
+
+    expect(await screen.findByRole('heading', { name: 'Not found' })).toBeInTheDocument()
+  })
+})

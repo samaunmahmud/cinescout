@@ -14,13 +14,14 @@ outreach to venue owners.
 - JUnit 5, Mockito, WireMock, Testcontainers
 - Spring Security, springdoc OpenAPI, Resilience4j
 - Open-Meteo (weather) and OpenStreetMap via Overpass and Nominatim (places, geocoding), all keyless
-- Planned: a React frontend
+- Frontend: React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query; Vitest and Testing Library
 
 ## Layout
 
 | Path | Contents |
 |---|---|
 | `backend/` | Spring Boot application (`com.cinescout`) |
+| `frontend/` | React web app |
 | `backend/src/main/resources/db/migration/` | Flyway migrations |
 | `docs/architecture.md` | Entity relationships and schema decisions |
 
@@ -34,6 +35,19 @@ cd backend
 mvn test
 DB_PASSWORD=... mvn spring-boot:run
 ```
+
+The web app needs Node.js 20.19+ (or 22.12+). With the backend running:
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:5173, proxies /api to the backend
+npm test
+npm run build
+```
+
+The dev server proxies `/api` to `http://localhost:8081`; set `BACKEND_URL` to point it elsewhere. The web app
+logs in with HTTP Basic and keeps the credentials in memory only, so reloading the page asks for them again.
 
 Configuration comes from the environment:
 
@@ -150,5 +164,6 @@ comes back with that section marked `UNAVAILABLE`.
 5. REST controllers, authentication, validation and OpenAPI docs - done
 6. Outreach email generator and draft management (module C) - done
 7. Shoot logistics: solar windows, weather, noise risk and nearby services (module B) - done
+8. Web app - in progress: accounts and projects are done; scenes, scouting, logistics and outreach come next
 
-Not built yet: the frontend.
+Not built yet: the web app screens for scenes, scouting, logistics and outreach.
