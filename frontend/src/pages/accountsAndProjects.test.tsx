@@ -1,38 +1,17 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import type { Project, User } from '../api/types'
+import type { Project } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
+import { PASSWORD, ada, logIn, project } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 import { basicAuthorization } from '../api/client'
-
-const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
-const PASSWORD = 'a-long-password'
-
-function project(overrides: Partial<Project> = {}): Project {
-  return {
-    id: 'p1',
-    title: 'Night Shift',
-    description: 'A thriller set in a hospital.',
-    locationArea: 'Brooklyn, New York',
-    status: 'ACTIVE',
-    createdAt: '2026-09-01T10:00:00Z',
-    updatedAt: '2026-09-01T10:00:00Z',
-    ...overrides,
-  }
-}
-
-async function logIn(user = userEvent.setup()) {
-  await user.type(screen.getByLabelText('Email'), ada.email)
-  await user.type(screen.getByLabelText('Password'), PASSWORD)
-  await user.click(screen.getByRole('button', { name: 'Log in' }))
-  return user
-}
 
 describe('logging in', () => {
   it('sends a logged-out visitor to the login page and back to where they were going', async () => {
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1/scenes': () => json([]),
       'GET /api/projects/p1': () => json(project()),
     })
     const { router } = renderApp('/projects/p1')
@@ -153,6 +132,7 @@ describe('projects', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects?status=ACTIVE': () => json([]),
       'POST /api/projects': () => json(created, 201),
+      'GET /api/projects/p9/scenes': () => json([]),
     })
     const { router } = renderApp('/login')
     const user = await logIn()
@@ -170,6 +150,7 @@ describe('projects', () => {
   it('edits a project with a full replacement that keeps its status', async () => {
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1/scenes': () => json([]),
       'GET /api/projects/p1': () => json(project({ status: 'ARCHIVED' })),
       'PUT /api/projects/p1': (req) => json(project(req.body as Partial<Project>)),
     })
@@ -195,6 +176,7 @@ describe('projects', () => {
   it('archives and restores a project', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1/scenes': () => json([]),
       'GET /api/projects/p1': () => json(project()),
       'PUT /api/projects/p1': (req) => json(project(req.body as Partial<Project>)),
     })
@@ -210,6 +192,7 @@ describe('projects', () => {
   it('deletes a project only after confirmation', async () => {
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1/scenes': () => json([]),
       'GET /api/projects/p1': () => json(project()),
       'DELETE /api/projects/p1': () => new Response(null, { status: 204 }),
       'GET /api/projects?status=ACTIVE': () => json([]),

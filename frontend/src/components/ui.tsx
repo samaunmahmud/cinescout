@@ -72,13 +72,13 @@ function FieldShell({ id, label, error, hint, children }: FieldProps & { id: str
   )
 }
 
-export function TextField({ label, error, hint, ...props }: FieldProps & InputHTMLAttributes<HTMLInputElement>) {
+export function TextField({ label, error, hint, className = '', ...props }: FieldProps & InputHTMLAttributes<HTMLInputElement>) {
   const id = useId()
   return (
     <FieldShell id={id} label={label} error={error} hint={hint}>
       <input
         id={id}
-        className={inputClass}
+        className={`${inputClass} ${className}`}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         {...props}
@@ -87,14 +87,14 @@ export function TextField({ label, error, hint, ...props }: FieldProps & InputHT
   )
 }
 
-export function TextArea({ label, error, hint, ...props }: FieldProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextArea({ label, error, hint, className = '', ...props }: FieldProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const id = useId()
   return (
     <FieldShell id={id} label={label} error={error} hint={hint}>
       <textarea
         id={id}
         rows={4}
-        className={inputClass}
+        className={`${inputClass} ${className}`}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         {...props}
@@ -117,11 +117,12 @@ export function ErrorAlert({ error, onRetry }: { error: unknown; onRetry?: () =>
   )
 }
 
-export function Badge({ tone = 'neutral', children }: { tone?: 'neutral' | 'amber' | 'green'; children: ReactNode }) {
+export function Badge({ tone = 'neutral', children }: { tone?: 'neutral' | 'amber' | 'green' | 'red'; children: ReactNode }) {
   const tones = {
     neutral: 'bg-stone-800 text-stone-300',
     amber: 'bg-amber-500/15 text-amber-300',
     green: 'bg-emerald-500/15 text-emerald-300',
+    red: 'bg-red-500/15 text-red-300',
   }
   return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>{children}</span>
 }

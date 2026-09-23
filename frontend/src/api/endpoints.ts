@@ -1,5 +1,14 @@
 import { ApiError, request, type Credentials } from './client'
-import type { CreateProjectRequest, Project, ProjectStatus, RegisterRequest, UpdateProjectRequest, User } from './types'
+import type {
+  CreateProjectRequest,
+  Project,
+  ProjectStatus,
+  RegisterRequest,
+  Scene,
+  SceneRequest,
+  UpdateProjectRequest,
+  User,
+} from './types'
 
 export const authApi = {
   register: (body: RegisterRequest) => request<User>('/api/auth/register', { method: 'POST', body }),
@@ -28,6 +37,16 @@ export function createApi(credentials: Credentials, onUnauthorized: () => void =
       update: (id: string, body: UpdateProjectRequest) =>
         call<Project>(`/api/projects/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    scenes: {
+      list: (projectId: string) => call<Scene[]>(`/api/projects/${encodeURIComponent(projectId)}/scenes`),
+      get: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`),
+      create: (projectId: string, body: SceneRequest) =>
+        call<Scene>(`/api/projects/${encodeURIComponent(projectId)}/scenes`, { method: 'POST', body }),
+      update: (id: string, body: SceneRequest) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      remove: (id: string) => call<void>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** Extracts the filming requirements with the AI. Takes seconds; answers 503 when scouting is not configured. */
+      parse: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}/parse`, { method: 'POST' }),
     },
   }
 }

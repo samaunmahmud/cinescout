@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ApiError } from '../api/client'
+import { isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
 import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
+import { ConfirmDelete } from '../components/ConfirmDelete'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { NotFoundPage } from './NotFoundPage'
+import { ScenesSection } from './ScenesSection'
 
 export function ProjectPage() {
   const { projectId = '' } = useParams()
@@ -17,8 +19,7 @@ export function ProjectPage() {
 
   if (project.isPending) return <Spinner label="Loading project" />
   if (project.isError) {
-    // Another user's project is a 404 too, so this never reveals whether it exists.
-    if (project.error instanceof ApiError && (project.error.status === 404 || project.error.status === 400)) return <NotFoundPage />
+    if (isNotFound(project.error)) return <NotFoundPage />
     return <ErrorAlert error={project.error} onRetry={() => project.refetch()} />
   }
   return <ProjectDetails project={project.data} />
@@ -117,22 +118,19 @@ function ProjectDetails({ project }: { project: Project }) {
       )}
 
       {confirmingDelete && (
-        <div role="alertdialog" aria-labelledby="delete-title" className="space-y-3 rounded-lg border border-red-900 bg-red-950/40 p-5">
-          <h2 id="delete-title" className="font-semibold">
-            Delete “{project.title}”?
-          </h2>
-          <p className="text-sm text-stone-300">This also deletes its scenes, scouted locations and outreach drafts. It cannot be undone.</p>
-          <ErrorAlert error={remove.error} />
-          <div className="flex gap-2">
-            <Button variant="danger" busy={remove.isPending} onClick={() => remove.mutate()}>
-              Delete project
-            </Button>
-            <Button variant="ghost" disabled={remove.isPending} onClick={() => setConfirmingDelete(false)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
+        <ConfirmDelete
+          title={`Delete “${project.title}”?`}
+          confirmLabel="Delete project"
+          busy={remove.isPending}
+          error={remove.error}
+          onConfirm={() => remove.mutate()}
+          onCancel={() => setConfirmingDelete(false)}
+        >
+          This also deletes its scenes, scouted locations and outreach drafts. It cannot be undone.
+        </ConfirmDelete>
       )}
+
+      {!editing && <ScenesSection projectId={project.id} />}
     </div>
   )
 }

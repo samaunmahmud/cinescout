@@ -14,3 +14,11 @@ export function fieldErrors(error: unknown): Record<string, string> {
   if (!(error instanceof ApiError)) return {}
   return Object.fromEntries(error.fieldErrors.map((e) => [e.field, e.message]))
 }
+
+/**
+ * Whether a page's resource is missing. Another user's data is a 404 too, so this never reveals that it
+ * exists; a malformed id in the URL is a 400.
+ */
+export function isNotFound(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 404 || error.status === 400)
+}

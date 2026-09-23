@@ -41,3 +41,43 @@ export interface UpdateProjectRequest {
   locationArea: string | null
   status: ProjectStatus
 }
+
+export type ParseStatus = 'PENDING' | 'PARSED' | 'FAILED'
+
+export type AcousticSensitivity = 'LOW' | 'MEDIUM' | 'HIGH'
+
+/** The physical filming requirements the AI extracts from a scene's script. */
+export interface SceneRequirements {
+  settingType: string
+  visualMood: string | null
+  lightingNeeds: string | null
+  timeOfDay: string | null
+  acousticSensitivity: AcousticSensitivity | null
+  estimatedCastAndCrewSize: number | null
+}
+
+export interface Scene {
+  id: string
+  projectId: string
+  sceneNumber: number | null
+  title: string
+  sourceText: string
+  /** ISO dates (yyyy-mm-dd). */
+  shootDateStart: string | null
+  shootDateEnd: string | null
+  parseStatus: ParseStatus
+  /** Null until the scene has been parsed. */
+  requirements: SceneRequirements | null
+  parsedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Creates a scene, or fully replaces one (PUT): nulls clear the optional fields. */
+export interface SceneRequest {
+  sceneNumber: number | null
+  title: string
+  sourceText: string
+  shootDateStart: string | null
+  shootDateEnd: string | null
+}

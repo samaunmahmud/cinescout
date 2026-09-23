@@ -164,6 +164,6 @@ comes back with that section marked `UNAVAILABLE`.
 5. REST controllers, authentication, validation and OpenAPI docs - done
 6. Outreach email generator and draft management (module C) - done
 7. Shoot logistics: solar windows, weather, noise risk and nearby services (module B) - done
-8. Web app - in progress: accounts and projects are done; scenes, scouting, logistics and outreach come next
+8. Web app - in progress: accounts, projects and scenes (with AI requirement extraction) are done; scouting, logistics and outreach come next
 
-Not built yet: the web app screens for scenes, scouting, logistics and outreach.
+Not built yet: the web app screens for scouting results, logistics and outreach.

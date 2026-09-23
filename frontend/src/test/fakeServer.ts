@@ -1,4 +1,14 @@
-import { vi } from 'vitest'
+import { afterEach, expect, vi } from 'vitest'
+
+let unrouted: string[] = []
+
+// The app turns a thrown fetch into a "network error" it can show, so an unrouted request would otherwise pass
+// unnoticed. Fail the test instead.
+afterEach(() => {
+  const missed = unrouted
+  unrouted = []
+  expect(missed, 'requests the fake server had no route for').toEqual([])
+})
 
 export interface RecordedRequest {
   method: string
@@ -20,7 +30,7 @@ export const problem = (status: number, title: string, detail?: string, extra: R
 
 /**
  * Replaces fetch with routes keyed by "METHOD /path" (query string included). Every request is recorded;
- * an unrouted one fails the test loudly instead of hanging.
+ * an unrouted one fails the test.
  */
 export function fakeServer(routes: Record<string, Handler>) {
   const requests: RecordedRequest[] = []
@@ -34,7 +44,10 @@ export function fakeServer(routes: Record<string, Handler>) {
     }
     requests.push(req)
     const handler = routes[`${req.method} ${req.path}`]
-    if (!handler) throw new Error(`Unexpected request: ${req.method} ${req.path}`)
+    if (!handler) {
+      unrouted.push(`${req.method} ${req.path}`)
+      throw new Error(`Unexpected request: ${req.method} ${req.path}`)
+    }
     return handler(req)
   })
   vi.stubGlobal('fetch', fetchMock)
