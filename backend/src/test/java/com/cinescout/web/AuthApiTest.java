@@ -118,6 +118,18 @@ class AuthApiTest extends ApiTest {
     }
 
     @Test
+    void theWebAppGetsTheUnauthorizedProblemWithoutTheBrowserLoginChallenge() {
+        Account ada = register("Ada");
+
+        as(ada.email(), "not-the-password").get().uri("/api/auth/me").header("X-Requested-With", "XMLHttpRequest")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectHeader().doesNotExist(HttpHeaders.WWW_AUTHENTICATE)
+                .expectHeader().contentType(PROBLEM)
+                .expectBody().jsonPath("$.title").isEqualTo("Unauthorized");
+    }
+
+    @Test
     void aWrongPasswordAndAnUnknownAccountAreIndistinguishable() {
         Account ada = register("Ada");
 

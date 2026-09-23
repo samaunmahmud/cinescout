@@ -16,6 +16,10 @@ import java.util.Map;
 /**
  * The 401 for a missing or wrong login, as an RFC 9457 problem like every other error. The message is
  * the same whether the account exists or not, so it cannot be used to discover accounts.
+ * <p>
+ * A browser answers {@code WWW-Authenticate: Basic} with its own login dialog, even for a script's request.
+ * The web app marks its requests with {@code X-Requested-With: XMLHttpRequest} and shows its own login form,
+ * so those requests get the 401 without the challenge header.
  */
 final class ProblemAuthenticationEntryPoint implements ServerAuthenticationEntryPoint {
 
@@ -29,7 +33,9 @@ final class ProblemAuthenticationEntryPoint implements ServerAuthenticationEntry
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
-        response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"CineScout\", charset=\"UTF-8\"");
+        if (!isScriptRequest(exchange)) {
+            response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"CineScout\", charset=\"UTF-8\"");
+        }
         response.getHeaders().setContentType(MediaType.APPLICATION_PROBLEM_JSON);
         try {
             byte[] body = mapper.writeValueAsBytes(Map.of(
@@ -41,5 +47,9 @@ final class ProblemAuthenticationEntryPoint implements ServerAuthenticationEntry
         } catch (JsonProcessingException e) {
             return response.setComplete();
         }
+    }
+
+    private static boolean isScriptRequest(ServerWebExchange exchange) {
+        return "XMLHttpRequest".equalsIgnoreCase(exchange.getRequest().getHeaders().getFirst("X-Requested-With"));
     }
 }
