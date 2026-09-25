@@ -81,3 +81,50 @@ export interface SceneRequest {
   shootDateStart: string | null
   shootDateEnd: string | null
 }
+
+export type LocationStatus = 'SUGGESTED' | 'SHORTLISTED' | 'REJECTED' | 'CONTACTED' | 'CONFIRMED'
+
+/** How hard the venue is likely to be to book: a public space, a business, or a private home or property. */
+export type BookingFriction = 'PUBLIC' | 'COMMERCIAL' | 'PRIVATE'
+
+/** A candidate venue for a scene, found by scouting (with an AI assessment) or added by hand (without one). */
+export interface Location {
+  id: string
+  sceneId: string
+  name: string
+  address: string | null
+  latitude: number | null
+  longitude: number | null
+  sourceUrl: string | null
+  sourceProvider: string | null
+  sourceExcerpt: string | null
+  fitReason: string | null
+  /** 0 (unusable) to 100 (ideal); null for venues added by hand. */
+  fitScore: number | null
+  bookingFriction: BookingFriction | null
+  frictionNote: string | null
+  footprintWarnings: string[]
+  /** The cached logistics report, null until it has been worked out. */
+  logistics: unknown
+  logisticsFetchedAt: string | null
+  status: LocationStatus
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** The user's own workflow fields (PUT, full replacement): a null note clears it. */
+export interface UpdateLocationRequest {
+  status: LocationStatus
+  notes: string | null
+}
+
+/** What one scouting run saved for a scene. */
+export interface ScoutingResult {
+  /** The new candidate locations, best fit first. */
+  added: Location[]
+  /** Venues found again that were already saved; left untouched. */
+  alreadySaved: number
+  /** Venues found but dropped because the AI could not assess them. */
+  unassessed: number
+}

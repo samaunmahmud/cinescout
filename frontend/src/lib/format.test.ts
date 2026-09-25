@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatShootWindow, sceneLabel } from './format'
+import { formatDate, formatShootWindow, sceneLabel, scoutingSummary } from './format'
+import { location } from '../test/fixtures'
 
 describe('formatDate', () => {
   it('shows the calendar date as written, whatever the time zone', () => {
@@ -23,5 +24,15 @@ describe('sceneLabel', () => {
   it('puts the number first when there is one', () => {
     expect(sceneLabel({ sceneNumber: 4, title: 'Chase' })).toBe('Scene 4: Chase')
     expect(sceneLabel({ sceneNumber: null, title: 'Chase' })).toBe('Chase')
+  })
+})
+
+describe('scoutingSummary', () => {
+  it('only mentions what happened, in the right number', () => {
+    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 0 })).toBe('No new venues found.')
+    expect(scoutingSummary({ added: [location(), location({ id: 'l2' })], alreadySaved: 1, unassessed: 0 })).toBe(
+      'Found 2 new venues. 1 venue was already saved and left as it was.',
+    )
+    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 3 })).toBe('No new venues found. 3 venues could not be assessed and were left out.')
   })
 })

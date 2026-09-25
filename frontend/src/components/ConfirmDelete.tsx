@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { Button, ErrorAlert } from './ui'
 
 /** An inline "are you sure?" panel for an irreversible delete. */
@@ -19,9 +19,11 @@ export function ConfirmDelete({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  // Unique per panel: a page can show more than one (a list of locations, say).
+  const titleId = useId()
   return (
-    <div role="alertdialog" aria-labelledby="confirm-delete-title" className="space-y-3 rounded-lg border border-red-900 bg-red-950/40 p-5">
-      <h2 id="confirm-delete-title" className="font-semibold">
+    <div role="alertdialog" aria-labelledby={titleId} className="space-y-3 rounded-lg border border-red-900 bg-red-950/40 p-5">
+      <h2 id={titleId} className="font-semibold">
         {title}
       </h2>
       <p className="text-sm text-stone-300">{children}</p>

@@ -1,11 +1,14 @@
 import { ApiError, request, type Credentials } from './client'
 import type {
   CreateProjectRequest,
+  Location,
   Project,
   ProjectStatus,
   RegisterRequest,
   Scene,
   SceneRequest,
+  ScoutingResult,
+  UpdateLocationRequest,
   UpdateProjectRequest,
   User,
 } from './types'
@@ -47,6 +50,18 @@ export function createApi(credentials: Credentials, onUnauthorized: () => void =
       remove: (id: string) => call<void>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Extracts the filming requirements with the AI. Takes seconds; answers 503 when scouting is not configured. */
       parse: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}/parse`, { method: 'POST' }),
+      /**
+       * Finds and assesses venues in the project's location area and saves the new ones; parses the scene first
+       * if needed. Takes up to minutes; 409 when the project has no location area, 503 when not configured.
+       */
+      scout: (id: string) => call<ScoutingResult>(`/api/scenes/${encodeURIComponent(id)}/scout`, { method: 'POST' }),
+    },
+    locations: {
+      /** Best fit first; venues added by hand (no score) last. */
+      list: (sceneId: string) => call<Location[]>(`/api/scenes/${encodeURIComponent(sceneId)}/locations`),
+      update: (id: string, body: UpdateLocationRequest) =>
+        call<Location>(`/api/locations/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      remove: (id: string) => call<void>(`/api/locations/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
   }
 }

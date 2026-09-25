@@ -9,6 +9,7 @@ import { ConfirmDelete } from '../components/ConfirmDelete'
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
+import { LocationsSection } from './LocationsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
 import { SceneForm } from './SceneForm'
@@ -32,7 +33,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  // Only for the breadcrumb; the page works without it.
+  // For the breadcrumb and the scouting area; the page works without it.
   const project = useQuery({ queryKey: queryKeys.project(scene.projectId), queryFn: () => api.projects.get(scene.projectId) })
   const projectPath = `/projects/${scene.projectId}`
 
@@ -126,6 +127,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
       {!editing && (
         <>
           <RequirementsPanel scene={scene} />
+          <LocationsSection scene={scene} locationArea={project.data?.locationArea} />
           <section aria-labelledby="script-heading" className="space-y-3">
             <h2 id="script-heading" className="text-lg font-semibold">
               Script

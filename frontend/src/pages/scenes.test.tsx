@@ -46,6 +46,7 @@ describe('the scenes of a project', () => {
       'GET /api/projects/p1': () => json(project()),
       'GET /api/projects/p1/scenes': () => json([]),
       'POST /api/projects/p1/scenes': () => json(created, 201),
+      'GET /api/scenes/s9/locations': () => json([]),
     })
     const { router } = renderApp('/projects/p1')
     const user = await logIn()
@@ -111,6 +112,7 @@ describe('a scene', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/scenes/s1': () => json(current),
+      'GET /api/scenes/s1/locations': () => json([]),
       ...extra,
     })
   }
