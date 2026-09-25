@@ -2,8 +2,10 @@ import { ApiError, request, type Credentials } from './client'
 import type {
   CreateLocationRequest,
   CreateProjectRequest,
+  GenerateOutreachRequest,
   Location,
   LogisticsReport,
+  OutreachDraft,
   Project,
   ProjectStatus,
   RegisterRequest,
@@ -12,6 +14,7 @@ import type {
   ScoutingResult,
   UpdateCoordinatesRequest,
   UpdateLocationRequest,
+  UpdateOutreachRequest,
   UpdateProjectRequest,
   User,
 } from './types'
@@ -78,6 +81,19 @@ export function createApi(credentials: Credentials, onUnauthorized: () => void =
        */
       refreshLogistics: (id: string) =>
         call<LogisticsReport>(`/api/locations/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
+    },
+    outreach: {
+      /** Newest first. */
+      list: (locationId: string) => call<OutreachDraft[]>(`/api/locations/${encodeURIComponent(locationId)}/outreach-drafts`),
+      /**
+       * Has the AI write a new draft (each call adds one). Takes seconds; 503 when generation is not configured.
+       * The AI sees the venue, the scene's requirements, the sender's name and the shoot dates, never the script.
+       */
+      generate: (locationId: string, body: GenerateOutreachRequest) =>
+        call<OutreachDraft>(`/api/locations/${encodeURIComponent(locationId)}/outreach-drafts/generate`, { method: 'POST', body }),
+      update: (id: string, body: UpdateOutreachRequest) =>
+        call<OutreachDraft>(`/api/outreach-drafts/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      remove: (id: string) => call<void>(`/api/outreach-drafts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
   }
 }

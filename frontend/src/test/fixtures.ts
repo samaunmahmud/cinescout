@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Location, LogisticsReport, Project, Scene, User } from '../api/types'
+import type { Location, LogisticsReport, OutreachDraft, Project, Scene, User } from '../api/types'
 
 export const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
 export const PASSWORD = 'a-long-password'
@@ -133,6 +133,24 @@ export function logisticsReport(overrides: Partial<LogisticsReport> = {}): Logis
     },
     notes: ["The coordinates were looked up from the venue's address; check the pin on a map and correct it if it is wrong."],
     attribution: ['Geocoding by Nominatim, map data © OpenStreetMap contributors (ODbL)', 'Weather data by Open-Meteo.com (CC BY 4.0)'],
+    ...overrides,
+  }
+}
+
+export function draft(overrides: Partial<OutreachDraft> = {}): OutreachDraft {
+  return {
+    id: 'd1',
+    locationId: 'l1',
+    recipientName: 'Tom Miller',
+    recipientEmail: 'tom@toms-diner.example',
+    subject: 'Filming request: Night Shift at Tom’s Diner',
+    body: 'Dear Tom,\n\nWe are making a thriller called Night Shift and would love to film one night scene in your diner.\n\nBest,\nAda',
+    tone: 'PROFESSIONAL',
+    generatedBy: 'ibm/granite-3-8b-instruct',
+    status: 'DRAFT',
+    sentAt: null,
+    createdAt: '2026-09-20T10:00:00Z',
+    updatedAt: '2026-09-20T10:00:00Z',
     ...overrides,
   }
 }

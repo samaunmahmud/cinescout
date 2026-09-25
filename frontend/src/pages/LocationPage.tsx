@@ -15,6 +15,7 @@ import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
 import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
+import { OutreachSection } from './OutreachSection'
 
 export function LocationPage() {
   const { locationId = '' } = useParams()
@@ -97,6 +98,7 @@ function LocationDetails({ location }: { location: Location }) {
       <Notes location={location} update={update} />
       <Position location={location} />
       <LogisticsSection location={location} />
+      <OutreachSection location={location} />
     </div>
   )
 }

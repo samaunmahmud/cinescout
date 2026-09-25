@@ -10,6 +10,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current),
     'GET /api/scenes/s1': () => json(scene()),
+    'GET /api/locations/l1/outreach-drafts': () => json([]),
     ...extra,
   })
 }
@@ -137,6 +138,7 @@ describe('adding a venue by hand', () => {
       'GET /api/projects/p1': () => json(project()),
       'GET /api/scenes/s1/locations': () => json([]),
       'POST /api/scenes/s1/locations': () => json(created, 201),
+      'GET /api/locations/l9/outreach-drafts': () => json([]),
     })
     const { router } = renderApp('/scenes/s1')
     const user = await logIn()

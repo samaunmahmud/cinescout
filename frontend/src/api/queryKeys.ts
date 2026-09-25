@@ -9,4 +9,5 @@ export const queryKeys = {
   scene: (id: string) => ['scenes', 'detail', id] as const,
   locationList: (sceneId: string) => ['locations', 'list', sceneId] as const,
   location: (id: string) => ['locations', 'detail', id] as const,
+  outreachList: (locationId: string) => ['outreach', 'list', locationId] as const,
 }

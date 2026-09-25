@@ -135,6 +135,48 @@ export interface UpdateCoordinatesRequest {
   longitude: number
 }
 
+export type OutreachTone = 'PROFESSIONAL' | 'FRIENDLY' | 'CONCISE'
+
+/** What the user reports: the API never sends email itself. */
+export type OutreachStatus = 'DRAFT' | 'SENT' | 'REPLIED'
+
+/** An email to a venue's owner, written by the AI for the user to edit and send themselves. */
+export interface OutreachDraft {
+  id: string
+  locationId: string
+  recipientName: string | null
+  recipientEmail: string | null
+  subject: string
+  body: string
+  tone: OutreachTone
+  /** The model that wrote it. */
+  generatedBy: string | null
+  status: OutreachStatus
+  /** Set by the server when the status leaves DRAFT, cleared when it goes back. */
+  sentAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** All optional; the tone defaults to PROFESSIONAL. */
+export interface GenerateOutreachRequest {
+  tone: OutreachTone
+  recipientName: string | null
+  recipientEmail: string | null
+  /** Free text for the AI to work in, e.g. "we can shoot on a weekday". */
+  additionalContext: string | null
+}
+
+/** Full replacement (PUT): null recipient fields clear them. */
+export interface UpdateOutreachRequest {
+  subject: string
+  body: string
+  tone: OutreachTone
+  status: OutreachStatus
+  recipientName: string | null
+  recipientEmail: string | null
+}
+
 /** What one scouting run saved for a scene. */
 export interface ScoutingResult {
   /** The new candidate locations, best fit first. */

@@ -11,6 +11,7 @@ function serverFor(current: () => Location, extra: Parameters<typeof fakeServer>
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current()),
     'GET /api/scenes/s1': () => json(scene()),
+    'GET /api/locations/l1/outreach-drafts': () => json([]),
     ...extra,
   })
 }
