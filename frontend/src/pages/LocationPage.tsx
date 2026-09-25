@@ -13,6 +13,7 @@ import { sceneLabel } from '../lib/format'
 import { formatCoordinates, osmLink, parseCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
+import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 
 export function LocationPage() {
@@ -95,6 +96,7 @@ function LocationDetails({ location }: { location: Location }) {
       <Assessment location={location} />
       <Notes location={location} update={update} />
       <Position location={location} />
+      <LogisticsSection location={location} />
     </div>
   )
 }
