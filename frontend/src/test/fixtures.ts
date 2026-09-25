@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Location, Project, Scene, User } from '../api/types'
+import type { Location, LogisticsReport, Project, Scene, User } from '../api/types'
 
 export const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
 export const PASSWORD = 'a-long-password'
@@ -58,6 +58,81 @@ export function location(overrides: Partial<Location> = {}): Location {
     notes: null,
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+/**
+ * Based on a real report for a Brooklyn venue (2026-09-25). The live map service was down then, so the
+ * surroundings are made up in the shape the server sends.
+ */
+export function logisticsReport(overrides: Partial<LogisticsReport> = {}): LogisticsReport {
+  return {
+    version: 1,
+    generatedAt: '2026-09-25T22:30:19.412560Z',
+    position: { latitude: 40.67447, longitude: -73.963316, geocoded: true },
+    timeZone: 'America/New_York',
+    shootWindow: { start: '2026-09-28', end: '2026-09-29', assumed: false, truncated: false },
+    solar: {
+      timeOfDay: 'Night',
+      sceneLight: 'NIGHT',
+      days: [
+        {
+          date: '2026-09-28',
+          sunrise: '2026-09-28T06:49:00-04:00',
+          sunset: '2026-09-28T18:43:00-04:00',
+          solarNoon: '2026-09-28T12:46:00-04:00',
+          daylightMinutes: 713,
+          goldenHours: [
+            { start: '2026-09-28T06:33:00-04:00', end: '2026-09-28T07:26:00-04:00' },
+            { start: '2026-09-28T18:07:00-04:00', end: '2026-09-28T19:00:00-04:00' },
+          ],
+          blueHours: [
+            { start: '2026-09-28T06:22:00-04:00', end: '2026-09-28T06:33:00-04:00' },
+            { start: '2026-09-28T19:00:00-04:00', end: '2026-09-28T19:10:00-04:00' },
+          ],
+          sceneWindows: [
+            { start: '2026-09-28T00:00:00-04:00', end: '2026-09-28T06:22:00-04:00' },
+            { start: '2026-09-28T19:10:00-04:00', end: '2026-09-29T00:00:00-04:00' },
+          ],
+        },
+      ],
+    },
+    weather: {
+      status: 'OK',
+      message: null,
+      days: [
+        {
+          date: '2026-09-28',
+          basis: 'FORECAST',
+          referenceDate: '2026-09-28',
+          summary: 'Rain',
+          temperatureMaxC: 16.4,
+          temperatureMinC: 14.3,
+          precipitationMm: 7.0,
+          precipitationProbabilityPercent: 89,
+          windSpeedMaxKmh: 27.4,
+          windGustsMaxKmh: 53.6,
+          cloudCoverPercent: 100,
+          warnings: ['Rain likely: plan cover for cast, crew and equipment'],
+        },
+      ],
+    },
+    environment: {
+      status: 'OK',
+      message: null,
+      acousticSensitivity: 'HIGH',
+      noiseRisk: 'HIGH',
+      noiseSources: [
+        { kind: 'MAJOR_ROAD', name: 'Atlantic Avenue', distanceMeters: 120, level: 'HIGH', advice: 'Traffic noise all day: record sound early or late' },
+      ],
+      nearbyServices: [
+        { kind: 'HOSPITAL', name: 'Interfaith Medical Center', distanceMeters: 1900, latitude: 40.6786, longitude: -73.9446 },
+        { kind: 'PARKING', name: null, distanceMeters: 240, latitude: null, longitude: null },
+      ],
+    },
+    notes: ["The coordinates were looked up from the venue's address; check the pin on a map and correct it if it is wrong."],
+    attribution: ['Geocoding by Nominatim, map data © OpenStreetMap contributors (ODbL)', 'Weather data by Open-Meteo.com (CC BY 4.0)'],
     ...overrides,
   }
 }

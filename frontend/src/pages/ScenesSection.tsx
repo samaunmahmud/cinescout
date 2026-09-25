@@ -3,11 +3,9 @@ import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import { useSession } from '../auth/context'
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
+import { linkButton } from '../components/buttonStyles'
 import { ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
-
-const linkButton =
-  'inline-flex items-center justify-center rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-stone-950 hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300'
 
 /** A project's scenes in script order. */
 export function ScenesSection({ projectId }: { projectId: string }) {
@@ -20,7 +18,7 @@ export function ScenesSection({ projectId }: { projectId: string }) {
         <h2 id="scenes-heading" className="text-lg font-semibold">
           Scenes
         </h2>
-        <Link to={`/projects/${projectId}/scenes/new`} className={linkButton}>
+        <Link to={`/projects/${projectId}/scenes/new`} className={linkButton()}>
           Add scene
         </Link>
       </div>

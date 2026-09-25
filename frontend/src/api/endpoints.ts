@@ -1,13 +1,16 @@
 import { ApiError, request, type Credentials } from './client'
 import type {
+  CreateLocationRequest,
   CreateProjectRequest,
   Location,
+  LogisticsReport,
   Project,
   ProjectStatus,
   RegisterRequest,
   Scene,
   SceneRequest,
   ScoutingResult,
+  UpdateCoordinatesRequest,
   UpdateLocationRequest,
   UpdateProjectRequest,
   User,
@@ -59,9 +62,22 @@ export function createApi(credentials: Credentials, onUnauthorized: () => void =
     locations: {
       /** Best fit first; venues added by hand (no score) last. */
       list: (sceneId: string) => call<Location[]>(`/api/scenes/${encodeURIComponent(sceneId)}/locations`),
+      get: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}`),
+      /** Adds a venue by hand; 409 when the same source URL is already saved for the scene. */
+      create: (sceneId: string, body: CreateLocationRequest) =>
+        call<Location>(`/api/scenes/${encodeURIComponent(sceneId)}/locations`, { method: 'POST', body }),
       update: (id: string, body: UpdateLocationRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/locations/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** Moves the pin; the server drops the cached logistics, which were for the old spot. */
+      updateCoordinates: (id: string, body: UpdateCoordinatesRequest) =>
+        call<Location>(`/api/locations/${encodeURIComponent(id)}/coordinates`, { method: 'PUT', body }),
+      /**
+       * Works the logistics out afresh and caches them on the location, geocoding it first if it has no
+       * coordinates. Takes seconds (up to half a minute); 409 when the venue cannot be found on the map.
+       */
+      refreshLogistics: (id: string) =>
+        call<LogisticsReport>(`/api/locations/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
     },
   }
 }

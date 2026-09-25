@@ -104,8 +104,8 @@ export interface Location {
   bookingFriction: BookingFriction | null
   frictionNote: string | null
   footprintWarnings: string[]
-  /** The cached logistics report, null until it has been worked out. */
-  logistics: unknown
+  /** The cached logistics report, null until it has been worked out (and again after the coordinates change). */
+  logistics: LogisticsReport | null
   logisticsFetchedAt: string | null
   status: LocationStatus
   notes: string | null
@@ -119,6 +119,22 @@ export interface UpdateLocationRequest {
   notes: string | null
 }
 
+/** A venue the user found themselves. Coordinates are given together or not at all. */
+export interface CreateLocationRequest {
+  name: string
+  address: string | null
+  latitude: number | null
+  longitude: number | null
+  sourceUrl: string | null
+  notes: string | null
+}
+
+/** Decimal degrees; the server keeps six decimal places. */
+export interface UpdateCoordinatesRequest {
+  latitude: number
+  longitude: number
+}
+
 /** What one scouting run saved for a scene. */
 export interface ScoutingResult {
   /** The new candidate locations, best fit first. */
@@ -127,4 +143,91 @@ export interface ScoutingResult {
   alreadySaved: number
   /** Venues found but dropped because the AI could not assess them. */
   unassessed: number
+}
+
+// The logistics report (com.cinescout.logistics.LogisticsReport). Local times are ISO-8601 with the
+// location's own UTC offset, e.g. "2026-09-28T06:49:00-04:00".
+
+export type SectionStatus = 'OK' | 'PARTIAL' | 'UNAVAILABLE'
+export type NoiseLevel = 'LOW' | 'MEDIUM' | 'HIGH'
+export type SceneLight = 'DAWN' | 'DUSK' | 'GOLDEN_HOUR' | 'BLUE_HOUR' | 'NIGHT' | 'DAY'
+export type WeatherBasis = 'FORECAST' | 'RECORDED' | 'PAST_YEAR'
+export type PlaceKind =
+  | 'HOSPITAL' | 'PHARMACY' | 'PARKING' | 'FOOD' | 'TOILETS' | 'FUEL' | 'LODGING' | 'HARDWARE' | 'GROCERY'
+  | 'AIRPORT' | 'HELIPORT' | 'STADIUM' | 'RAILWAY' | 'EMERGENCY_STATION' | 'CONSTRUCTION' | 'MAJOR_ROAD'
+  | 'SCHOOL' | 'NIGHTLIFE' | 'PLACE_OF_WORSHIP'
+
+export interface TimeWindow {
+  start: string
+  end: string
+}
+
+export interface SolarDay {
+  date: string
+  /** Null when the sun does not rise (or set) that day. */
+  sunrise: string | null
+  sunset: string | null
+  solarNoon: string
+  daylightMinutes: number
+  goldenHours: TimeWindow[]
+  blueHours: TimeWindow[]
+  /** The windows matching the scene's time of day; empty if unknown or it never occurs. */
+  sceneWindows: TimeWindow[]
+}
+
+export interface WeatherDay {
+  date: string
+  basis: WeatherBasis
+  /** The shoot date, or the same date in an earlier year when the basis is PAST_YEAR. */
+  referenceDate: string
+  summary: string | null
+  temperatureMaxC: number | null
+  temperatureMinC: number | null
+  precipitationMm: number | null
+  precipitationProbabilityPercent: number | null
+  windSpeedMaxKmh: number | null
+  windGustsMaxKmh: number | null
+  cloudCoverPercent: number | null
+  warnings: string[]
+}
+
+export interface NoiseSource {
+  kind: PlaceKind
+  name: string | null
+  distanceMeters: number
+  level: NoiseLevel
+  advice: string
+}
+
+export interface NearbyService {
+  kind: PlaceKind
+  name: string | null
+  distanceMeters: number
+  latitude: number | null
+  longitude: number | null
+}
+
+export interface LogisticsReport {
+  version: number
+  generatedAt: string
+  position: { latitude: number; longitude: number; geocoded: boolean }
+  /** The IANA zone of every local time in the report. */
+  timeZone: string
+  /** `assumed`: the scene has no dates, so the coming week was used; `truncated`: only the window's start is covered. */
+  shootWindow: { start: string; end: string; assumed: boolean; truncated: boolean }
+  solar: { timeOfDay: string | null; sceneLight: SceneLight | null; days: SolarDay[] }
+  weather: { status: SectionStatus; message: string | null; days: WeatherDay[] }
+  environment: {
+    status: SectionStatus
+    message: string | null
+    acousticSensitivity: AcousticSensitivity | null
+    noiseRisk: NoiseLevel | null
+    /** Loudest and nearest first. */
+    noiseSources: NoiseSource[]
+    /** The nearest few of each kind, grouped by kind. */
+    nearbyServices: NearbyService[]
+  }
+  notes: string[]
+  /** Credits the data licences require to be shown with the data. */
+  attribution: string[]
 }

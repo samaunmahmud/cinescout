@@ -8,4 +8,5 @@ export const queryKeys = {
   sceneList: (projectId: string) => ['scenes', 'list', projectId] as const,
   scene: (id: string) => ['scenes', 'detail', id] as const,
   locationList: (sceneId: string) => ['locations', 'list', sceneId] as const,
+  location: (id: string) => ['locations', 'detail', id] as const,
 }

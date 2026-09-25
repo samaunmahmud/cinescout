@@ -1,27 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { BookingFriction, Location, LocationStatus, Scene } from '../api/types'
+import type { Location, Scene } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
-import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
+import { useUpdateLocation } from '../components/locationHooks'
+import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
+import { linkButton } from '../components/buttonStyles'
+import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { scoutingSummary } from '../lib/format'
 import { displayHost, safeHttpUrl } from '../lib/url'
-
-const statusLabels: Record<LocationStatus, string> = {
-  SUGGESTED: 'Suggested',
-  SHORTLISTED: 'Shortlisted',
-  REJECTED: 'Rejected',
-  CONTACTED: 'Contacted',
-  CONFIRMED: 'Confirmed',
-}
-
-const friction: Record<BookingFriction, { text: string; tone: 'green' | 'amber' | 'red' }> = {
-  PUBLIC: { text: 'Public space', tone: 'green' },
-  COMMERCIAL: { text: 'Business', tone: 'amber' },
-  PRIVATE: { text: 'Private property', tone: 'red' },
-}
 
 /**
  * The scene's candidate venues and the button that scouts for more. `locationArea` is the project's search
@@ -54,9 +43,14 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
           </h2>
           {locationArea && <p className="text-sm text-stone-400">Scouting in {locationArea}</p>}
         </div>
-        <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate()}>
-          {hasLocations ? 'Scout again' : 'Scout locations'}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/scenes/${scene.id}/locations/new`} className={linkButton('ghost')}>
+            Add venue
+          </Link>
+          <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate()}>
+            {hasLocations ? 'Scout again' : 'Scout locations'}
+          </Button>
+        </div>
       </div>
 
       {noArea && (
@@ -104,37 +98,19 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
   )
 }
 
-function FitScore({ score }: { score: number }) {
-  const tone = score >= 75 ? 'text-emerald-300 border-emerald-800' : score >= 50 ? 'text-amber-300 border-amber-800' : 'text-red-300 border-red-900'
-  return (
-    <span
-      className={`flex size-12 shrink-0 flex-col items-center justify-center rounded-full border-2 ${tone}`}
-      aria-label={`Fit ${score} out of 100`}
-      title="How well the venue suits the scene, out of 100"
-    >
-      <span className="text-base leading-none font-bold">{score}</span>
-    </span>
-  )
-}
-
 function LocationCard({ location }: { location: Location }) {
   const { api } = useSession()
   const queryClient = useQueryClient()
-  const statusId = useId()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const listKey = queryKeys.locationList(location.sceneId)
+  const update = useUpdateLocation(location)
   const sourceUrl = safeHttpUrl(location.sourceUrl)
-
-  const update = useMutation({
-    // A full replacement: the notes go back unchanged.
-    mutationFn: (status: LocationStatus) => api.locations.update(location.id, { status, notes: location.notes }),
-    onSuccess: (updated) =>
-      queryClient.setQueryData<Location[]>(listKey, (list) => list?.map((l) => (l.id === updated.id ? updated : l))),
-  })
 
   const remove = useMutation({
     mutationFn: () => api.locations.remove(location.id),
-    onSuccess: () => queryClient.setQueryData<Location[]>(listKey, (list) => list?.filter((l) => l.id !== location.id)),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: queryKeys.location(location.id) })
+      queryClient.setQueryData<Location[]>(queryKeys.locationList(location.sceneId), (list) => list?.filter((l) => l.id !== location.id))
+    },
   })
 
   return (
@@ -146,9 +122,12 @@ function LocationCard({ location }: { location: Location }) {
         {location.fitScore != null && <FitScore score={location.fitScore} />}
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">{location.name}</h3>
-            {location.bookingFriction && <Badge tone={friction[location.bookingFriction].tone}>{friction[location.bookingFriction].text}</Badge>}
-            {location.fitScore == null && <Badge>Added by hand</Badge>}
+            <h3 className="font-semibold">
+              <Link to={`/locations/${location.id}`} className="hover:text-amber-300 hover:underline">
+                {location.name}
+              </Link>
+            </h3>
+            <LocationBadges location={location} />
           </div>
           {location.address && <p className="text-sm text-stone-400">{location.address}</p>}
           {sourceUrl && (
@@ -159,22 +138,7 @@ function LocationCard({ location }: { location: Location }) {
           )}
         </div>
         <div className="shrink-0">
-          <label htmlFor={statusId} className="sr-only">
-            Status of {location.name}
-          </label>
-          <select
-            id={statusId}
-            value={location.status}
-            disabled={update.isPending}
-            onChange={(e) => update.mutate(e.target.value as LocationStatus)}
-            className="rounded-md border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 focus:outline-none disabled:opacity-50"
-          >
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <StatusSelect location={location} update={update} />
         </div>
       </div>
 
@@ -187,7 +151,7 @@ function LocationCard({ location }: { location: Location }) {
           ))}
         </ul>
       )}
-      {location.notes && <p className="border-l-2 border-stone-700 pl-3 text-sm text-stone-300 italic">{location.notes}</p>}
+      {location.notes && <p className="border-l-2 border-stone-700 pl-3 text-sm whitespace-pre-line text-stone-300 italic">{location.notes}</p>}
 
       <ErrorAlert error={update.error} />
 

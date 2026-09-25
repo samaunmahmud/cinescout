@@ -2,6 +2,8 @@ import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { Layout } from './components/Layout'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
+import { LocationPage } from './pages/LocationPage'
+import { NewLocationPage } from './pages/NewLocationPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ProjectPage } from './pages/ProjectPage'
 import { NewScenePage } from './pages/NewScenePage'
@@ -23,6 +25,8 @@ export const routes: RouteObject[] = [
       { path: '/projects/:projectId', element: <ProjectPage /> },
       { path: '/projects/:projectId/scenes/new', element: <NewScenePage /> },
       { path: '/scenes/:sceneId', element: <ScenePage /> },
+      { path: '/scenes/:sceneId/locations/new', element: <NewLocationPage /> },
+      { path: '/locations/:locationId', element: <LocationPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

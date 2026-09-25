@@ -38,6 +38,7 @@ describe("a scene's locations", () => {
     const [first, second] = within(list).getAllByRole('article')
 
     expect(within(first).getByRole('heading', { name: 'Tom’s Diner' })).toBeInTheDocument()
+    expect(within(first).getByRole('link', { name: 'Tom’s Diner' })).toHaveAttribute('href', '/locations/l1')
     expect(within(first).getByLabelText('Fit 82 out of 100')).toBeInTheDocument()
     expect(first).toHaveTextContent('Business')
     expect(first).toHaveTextContent('Neon sign and red booths match the mood.')
@@ -52,7 +53,7 @@ describe("a scene's locations", () => {
     // Added by hand: no assessment, and a source URL that is not http(s) is never rendered as a link.
     expect(second).toHaveTextContent('Added by hand')
     expect(second).toHaveTextContent('Owner is a friend of the producer.')
-    expect(within(second).queryByRole('link')).toBeNull()
+    expect(within(second).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/locations/l2'])
     expect(within(second).queryByLabelText(/^Fit/)).toBeNull()
   })
 
