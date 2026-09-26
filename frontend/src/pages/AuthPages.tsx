@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/context'
+import { SessionCheck } from '../auth/SessionCheck'
 import { Logo } from '../components/Layout'
 import { fieldErrors } from '../api/errors'
 import { Button, ErrorAlert, TextField } from '../components/ui'
@@ -28,7 +29,7 @@ function useReturnTo(): string {
 }
 
 export function LoginPage() {
-  const { session, logIn } = useAuth()
+  const { session, checking, logIn } = useAuth()
   const navigate = useNavigate()
   const returnTo = useReturnTo()
   const [email, setEmail] = useState('')
@@ -36,6 +37,7 @@ export function LoginPage() {
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
 
+  if (checking) return <SessionCheck />
   if (session) return <Navigate to={returnTo} replace />
 
   async function submit(e: FormEvent) {
@@ -83,12 +85,13 @@ export function LoginPage() {
 }
 
 export function RegisterPage() {
-  const { session, register } = useAuth()
+  const { session, checking, register } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ displayName: '', email: '', password: '' })
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
 
+  if (checking) return <SessionCheck />
   if (session) return <Navigate to="/projects" replace />
 
   const errors = fieldErrors(error)

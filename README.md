@@ -47,7 +47,7 @@ npm run build
 ```
 
 The dev server proxies `/api` to `http://localhost:8081`; set `BACKEND_URL` to point it elsewhere. The web app
-logs in with HTTP Basic and keeps the credentials in memory only, so reloading the page asks for them again.
+logs in with a session cookie (see Authentication), so a reload keeps you logged in.
 
 Maps use Leaflet with OpenStreetMap's own tile server, which needs no key but is meant for light use only
 ([tile usage policy](https://operations.osmfoundation.org/policies/tiles/)). For a real deployment, set
@@ -117,8 +117,15 @@ that should point the base URLs at a private or commercial instance:
 
 ## Authentication
 
-Every endpoint needs a login except `POST /api/auth/register`. Authentication is HTTP Basic (email
-and password) against the `users` table, so there is no session and no token to manage yet:
+Every endpoint needs a login except registering, logging in and out. There are two ways to log in, both
+against the `users` table:
+
+- **Session cookie (the web app).** `POST /api/auth/login` sets an `HttpOnly`, `SameSite=Strict` cookie
+  holding a random token; the database stores only its SHA-256 hash. It lasts
+  `cinescout.security.session-ttl` (14 days) or until `POST /api/auth/logout`. As a CSRF defence the cookie
+  only counts on requests that also send `X-Requested-With: XMLHttpRequest`. It is `Secure` when the request
+  came over HTTPS; set `cinescout.security.cookie-secure` to force it either way.
+- **HTTP Basic (scripts, Swagger UI).** Send the email and password with every request:
 
 ```bash
 curl -X POST localhost:8081/api/auth/register -H 'Content-Type: application/json' \
@@ -127,8 +134,8 @@ curl -u ada@example.com:a-long-password localhost:8081/api/auth/me
 ```
 
 Errors are RFC 9457 problems (`application/problem+json`). Set `cinescout.security.registration-open=false`
-to stop new accounts being created on a deployment that should not be public. HTTP Basic sends the
-password on every request, so run it behind HTTPS; tokens are the planned replacement for browsers.
+to stop new accounts being created on a deployment that should not be public. Both logins carry secrets,
+so run any deployment behind HTTPS.
 
 ## API
 

@@ -9,9 +9,11 @@ export interface Session {
 
 export interface AuthState {
   session: Session | null
+  /** True until the server has said whether there is a session already. */
+  checking: boolean
   logIn: (email: string, password: string) => Promise<void>
   register: (request: RegisterRequest) => Promise<void>
-  logOut: () => void
+  logOut: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthState | null>(null)

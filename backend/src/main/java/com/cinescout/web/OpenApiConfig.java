@@ -25,8 +25,9 @@ class OpenApiConfig {
                                 each scene's filming requirements, finds and assesses real venues in the project's area, \
                                 keeps the shortlist and drafts the outreach emails to venue owners.
 
-                                **Authentication.** Register once, then send the email and password as HTTP Basic \
-                                credentials with every request.
+                                **Authentication.** Register once, then either send the email and password as HTTP \
+                                Basic credentials with every request (scripts, this page), or log in for a session \
+                                cookie (the web app; it only counts with `X-Requested-With: XMLHttpRequest`).
 
                                 **Errors** are RFC 9457 problems (`application/problem+json`) with `status`, `title` and \
                                 `detail`. Validation failures (400) add an `errors` list of `{field, message}`; failures of \

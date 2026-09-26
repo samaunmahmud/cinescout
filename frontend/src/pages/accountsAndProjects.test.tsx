@@ -5,11 +5,10 @@ import type { Project } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { PASSWORD, ada, logIn, project } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
-import { basicAuthorization } from '../api/client'
 
 describe('logging in', () => {
   it('sends a logged-out visitor to the login page and back to where they were going', async () => {
-    const { requests } = fakeServer({
+    const { requests, authRequests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1/scenes': () => json([]),
       'GET /api/projects/p1': () => json(project()),
@@ -21,11 +20,37 @@ describe('logging in', () => {
 
     expect(await screen.findByRole('heading', { name: 'Night Shift' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/projects/p1')
-    expect(requests.every((r) => r.headers.Authorization === basicAuthorization({ email: ada.email, password: PASSWORD }))).toBe(true)
+    expect(authRequests.find((r) => r.path === '/api/auth/login')?.body).toEqual({ email: ada.email, password: PASSWORD })
+    // The session is an HttpOnly cookie the browser sends by itself: the password is sent once, to log in.
+    const all = [...requests, ...authRequests]
+    expect(all.some((r) => 'Authorization' in r.headers)).toBe(false)
+    expect(all.filter((r) => JSON.stringify(r.body ?? '').includes(PASSWORD))).toHaveLength(1)
+  })
+
+  it('keeps the user logged in across a reload while the session lasts', async () => {
+    fakeServer(
+      { 'GET /api/auth/me': () => json(ada), 'GET /api/projects/p1/scenes': () => json([]), 'GET /api/projects/p1': () => json(project()) },
+      { loggedIn: true },
+    )
+    const { router } = renderApp('/projects/p1')
+    // While the server is asked, the page waits where it is instead of bouncing through the login page.
+    expect(router.state.location.pathname).toBe('/projects/p1')
+
+    expect(await screen.findByRole('heading', { name: 'Night Shift' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Log in' })).toBeNull()
+  })
+
+  it('asks the server whether there is a session before showing the login form', async () => {
+    fakeServer({ 'GET /api/auth/me': () => json(ada) })
+    renderApp('/login')
+
+    expect(screen.getByRole('status')).toHaveTextContent('Checking your login')
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    expect(screen.queryByText('Checking your login')).toBeNull()
   })
 
   it('says so when the email or password is wrong', async () => {
-    fakeServer({ 'GET /api/auth/me': () => problem(401, 'Unauthorized', 'Valid credentials are required') })
+    fakeServer({ 'POST /api/auth/login': () => problem(401, 'Unauthorized', 'The email or password is not right') })
     renderApp('/login')
 
     await logIn()
@@ -34,8 +59,8 @@ describe('logging in', () => {
     expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument()
   })
 
-  it('logs out, forgetting the credentials', async () => {
-    fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE': () => json([]) })
+  it('logs out, ending the session on the server', async () => {
+    const { authRequests } = fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE': () => json([]) })
     const { router } = renderApp('/login')
     const user = await logIn()
     await screen.findByText(/No projects yet/)
@@ -43,12 +68,13 @@ describe('logging in', () => {
     await user.click(screen.getByRole('button', { name: 'Log out' }))
 
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    expect(authRequests.filter((r) => r.path === '/api/auth/logout')).toHaveLength(1)
     await act(() => router.navigate('/projects'))
     expect(router.state.location.pathname).toBe('/login')
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
   })
 
-  it('goes back to the login page when the server stops accepting the credentials', async () => {
+  it('goes back to the login page when the session ends on the server', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects?status=ACTIVE': () => problem(401, 'Unauthorized', 'Valid credentials are required'),
@@ -63,14 +89,14 @@ describe('logging in', () => {
 
 describe('registering', () => {
   async function fillIn(user: ReturnType<typeof userEvent.setup>) {
-    await user.type(screen.getByLabelText('Name'), 'Ada')
+    await user.type(await screen.findByLabelText('Name'), 'Ada')
     await user.type(screen.getByLabelText('Email'), ` ${ada.email} `)
     await user.type(screen.getByLabelText('Password'), PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
   }
 
   it('creates the account and logs straight in', async () => {
-    const { requests } = fakeServer({
+    const { authRequests } = fakeServer({
       'POST /api/auth/register': () => json(ada, 201),
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects?status=ACTIVE': () => json([]),
@@ -80,8 +106,8 @@ describe('registering', () => {
     await fillIn(userEvent.setup())
 
     expect(await screen.findByRole('heading', { name: 'Projects' })).toBeInTheDocument()
-    expect(requests[0].body).toEqual({ displayName: 'Ada', email: ada.email, password: PASSWORD })
-    expect(requests[1].headers.Authorization).toBe(basicAuthorization({ email: ada.email, password: PASSWORD }))
+    expect(authRequests.find((r) => r.path === '/api/auth/register')?.body).toEqual({ displayName: 'Ada', email: ada.email, password: PASSWORD })
+    expect(authRequests.find((r) => r.path === '/api/auth/login')?.body).toEqual({ email: ada.email, password: PASSWORD })
   })
 
   it('shows the server-side validation message next to the field', async () => {

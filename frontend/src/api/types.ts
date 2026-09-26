@@ -16,6 +16,11 @@ export interface RegisterRequest {
   displayName: string
 }
 
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
 export type ProjectStatus = 'ACTIVE' | 'ARCHIVED'
 
 export interface Project {

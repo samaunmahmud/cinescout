@@ -1,8 +1,9 @@
-import { ApiError, request, type Credentials } from './client'
+import { ApiError, request } from './client'
 import type {
   CreateLocationRequest,
   CreateProjectRequest,
   GenerateOutreachRequest,
+  LoginRequest,
   Location,
   LogisticsReport,
   OutreachDraft,
@@ -21,17 +22,21 @@ import type {
 
 export const authApi = {
   register: (body: RegisterRequest) => request<User>('/api/auth/register', { method: 'POST', body }),
-  me: (credentials: Credentials) => request<User>('/api/auth/me', { credentials }),
+  /** Starts a session: the server sets an HttpOnly cookie the browser then sends by itself. */
+  logIn: (body: LoginRequest) => request<User>('/api/auth/login', { method: 'POST', body }),
+  logOut: () => request<void>('/api/auth/logout', { method: 'POST' }),
+  /** The session's account; a 401 means there is no session (or it expired). */
+  me: () => request<User>('/api/auth/me'),
 }
 
 /**
- * The API calls that need a login, bound to one user's credentials. `onUnauthorized` runs when the server
- * rejects them (the password was changed elsewhere, say), so the app can send the user back to the login page.
+ * The API calls that need a login. `onUnauthorized` runs when the server rejects them (the session expired or
+ * was ended elsewhere, say), so the app can send the user back to the login page.
  */
-export function createApi(credentials: Credentials, onUnauthorized: () => void = () => {}) {
+export function createApi(onUnauthorized: () => void = () => {}) {
   const call = async <T>(path: string, options: Parameters<typeof request>[1] = {}) => {
     try {
-      return await request<T>(path, { ...options, credentials })
+      return await request<T>(path, options)
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) onUnauthorized()
       throw e

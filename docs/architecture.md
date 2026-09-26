@@ -54,9 +54,11 @@ erDiagram
   return DTOs. Every failure leaves as an RFC 9457 problem: domain errors keep their safe messages,
   provider failures map by kind (503 + `Retry-After` or 502, with a `retryable` flag) and never quote
   the underlying message, and anything unexpected is a fixed 500.
-- **Authentication is HTTP Basic** against the `users` table (BCrypt, stateless), isolated in
-  `SecurityConfig` so tokens can replace it later without touching controllers, which only receive an
-  `AuthenticatedUser`. Registration always creates a `USER` and can be closed by configuration.
+- **Authentication is a session cookie or HTTP Basic**, both against the `users` table (BCrypt), set up in
+  `SecurityConfig`; controllers only receive an `AuthenticatedUser`. Web app sessions (`auth_sessions`, V3)
+  are random tokens in an `HttpOnly`, `SameSite=Strict` cookie, stored as SHA-256 hashes, revocable at
+  logout, honoured only with `X-Requested-With` (the CSRF defence). Basic stays for scripts and Swagger UI.
+  Registration always creates a `USER` and can be closed by configuration.
 - **Logistics (module B) run on demand per location and are cached on it** (`logistics_json`,
   `logistics_fetched_at`, the report exactly as returned), so viewing a location never re-hits the
   providers, and scouting ten venues does not fire forty calls at free public services. Moving a location

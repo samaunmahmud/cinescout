@@ -1,10 +1,5 @@
-// A small fetch wrapper for the CineScout API: JSON in and out, HTTP Basic credentials, and RFC 9457
-// problem responses turned into ApiError.
-
-export interface Credentials {
-  email: string
-  password: string
-}
+// A small fetch wrapper for the CineScout API: JSON in and out, the session cookie, and RFC 9457 problem
+// responses turned into ApiError.
 
 /** One entry of a validation problem's `errors` list. */
 export interface FieldProblem {
@@ -34,32 +29,25 @@ export class ApiError extends Error {
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   body?: unknown
-  credentials?: Credentials | null
   signal?: AbortSignal
-}
-
-/** Basic credentials are UTF-8 (the server's challenge says charset="UTF-8"); btoa alone only handles Latin-1. */
-export function basicAuthorization({ email, password }: Credentials): string {
-  const bytes = new TextEncoder().encode(`${email}:${password}`)
-  let binary = ''
-  bytes.forEach((b) => (binary += String.fromCharCode(b)))
-  return `Basic ${btoa(binary)}`
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {
     Accept: 'application/json, application/problem+json',
-    // Tells the server not to send WWW-Authenticate on a 401, which would open the browser's own login dialog.
+    // The session cookie only counts together with this header (the server's CSRF defence), and it tells the
+    // server not to send WWW-Authenticate on a 401, which would open the browser's own login dialog.
     'X-Requested-With': 'XMLHttpRequest',
   }
   if (options.body !== undefined) headers['Content-Type'] = 'application/json'
-  if (options.credentials) headers.Authorization = basicAuthorization(options.credentials)
 
   let response: Response
   try {
     response = await fetch(path, {
       method: options.method ?? 'GET',
       headers,
+      // The HttpOnly session cookie: sent to this origin only, never readable by scripts.
+      credentials: 'same-origin',
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: options.signal,
     })
