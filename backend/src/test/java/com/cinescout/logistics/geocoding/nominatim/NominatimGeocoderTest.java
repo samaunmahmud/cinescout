@@ -34,7 +34,7 @@ class NominatimGeocoderTest {
     private NominatimGeocoder geocoder() {
         Duration timeout = Duration.ofSeconds(5);
         return new NominatimGeocoder(ProviderHttp.webClient(WebClient.builder(), api.baseUrl(), timeout, "CineScout-test"),
-                new NominatimProperties(api.baseUrl(), timeout));
+                new NominatimProperties(api.baseUrl(), timeout, Duration.ZERO, Duration.ZERO));
     }
 
     private void stub(int status, String body) {

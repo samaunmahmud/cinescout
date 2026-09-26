@@ -1,11 +1,14 @@
 package com.cinescout.scouting;
 
 import com.cinescout.llm.watsonx.WatsonxLlmClient;
+import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.search.parallel.ParallelSearchClient;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
@@ -32,7 +35,9 @@ class ScoutingConfigTest {
             // The persistence beans come from JPA, which this slice does not load.
             .withBean(SceneRepository.class, () -> mock(SceneRepository.class))
             .withBean(LocationRepository.class, () -> mock(LocationRepository.class))
-            .withBean(BlockingTransactions.class, () -> mock(BlockingTransactions.class));
+            .withBean(BlockingTransactions.class, () -> mock(BlockingTransactions.class))
+            // Logistics owns the geocoder (it always exists); scouting only borrows it.
+            .withBean(Geocoder.class, () -> mock(Geocoder.class));
 
     /** The wiring classes are deliberately package-private, so tests in other packages load them by name. */
     private static Class<?> configClass(String name) {
@@ -62,6 +67,8 @@ class ScoutingConfigTest {
             assertThat(context.getBean(com.cinescout.llm.LlmClient.class)).isInstanceOf(WatsonxLlmClient.class);
             assertThat(context.getBean(com.cinescout.search.LocationSearchClient.class)).isInstanceOf(ParallelSearchClient.class);
             assertThat(context.getBean(ScoutingProperties.class).assessmentConcurrency()).isEqualTo(4);
+            assertThat(context).hasSingleBean(VenuePlacer.class);
+            assertThat(context.getBean(ScoutingProperties.class).placementBudget()).isEqualTo(Duration.ofSeconds(20));
         });
     }
 

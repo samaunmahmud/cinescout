@@ -58,7 +58,7 @@ class ScoutingApiTest extends ApiTest {
             String prompt = call.getArgument(1);
             int score = prompt.contains("Venue Best") ? 92 : prompt.contains("Venue Middle") ? 71 : 40;
             return Mono.just(new LocationAssessment(score, "Reason " + score, BookingFriction.COMMERCIAL, "Enquire via events team",
-                    List.of("Lift access only")));
+                    List.of("Lift access only"), null, null));
         });
         when(search.search(any())).thenReturn(Mono.just(List.of(hit("Middle"), hit("Best"), hit("Worst"))));
     }
@@ -183,7 +183,7 @@ class ScoutingApiTest extends ApiTest {
             String prompt = call.getArgument(1);
             return prompt.contains("Venue Worst")
                     ? Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable"))
-                    : Mono.just(new LocationAssessment(80, "ok", BookingFriction.PUBLIC, null, List.of()));
+                    : Mono.just(new LocationAssessment(80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null));
         });
         Account ada = register("Ada");
 

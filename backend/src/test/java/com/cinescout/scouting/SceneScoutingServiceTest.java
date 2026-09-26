@@ -15,6 +15,9 @@ import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmException.Kind;
+import com.cinescout.logistics.GeoPoint;
+import com.cinescout.logistics.LogisticsException;
+import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
@@ -37,10 +40,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,6 +101,7 @@ class SceneScoutingServiceTest {
     @Autowired PlatformTransactionManager transactionManager;
 
     private final ScoutingPipeline pipeline = mock(ScoutingPipeline.class);
+    private final FakeGeocoder geocoder = new FakeGeocoder();
     private TransactionTemplate setup;
     private RecordingTransactions serviceTx;
     private SceneScoutingService service;
@@ -106,7 +113,8 @@ class SceneScoutingServiceTest {
     void setUp() {
         setup = new TransactionTemplate(transactionManager);
         serviceTx = new RecordingTransactions(transactionManager);
-        service = new SceneScoutingService(pipeline, scenes, locations, new BlockingTransactions(serviceTx),
+        service = new SceneScoutingService(pipeline, new VenuePlacer(geocoder, Duration.ofSeconds(5)), scenes, locations,
+                new BlockingTransactions(serviceTx),
                 Jackson2ObjectMapperBuilder.json().build());
     }
 
@@ -155,11 +163,34 @@ class SceneScoutingServiceTest {
                 .map(LocationResponse::from).toList());
     }
 
+    /** Knows the places it was given, and remembers what it was asked. */
+    static class FakeGeocoder implements Geocoder {
+        final Map<String, GeoPoint> known = new ConcurrentHashMap<>();
+        final List<String> queries = new CopyOnWriteArrayList<>();
+
+        @Override
+        public Mono<GeoPoint> locate(String query) {
+            queries.add(query);
+            return Mono.justOrEmpty(known.get(query));
+        }
+
+        @Override
+        public String attribution() {
+            return "test";
+        }
+    }
+
+    private static ScoutedVenue venue(String name, int score, String venueName, String address) {
+        return new ScoutedVenue(
+                new SearchResult("Venue " + name + " | Official Site", "https://" + name.toLowerCase() + ".example.com/", "Excerpt " + name, "parallel"),
+                new LocationAssessment(score, "Reason " + name, BookingFriction.COMMERCIAL, null, List.of(), venueName, address));
+    }
+
     private static ScoutedVenue venue(String name, int score) {
         return new ScoutedVenue(
                 new SearchResult("Venue " + name, "https://" + name.toLowerCase() + ".example.com/", "Excerpt " + name, "parallel"),
                 new LocationAssessment(score, "Reason " + name, BookingFriction.COMMERCIAL, "Enquire via events team",
-                        List.of("Lift access only", "Noise curfew 22:00")));
+                        List.of("Lift access only", "Noise curfew 22:00"), null, null));
     }
 
     private void pipelineFinds(ScoutingOutcome outcome) {
@@ -252,6 +283,69 @@ class SceneScoutingServiceTest {
         assertThat(best.sourceExcerpt()).isEqualTo("Excerpt B");
         assertThat(best.createdAt()).isNotNull();
         assertThat(savedLocations(f)).hasSize(2);
+    }
+
+    @Test
+    void newVenuesAreNamedAsTheModelNamedThemAndPlacedOnTheMapByAddressOrByNameInTheArea() {
+        Fixture f = fixture(AREA, true);
+        geocoder.known.put("80 Wythe Ave, Brooklyn, NY 11249", new GeoPoint(40.72183512, -73.95790049));
+        geocoder.known.put("Industry City, " + AREA, new GeoPoint(40.656, -74.0074));
+        pipelineFinds(new ScoutingOutcome(List.of(
+                venue("W", 90, "Wythe Hotel", "80 Wythe Ave, Brooklyn, NY 11249"),
+                venue("I", 70, "Industry City", null),
+                venue("N", 50, null, null)), 0));
+
+        service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        assertThat(geocoder.queries).containsExactly(
+                "80 Wythe Ave, Brooklyn, NY 11249", "Industry City, " + AREA, "Venue N | Official Site, " + AREA);
+        List<LocationResponse> saved = savedLocations(f);
+        LocationResponse wythe = saved.stream().filter(l -> l.sourceUrl().startsWith("https://w.")).findFirst().orElseThrow();
+        assertThat(wythe.name()).isEqualTo("Wythe Hotel");
+        assertThat(wythe.address()).isEqualTo("80 Wythe Ave, Brooklyn, NY 11249");
+        assertThat(wythe.latitude()).isEqualByComparingTo("40.721835");
+        assertThat(wythe.longitude()).isEqualByComparingTo("-73.957900");
+        LocationResponse industry = saved.stream().filter(l -> l.sourceUrl().startsWith("https://i.")).findFirst().orElseThrow();
+        assertThat(industry.address()).isNull();
+        assertThat(industry.latitude()).isEqualByComparingTo("40.656");
+        // Not found on the map, and no name from the model: saved under the page title, without coordinates.
+        LocationResponse unnamed = saved.stream().filter(l -> l.sourceUrl().startsWith("https://n.")).findFirst().orElseThrow();
+        assertThat(unnamed.name()).isEqualTo("Venue N | Official Site");
+        assertThat(unnamed.latitude()).isNull();
+        assertThat(unnamed.longitude()).isNull();
+    }
+
+    @Test
+    void venuesAlreadySavedAreNotLookedUpOnTheMapAgain() {
+        Fixture f = fixture(AREA, true);
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, null, "1 First St")), 0));
+        service.scout(f.ownerId(), f.sceneId(), 10).block();
+        geocoder.queries.clear();
+
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, null, "1 First St"), venue("B", 70, null, "2 Second St")), 0));
+        ScoutingResult again = service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        assertThat(geocoder.queries).containsExactly("2 Second St");
+        assertThat(again.alreadySaved()).isEqualTo(1);
+    }
+
+    @Test
+    void aGeocoderThatFailsLeavesTheVenuesWithoutCoordinatesButSavesThem() {
+        Fixture f = fixture(AREA, true);
+        service = new SceneScoutingService(pipeline, new VenuePlacer(new FakeGeocoder() {
+            @Override
+            public Mono<GeoPoint> locate(String query) {
+                return Mono.error(new LogisticsException(LogisticsException.Kind.UNAVAILABLE, "down"));
+            }
+        }, Duration.ofSeconds(5)), scenes, locations, new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, "Alpha", "1 First St")), 0));
+
+        ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        assertThat(result.added()).singleElement().satisfies(l -> {
+            assertThat(l.name()).isEqualTo("Alpha");
+            assertThat(l.latitude()).isNull();
+        });
     }
 
     @Test

@@ -76,7 +76,7 @@ class ScoutingPipelineTest {
         ResilienceProperties resilience = new ResilienceProperties(3, Duration.ofMillis(1), Duration.ofMillis(5),
                 10, 5, 50, Duration.ofSeconds(30));
         return new ScoutingPipeline(llm, search, new GuardFactory(resilience, CircuitBreakerRegistry.ofDefaults()),
-                new ScoutingProperties(concurrency));
+                new ScoutingProperties(concurrency, Duration.ZERO));
     }
 
     private static SearchResult venue(String name) {
@@ -84,7 +84,7 @@ class ScoutingPipelineTest {
     }
 
     private static LocationAssessment assessment(int score) {
-        return new LocationAssessment(score, "Reason for " + score, BookingFriction.COMMERCIAL, null, List.of());
+        return new LocationAssessment(score, "Reason for " + score, BookingFriction.COMMERCIAL, null, List.of(), null, null);
     }
 
     private static LlmException llmFailure(Kind kind) {

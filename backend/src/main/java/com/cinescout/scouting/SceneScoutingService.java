@@ -8,6 +8,7 @@ import com.cinescout.domain.SceneRequirements;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.llm.LlmException;
+import com.cinescout.logistics.GeoPoint;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
@@ -19,9 +20,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,6 +37,10 @@ import java.util.UUID;
  * seconds). Every step re-checks that the scene belongs to {@code ownerId}, so a scene deleted or
  * reassigned mid-run fails cleanly instead of being written to.
  *
+ * <p>New venues are placed on the map before they are saved (by the address the page gives, or their
+ * name in the search area), on a best-effort basis; see {@link VenuePlacer}. Venues already saved are
+ * not looked up again.
+ *
  * <p>Two runs racing on the same scene can both pass the "already saved" check; the loser then
  * fails on the unique (scene, source url) index, which surfaces as a {@code ConflictException}, so
  * nothing is saved twice.
@@ -41,15 +49,21 @@ public class SceneScoutingService {
 
     private static final Logger log = LoggerFactory.getLogger(SceneScoutingService.class);
 
+    /** The columns take any length, but the API caps what users enter; scouted values get the same caps. */
+    private static final int MAX_NAME = 200;
+    private static final int MAX_ADDRESS = 500;
+
     private final ScoutingPipeline pipeline;
+    private final VenuePlacer placer;
     private final SceneRepository scenes;
     private final LocationRepository locations;
     private final BlockingTransactions db;
     private final ObjectMapper mapper;
 
-    public SceneScoutingService(ScoutingPipeline pipeline, SceneRepository scenes, LocationRepository locations,
-                                BlockingTransactions db, ObjectMapper mapper) {
+    public SceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes,
+                                LocationRepository locations, BlockingTransactions db, ObjectMapper mapper) {
         this.pipeline = pipeline;
+        this.placer = placer;
         this.scenes = scenes;
         this.locations = locations;
         this.db = db;
@@ -78,7 +92,9 @@ public class SceneScoutingService {
         return db.call(() -> prepare(ownerId, sceneId))
                 .flatMap(target -> requirementsFor(ownerId, sceneId, target)
                         .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults))
-                        .flatMap(outcome -> db.call(() -> saveVenues(ownerId, sceneId, outcome))
+                        .flatMap(outcome -> db.call(() -> unsaved(ownerId, sceneId, outcome))
+                                .flatMap(fresh -> placer.place(fresh, target.area()))
+                                .flatMap(placed -> db.call(() -> saveVenues(ownerId, sceneId, outcome, placed)))
                                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate)));
     }
 
@@ -134,24 +150,38 @@ public class SceneScoutingService {
                 .then();
     }
 
-    private ScoutingResult saveVenues(UUID ownerId, UUID sceneId, ScoutingOutcome outcome) {
+    /** The venues not saved for the scene yet: only these are worth placing on the map. */
+    private List<ScoutedVenue> unsaved(UUID ownerId, UUID sceneId, ScoutingOutcome outcome) {
+        load(ownerId, sceneId);
+        Set<String> seen = new HashSet<>(locations.findSourceUrlsBySceneId(sceneId));
+        return outcome.venues().stream().filter(venue -> seen.add(venue.source().url())).toList();
+    }
+
+    private ScoutingResult saveVenues(UUID ownerId, UUID sceneId, ScoutingOutcome outcome, Map<String, GeoPoint> placed) {
         Scene scene = load(ownerId, sceneId);
+        // Checked again: another run may have saved some of these while they were being placed.
         Set<String> seen = new HashSet<>(locations.findSourceUrlsBySceneId(sceneId));
 
         List<Location> toSave = new ArrayList<>();
         for (ScoutedVenue venue : outcome.venues()) {
             if (seen.add(venue.source().url())) {
-                toSave.add(toLocation(scene, venue));
+                toSave.add(toLocation(scene, venue, placed.get(venue.source().url())));
             }
         }
         List<LocationResponse> added = locations.saveAllAndFlush(toSave).stream().map(LocationResponse::from).toList();
         return new ScoutingResult(added, outcome.venues().size() - added.size(), outcome.unassessed());
     }
 
-    private static Location toLocation(Scene scene, ScoutedVenue venue) {
+    private static Location toLocation(Scene scene, ScoutedVenue venue, GeoPoint point) {
         SearchResult source = venue.source();
         LocationAssessment assessment = venue.assessment();
-        Location location = new Location(scene, source.title());
+        String name = assessment.venueName() != null ? assessment.venueName() : source.title();
+        Location location = new Location(scene, cap(name, MAX_NAME));
+        location.setAddress(cap(assessment.address(), MAX_ADDRESS));
+        if (point != null) {
+            location.setLatitude(degrees(point.latitude()));
+            location.setLongitude(degrees(point.longitude()));
+        }
         location.setSourceUrl(source.url());
         location.setSourceProvider(source.provider());
         location.setSourceExcerpt(source.excerpt());
@@ -161,6 +191,15 @@ public class SceneScoutingService {
         location.setFrictionNote(assessment.frictionNote());
         location.setFootprintWarnings(new ArrayList<>(assessment.footprintWarnings()));
         return location;
+    }
+
+    private static String cap(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max).strip();
+    }
+
+    /** Six decimal places, about 10 cm, as the columns store them. */
+    private static BigDecimal degrees(double value) {
+        return BigDecimal.valueOf(value).setScale(6, RoundingMode.HALF_UP);
     }
 
     private Scene load(UUID ownerId, UUID sceneId) {

@@ -28,7 +28,8 @@ class JsonSchemasTest {
         assertThat(schema.path("type").asText()).isEqualTo("object");
         assertThat(schema.path("additionalProperties").asBoolean(true)).isFalse();
         assertThat(names(schema.path("required")))
-                .containsExactlyInAnyOrder("fitScore", "fitReason", "bookingFriction", "frictionNote", "footprintWarnings");
+                .containsExactlyInAnyOrder("fitScore", "fitReason", "bookingFriction", "frictionNote", "footprintWarnings",
+                        "venueName", "address");
     }
 
     @Test
@@ -46,6 +47,8 @@ class JsonSchemasTest {
         JsonNode props = schemas.schemaFor(LocationAssessment.class).path("properties");
 
         assertThat(props.path("frictionNote").toString()).contains("null");
+        assertThat(props.path("venueName").toString()).contains("null");
+        assertThat(props.path("address").toString()).contains("null");
         assertThat(props.path("fitReason").toString()).doesNotContain("null");
         assertThat(props.path("fitScore").toString()).doesNotContain("null");
     }

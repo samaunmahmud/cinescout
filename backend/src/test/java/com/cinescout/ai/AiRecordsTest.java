@@ -89,15 +89,26 @@ class AiRecordsTest {
     @Test
     void nullWarningEntriesAreDroppedRatherThanFailingTheWholeAssessment() {
         LocationAssessment assessment = new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null,
-                Arrays.asList("Parking is tight", null));
+                Arrays.asList("Parking is tight", null), null, null);
 
         assertThat(assessment.footprintWarnings()).containsExactly("Parking is tight");
     }
 
     @Test
+    void aBlankVenueNameOrAddressMeansNoneAndBothAreTrimmed() {
+        LocationAssessment blank = new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null, null, "  ", "");
+        LocationAssessment padded = new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null, null, " Wythe Hotel ", " 80 Wythe Ave ");
+
+        assertThat(blank.venueName()).isNull();
+        assertThat(blank.address()).isNull();
+        assertThat(padded.venueName()).isEqualTo("Wythe Hotel");
+        assertThat(padded.address()).isEqualTo("80 Wythe Ave");
+    }
+
+    @Test
     void warningsAreDefensivelyCopied() {
         List<String> source = new ArrayList<>(List.of("Lift access only"));
-        LocationAssessment assessment = new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null, source);
+        LocationAssessment assessment = new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null, source, null, null);
         source.add("added later");
 
         assertThat(assessment.footprintWarnings()).containsExactly("Lift access only");
@@ -106,23 +117,23 @@ class AiRecordsTest {
 
     @Test
     void outOfRangeScoresAreRejected() {
-        assertThat(invalidProperties(new LocationAssessment(101, "ok", BookingFriction.PUBLIC, null, null)))
+        assertThat(invalidProperties(new LocationAssessment(101, "ok", BookingFriction.PUBLIC, null, null, null, null)))
                 .containsExactly("fitScore");
-        assertThat(invalidProperties(new LocationAssessment(-1, "ok", BookingFriction.PUBLIC, null, null)))
+        assertThat(invalidProperties(new LocationAssessment(-1, "ok", BookingFriction.PUBLIC, null, null, null, null)))
                 .containsExactly("fitScore");
-        assertThat(invalidProperties(new LocationAssessment(0, "ok", BookingFriction.PUBLIC, null, null))).isEmpty();
-        assertThat(invalidProperties(new LocationAssessment(100, "ok", BookingFriction.PUBLIC, null, null))).isEmpty();
+        assertThat(invalidProperties(new LocationAssessment(0, "ok", BookingFriction.PUBLIC, null, null, null, null))).isEmpty();
+        assertThat(invalidProperties(new LocationAssessment(100, "ok", BookingFriction.PUBLIC, null, null, null, null))).isEmpty();
     }
 
     @Test
     void missingScoreReasonOrFrictionIsRejected() {
-        assertThat(invalidProperties(new LocationAssessment(null, " ", null, null, null)))
+        assertThat(invalidProperties(new LocationAssessment(null, " ", null, null, null, null, null)))
                 .containsExactlyInAnyOrder("fitScore", "fitReason", "bookingFriction");
     }
 
     @Test
     void blankWarningTextIsRejected() {
-        assertThat(invalidProperties(new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null, List.of("  "))))
+        assertThat(invalidProperties(new LocationAssessment(50, "ok", BookingFriction.PUBLIC, null, List.of("  "), null, null)))
                 .hasSize(1);
     }
 

@@ -14,13 +14,17 @@ import java.time.Duration;
  * geocoding here happens once per venue at a user's request, well inside it. Heavier use should point
  * {@code base-url} at a private instance or a commercial Nominatim host.
  *
- * @param baseUrl Nominatim host
- * @param timeout whole-call budget
+ * @param baseUrl     Nominatim host
+ * @param timeout     whole-call budget
+ * @param minInterval the least time between two requests, across the app; the public instance allows one a second
+ * @param maxWait     how long a request may wait for its turn before it fails as rate limited
  */
 @Validated
 @ConfigurationProperties("cinescout.logistics.nominatim")
 public record NominatimProperties(
         @DefaultValue("https://nominatim.openstreetmap.org") @NotBlank String baseUrl,
-        @DefaultValue("10s") @NotNull Duration timeout
+        @DefaultValue("10s") @NotNull Duration timeout,
+        @DefaultValue("1100ms") @NotNull Duration minInterval,
+        @DefaultValue("30s") @NotNull Duration maxWait
 ) {
 }

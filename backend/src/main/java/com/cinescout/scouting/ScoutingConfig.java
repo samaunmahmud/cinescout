@@ -1,6 +1,7 @@
 package com.cinescout.scouting;
 
 import com.cinescout.llm.LlmClient;
+import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.SceneRepository;
@@ -30,8 +31,13 @@ class ScoutingConfig {
     }
 
     @Bean
-    SceneScoutingService sceneScoutingService(ScoutingPipeline pipeline, SceneRepository scenes,
+    VenuePlacer venuePlacer(Geocoder geocoder, ScoutingProperties props) {
+        return new VenuePlacer(geocoder, props.placementBudget());
+    }
+
+    @Bean
+    SceneScoutingService sceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes,
                                               LocationRepository locations, BlockingTransactions db, ObjectMapper mapper) {
-        return new SceneScoutingService(pipeline, scenes, locations, db, mapper);
+        return new SceneScoutingService(pipeline, placer, scenes, locations, db, mapper);
     }
 }
