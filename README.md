@@ -115,6 +115,15 @@ that should point the base URLs at a private or commercial instance:
 | `cinescout.logistics.overpass.base-url` | `https://overpass-api.de` (OpenStreetMap places) |
 | `cinescout.logistics.nominatim.base-url` | `https://nominatim.openstreetmap.org` (geocoding, at most one request a second) |
 
+## Venue videos
+
+With `YOUTUBE_API_KEY` set (a Google Cloud API key with the YouTube Data API v3 enabled),
+`GET /api/locations/{id}/videos` searches YouTube for the venue's name and address (or the project's area)
+and the location page shows the videos, playing them in place with YouTube's no-cookie player. A search
+costs 100 of the free 10,000 daily quota units, so results are cached on the location for a week
+(`cinescout.video.cache-ttl`), or until its name or address changes. Without a key the endpoint answers 503
+and the page links to a YouTube search instead.
+
 ## Deploying
 
 `docker-compose.yml` runs the whole thing on one machine: PostgreSQL, the API, and nginx serving the web

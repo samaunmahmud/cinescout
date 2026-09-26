@@ -71,6 +71,17 @@ public class Location extends BaseEntity {
     @Column(name = "logistics_fetched_at")
     private Instant logisticsFetchedAt;
 
+    /** Cached video search results for the venue, and the query they answer. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "videos_json")
+    private JsonNode videosJson;
+
+    @Column(name = "videos_query")
+    private String videosQuery;
+
+    @Column(name = "videos_fetched_at")
+    private Instant videosFetchedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LocationStatus status = LocationStatus.SUGGESTED;
@@ -98,6 +109,12 @@ public class Location extends BaseEntity {
         this.logisticsFetchedAt = Instant.now();
     }
 
+    public void cacheVideos(JsonNode videos, String query, Instant fetchedAt) {
+        this.videosJson = videos;
+        this.videosQuery = query;
+        this.videosFetchedAt = fetchedAt;
+    }
+
     public Scene getScene() { return scene; }
     public String getName() { return name; }
     public String getAddress() { return address; }
@@ -113,6 +130,9 @@ public class Location extends BaseEntity {
     public List<String> getFootprintWarnings() { return footprintWarnings; }
     public JsonNode getLogisticsJson() { return logisticsJson; }
     public Instant getLogisticsFetchedAt() { return logisticsFetchedAt; }
+    public JsonNode getVideosJson() { return videosJson; }
+    public String getVideosQuery() { return videosQuery; }
+    public Instant getVideosFetchedAt() { return videosFetchedAt; }
     public LocationStatus getStatus() { return status; }
     public String getNotes() { return notes; }
 

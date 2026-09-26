@@ -6,6 +6,7 @@ import com.cinescout.scouting.ScoutingException;
 import com.cinescout.search.SearchException;
 import com.cinescout.service.ConflictException;
 import com.cinescout.service.NotFoundException;
+import com.cinescout.video.VideoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -124,6 +125,17 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             case UNAVAILABLE -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The map service is unavailable; try again shortly", true);
             case INVALID_REQUEST ->
                     upstream(HttpStatus.BAD_GATEWAY, "The map service rejected our request; this is a server configuration problem", false);
+        };
+    }
+
+    @ExceptionHandler(VideoException.class)
+    ResponseEntity<ProblemDetail> video(VideoException e) {
+        log.warn("Video search failed ({}, retryable={}): {}", e.kind(), e.isRetryable(), e.getMessage());
+        return switch (e.kind()) {
+            case QUOTA_EXCEEDED -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The video service's daily limit is used up; try again tomorrow", false);
+            case UNAVAILABLE -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The video service is unavailable; try again shortly", true);
+            case AUTHENTICATION, INVALID_REQUEST ->
+                    upstream(HttpStatus.BAD_GATEWAY, "The video service rejected our request; this is a server configuration problem", false);
         };
     }
 

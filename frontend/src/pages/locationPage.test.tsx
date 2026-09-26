@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Location } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, location, logIn, project, scene, logisticsReport } from '../test/fixtures'
+import { ada, location, logIn, project, scene, logisticsReport, locationVideos } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = {}) {
@@ -11,6 +11,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/locations/l1': () => json(current),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/locations/l1/outreach-drafts': () => json([]),
+    'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
   })
 }
@@ -139,6 +140,7 @@ describe('adding a venue by hand', () => {
       'GET /api/scenes/s1/locations': () => json([]),
       'POST /api/scenes/s1/locations': () => json(created, 201),
       'GET /api/locations/l9/outreach-drafts': () => json([]),
+      'GET /api/locations/l9/videos': () => json(locationVideos({ videos: [] })),
     })
     const { router } = renderApp('/scenes/s1')
     const user = await logIn()

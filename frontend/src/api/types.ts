@@ -278,3 +278,19 @@ export interface LogisticsReport {
   /** Credits the data licences require to be shown with the data. */
   attribution: string[]
 }
+
+/** A video about a venue. Links are built from the id (see lib/video.ts), never taken from elsewhere. */
+export interface Video {
+  id: string
+  title: string
+  channel: string
+  publishedAt: string | null
+}
+
+export interface LocationVideos {
+  /** What was searched for: the venue's name and where it is. */
+  query: string
+  /** When the search ran; the server caches it for a week. */
+  fetchedAt: string
+  videos: Video[]
+}

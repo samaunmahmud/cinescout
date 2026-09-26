@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Location, LogisticsReport, OutreachDraft, Project, Scene, User } from '../api/types'
+import type { Location, LocationVideos, LogisticsReport, OutreachDraft, Project, Scene, User } from '../api/types'
 
 export const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
 export const PASSWORD = 'a-long-password'
@@ -156,6 +156,18 @@ export function draft(overrides: Partial<OutreachDraft> = {}): OutreachDraft {
 }
 
 /** Fills in and submits the login form that a logged-out visit lands on. */
+export function locationVideos(overrides: Partial<LocationVideos> = {}): LocationVideos {
+  return {
+    query: 'Tom’s Diner 782 Washington Ave, Brooklyn, NY',
+    fetchedAt: '2026-09-20T10:00:00Z',
+    videos: [
+      { id: 'dQw4w9WgXcQ', title: 'Inside Tom’s Diner, Brooklyn', channel: 'NYC Eats', publishedAt: '2023-04-01T12:00:00Z' },
+      { id: 'abcDEF12_-3', title: 'Prospect Heights walk', channel: 'Walks', publishedAt: null },
+    ],
+    ...overrides,
+  }
+}
+
 export async function logIn(user = userEvent.setup()) {
   await user.type(await screen.findByLabelText('Email'), ada.email)
   await user.type(screen.getByLabelText('Password'), PASSWORD)

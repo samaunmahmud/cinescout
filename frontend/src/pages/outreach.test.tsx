@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { OutreachDraft } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, draft, location, logIn, scene } from '../test/fixtures'
+import { ada, draft, location, logIn, scene, locationVideos } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(drafts: OutreachDraft[], extra: Parameters<typeof fakeServer>[0] = {}) {
@@ -11,6 +11,7 @@ function serverFor(drafts: OutreachDraft[], extra: Parameters<typeof fakeServer>
     'GET /api/locations/l1': () => json(location()),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/locations/l1/outreach-drafts': () => json(drafts),
+    'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
   })
 }

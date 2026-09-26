@@ -19,6 +19,7 @@ import { displayHost, safeHttpUrl } from '../lib/url'
 import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
+import { VideosSection } from './VideosSection'
 
 export function LocationPage() {
   const { locationId = '' } = useParams()
@@ -100,6 +101,7 @@ function LocationDetails({ location }: { location: Location }) {
       <Assessment location={location} />
       <Notes location={location} update={update} />
       <Position location={location} />
+      <VideosSection location={location} />
       <LogisticsSection location={location} />
       <OutreachSection location={location} />
     </div>

@@ -5,6 +5,7 @@ import type {
   GenerateOutreachRequest,
   LoginRequest,
   Location,
+  LocationVideos,
   LogisticsReport,
   OutreachDraft,
   Project,
@@ -77,6 +78,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       update: (id: string, body: UpdateLocationRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/locations/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** Videos of the venue, searched on first request and cached by the server; 503 when not configured. */
+      videos: (id: string) => call<LocationVideos>(`/api/locations/${encodeURIComponent(id)}/videos`),
       /** Moves the pin; the server drops the cached logistics, which were for the old spot. */
       updateCoordinates: (id: string, body: UpdateCoordinatesRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/coordinates`, { method: 'PUT', body }),
