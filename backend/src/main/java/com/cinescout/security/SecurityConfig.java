@@ -84,6 +84,8 @@ class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
                         // The API description and Swagger UI. Turn them off with springdoc.api-docs.enabled=false.
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
+                        // Up or down, nothing more (show-details: never): for the container health check.
+                        .pathMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .anyExchange().authenticated())
                 .build();
     }

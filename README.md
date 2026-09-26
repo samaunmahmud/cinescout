@@ -115,6 +115,29 @@ that should point the base URLs at a private or commercial instance:
 | `cinescout.logistics.overpass.base-url` | `https://overpass-api.de` (OpenStreetMap places) |
 | `cinescout.logistics.nominatim.base-url` | `https://nominatim.openstreetmap.org` (geocoding, at most one request a second) |
 
+## Deploying
+
+`docker-compose.yml` runs the whole thing on one machine: PostgreSQL, the API, and nginx serving the web
+app and proxying `/api` to it on the same origin. Only the web port is published.
+
+```bash
+cp .env.example .env          # set DB_PASSWORD, and the API keys you have
+docker compose up -d --build  # http://localhost:8080
+```
+
+For a public host, point a DNS name at it and let Caddy fetch certificates:
+
+```bash
+DOMAIN=cinescout.example.com docker compose --profile https up -d --build
+```
+
+Every container has a health check (the API's is `GET /actuator/health`, the only actuator endpoint
+exposed). nginx sets `Content-Security-Policy` and the other usual headers, and passes on the scheme the
+browser used, so the session cookie is `Secure` over HTTPS. Before going public, set `REGISTRATION_OPEN=false`
+once your accounts exist, put your own contact in `OSM_USER_AGENT`, and consider a tile provider for the
+maps (see `.env.example`). Remove the `/v3/api-docs` and `/swagger-ui` blocks from `frontend/nginx.conf` to
+keep the API docs private.
+
 ## Authentication
 
 Every endpoint needs a login except registering, logging in and out. There are two ways to log in, both
@@ -175,6 +198,5 @@ comes back with that section marked `UNAVAILABLE`.
 5. REST controllers, authentication, validation and OpenAPI docs - done
 6. Outreach email generator and draft management (module C) - done
 7. Shoot logistics: solar windows, weather, noise risk and nearby services (module B) - done
-8. Web app - in progress: accounts, projects and scenes (with AI requirement extraction) are done; scouting, logistics and outreach come next
-
-Not built yet: the web app screens for scouting results, logistics and outreach.
+8. Web app: accounts, projects, scenes, scouting, locations with logistics and maps, outreach - done
+9. Session logins for the web app, Docker Compose deployment - done

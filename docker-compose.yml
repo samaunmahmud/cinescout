@@ -1,0 +1,82 @@
+# CineScout on one machine: PostgreSQL, the API, and nginx serving the web app on one origin.
+#
+#   cp .env.example .env        # then set DB_PASSWORD (and the API keys you have)
+#   docker compose up -d --build
+#   open http://localhost:8080
+#
+# For HTTPS on a public host, also set DOMAIN and run with the "https" profile (Caddy gets certificates).
+
+name: cinescout
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cinescout
+      POSTGRES_USER: cinescout
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinescout -d cinescout"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/cinescout
+      DB_USERNAME: cinescout
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      # nginx (and Caddy in front of it) say which scheme the browser used; the session cookie is Secure over HTTPS.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      CINESCOUT_SECURITY_REGISTRATIONOPEN: ${REGISTRATION_OPEN:-true}
+      CINESCOUT_LOGISTICS_USERAGENT: ${OSM_USER_AGENT:-CineScout/0.1 (+https://github.com/samaunmahmud/cinescout)}
+      # Optional: AI scene analysis, scouting and outreach need these (the app starts without them).
+      WATSONX_API_KEY: ${WATSONX_API_KEY:-}
+      WATSONX_PROJECT_ID: ${WATSONX_PROJECT_ID:-}
+      WATSONX_MODEL_ID: ${WATSONX_MODEL_ID:-}
+      WATSONX_URL: ${WATSONX_URL:-https://us-south.ml.cloud.ibm.com}
+      PARALLEL_API_KEY: ${PARALLEL_API_KEY:-}
+    # Not published: only the web container talks to it.
+    expose:
+      - "8081"
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_MAP_TILE_URL: ${VITE_MAP_TILE_URL:-}
+        VITE_MAP_TILE_ATTRIBUTION: ${VITE_MAP_TILE_ATTRIBUTION:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+
+  # HTTPS with automatic certificates: DOMAIN=cinescout.example.com docker compose --profile https up -d
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    command: caddy reverse-proxy --from ${DOMAIN:-localhost} --to web:8080
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+
+volumes:
+  db-data:
+  caddy-data:

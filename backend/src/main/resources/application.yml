@@ -26,3 +26,12 @@ cinescout:
 
 server:
   port: ${PORT:8081}           # 8080 is used by the Node prototype
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health        # for container health checks; nothing else is exposed
+  endpoint:
+    health:
+      show-details: never
