@@ -3,6 +3,7 @@ package com.cinescout.web;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerMapping;
@@ -14,7 +15,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenApiTest extends ApiTest {
 
+    /** The application's own routes; Actuator registers a second mapping of this type for its endpoints. */
     @Autowired
+    @Qualifier("requestMappingHandlerMapping")
     RequestMappingHandlerMapping routes;
 
     private JsonNode docs() {
