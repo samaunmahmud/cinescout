@@ -6,6 +6,8 @@ import type { GenerateOutreachRequest, Location, OutreachDraft, OutreachStatus, 
 import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { ConfirmDelete } from '../components/ConfirmDelete'
+import { Mail, Sparkles } from 'lucide-react'
+import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { emailText, looksLikeEmail, mailtoLink } from '../lib/email'
 import { blankToNull } from '../lib/text'
@@ -47,25 +49,26 @@ export function OutreachSection({ location }: { location: Location }) {
   const latest = drafts.data?.[0]
 
   return (
-    <section aria-labelledby="outreach-heading" className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 id="outreach-heading" className="text-lg font-semibold">
-            Outreach
-          </h2>
-          <p className="text-sm text-stone-400">Emails to the venue's owner. CineScout never sends them: you do, from your own email.</p>
-        </div>
-        {!composing && (
+    <Section
+      titleId="outreach-heading"
+      title="Outreach"
+      eyebrow="Ask to film here"
+      icon={Mail}
+      description="Emails to the venue's owner. CineScout never sends them: you do, from your own email."
+      actions={
+        !composing && (
           <Button
             onClick={() => {
               generate.reset()
               setComposing(true)
             }}
           >
+            <Sparkles aria-hidden className="size-4" />
             Write an email
           </Button>
-        )}
-      </div>
+        )
+      }
+    >
 
       {composing && (
         <GenerateForm
@@ -83,9 +86,9 @@ export function OutreachSection({ location }: { location: Location }) {
         <ErrorAlert error={drafts.error} onRetry={() => drafts.refetch()} />
       ) : drafts.data.length === 0 ? (
         !composing && (
-          <p className="rounded-lg border border-dashed border-stone-800 px-6 py-10 text-center text-stone-400">
+          <EmptyState icon={Mail}>
             No emails yet. The AI drafts a request to film here from the venue and the scene's needs, for you to check and send.
-          </p>
+          </EmptyState>
         )
       ) : (
         <ul aria-label="Emails" className="space-y-3">
@@ -96,7 +99,7 @@ export function OutreachSection({ location }: { location: Location }) {
           ))}
         </ul>
       )}
-    </section>
+    </Section>
   )
 }
 
@@ -132,7 +135,7 @@ function GenerateForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Write an email" className="space-y-4 rounded-lg border border-stone-800 bg-stone-900/60 p-5" noValidate>
+    <form onSubmit={submit} aria-label="Write an email" className="space-y-4 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30" noValidate>
       <ErrorAlert error={error} />
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-stone-300">Tone</legend>
@@ -241,7 +244,7 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
   const recipient = [draft.recipientName, draft.recipientEmail && `<${draft.recipientEmail}>`].filter(Boolean).join(' ')
 
   return (
-    <article aria-label={draft.subject} className="space-y-3 rounded-lg border border-stone-800 bg-stone-900/60 p-5">
+    <article aria-label={draft.subject} className="space-y-3 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="font-semibold">{draft.subject}</h3>
@@ -271,7 +274,7 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
         </div>
       </div>
 
-      <div className="rounded-md border border-stone-800 bg-stone-950/60 p-4 text-sm whitespace-pre-wrap text-stone-200">{draft.body}</div>
+      <div className="rounded-lg border border-white/[0.06] bg-ink/60 p-4 text-sm leading-relaxed whitespace-pre-wrap text-stone-200">{draft.body}</div>
 
       <ErrorAlert error={update.error} />
 
@@ -351,7 +354,7 @@ function EditDraftForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Edit email" className="space-y-4 rounded-lg border border-amber-900/60 bg-stone-900/60 p-5" noValidate>
+    <form onSubmit={submit} aria-label="Edit email" className="space-y-4 rounded-xl border border-amber-400/25 bg-frame/90 p-5" noValidate>
       <ErrorAlert error={error} />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Recipient name" maxLength={200} value={values.recipientName} onChange={set('recipientName')} error={server.recipientName} />

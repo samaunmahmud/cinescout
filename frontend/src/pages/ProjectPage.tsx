@@ -6,7 +6,10 @@ import { queryKeys } from '../api/queryKeys'
 import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
+import { ChevronLeft, Clapperboard, MapPin } from 'lucide-react'
+import { Eyebrow } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
+import { posterGradient } from '../lib/poster'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { NotFoundPage } from './NotFoundPage'
@@ -68,14 +71,15 @@ function ProjectDetails({ project }: { project: Project }) {
     })
 
   return (
-    <div className="space-y-6">
-      <Link to="/projects" className="text-sm text-stone-400 hover:text-stone-200">
-        ← Projects
+    <div className="space-y-8">
+      <Link to="/projects" className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+        <ChevronLeft aria-hidden className="size-4" />
+        Projects
       </Link>
 
       {editing ? (
-        <section aria-labelledby="edit-project" className="rounded-lg border border-stone-800 bg-stone-900/60 p-6">
-          <h1 id="edit-project" className="mb-4 text-lg font-semibold">
+        <section aria-labelledby="edit-project" className="rounded-xl border border-white/[0.07] bg-frame/80 p-6">
+          <h1 id="edit-project" className="mb-4 font-display text-4xl leading-none">
             Edit project
           </h1>
           <ProjectForm
@@ -91,14 +95,20 @@ function ProjectDetails({ project }: { project: Project }) {
           />
         </section>
       ) : (
-        <header className="space-y-3">
+        <header className="relative space-y-4 overflow-hidden rounded-2xl border border-white/[0.07] p-6 sm:p-8">
+          <div aria-hidden className="absolute inset-0 -z-10 opacity-70" style={{ background: posterGradient(project.title) }} />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-ink via-ink/85 to-ink/40" />
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
+              <Eyebrow icon={Clapperboard}>Production</Eyebrow>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold">{project.title}</h1>
+                <h1 className="font-display text-6xl leading-none text-stone-50">{project.title}</h1>
                 {archived && <Badge>Archived</Badge>}
               </div>
-              <p className="text-stone-400">{project.locationArea ?? 'No location area set. Scouting needs one.'}</p>
+              <p className="flex items-center gap-1.5 text-stone-300">
+                <MapPin aria-hidden className="size-4 text-amber-400" />
+                {project.locationArea ?? 'No location area set. Scouting needs one.'}
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => setEditing(true)}>
@@ -112,7 +122,7 @@ function ProjectDetails({ project }: { project: Project }) {
               </Button>
             </div>
           </div>
-          {project.description && <p className="max-w-prose whitespace-pre-line text-stone-300">{project.description}</p>}
+          {project.description && <p className="max-w-prose whitespace-pre-line text-stone-300/90">{project.description}</p>}
           <ErrorAlert error={update.error} />
         </header>
       )}

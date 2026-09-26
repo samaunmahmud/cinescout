@@ -1,13 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { fieldErrors, isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
 import type { Location } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
+import {
+  ChevronLeft,
+  Clapperboard,
+  Crosshair,
+  ExternalLink,
+  Gauge,
+  KeyRound,
+  LayoutGrid,
+  Mail,
+  MapPin as PinIcon,
+  MapPinned,
+  NotebookPen,
+  Quote,
+  Sparkles,
+  Sun,
+  TriangleAlert,
+} from 'lucide-react'
 import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
+import { frictionLabel } from '../lib/fit'
+import { Eyebrow, Fact, Section, Tabs, type TabItem } from '../components/surfaces'
 import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
@@ -39,6 +58,7 @@ function LocationDetails({ location }: { location: Location }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [params, setParams] = useSearchParams()
   const update = useUpdateLocation(location)
   // Only for the breadcrumb; the page works without it.
   const scene = useQuery({ queryKey: queryKeys.scene(location.sceneId), queryFn: () => api.scenes.get(location.sceneId) })
@@ -54,35 +74,62 @@ function LocationDetails({ location }: { location: Location }) {
     },
   })
 
+  const tab = tabOf(params.get('tab'))
+  const pin = location.latitude != null && location.longitude != null
   return (
     <div className="space-y-8">
-      <Link to={scenePath} className="text-sm text-stone-400 hover:text-stone-200">
-        ← {scene.data ? sceneLabel(scene.data) : 'Scene'}
+      <Link to={scenePath} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+        <ChevronLeft aria-hidden className="size-4" />
+        {scene.data ? sceneLabel(scene.data) : 'Scene'}
       </Link>
 
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-4">
-          {location.fitScore != null && <FitScore score={location.fitScore} />}
-          <div className="min-w-0 space-y-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold">{location.name}</h1>
-              <LocationBadges location={location} />
+      <header className="space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex min-w-0 items-start gap-5">
+            {location.fitScore != null && <FitScore score={location.fitScore} size="lg" />}
+            <div className="min-w-0 space-y-2">
+              <Eyebrow icon={MapPinned}>Location</Eyebrow>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="font-display text-5xl leading-none text-stone-50 sm:text-6xl">{location.name}</h1>
+                <LocationBadges location={location} />
+              </div>
+              {location.address && (
+                <p className="flex items-center gap-1.5 text-stone-300">
+                  <PinIcon aria-hidden className="size-4 shrink-0 text-amber-400" />
+                  {location.address}
+                </p>
+              )}
+              {sourceUrl && (
+                <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-amber-300 underline hover:text-amber-200">
+                  {displayHost(sourceUrl)}
+                  <ExternalLink aria-hidden className="size-3.5" />
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              )}
             </div>
-            {location.address && <p className="text-stone-400">{location.address}</p>}
-            {sourceUrl && (
-              <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-amber-300 underline hover:text-amber-200">
-                {displayHost(sourceUrl)}
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusSelect location={location} update={update} />
+            <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+              Remove
+            </Button>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusSelect location={location} update={update} />
-          <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
-            Remove
-          </Button>
-        </div>
+
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Fact icon={Gauge} label="Fit">
+            {location.fitScore != null ? `${location.fitScore} / 100` : 'Not assessed'}
+          </Fact>
+          <Fact icon={KeyRound} label="Booking">
+            {location.bookingFriction ? frictionLabel(location.bookingFriction) : 'Unknown'}
+          </Fact>
+          <Fact icon={Crosshair} label="Position">
+            {pin ? 'On the map' : 'Not set yet'}
+          </Fact>
+          <Fact icon={Sun} label="Logistics">
+            {location.logistics ? 'Ready' : 'To do'}
+          </Fact>
+        </dl>
       </header>
 
       {confirmingDelete && (
@@ -98,37 +145,88 @@ function LocationDetails({ location }: { location: Location }) {
         </ConfirmDelete>
       )}
 
-      <Assessment location={location} />
-      <Notes location={location} update={update} />
-      <Position location={location} />
-      <VideosSection location={location} />
-      <LogisticsSection location={location} />
-      <OutreachSection location={location} />
+      <Tabs
+        label="About this location"
+        items={tabs}
+        selected={tab}
+        onSelect={(key) => setParams(key === 'overview' ? {} : { tab: key }, { replace: true })}
+      >
+        {tab === 'overview' && (
+          <div className="grid items-start gap-8 lg:grid-cols-2">
+            <div className="space-y-8">
+              <Assessment location={location} />
+              <Notes location={location} update={update} />
+            </div>
+            <Position location={location} />
+          </div>
+        )}
+        {tab === 'videos' && <VideosSection location={location} />}
+        {tab === 'logistics' && <LogisticsSection location={location} />}
+        {tab === 'outreach' && <OutreachSection location={location} />}
+      </Tabs>
     </div>
   )
 }
 
-/** What the AI made of the venue; venues added by hand have none. */
+type TabKey = 'overview' | 'videos' | 'logistics' | 'outreach'
+
+const tabs: TabItem<TabKey>[] = [
+  { key: 'overview', label: 'Overview', icon: LayoutGrid },
+  { key: 'videos', label: 'Videos', icon: Clapperboard },
+  { key: 'logistics', label: 'Logistics', icon: Sun },
+  { key: 'outreach', label: 'Outreach', icon: Mail },
+]
+
+function tabOf(value: string | null): TabKey {
+  return tabs.some((t) => t.key === value) ? (value as TabKey) : 'overview'
+}
+
+/** What the AI made of the venue, in the order a producer asks: does it fit, who says yes, what could go wrong. */
 function Assessment({ location }: { location: Location }) {
   if (location.fitScore == null) return null
   return (
-    <section aria-labelledby="assessment-heading" className="space-y-3 rounded-lg border border-stone-800 bg-stone-900/60 p-6">
-      <h2 id="assessment-heading" className="text-lg font-semibold">
-        Assessment
-      </h2>
-      {location.fitReason && <p className="text-stone-200">{location.fitReason}</p>}
-      {location.frictionNote && <p className="text-sm text-stone-400">{location.frictionNote}</p>}
+    <section aria-labelledby="assessment-heading" className="space-y-5 rounded-xl border border-amber-400/15 bg-gradient-to-br from-amber-500/[0.07] via-frame/90 to-reel p-6">
+      <div className="space-y-1">
+        <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
+        <h2 id="assessment-heading" className="font-display text-3xl leading-none">
+          Assessment
+        </h2>
+      </div>
+      {location.fitReason && (
+        <div className="space-y-1">
+          <h3 className="text-xs font-semibold tracking-wider text-stone-500 uppercase">Why it fits</h3>
+          <p className="text-stone-100">{location.fitReason}</p>
+        </div>
+      )}
+      {location.frictionNote && (
+        <div className="space-y-1">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-500 uppercase">
+            <KeyRound aria-hidden className="size-3.5" />
+            Booking
+          </h3>
+          <p className="text-sm text-stone-300">{location.frictionNote}</p>
+        </div>
+      )}
       {location.footprintWarnings.length > 0 && (
-        <ul aria-label="Warnings" className="list-inside list-disc space-y-1 text-sm text-amber-200">
-          {location.footprintWarnings.map((warning) => (
-            <li key={warning}>{warning}</li>
-          ))}
-        </ul>
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold tracking-wider text-stone-500 uppercase">Watch out for</h3>
+          <ul aria-label="Warnings" className="space-y-1.5">
+            {location.footprintWarnings.map((warning) => (
+              <li key={warning} className="flex items-start gap-2 rounded-lg bg-amber-500/[0.06] px-3 py-2 text-sm text-amber-100 ring-1 ring-amber-400/15 ring-inset">
+                <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-400" />
+                {warning}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {location.sourceExcerpt && (
         <figure className="space-y-1">
-          <figcaption className="text-xs font-medium tracking-wide text-stone-500 uppercase">From the source</figcaption>
-          <blockquote className="border-l-2 border-stone-700 pl-3 text-sm text-stone-300">{location.sourceExcerpt}</blockquote>
+          <figcaption className="text-xs font-semibold tracking-wider text-stone-500 uppercase">From the source</figcaption>
+          <blockquote className="flex gap-2 border-l-2 border-amber-400/40 pl-3 text-sm text-stone-300 italic">
+            <Quote aria-hidden className="size-4 shrink-0 text-amber-400/50" />
+            {location.sourceExcerpt}
+          </blockquote>
         </figure>
       )}
     </section>
@@ -145,10 +243,7 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
   }
 
   return (
-    <section aria-labelledby="notes-heading" className="space-y-3">
-      <h2 id="notes-heading" className="text-lg font-semibold">
-        Notes
-      </h2>
+    <Section titleId="notes-heading" title="Notes" eyebrow="Just for you" icon={NotebookPen}>
       <form onSubmit={save} className="space-y-3" noValidate>
         <ErrorAlert error={update.error} />
         <TextArea
@@ -165,7 +260,7 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
           </Button>
         </div>
       </form>
-    </section>
+    </Section>
   )
 }
 
@@ -197,12 +292,13 @@ function Position({ location }: { location: Location }) {
 
   const server = fieldErrors(relocate.error)
   return (
-    <section aria-labelledby="position-heading" className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 id="position-heading" className="text-lg font-semibold">
-          Position
-        </h2>
-        {!editing && (
+    <Section
+      titleId="position-heading"
+      title="Position"
+      eyebrow="On the map"
+      icon={Crosshair}
+      actions={
+        !editing && (
           <Button
             variant="secondary"
             onClick={() => {
@@ -213,11 +309,12 @@ function Position({ location }: { location: Location }) {
           >
             {current ? 'Move pin' : 'Set coordinates'}
           </Button>
-        )}
-      </div>
+        )
+      }
+    >
 
       {editing ? (
-        <form onSubmit={save} className="space-y-3 rounded-lg border border-stone-800 bg-stone-900/60 p-5" noValidate>
+        <form onSubmit={save} className="space-y-3 rounded-xl border border-white/[0.07] bg-frame/80 p-5" noValidate>
           <ErrorAlert error={relocate.error} />
           <TextField
             label="Coordinates"
@@ -250,7 +347,7 @@ function Position({ location }: { location: Location }) {
         </form>
       ) : current && pin ? (
         <div className="space-y-2">
-          <VenueMap pins={[pin]} label={`Map of ${location.name}`} className="h-64" />
+          <VenueMap pins={[pin]} label={`Map of ${location.name}`} className="h-80 shadow-xl shadow-black/40" />
           <p className="text-sm text-stone-300">
             {formatCoordinates(current)} ·{' '}
             <a href={osmLink(current)} target="_blank" rel="noopener noreferrer" className="text-amber-300 underline hover:text-amber-200">
@@ -264,6 +361,6 @@ function Position({ location }: { location: Location }) {
           Not set. Logistics look the venue up from its {location.address ? 'address' : 'name'}; set the coordinates if that finds the wrong place.
         </p>
       )}
-    </section>
+    </Section>
   )
 }

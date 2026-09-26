@@ -7,6 +7,8 @@ import type { Scene, SceneRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
+import { CalendarDays, ChevronLeft, Clapperboard, ScrollText } from 'lucide-react'
+import { Eyebrow, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
 import { LocationsSection } from './LocationsSection'
@@ -59,13 +61,14 @@ function SceneDetails({ scene }: { scene: Scene }) {
 
   return (
     <div className="space-y-8">
-      <Link to={projectPath} className="text-sm text-stone-400 hover:text-stone-200">
-        ← {project.data?.title ?? 'Project'}
+      <Link to={projectPath} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+        <ChevronLeft aria-hidden className="size-4" />
+        {project.data?.title ?? 'Project'}
       </Link>
 
       {editing ? (
-        <section aria-labelledby="edit-scene" className="rounded-lg border border-stone-800 bg-stone-900/60 p-6">
-          <h1 id="edit-scene" className="mb-4 text-xl font-semibold">
+        <section aria-labelledby="edit-scene" className="rounded-xl border border-white/[0.07] bg-frame/80 p-6">
+          <h1 id="edit-scene" className="mb-4 font-display text-4xl leading-none">
             Edit scene
           </h1>
           <SceneForm
@@ -92,13 +95,20 @@ function SceneDetails({ scene }: { scene: Scene }) {
           />
         </section>
       ) : (
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold">{sceneLabel(scene)}</h1>
-              <ParseStatusBadge status={scene.parseStatus} />
+        <header className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex min-w-0 items-start gap-5">
+            <Slate number={scene.sceneNumber} className="w-24 scale-110" />
+            <div className="min-w-0 space-y-2">
+              <Eyebrow icon={Clapperboard}>{project.data?.title ?? 'Scene'}</Eyebrow>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="font-display text-5xl leading-none text-stone-50">{sceneLabel(scene)}</h1>
+                <ParseStatusBadge status={scene.parseStatus} />
+              </div>
+              <p className="flex items-center gap-1.5 text-stone-400">
+                <CalendarDays aria-hidden className="size-4 text-amber-400/80" />
+                {shootWindow ?? 'No shoot dates yet'}
+              </p>
             </div>
-            <p className="text-stone-400">{shootWindow ?? 'No shoot dates yet'}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setEditing(true)}>
@@ -125,18 +135,22 @@ function SceneDetails({ scene }: { scene: Scene }) {
       )}
 
       {!editing && (
-        <>
-          <RequirementsPanel scene={scene} />
-          <LocationsSection scene={scene} locationArea={project.data?.locationArea} />
-          <section aria-labelledby="script-heading" className="space-y-3">
-            <h2 id="script-heading" className="text-lg font-semibold">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="min-w-0 space-y-10">
+            <RequirementsPanel scene={scene} />
+            <LocationsSection scene={scene} locationArea={project.data?.locationArea} />
+          </div>
+          <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
+            <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>
+            <h2 id="script-heading" className="font-display text-3xl leading-none">
               Script
             </h2>
-            <pre className="max-h-[32rem] overflow-auto rounded-lg border border-stone-800 bg-stone-900/60 p-5 font-mono text-sm whitespace-pre-wrap text-stone-200">
+            {/* A page of the script, as it would come off the printer. */}
+            <pre className="max-h-[70vh] overflow-auto rounded-sm bg-paper px-6 py-7 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-stone-900 shadow-2xl shadow-black/60 ring-1 ring-black/20">
               {scene.sourceText}
             </pre>
           </section>
-        </>
+        </div>
       )}
     </div>
   )

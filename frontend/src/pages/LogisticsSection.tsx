@@ -13,6 +13,8 @@ import type {
   WeatherDay,
 } from '../api/types'
 import { useSession } from '../auth/context'
+import { CloudSun, Sun, Sunset, Trees, type LucideIcon } from 'lucide-react'
+import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatDate, formatShootWindow } from '../lib/format'
 import { formatDaylight, formatDistance, localTime, temperatureRange, timeWindow } from '../lib/logisticsFormat'
@@ -73,18 +75,18 @@ export function LogisticsSection({ location }: { location: Location }) {
 
   const report = location.logistics
   return (
-    <section aria-labelledby="logistics-heading" className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 id="logistics-heading" className="text-lg font-semibold">
-            Logistics
-          </h2>
-          {report && <p className="text-sm text-stone-400">Worked out {generatedFormat.format(new Date(report.generatedAt))}</p>}
-        </div>
+    <Section
+      titleId="logistics-heading"
+      title="Logistics"
+      eyebrow="The day of the shoot"
+      icon={Sun}
+      description={report && `Worked out ${generatedFormat.format(new Date(report.generatedAt))}`}
+      actions={
         <Button variant={report ? 'secondary' : 'primary'} busy={refresh.isPending} onClick={() => refresh.mutate()}>
           {report ? 'Refresh' : 'Work out logistics'}
         </Button>
-      </div>
+      }
+    >
 
       {refresh.isPending ? (
         <Spinner label="Checking the light, weather and surroundings. This can take up to half a minute." />
@@ -94,17 +96,17 @@ export function LogisticsSection({ location }: { location: Location }) {
 
       {!report ? (
         !refresh.isPending && (
-          <p className="rounded-lg border border-dashed border-stone-800 px-6 py-10 text-center text-stone-400">
+          <EmptyState icon={Sunset}>
             Not worked out yet. CineScout checks golden and blue hours, the weather and nearby noise and services for the scene's shoot
             days.
-          </p>
+          </EmptyState>
         )
       ) : report.version !== SUPPORTED_VERSION ? (
         <p className="text-sm text-stone-400">This report was saved in a format this page does not know. Refresh it to see it.</p>
       ) : (
         <Report report={report} />
       )}
-    </section>
+    </Section>
   )
 }
 
@@ -138,10 +140,20 @@ function Report({ report }: { report: LogisticsReport }) {
   )
 }
 
+const panelIcons: Record<string, LucideIcon> = { Light: Sunset, Weather: CloudSun, Surroundings: Trees }
+
 function Panel({ title, children }: { title: string; children: ReactNode }) {
+  const Icon = panelIcons[title]
   return (
-    <section aria-label={title} className="space-y-3 rounded-lg border border-stone-800 bg-stone-900/60 p-5">
-      <h3 className="font-semibold">{title}</h3>
+    <section aria-label={title} className="space-y-4 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30">
+      <h3 className="flex items-center gap-2 font-display text-2xl leading-none text-stone-50">
+        {Icon && (
+          <span className="flex size-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 ring-1 ring-amber-400/20">
+            <Icon aria-hidden className="size-4" />
+          </span>
+        )}
+        {title}
+      </h3>
       {children}
     </section>
   )
@@ -179,7 +191,7 @@ function Light({ solar }: { solar: LogisticsReport['solar'] }) {
               {sceneLight && <th scope="col" className="py-2 font-medium text-amber-300">{sceneLight} (scene)</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-800">
+          <tbody className="divide-y divide-white/[0.06]">
             {solar.days.map((day) => (
               <tr key={day.date}>
                 <th scope="row" className="py-2 pr-4 font-medium whitespace-nowrap">{formatDate(day.date)}</th>
@@ -212,7 +224,7 @@ function Weather({ weather }: { weather: LogisticsReport['weather'] }) {
     <Panel title="Weather">
       <SectionMessage status={weather.status} message={weather.message} />
       {weather.days.length > 0 && (
-        <ul className="divide-y divide-stone-800">
+        <ul className="divide-y divide-white/[0.06]">
           {weather.days.map((day) => {
             const facts = [
               temperatureRange(day.temperatureMinC, day.temperatureMaxC),

@@ -23,7 +23,7 @@ describe('a location', () => {
     await logIn()
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Tom’s Diner' })).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: '← Scene 12: INT. DINER - NIGHT' })).toHaveAttribute('href', '/scenes/s1')
+    expect(await screen.findByRole('link', { name: 'Scene 12: INT. DINER - NIGHT' })).toHaveAttribute('href', '/scenes/s1')
     expect(screen.getByLabelText('Fit 82 out of 100')).toBeInTheDocument()
     const assessment = screen.getByRole('region', { name: 'Assessment' })
     expect(assessment).toHaveTextContent('Neon sign and red booths match the mood.')

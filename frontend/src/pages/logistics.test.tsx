@@ -28,7 +28,7 @@ describe("a location's logistics", () => {
       },
       'GET /api/scenes/s1/locations': () => json([current]),
     })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=logistics')
     const user = await logIn()
 
     expect(await screen.findByText(/Not worked out yet/)).toBeInTheDocument()
@@ -39,7 +39,8 @@ describe("a location's logistics", () => {
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument()
     expect(screen.getByText(/times are local to the venue \(America\/New_York\)/)).toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'About this report' })).toHaveTextContent('The coordinates were looked up')
-    expect(screen.getByText(/40\.67447, -73\.963316/)).toBeInTheDocument()
+    // The header's position tile, on every tab, picks up the coordinates the server looked up.
+    expect(await screen.findByText('On the map')).toBeInTheDocument()
 
     // The venue's own clock, including the night window running to midnight.
     const [header, row] = within(light).getAllByRole('row')
@@ -77,7 +78,7 @@ describe("a location's logistics", () => {
 
   it('are shown from the cache without being worked out again', async () => {
     const { requests } = serverFor(() => location({ logistics: logisticsReport() }))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=logistics')
     await logIn()
 
     expect(await screen.findByRole('region', { name: 'Light' })).toBeInTheDocument()
@@ -97,7 +98,7 @@ describe("a location's logistics", () => {
       environment: { ...logisticsReport().environment, status: 'UNAVAILABLE', message: 'The map service could not be reached; try again later', noiseRisk: null, noiseSources: [], nearbyServices: [] },
     })
     serverFor(() => location({ logistics: report }))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=logistics')
     await logIn()
 
     expect(await screen.findByRole('list', { name: 'About this report' })).toHaveTextContent('The scene has no shoot dates yet')
@@ -117,7 +118,7 @@ describe("a location's logistics", () => {
       'POST /api/locations/l1/logistics': () =>
         problem(409, 'Conflict', 'The venue could not be found on the map; set its coordinates first'),
     })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=logistics')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Work out logistics' }))
@@ -127,7 +128,7 @@ describe("a location's logistics", () => {
 
   it('ask for a refresh when the saved report is in an unknown format', async () => {
     serverFor(() => location({ logistics: logisticsReport({ version: 2 }) }))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=logistics')
     await logIn()
 
     expect(await screen.findByText(/format this page does not know/)).toBeInTheDocument()

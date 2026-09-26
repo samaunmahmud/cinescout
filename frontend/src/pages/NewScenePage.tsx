@@ -32,11 +32,11 @@ export function NewScenePage() {
 
   return (
     <div className="space-y-6">
-      <Link to={`/projects/${projectId}`} className="text-sm text-stone-400 hover:text-stone-200">
+      <Link to={`/projects/${projectId}`} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
         ← {project.data.title}
       </Link>
-      <section aria-labelledby="new-scene" className="rounded-lg border border-stone-800 bg-stone-900/60 p-6">
-        <h1 id="new-scene" className="mb-4 text-xl font-semibold">
+      <section aria-labelledby="new-scene" className="mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
+        <h1 id="new-scene" className="mb-6 font-display text-5xl leading-none text-stone-50">
           New scene
         </h1>
         <SceneForm

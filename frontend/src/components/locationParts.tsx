@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import type { BookingFriction, Location, LocationStatus } from '../api/types'
-import { fitBand, type FitBand } from '../lib/fit'
+import { fitBand, frictionLabel, type FitBand } from '../lib/fit'
 import type { useUpdateLocation } from './locationHooks'
 import { Badge } from './ui'
 
@@ -12,11 +12,7 @@ const statusLabels: Record<LocationStatus, string> = {
   CONFIRMED: 'Confirmed',
 }
 
-const friction: Record<BookingFriction, { text: string; tone: 'green' | 'amber' | 'red' }> = {
-  PUBLIC: { text: 'Public space', tone: 'green' },
-  COMMERCIAL: { text: 'Business', tone: 'amber' },
-  PRIVATE: { text: 'Private property', tone: 'red' },
-}
+const frictionTones: Record<BookingFriction, 'green' | 'amber' | 'red'> = { PUBLIC: 'green', COMMERCIAL: 'amber', PRIVATE: 'red' }
 
 /** A status dropdown that saves on change, keeping the notes as they are. */
 export function StatusSelect({ location, update }: { location: Location; update: ReturnType<typeof useUpdateLocation> }) {
@@ -43,21 +39,40 @@ export function StatusSelect({ location, update }: { location: Location; update:
   )
 }
 
-const fitScoreTones: Record<FitBand, string> = {
-  good: 'text-emerald-300 border-emerald-800',
-  fair: 'text-amber-300 border-amber-800',
-  poor: 'text-red-300 border-red-900',
+const fitColours: Record<FitBand, { text: string; stroke: string }> = {
+  good: { text: 'text-emerald-300', stroke: 'stroke-emerald-400' },
+  fair: { text: 'text-amber-300', stroke: 'stroke-amber-400' },
+  poor: { text: 'text-red-300', stroke: 'stroke-red-400' },
 }
 
-export function FitScore({ score }: { score: number }) {
-  const tone = fitScoreTones[fitBand(score)]
+/** The fit score as a dial: the ring fills to the score. */
+export function FitScore({ score, size = 'md' }: { score: number; size?: 'md' | 'lg' }) {
+  const colour = fitColours[fitBand(score)]
+  const r = 20
+  const circumference = 2 * Math.PI * r
   return (
     <span
-      className={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-base font-bold ${tone}`}
+      className={`relative flex shrink-0 items-center justify-center ${size === 'lg' ? 'size-24' : 'size-14'}`}
       aria-label={`Fit ${score} out of 100`}
       title="How well the venue suits the scene, out of 100"
     >
-      {score}
+      <svg viewBox="0 0 48 48" aria-hidden className="absolute inset-0 size-full -rotate-90">
+        <circle cx="24" cy="24" r={r} fill="none" strokeWidth="4" className="stroke-white/[0.08]" />
+        <circle
+          cx="24"
+          cy="24"
+          r={r}
+          fill="none"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - Math.max(0, Math.min(100, score)) / 100)}
+          className={colour.stroke}
+        />
+      </svg>
+      <span aria-hidden className={`font-display leading-none ${colour.text} ${size === 'lg' ? 'text-4xl' : 'text-xl'}`}>
+        {score}
+      </span>
     </span>
   )
 }
@@ -66,7 +81,7 @@ export function FitScore({ score }: { score: number }) {
 export function LocationBadges({ location }: { location: Location }) {
   return (
     <>
-      {location.bookingFriction && <Badge tone={friction[location.bookingFriction].tone}>{friction[location.bookingFriction].text}</Badge>}
+      {location.bookingFriction && <Badge tone={frictionTones[location.bookingFriction]}>{frictionLabel(location.bookingFriction)}</Badge>}
       {location.fitScore == null && <Badge>Added by hand</Badge>}
     </>
   )

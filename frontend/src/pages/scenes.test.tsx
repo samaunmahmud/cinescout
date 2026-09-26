@@ -125,7 +125,7 @@ describe('a scene', () => {
     expect(await screen.findByRole('heading', { name: 'Scene 12: INT. DINER - NIGHT' })).toBeInTheDocument()
     expect(screen.getByText(/Rain on the windows/)).toBeInTheDocument()
     expect(screen.getByText(/12.*2026 – .*14.*2026/)).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: '← Night Shift' })).toHaveAttribute('href', '/projects/p1')
+    expect(await screen.findByRole('link', { name: 'Night Shift' })).toHaveAttribute('href', '/projects/p1')
   })
 
   it('is analysed on request and shows the extracted requirements', async () => {

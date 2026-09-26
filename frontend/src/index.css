@@ -1,9 +1,77 @@
 @import "tailwindcss";
 
+/*
+ * CineScout's look: a dark screening room lit by tungsten. Deep warm blacks, amber light, poster type for
+ * titles, a screenplay face for scripts, and a faint film grain over everything.
+ */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bebas Neue", "Inter Variable", ui-sans-serif, sans-serif;
+  --font-script: "Courier Prime", ui-monospace, "Courier New", monospace;
+
+  /* Surfaces, darkest first. */
+  --color-ink: #0b0a09;
+  --color-reel: #13110f;
+  --color-frame: #1b1815;
+  --color-gate: #26221e;
+  /* The screenplay page. */
+  --color-paper: #f4efe4;
+
+  --animate-flicker: flicker 6s ease-in-out infinite;
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    48% { opacity: 1; }
+    50% { opacity: 0.85; }
+    52% { opacity: 1; }
+  }
+}
+
 :root {
   color-scheme: dark;
 }
 
 body {
-  @apply bg-stone-950 text-stone-100 antialiased;
+  @apply bg-ink font-sans text-stone-100 antialiased;
+  /* A soft pool of light from above, like a lamp over the cutting table. */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(245 158 11 / 0.10), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(180 83 9 / 0.06), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Film grain: fixed, faint, and never in the way of a click. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The perforated edge of a film strip, used as a divider. */
+.film-strip {
+  height: 10px;
+  background-color: var(--color-reel);
+  background-image: repeating-linear-gradient(90deg, transparent 0 10px, rgb(255 255 255 / 0.10) 10px 18px, transparent 18px 28px);
+  background-size: 28px 5px;
+  background-position: 0 2.5px;
+  background-repeat: repeat-x;
+}
+
+/* The black-and-white bar across the top of a clapperboard. */
+.clapper {
+  background-image: repeating-linear-gradient(-45deg, #f5f5f4 0 14px, #0c0a09 14px 28px);
+}
+
+.font-display {
+  letter-spacing: 0.03em;
 }

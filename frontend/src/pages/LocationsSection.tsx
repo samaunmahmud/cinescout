@@ -11,6 +11,8 @@ import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
 import { linkButton } from '../components/buttonStyles'
+import { MapPin as PinIcon, MapPinned, Plus, Radar, TriangleAlert } from 'lucide-react'
+import { EmptyState, Section } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { scoutingSummary } from '../lib/format'
 import { displayHost, safeHttpUrl } from '../lib/url'
@@ -38,26 +40,28 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
   const hasLocations = (locations.data?.length ?? 0) > 0
 
   return (
-    <section aria-labelledby="locations-heading" className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 id="locations-heading" className="text-lg font-semibold">
-            Locations
-          </h2>
-          {locationArea && <p className="text-sm text-stone-400">Scouting in {locationArea}</p>}
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <Section
+      titleId="locations-heading"
+      title="Locations"
+      eyebrow="Scouted venues"
+      icon={MapPinned}
+      description={locationArea && `Scouting in ${locationArea}`}
+      actions={
+        <>
           <Link to={`/scenes/${scene.id}/locations/new`} className={linkButton('ghost')}>
+            <Plus aria-hidden className="size-4" />
             Add venue
           </Link>
           <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate()}>
+            {!scout.isPending && <Radar aria-hidden className="size-4" />}
             {hasLocations ? 'Scout again' : 'Scout locations'}
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
 
       {noArea && (
-        <p className="rounded-md border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+        <p className="rounded-lg border border-amber-900/70 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
           Scouting searches the project's location area, and this project has none yet.{' '}
           <Link to={`/projects/${scene.projectId}`} className="font-semibold underline hover:text-white">
             Set one on the project
@@ -72,7 +76,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         <ErrorAlert error={scout.error} />
       ) : (
         scout.data && (
-          <p role="status" className="rounded-md border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+          <p role="status" className="rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
             {scoutingSummary(scout.data)}
           </p>
         )
@@ -84,9 +88,9 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         <ErrorAlert error={locations.error} onRetry={() => locations.refetch()} />
       ) : locations.data.length === 0 ? (
         !scout.isPending && (
-          <p className="rounded-lg border border-dashed border-stone-800 px-6 py-10 text-center text-stone-400">
+          <EmptyState icon={Radar}>
             No locations yet. Scouting searches the web for real venues that suit the scene and rates how well each one fits.
-          </p>
+          </EmptyState>
         )
       ) : (
         <>
@@ -100,7 +104,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
           </ul>
         </>
       )}
-    </section>
+    </Section>
   )
 }
 
@@ -111,7 +115,7 @@ function LocationsMap({ locations }: { locations: Location[] }) {
   const hint = 'Scouted venues get a position when their logistics are worked out, or you can set one on the venue’s page.'
   return (
     <div className="space-y-2">
-      {pins.length > 0 && <VenueMap pins={pins} label="Map of candidate locations" />}
+      {pins.length > 0 && <VenueMap pins={pins} label="Map of candidate locations" className="h-80 shadow-xl shadow-black/40" />}
       {unplaced > 0 && (
         <p className="text-sm text-stone-400">
           {pins.length === 0 ? 'None of these venues is on a map yet.' : `${unplaced} of ${locations.length} venues are not on the map yet.`} {hint}
@@ -139,20 +143,25 @@ function LocationCard({ location }: { location: Location }) {
   return (
     <article
       aria-label={location.name}
-      className={`space-y-3 rounded-lg border border-stone-800 bg-stone-900/60 p-5 ${location.status === 'REJECTED' ? 'opacity-60' : ''}`}
+      className={`space-y-3 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30 transition hover:border-white/15 ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
     >
       <div className="flex items-start gap-4">
         {location.fitScore != null && <FitScore score={location.fitScore} />}
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">
-              <Link to={`/locations/${location.id}`} className="hover:text-amber-300 hover:underline">
+              <Link to={`/locations/${location.id}`} className="text-lg text-stone-50 hover:text-amber-300">
                 {location.name}
               </Link>
             </h3>
             <LocationBadges location={location} />
           </div>
-          {location.address && <p className="text-sm text-stone-400">{location.address}</p>}
+          {location.address && (
+            <p className="flex items-center gap-1.5 text-sm text-stone-400">
+              <PinIcon aria-hidden className="size-3.5 shrink-0 text-amber-400/70" />
+              {location.address}
+            </p>
+          )}
           {sourceUrl && (
             <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-amber-300 underline hover:text-amber-200">
               {displayHost(sourceUrl)}
@@ -168,9 +177,12 @@ function LocationCard({ location }: { location: Location }) {
       {location.fitReason && <p className="text-sm text-stone-200">{location.fitReason}</p>}
       {location.frictionNote && <p className="text-sm text-stone-400">{location.frictionNote}</p>}
       {location.footprintWarnings.length > 0 && (
-        <ul aria-label="Warnings" className="list-inside list-disc space-y-1 text-sm text-amber-200">
+        <ul aria-label="Warnings" className="space-y-1 text-sm text-amber-200/90">
           {location.footprintWarnings.map((warning) => (
-            <li key={warning}>{warning}</li>
+            <li key={warning} className="flex items-start gap-2">
+              <TriangleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0 text-amber-400" />
+              {warning}
+            </li>
           ))}
         </ul>
       )}

@@ -24,7 +24,7 @@ describe("a location's outreach emails", () => {
       draft({ id: 'd2', subject: 'Following up', recipientName: null, recipientEmail: null, tone: 'CONCISE', createdAt: '2026-09-22T10:00:00Z' }),
       draft({ status: 'SENT', sentAt: '2026-09-21T09:30:00Z' }),
     ])
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     await logIn()
 
     const [newest, older] = within(await screen.findByRole('list', { name: 'Emails' })).getAllByRole('article')
@@ -51,7 +51,7 @@ describe("a location's outreach emails", () => {
     const { requests } = serverFor([draft()], {
       'POST /api/locations/l1/outreach-drafts/generate': () => json(written, 201),
     })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Write an email' }))
@@ -77,7 +77,7 @@ describe("a location's outreach emails", () => {
 
   it('catch a mistyped recipient address before asking the AI', async () => {
     const { requests } = serverFor([])
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Write an email' }))
@@ -92,7 +92,7 @@ describe("a location's outreach emails", () => {
     serverFor([], {
       'POST /api/locations/l1/outreach-drafts/generate': () => problem(503, 'Not available', 'Outreach generation is not configured on this server'),
     })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Write an email' }))
@@ -106,7 +106,7 @@ describe("a location's outreach emails", () => {
     const { requests } = serverFor([draft({ tone: 'FRIENDLY', status: 'SENT', sentAt: '2026-09-21T09:30:00Z' })], {
       'PUT /api/outreach-drafts/d1': (req) => json(draft({ ...(req.body as object) })),
     })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Edit' }))
@@ -129,7 +129,7 @@ describe("a location's outreach emails", () => {
 
   it('cannot be saved with a mistyped address or an empty message', async () => {
     const { requests } = serverFor([draft()])
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Edit' }))
@@ -149,7 +149,7 @@ describe("a location's outreach emails", () => {
     const { requests } = serverFor([draft()], {
       'PUT /api/outreach-drafts/d1': (req) => json(draft({ ...(req.body as object), sentAt: '2026-09-26T08:00:00Z' })),
     })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.selectOptions(await screen.findByLabelText(/^Status of “Filming request/), 'Sent')
@@ -168,7 +168,7 @@ describe("a location's outreach emails", () => {
 
   it('can be copied with the subject line', async () => {
     serverFor([draft()])
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Copy' }))
@@ -179,7 +179,7 @@ describe("a location's outreach emails", () => {
 
   it('are deleted after confirmation', async () => {
     const { requests } = serverFor([draft()], { 'DELETE /api/outreach-drafts/d1': () => new Response(null, { status: 204 }) })
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 
     await user.click(await screen.findByRole('button', { name: 'Delete' }))

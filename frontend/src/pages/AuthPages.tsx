@@ -3,20 +3,63 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/context'
 import { SessionCheck } from '../auth/SessionCheck'
+import { Mail, MapPinned, ScrollText, Sunset } from 'lucide-react'
 import { Logo } from '../components/Layout'
+import { Card } from '../components/surfaces'
 import { fieldErrors } from '../api/errors'
 import { Button, ErrorAlert, TextField } from '../components/ui'
 
+const features = [
+  { icon: ScrollText, text: 'Reads your scene and works out the location it needs' },
+  { icon: MapPinned, text: 'Finds real venues nearby and rates how well each one fits' },
+  { icon: Sunset, text: 'Golden hour, weather and noise for every shoot day' },
+  { icon: Mail, text: 'Drafts the email to the venue’s owner for you to send' },
+]
+
 function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-2 text-center">
-          <Logo />
-          <h1 className="text-2xl font-semibold">{title}</h1>
+    <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
+      {/* The poster side: decoration and a word on what CineScout does. */}
+      <aside className="relative hidden overflow-hidden border-r border-white/[0.06] lg:block">
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgb(245_158_11/0.28),transparent_55%),radial-gradient(ellipse_at_80%_90%,rgb(180_83_9/0.22),transparent_50%)]" />
+        <div aria-hidden className="film-strip absolute inset-x-0 top-0" />
+        <div aria-hidden className="film-strip absolute inset-x-0 bottom-0" />
+        <div className="relative flex h-full flex-col justify-between p-12">
+          <Logo size="lg" />
+          <div className="space-y-8">
+            <p className="font-display text-7xl leading-[0.9] text-stone-50">
+              Find the place
+              <br />
+              your scene was
+              <br />
+              <span className="text-amber-400">written for.</span>
+            </p>
+            <ul className="space-y-3">
+              {features.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-3 text-stone-300">
+                  <span className="flex size-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 ring-1 ring-amber-400/25">
+                    <Icon aria-hidden className="size-4" />
+                  </span>
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-xs tracking-[0.3em] text-stone-500 uppercase">AI location scouting for film and TV</p>
         </div>
-        <div className="rounded-lg border border-stone-800 bg-stone-900/60 p-6">{children}</div>
-        <p className="text-center text-sm text-stone-400">{footer}</p>
+      </aside>
+
+      <div className="flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-3 text-center">
+            <span className="lg:hidden">
+              <Logo size="lg" />
+            </span>
+            <h1 className="font-display text-5xl leading-none text-stone-50">{title}</h1>
+          </div>
+          <Card className="p-6">{children}</Card>
+          <p className="text-center text-sm text-stone-400">{footer}</p>
+        </div>
       </div>
     </div>
   )

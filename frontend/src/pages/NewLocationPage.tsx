@@ -63,11 +63,11 @@ export function NewLocationPage() {
   const scenePath = `/scenes/${sceneId}`
   return (
     <div className="space-y-6">
-      <Link to={scenePath} className="text-sm text-stone-400 hover:text-stone-200">
+      <Link to={scenePath} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
         ← {sceneLabel(scene.data)}
       </Link>
-      <section aria-labelledby="new-location" className="rounded-lg border border-stone-800 bg-stone-900/60 p-6">
-        <h1 id="new-location" className="mb-1 text-xl font-semibold">
+      <section aria-labelledby="new-location" className="mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
+        <h1 id="new-location" className="mb-2 font-display text-5xl leading-none text-stone-50">
           Add a venue
         </h1>
         <p className="mb-4 text-sm text-stone-400">A place you found yourself. It is saved without an AI assessment.</p>

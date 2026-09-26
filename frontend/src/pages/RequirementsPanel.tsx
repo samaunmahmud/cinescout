@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { queryKeys } from '../api/queryKeys'
 import type { AcousticSensitivity, Scene, SceneRequirements } from '../api/types'
 import { useSession } from '../auth/context'
+import { Building2, Clock, Lightbulb, Palette, Sparkles, Users, Volume2, type LucideIcon } from 'lucide-react'
+import { Eyebrow, Fact } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 
 const sensitivity: Record<AcousticSensitivity, string> = {
@@ -34,11 +36,14 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
   )
 
   return (
-    <section aria-labelledby="requirements-heading" className="space-y-4 rounded-lg border border-stone-800 bg-stone-900/60 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 id="requirements-heading" className="text-lg font-semibold">
-          Location requirements
-        </h2>
+    <section aria-labelledby="requirements-heading" className="relative space-y-5 overflow-hidden rounded-xl border border-amber-400/15 bg-gradient-to-br from-amber-500/[0.07] via-frame/90 to-reel p-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <Eyebrow icon={Sparkles}>Read by the AI</Eyebrow>
+          <h2 id="requirements-heading" className="font-display text-3xl leading-none">
+            Location requirements
+          </h2>
+        </div>
         {action}
       </div>
 
@@ -64,21 +69,20 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
 }
 
 function RequirementsList({ requirements: r }: { requirements: SceneRequirements }) {
-  const rows: [string, ReactNode][] = [
-    ['Setting', r.settingType],
-    ['Time of day', r.timeOfDay],
-    ['Visual mood', r.visualMood],
-    ['Lighting', r.lightingNeeds],
-    ['Sound', r.acousticSensitivity && sensitivity[r.acousticSensitivity]],
-    ['Cast and crew', r.estimatedCastAndCrewSize != null && `About ${r.estimatedCastAndCrewSize} people`],
+  const rows: [string, LucideIcon, ReactNode][] = [
+    ['Setting', Building2, r.settingType],
+    ['Time of day', Clock, r.timeOfDay],
+    ['Visual mood', Palette, r.visualMood],
+    ['Lighting', Lightbulb, r.lightingNeeds],
+    ['Sound', Volume2, r.acousticSensitivity && sensitivity[r.acousticSensitivity]],
+    ['Cast and crew', Users, r.estimatedCastAndCrewSize != null && `About ${r.estimatedCastAndCrewSize} people`],
   ]
   return (
-    <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-      {rows.map(([label, value]) => (
-        <div key={label}>
-          <dt className="text-xs font-medium tracking-wide text-stone-500 uppercase">{label}</dt>
-          <dd className="mt-1 text-stone-100">{value || <span className="text-stone-500">Not specified</span>}</dd>
-        </div>
+    <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {rows.map(([label, icon, value]) => (
+        <Fact key={label} icon={icon} label={label}>
+          {value || <span className="text-stone-500">Not specified</span>}
+        </Fact>
       ))}
     </dl>
   )

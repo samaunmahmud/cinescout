@@ -4,6 +4,9 @@ import { ApiError } from '../api/client'
 import { queryKeys } from '../api/queryKeys'
 import type { Location, Video } from '../api/types'
 import { useSession } from '../auth/context'
+import { Clapperboard, CirclePlay } from 'lucide-react'
+import { linkButton } from '../components/buttonStyles'
+import { EmptyState, Section } from '../components/surfaces'
 import { ErrorAlert, Spinner } from '../components/ui'
 import { embedUrl, isVideoId, searchUrl, thumbnailUrl, watchUrl } from '../lib/video'
 
@@ -25,44 +28,45 @@ export function VideosSection({ location }: { location: Location }) {
   const notConfigured = videos.error instanceof ApiError && videos.error.status === 503
 
   return (
-    <section aria-labelledby="videos-heading" className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 id="videos-heading" className="text-lg font-semibold">
-            Videos
-          </h2>
-          <p className="text-sm text-stone-400">See the place before the recce. From YouTube, for “{query}”.</p>
-        </div>
-        <a href={searchUrl(query)} target="_blank" rel="noopener noreferrer" className="text-sm text-amber-300 underline hover:text-amber-200">
+    <Section
+      titleId="videos-heading"
+      title="Videos"
+      eyebrow="See it before the recce"
+      icon={Clapperboard}
+      description={`From YouTube, for “${query}”.`}
+      actions={
+        <a href={searchUrl(query)} target="_blank" rel="noopener noreferrer" className={linkButton('secondary')}>
+          <CirclePlay aria-hidden className="size-4 text-red-500" />
           More on YouTube
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
-      </div>
+      }
+    >
 
       {videos.isPending ? (
         <Spinner label="Looking for videos" />
       ) : notConfigured ? (
-        <p className="rounded-lg border border-dashed border-stone-800 px-6 py-8 text-center text-stone-400">
+        <EmptyState icon={CirclePlay}>
           {(videos.error as ApiError).detail ?? 'Videos are not available right now.'} Use “More on YouTube” to search there.
-        </p>
+        </EmptyState>
       ) : videos.isError ? (
         <ErrorAlert error={videos.error} onRetry={() => videos.refetch()} />
       ) : (
         <VideoGrid videos={videos.data.videos.filter((video) => isVideoId(video.id))} />
       )}
-    </section>
+    </Section>
   )
 }
 
 function VideoGrid({ videos }: { videos: Video[] }) {
   const [playing, setPlaying] = useState<string | null>(null)
   if (videos.length === 0) {
-    return <p className="rounded-lg border border-dashed border-stone-800 px-6 py-8 text-center text-stone-400">No videos of this venue found.</p>
+    return <EmptyState icon={CirclePlay}>No videos of this venue found.</EmptyState>
   }
   return (
     <ul aria-label="Videos of the venue" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {videos.map((video) => (
-        <li key={video.id} className="overflow-hidden rounded-lg border border-stone-800 bg-stone-900/60">
+        <li key={video.id} className="overflow-hidden rounded-xl border border-white/[0.07] bg-reel shadow-lg shadow-black/40 transition hover:border-amber-400/30">
           <div className="relative aspect-video bg-black">
             {playing === video.id ? (
               <iframe

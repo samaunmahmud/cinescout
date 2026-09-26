@@ -22,8 +22,8 @@ export function ConfirmDelete({
   // Unique per panel: a page can show more than one (a list of locations, say).
   const titleId = useId()
   return (
-    <div role="alertdialog" aria-labelledby={titleId} className="space-y-3 rounded-lg border border-red-900 bg-red-950/40 p-5">
-      <h2 id={titleId} className="font-semibold">
+    <div role="alertdialog" aria-labelledby={titleId} className="space-y-3 rounded-xl border border-red-900/70 bg-red-950/40 p-5">
+      <h2 id={titleId} className="font-display text-2xl leading-none text-red-100">
         {title}
       </h2>
       <p className="text-sm text-stone-300">{children}</p>

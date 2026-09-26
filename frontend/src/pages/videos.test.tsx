@@ -18,7 +18,7 @@ function serverFor(videos: () => Response) {
 describe("a venue's videos", () => {
   it('show a thumbnail per video, built from its id, and a link to more on YouTube', async () => {
     serverFor(() => json(locationVideos()))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=videos')
     await logIn()
 
     const list = await screen.findByRole('list', { name: 'Videos of the venue' })
@@ -39,7 +39,7 @@ describe("a venue's videos", () => {
 
   it('play in place with the no-cookie player only when asked', async () => {
     serverFor(() => json(locationVideos()))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=videos')
     const user = await logIn()
 
     const list = await screen.findByRole('list', { name: 'Videos of the venue' })
@@ -58,7 +58,7 @@ describe("a venue's videos", () => {
       videos: [{ id: '"><img src=x onerror=alert(1)>', title: 'Evil', channel: 'X', publishedAt: null }, locationVideos().videos[0]],
     })
     serverFor(() => json(tampered))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=videos')
     await logIn()
 
     const list = await screen.findByRole('list', { name: 'Videos of the venue' })
@@ -68,7 +68,7 @@ describe("a venue's videos", () => {
 
   it('say when none were found', async () => {
     serverFor(() => json(locationVideos({ videos: [] })))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=videos')
     await logIn()
 
     expect(await screen.findByText('No videos of this venue found.')).toBeInTheDocument()
@@ -76,7 +76,7 @@ describe("a venue's videos", () => {
 
   it('fall back to a YouTube search when the server cannot search', async () => {
     serverFor(() => problem(503, 'Not available', 'Videos are not configured on this server'))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=videos')
     await logIn()
 
     expect(await screen.findByText(/Videos are not configured on this server/)).toBeInTheDocument()
@@ -90,7 +90,7 @@ describe("a venue's videos", () => {
   it('offer to try again after another failure', async () => {
     let calls = 0
     serverFor(() => (++calls === 1 ? problem(502, 'Bad gateway', 'The video service rejected our request') : json(locationVideos())))
-    renderApp('/locations/l1')
+    renderApp('/locations/l1?tab=videos')
     const user = await logIn()
 
     const alert = await screen.findByRole('alert')
