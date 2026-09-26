@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import type { BookingFriction, Location, LocationStatus } from '../api/types'
+import { fitBand, type FitBand } from '../lib/fit'
 import type { useUpdateLocation } from './locationHooks'
 import { Badge } from './ui'
 
@@ -42,8 +43,14 @@ export function StatusSelect({ location, update }: { location: Location; update:
   )
 }
 
+const fitScoreTones: Record<FitBand, string> = {
+  good: 'text-emerald-300 border-emerald-800',
+  fair: 'text-amber-300 border-amber-800',
+  poor: 'text-red-300 border-red-900',
+}
+
 export function FitScore({ score }: { score: number }) {
-  const tone = score >= 75 ? 'text-emerald-300 border-emerald-800' : score >= 50 ? 'text-amber-300 border-amber-800' : 'text-red-300 border-red-900'
+  const tone = fitScoreTones[fitBand(score)]
   return (
     <span
       className={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-base font-bold ${tone}`}

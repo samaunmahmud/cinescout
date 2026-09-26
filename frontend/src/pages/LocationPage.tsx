@@ -8,9 +8,12 @@ import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
 import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
+import { locationPin } from '../components/map/locationPin'
+import type { MapPin } from '../components/map/types'
+import { VenueMap } from '../components/map/VenueMap'
 import { Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { sceneLabel } from '../lib/format'
-import { formatCoordinates, osmLink, parseCoordinates } from '../lib/geo'
+import { formatCoordinates, osmLink, parseCoordinates, roundCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
 import { LogisticsSection } from './LogisticsSection'
@@ -172,6 +175,10 @@ function Position({ location }: { location: Location }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState('')
   const parsed = parseCoordinates(text)
+  const pin = locationPin(location, { withLink: false })
+  // While editing, the pin follows what has been typed or picked, as long as it reads as coordinates.
+  const placed = parsed.ok && parsed.value ? parsed.value : current
+  const editedPin: MapPin | null = placed && { ...(pin ?? { id: location.id, label: location.name, tone: 'neutral' }), position: placed }
 
   const relocate = useMutation({
     mutationFn: (body: { latitude: number; longitude: number }) => api.locations.updateCoordinates(location.id, body),
@@ -213,11 +220,17 @@ function Position({ location }: { location: Location }) {
           <TextField
             label="Coordinates"
             placeholder="40.6745, -73.9633"
-            hint="Latitude, longitude in decimal degrees, as copied from a map."
+            hint="Latitude, longitude in decimal degrees, as copied from a map. Or click the spot on the map below."
             value={text}
             onChange={(e) => setText(e.target.value)}
             error={(!parsed.ok ? parsed.error : (server.latitude ?? server.longitude)) || undefined}
             autoFocus
+          />
+          <VenueMap
+            pins={editedPin ? [editedPin] : []}
+            label="Map: click to place the pin"
+            onPick={(spot) => setText(formatCoordinates(roundCoordinates(spot)))}
+            className="h-72"
           />
           {location.logistics && (
             <p role="note" className="rounded-md border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
@@ -233,14 +246,17 @@ function Position({ location }: { location: Location }) {
             </Button>
           </div>
         </form>
-      ) : current ? (
-        <p className="text-sm text-stone-300">
-          {formatCoordinates(current)} ·{' '}
-          <a href={osmLink(current)} target="_blank" rel="noopener noreferrer" className="text-amber-300 underline hover:text-amber-200">
-            View on OpenStreetMap
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
-        </p>
+      ) : current && pin ? (
+        <div className="space-y-2">
+          <VenueMap pins={[pin]} label={`Map of ${location.name}`} className="h-64" />
+          <p className="text-sm text-stone-300">
+            {formatCoordinates(current)} ·{' '}
+            <a href={osmLink(current)} target="_blank" rel="noopener noreferrer" className="text-amber-300 underline hover:text-amber-200">
+              View on OpenStreetMap
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+        </div>
       ) : (
         <p className="text-sm text-stone-400">
           Not set. Logistics look the venue up from its {location.address ? 'address' : 'name'}; set the coordinates if that finds the wrong place.

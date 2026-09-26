@@ -7,6 +7,9 @@ import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useUpdateLocation } from '../components/locationHooks'
 import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
+import { locationPin } from '../components/map/locationPin'
+import type { MapPin } from '../components/map/types'
+import { VenueMap } from '../components/map/VenueMap'
 import { linkButton } from '../components/buttonStyles'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { scoutingSummary } from '../lib/format'
@@ -86,15 +89,35 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
           </p>
         )
       ) : (
-        <ul aria-label="Candidate locations" className="space-y-3">
-          {locations.data.map((location) => (
-            <li key={location.id}>
-              <LocationCard location={location} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <LocationsMap locations={locations.data} />
+          <ul aria-label="Candidate locations" className="space-y-3">
+            {locations.data.map((location) => (
+              <li key={location.id}>
+                <LocationCard location={location} />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
+  )
+}
+
+/** The venues that have a position, and a word on the ones that do not. */
+function LocationsMap({ locations }: { locations: Location[] }) {
+  const pins = locations.map((location) => locationPin(location)).filter((pin): pin is MapPin => pin !== null)
+  const unplaced = locations.length - pins.length
+  const hint = 'Scouted venues get a position when their logistics are worked out, or you can set one on the venue’s page.'
+  return (
+    <div className="space-y-2">
+      {pins.length > 0 && <VenueMap pins={pins} label="Map of candidate locations" />}
+      {unplaced > 0 && (
+        <p className="text-sm text-stone-400">
+          {pins.length === 0 ? 'None of these venues is on a map yet.' : `${unplaced} of ${locations.length} venues are not on the map yet.`} {hint}
+        </p>
+      )}
+    </div>
   )
 }
 

@@ -23,7 +23,12 @@ export function parseCoordinates(text: string): ParsedCoordinates {
   const longitude = Number(match[2])
   if (Math.abs(latitude) > 90) return { ok: false, error: 'Latitude must be between -90 and 90.' }
   if (Math.abs(longitude) > 180) return { ok: false, error: 'Longitude must be between -180 and 180.' }
-  return { ok: true, value: { latitude: round6(latitude), longitude: round6(longitude) } }
+  return { ok: true, value: roundCoordinates({ latitude, longitude }) }
+}
+
+/** To the precision the server keeps, e.g. for a spot picked on a map. */
+export function roundCoordinates({ latitude, longitude }: Coordinates): Coordinates {
+  return { latitude: round6(latitude), longitude: round6(longitude) }
 }
 
 export function formatCoordinates({ latitude, longitude }: Coordinates): string {

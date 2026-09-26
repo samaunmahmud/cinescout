@@ -49,6 +49,10 @@ npm run build
 The dev server proxies `/api` to `http://localhost:8081`; set `BACKEND_URL` to point it elsewhere. The web app
 logs in with HTTP Basic and keeps the credentials in memory only, so reloading the page asks for them again.
 
+Maps use Leaflet with OpenStreetMap's own tile server, which needs no key but is meant for light use only
+([tile usage policy](https://operations.osmfoundation.org/policies/tiles/)). For a real deployment, set
+`VITE_MAP_TILE_URL` (a `{z}/{x}/{y}` template) and `VITE_MAP_TILE_ATTRIBUTION` at build time to another provider.
+
 Configuration comes from the environment:
 
 | Variable | Default |

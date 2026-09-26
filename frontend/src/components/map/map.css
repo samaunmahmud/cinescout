@@ -1,0 +1,49 @@
+/* Leaflet's light chrome, adjusted to the app's dark theme. Tiles are darkened, not inverted, so map colours still read. */
+.cinescout-map .leaflet-container {
+  background: #1c1917;
+  font: inherit;
+}
+
+.cinescout-map.picking .leaflet-container {
+  cursor: crosshair;
+}
+
+.cinescout-map .leaflet-tile-pane {
+  filter: brightness(0.75) saturate(0.8);
+}
+
+.cinescout-map .leaflet-popup-content-wrapper,
+.cinescout-map .leaflet-popup-tip {
+  background: #1c1917;
+  color: #f5f5f4;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+}
+
+.cinescout-map .leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.cinescout-map .leaflet-container a.leaflet-popup-close-button {
+  color: #a8a29e;
+}
+
+.cinescout-map .leaflet-control-attribution {
+  background: rgb(12 10 9 / 0.75);
+  color: #a8a29e;
+}
+
+.cinescout-map .leaflet-control-attribution a {
+  color: #fcd34d;
+}
+
+.cinescout-map .leaflet-bar a {
+  background: #292524;
+  border-color: #44403c;
+  color: #f5f5f4;
+}
+
+.cinescout-map .leaflet-bar a:hover {
+  background: #44403c;
+}
