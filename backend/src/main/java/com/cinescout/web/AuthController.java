@@ -3,7 +3,11 @@ package com.cinescout.web;
 import com.cinescout.dto.LoginRequest;
 import com.cinescout.dto.RegisterRequest;
 import com.cinescout.dto.UserResponse;
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.security.AuthenticatedUser;
+import com.cinescout.security.ClientAddress;
+import com.cinescout.security.LoginThrottledException;
 import com.cinescout.security.SecurityProperties;
 import com.cinescout.security.SessionCookies;
 import com.cinescout.security.SessionService;
@@ -12,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,27 +43,30 @@ class AuthController {
     private final ReactiveAuthenticationManager passwords;
     private final SessionService sessions;
     private final SessionCookies cookies;
+    private final RateLimiter limits;
 
     AuthController(UserService users, SecurityProperties security, ReactiveAuthenticationManager passwords,
-                   SessionService sessions, SessionCookies cookies) {
+                   SessionService sessions, SessionCookies cookies, RateLimiter limits) {
         this.users = users;
         this.security = security;
         this.passwords = passwords;
         this.sessions = sessions;
         this.cookies = cookies;
+        this.limits = limits;
     }
 
     /** Creates an account. Public; log in afterwards, or send HTTP Basic credentials. */
     @Operation(summary = "Register an account",
             description = "Creates a regular account. Then log in for a session cookie, or send the email and password as HTTP Basic credentials.")
     @SecurityRequirements
+    @ApiResponse(responseCode = "429", description = "Too many accounts opened from this address lately; see Retry-After")
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    Mono<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+    Mono<UserResponse> register(@Valid @RequestBody RegisterRequest request, ServerWebExchange exchange) {
         if (!security.registrationOpen()) {
             return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Registration is closed"));
         }
-        return users.register(request);
+        return limits.acquire(RateLimit.REGISTER, ClientAddress.of(exchange)).then(Mono.defer(() -> users.register(request)));
     }
 
     /**
@@ -69,11 +77,13 @@ class AuthController {
             description = "Sets an HttpOnly session cookie. It counts only on requests that also send "
                     + "`X-Requested-With: XMLHttpRequest`, which protects it from cross-site requests.")
     @SecurityRequirements
+    @ApiResponse(responseCode = "429", description = "Too many failed logins from this address lately; see Retry-After")
     @PostMapping("/login")
     Mono<UserResponse> login(@Valid @RequestBody LoginRequest request, ServerWebExchange exchange) {
         return passwords.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(request.email().strip(), request.password()))
-                .onErrorMap(AuthenticationException.class,
-                        e -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "The email or password is not right"))
+                .onErrorMap(AuthenticationException.class, e -> e instanceof LoginThrottledException throttled
+                        ? throttled.limit()
+                        : new ResponseStatusException(HttpStatus.UNAUTHORIZED, "The email or password is not right"))
                 .map(authentication -> ((AuthenticatedUser) authentication.getPrincipal()).id())
                 .flatMap(userId -> sessions.open(userId)
                         .doOnNext(token -> exchange.getResponse().addCookie(cookies.issue(exchange, token, sessions.ttl())))

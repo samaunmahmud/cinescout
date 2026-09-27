@@ -4,6 +4,8 @@ import com.cinescout.dto.GenerateOutreachRequest;
 import com.cinescout.dto.OutreachDraftResponse;
 import com.cinescout.dto.UpdateOutreachRequest;
 import com.cinescout.outreach.OutreachGenerationService;
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.OutreachService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,10 +42,12 @@ class OutreachController {
 
     private final OutreachService outreach;
     private final ObjectProvider<OutreachGenerationService> generation;
+    private final RateLimiter limits;
 
-    OutreachController(OutreachService outreach, ObjectProvider<OutreachGenerationService> generation) {
+    OutreachController(OutreachService outreach, ObjectProvider<OutreachGenerationService> generation, RateLimiter limits) {
         this.outreach = outreach;
         this.generation = generation;
+        this.limits = limits;
     }
 
     /** A location's drafts, newest first. */
@@ -61,12 +65,13 @@ class OutreachController {
     @Operation(summary = "Generate an outreach email for a location",
             description = "The model sees the venue, the scene's requirements (never the script), the sender's name and the shoot dates. Calls a paid service and can take many seconds.")
     @ApiResponse(responseCode = "201", description = "Created; the Location header points at the new draft")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of AI calls is used up; see Retry-After")
     @ApiResponse(responseCode = "502", description = "The model returned an unusable answer or the provider key is misconfigured")
     @ApiResponse(responseCode = "503", description = "The AI provider is unavailable, or generation is not configured on this server; see Retry-After")
     @PostMapping("/locations/{locationId}/outreach-drafts/generate")
     Mono<ResponseEntity<OutreachDraftResponse>> generate(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                                          @Valid @RequestBody(required = false) GenerateOutreachRequest request) {
-        return service().flatMap(s -> s.generate(user.id(), locationId, request))
+        return service(user).flatMap(s -> s.generate(user.id(), locationId, request))
                 .map(draft -> ResponseEntity.created(URI.create("/api/outreach-drafts/" + draft.id())).body(draft));
     }
 
@@ -92,12 +97,13 @@ class OutreachController {
         return outreach.delete(user.id(), draftId);
     }
 
-    private Mono<OutreachGenerationService> service() {
+    /** The service, once the call is within the user's AI limit; an unconfigured server does not count the call. */
+    private Mono<OutreachGenerationService> service(AuthenticatedUser user) {
         return Mono.defer(() -> {
             OutreachGenerationService service = generation.getIfAvailable();
             return service == null
                     ? Mono.error(new FeatureUnavailableException("Outreach generation is not configured on this server"))
-                    : Mono.just(service);
+                    : limits.acquire(RateLimit.AI, user.id()).thenReturn(service);
         });
     }
 }

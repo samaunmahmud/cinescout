@@ -2,6 +2,7 @@ package com.cinescout.web;
 
 import com.cinescout.llm.LlmException;
 import com.cinescout.logistics.LogisticsException;
+import com.cinescout.ratelimit.RateLimitExceededException;
 import com.cinescout.scouting.ScoutingException;
 import com.cinescout.search.SearchException;
 import com.cinescout.service.ConflictException;
@@ -89,6 +90,16 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(FeatureUnavailableException.class)
     ResponseEntity<ProblemDetail> unavailable(FeatureUnavailableException e) {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "Not available", e.getMessage());
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    ResponseEntity<ProblemDetail> rateLimited(RateLimitExceededException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, e.detail());
+        problem.setTitle("Too many requests");
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.retryAfterSeconds()))
+                .body(problem);
     }
 
     // --- the AI and search providers -------------------------------------------------------------

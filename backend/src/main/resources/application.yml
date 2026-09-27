@@ -26,6 +26,13 @@ cinescout:
   video:
     youtube:                   # venue videos exist only when YOUTUBE_API_KEY is set
       api-key: ${YOUTUBE_API_KEY:}
+  rate-limits:                 # per user (ai, scouting, lookups) or per client address (login, register):
+    enabled: true              # a burst of `capacity` calls, then refilled evenly over `period`
+    ai:        { capacity: 30,  period: 1h }
+    scouting:  { capacity: 10,  period: 1h }
+    lookups:   { capacity: 120, period: 1h }
+    login:     { capacity: 20,  period: 10m }
+    register:  { capacity: 5,   period: 1h }
 
 server:
   port: ${PORT:8081}           # 8080 is used by the Node prototype

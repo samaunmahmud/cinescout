@@ -20,6 +20,8 @@ import java.util.Map;
  * A browser answers {@code WWW-Authenticate: Basic} with its own login dialog, even for a script's request.
  * The web app marks its requests with {@code X-Requested-With: XMLHttpRequest} and shows its own login form,
  * so those requests get the 401 without the challenge header.
+ * <p>
+ * A client that has failed to log in too often gets a 429 with a Retry-After instead, whatever it sent.
  */
 final class ProblemAuthenticationEntryPoint implements ServerAuthenticationEntryPoint {
 
@@ -32,17 +34,25 @@ final class ProblemAuthenticationEntryPoint implements ServerAuthenticationEntry
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException ex) {
         ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+        if (ex instanceof LoginThrottledException throttled) {
+            response.getHeaders().set(HttpHeaders.RETRY_AFTER, String.valueOf(throttled.limit().retryAfterSeconds()));
+            return write(response, HttpStatus.TOO_MANY_REQUESTS, "Too many requests", throttled.limit().detail());
+        }
         if (!isScriptRequest(exchange)) {
             response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"CineScout\", charset=\"UTF-8\"");
         }
+        return write(response, HttpStatus.UNAUTHORIZED, "Unauthorized", "Valid credentials are required");
+    }
+
+    private Mono<Void> write(ServerHttpResponse response, HttpStatus status, String title, String detail) {
+        response.setStatusCode(status);
         response.getHeaders().setContentType(MediaType.APPLICATION_PROBLEM_JSON);
         try {
             byte[] body = mapper.writeValueAsBytes(Map.of(
                     "type", "about:blank",
-                    "title", "Unauthorized",
-                    "status", 401,
-                    "detail", "Valid credentials are required"));
+                    "title", title,
+                    "status", status.value(),
+                    "detail", detail));
             return response.writeWith(Mono.just(response.bufferFactory().wrap(body)));
         } catch (JsonProcessingException e) {
             return response.setComplete();

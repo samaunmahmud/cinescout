@@ -1,6 +1,8 @@
 package com.cinescout.web;
 
 import com.cinescout.dto.SceneResponse;
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.scouting.SceneScoutingService;
 import com.cinescout.scouting.ScoutingResult;
 import com.cinescout.search.LocationSearchRequest;
@@ -24,7 +26,8 @@ import java.util.UUID;
 /**
  * The AI-backed endpoints. They call paid external services and take seconds (longer when a provider
  * is struggling and retries kick in), so clients should set generous timeouts. The service only exists
- * when both the watsonx.ai and Parallel API keys are configured; without them these answer 503.
+ * when both the watsonx.ai and Parallel API keys are configured; without them these answer 503. Each user gets a
+ * limited number of calls an hour (429 beyond it).
  */
 @RestController
 @RequestMapping("/api/scenes/{sceneId}")
@@ -32,18 +35,21 @@ import java.util.UUID;
 class ScoutingController {
 
     private final ObjectProvider<SceneScoutingService> scouting;
+    private final RateLimiter limits;
 
-    ScoutingController(ObjectProvider<SceneScoutingService> scouting) {
+    ScoutingController(ObjectProvider<SceneScoutingService> scouting, RateLimiter limits) {
         this.scouting = scouting;
+        this.limits = limits;
     }
 
     /** Extracts the scene's physical filming requirements from its script, replacing any earlier ones. */
     @Operation(summary = "Extract a scene's filming requirements")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of AI calls is used up; see Retry-After")
     @ApiResponse(responseCode = "502", description = "The model returned an unusable answer (the scene is marked FAILED) or a provider key is misconfigured")
     @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
     @PostMapping("/parse")
     Mono<SceneResponse> parse(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {
-        return service().flatMap(s -> s.parseScene(user.id(), sceneId));
+        return service(RateLimit.AI, user).flatMap(s -> s.parseScene(user.id(), sceneId));
     }
 
     /**
@@ -56,21 +62,23 @@ class ScoutingController {
     @Operation(summary = "Scout venues for a scene",
             description = "Searches the project's location area, assesses each venue against the scene and saves the new ones as suggested locations.")
     @ApiResponse(responseCode = "409", description = "The scene's project has no location area yet")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of scouting runs is used up; see Retry-After")
     @ApiResponse(responseCode = "502", description = "The model returned an unusable answer or a provider key is misconfigured")
     @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
     @PostMapping("/scout")
     Mono<ScoutingResult> scout(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                @RequestParam(defaultValue = "" + LocationSearchRequest.DEFAULT_MAX_RESULTS)
                                @Min(1) @Max(LocationSearchRequest.MAX_RESULTS) int maxResults) {
-        return service().flatMap(s -> s.scout(user.id(), sceneId, maxResults));
+        return service(RateLimit.SCOUTING, user).flatMap(s -> s.scout(user.id(), sceneId, maxResults));
     }
 
-    private Mono<SceneScoutingService> service() {
+    /** The service, once the call is within the user's limit; an unconfigured server does not count the call. */
+    private Mono<SceneScoutingService> service(RateLimit limit, AuthenticatedUser user) {
         return Mono.defer(() -> {
             SceneScoutingService service = scouting.getIfAvailable();
             return service == null
                     ? Mono.error(new FeatureUnavailableException("Scouting is not configured on this server"))
-                    : Mono.just(service);
+                    : limits.acquire(limit, user.id()).thenReturn(service);
         });
     }
 }

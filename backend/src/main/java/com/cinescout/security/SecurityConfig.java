@@ -1,12 +1,15 @@
 package com.cinescout.security;
 
 import com.cinescout.persistence.BlockingTransactions;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.repository.AuthSessionRepository;
 import com.cinescout.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
@@ -54,12 +57,23 @@ class SecurityConfig {
                 .map(user -> (org.springframework.security.core.userdetails.UserDetails) user);
     }
 
-    /** Checks an email and password; HTTP Basic and the login endpoint both use it. */
+    /**
+     * Checks an email and password; HTTP Basic and the login endpoint both use it. Failures are limited per client
+     * address ({@link ThrottledAuthentication}), which {@link ClientAddress} makes known to it.
+     */
     @Bean
-    ReactiveAuthenticationManager passwordAuthentication(ReactiveUserDetailsService userDetails, PasswordEncoder encoder) {
+    ReactiveAuthenticationManager passwordAuthentication(ReactiveUserDetailsService userDetails, PasswordEncoder encoder,
+                                                         RateLimiter limits) {
         UserDetailsRepositoryReactiveAuthenticationManager manager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetails);
         manager.setPasswordEncoder(encoder);
-        return manager;
+        return new ThrottledAuthentication(manager, limits);
+    }
+
+    /** Runs before Spring Security's filters, so the address is known to the password check. */
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    ClientAddress clientAddress() {
+        return new ClientAddress();
     }
 
     @Bean

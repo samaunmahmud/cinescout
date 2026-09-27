@@ -37,6 +37,7 @@ services:
       # nginx (and Caddy in front of it) say which scheme the browser used; the session cookie is Secure over HTTPS.
       SERVER_FORWARD_HEADERS_STRATEGY: framework
       CINESCOUT_SECURITY_REGISTRATIONOPEN: ${REGISTRATION_OPEN:-true}
+      CINESCOUT_RATELIMITS_ENABLED: ${RATE_LIMITS_ENABLED:-true}
       CINESCOUT_LOGISTICS_USERAGENT: ${OSM_USER_AGENT:-CineScout/0.1 (+https://github.com/samaunmahmud/cinescout)}
       # Optional: AI scene analysis, scouting and outreach need these (the app starts without them).
       WATSONX_API_KEY: ${WATSONX_API_KEY:-}

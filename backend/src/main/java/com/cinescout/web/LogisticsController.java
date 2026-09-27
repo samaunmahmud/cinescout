@@ -2,6 +2,8 @@ package com.cinescout.web;
 
 import com.cinescout.logistics.LogisticsReport;
 import com.cinescout.logistics.LogisticsService;
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.security.AuthenticatedUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,9 +32,11 @@ import java.util.UUID;
 class LogisticsController {
 
     private final LogisticsService logistics;
+    private final RateLimiter limits;
 
-    LogisticsController(LogisticsService logistics) {
+    LogisticsController(LogisticsService logistics, RateLimiter limits) {
         this.logistics = logistics;
+        this.limits = limits;
     }
 
     /** The report as it was last worked out; 404 until it has been. */
@@ -54,9 +58,10 @@ class LogisticsController {
                     + "Sections whose provider is down are marked UNAVAILABLE rather than failing the call; when the map "
                     + "service is busy the call can take up to half a minute.")
     @ApiResponse(responseCode = "409", description = "The venue has no coordinates and could not be found on the map; set them first")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of lookups is used up; see Retry-After")
     @ApiResponse(responseCode = "503", description = "The venue needed geocoding and the map service is unavailable; see Retry-After")
     @PostMapping
     Mono<LogisticsReport> refresh(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {
-        return logistics.refresh(user.id(), locationId);
+        return limits.acquire(RateLimit.LOOKUPS, user.id()).then(Mono.defer(() -> logistics.refresh(user.id(), locationId)));
     }
 }

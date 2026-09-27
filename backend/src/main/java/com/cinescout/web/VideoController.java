@@ -1,5 +1,7 @@
 package com.cinescout.web;
 
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.video.LocationVideos;
 import com.cinescout.video.VideoService;
@@ -21,15 +23,18 @@ import java.util.UUID;
 class VideoController {
 
     private final ObjectProvider<VideoService> videos;
+    private final RateLimiter limits;
 
-    VideoController(ObjectProvider<VideoService> videos) {
+    VideoController(ObjectProvider<VideoService> videos, RateLimiter limits) {
         this.videos = videos;
+        this.limits = limits;
     }
 
     @Operation(summary = "Videos of a location",
             description = "Searches for the venue's name and address (or the project's area). Results are cached on the "
                     + "location for a week, or until its name or address changes. Each video's id is 11 characters of "
                     + "[A-Za-z0-9_-]; build thumbnail and player URLs from it.")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of lookups is used up; see Retry-After")
     @ApiResponse(responseCode = "503", description = "Videos are not configured on this server, the provider is down, or its daily quota is used up")
     @ApiResponse(responseCode = "502", description = "The provider rejected the server's API key")
     @GetMapping("/api/locations/{locationId}/videos")
@@ -38,7 +43,7 @@ class VideoController {
             VideoService service = videos.getIfAvailable();
             return service == null
                     ? Mono.error(new FeatureUnavailableException("Videos are not configured on this server"))
-                    : service.videos(user.id(), locationId);
+                    : limits.acquire(RateLimit.LOOKUPS, user.id()).then(Mono.defer(() -> service.videos(user.id(), locationId)));
         });
     }
 }

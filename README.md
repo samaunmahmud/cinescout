@@ -169,6 +169,24 @@ Errors are RFC 9457 problems (`application/problem+json`). Set `cinescout.securi
 to stop new accounts being created on a deployment that should not be public. Both logins carry secrets,
 so run any deployment behind HTTPS.
 
+### Rate limits
+
+The paid and rate-limited services are protected per user, and logins and sign-ups per client address. Past a
+limit the API answers `429` with a `Retry-After` header and a problem saying when to try again. Each limit is a
+burst of `capacity` calls, refilled evenly over `period` (`cinescout.rate-limits.<name>.capacity` / `.period`):
+
+| Limit | Counts | Default |
+|---|---|---|
+| `ai` | scene parsing and outreach generation, per user | 30 an hour |
+| `scouting` | scouting runs, per user | 10 an hour |
+| `lookups` | logistics runs and venue video searches, per user | 120 an hour |
+| `login` | failed logins (web app and HTTP Basic), per address | 20 per 10 minutes |
+| `register` | new accounts, per address | 5 an hour |
+
+The counts live in memory: a restart forgets them, and each instance counts on its own. Behind nginx the
+client address comes from `X-Forwarded-For`, which nginx sets itself (trusting it only from private networks,
+such as Caddy's). `cinescout.rate-limits.enabled=false` turns them all off.
+
 ## API
 
 Once running, the interactive documentation is at `/swagger-ui.html` and the OpenAPI description at
@@ -186,7 +204,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 
 `PUT` is a full replacement. Someone else's resource is always a `404`. The two scouting routes and
 `generate` call paid services and can take many seconds; they answer `503` when the server has no
-AI keys (`generate` needs only the watsonx.ai key). Listing, editing and deleting drafts always works.
+AI keys (`generate` needs only the watsonx.ai key), and `429` past the user's [rate limit](#rate-limits). Listing, editing and deleting drafts always works.
 The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
 
 `POST /locations/{id}/logistics` works out a location's shoot logistics and caches them on it (`GET` returns
