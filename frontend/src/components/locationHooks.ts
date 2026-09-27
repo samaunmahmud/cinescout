@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../api/queryKeys'
-import type { Location, UpdateLocationRequest } from '../api/types'
+import type { Location, Page, UpdateLocationRequest } from '../api/types'
 import { useSession } from '../auth/context'
 
-/** Puts a changed location into both the scene's list and its own page, whichever are cached. */
+/** Puts a changed location into the scene's list (every cached page of it) and its own page, whichever are cached. */
 export function useStoreLocation() {
   const queryClient = useQueryClient()
   return (updated: Location) => {
     queryClient.setQueryData(queryKeys.location(updated.id), updated)
-    queryClient.setQueryData<Location[]>(queryKeys.locationList(updated.sceneId), (list) =>
-      list?.map((l) => (l.id === updated.id ? updated : l)),
+    queryClient.setQueriesData<Page<Location>>({ queryKey: queryKeys.locationList(updated.sceneId) }, (page) =>
+      page && { ...page, items: page.items.map((l) => (l.id === updated.id ? updated : l)) },
     )
   }
 }

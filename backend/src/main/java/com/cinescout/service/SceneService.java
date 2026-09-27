@@ -2,6 +2,8 @@ package com.cinescout.service;
 
 import com.cinescout.domain.Project;
 import com.cinescout.domain.Scene;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.persistence.BlockingTransactions;
@@ -11,7 +13,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -44,10 +45,10 @@ public class SceneService {
     }
 
     /** In script order: numbered scenes by number, then unnumbered ones by creation. */
-    public Mono<List<SceneResponse>> list(UUID ownerId, UUID projectId) {
+    public Mono<PageResponse<SceneResponse>> list(UUID ownerId, UUID projectId, PageQuery page) {
         return db.call(() -> {
             projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
-            return scenes.findOwnedByProject(projectId, ownerId).stream().map(SceneResponse::from).toList();
+            return PageResponse.from(scenes.findOwnedByProject(projectId, ownerId, page.pageable()), SceneResponse::from);
         });
     }
 

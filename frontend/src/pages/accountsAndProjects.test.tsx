@@ -3,14 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Project } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { PASSWORD, ada, logIn, project } from '../test/fixtures'
+import { PASSWORD, ada, logIn, project, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 describe('logging in', () => {
   it('sends a logged-out visitor to the login page and back to where they were going', async () => {
     const { requests, authRequests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
       'GET /api/projects/p1': () => json(project()),
     })
     const { router } = renderApp('/projects/p1')
@@ -29,7 +29,7 @@ describe('logging in', () => {
 
   it('keeps the user logged in across a reload while the session lasts', async () => {
     fakeServer(
-      { 'GET /api/auth/me': () => json(ada), 'GET /api/projects/p1/scenes': () => json([]), 'GET /api/projects/p1': () => json(project()) },
+      { 'GET /api/auth/me': () => json(ada), 'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])), 'GET /api/projects/p1': () => json(project()) },
       { loggedIn: true },
     )
     const { router } = renderApp('/projects/p1')
@@ -60,7 +60,7 @@ describe('logging in', () => {
   })
 
   it('logs out, ending the session on the server', async () => {
-    const { authRequests } = fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE': () => json([]) })
+    const { authRequests } = fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])) })
     const { router } = renderApp('/login')
     const user = await logIn()
     await screen.findByText(/No projects yet/)
@@ -77,7 +77,7 @@ describe('logging in', () => {
   it('goes back to the login page when the session ends on the server', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects?status=ACTIVE': () => problem(401, 'Unauthorized', 'Valid credentials are required'),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => problem(401, 'Unauthorized', 'Valid credentials are required'),
     })
     renderApp('/login')
 
@@ -99,7 +99,7 @@ describe('registering', () => {
     const { authRequests } = fakeServer({
       'POST /api/auth/register': () => json(ada, 201),
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects?status=ACTIVE': () => json([]),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])),
     })
     renderApp('/register')
 
@@ -137,8 +137,8 @@ describe('projects', () => {
   it('lists active projects and switches to archived ones', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects?status=ACTIVE': () => json([project(), project({ id: 'p2', title: 'Day Break', locationArea: null, description: null })]),
-      'GET /api/projects?status=ARCHIVED': () => json([project({ id: 'p3', title: 'Old Film', status: 'ARCHIVED' })]),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([project(), project({ id: 'p2', title: 'Day Break', locationArea: null, description: null })])),
+      'GET /api/projects?status=ARCHIVED&page=0&size=24': () => json(pageOf([project({ id: 'p3', title: 'Old Film', status: 'ARCHIVED' })])),
     })
     renderApp('/login')
     const user = await logIn()
@@ -156,9 +156,9 @@ describe('projects', () => {
     const created = project({ id: 'p9', title: 'New Film', description: null, locationArea: null })
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects?status=ACTIVE': () => json([]),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])),
       'POST /api/projects': () => json(created, 201),
-      'GET /api/projects/p9/scenes': () => json([]),
+      'GET /api/projects/p9/scenes?page=0&size=24': () => json(pageOf([])),
     })
     const { router } = renderApp('/login')
     const user = await logIn()
@@ -176,7 +176,7 @@ describe('projects', () => {
   it('edits a project with a full replacement that keeps its status', async () => {
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
       'GET /api/projects/p1': () => json(project({ status: 'ARCHIVED' })),
       'PUT /api/projects/p1': (req) => json(project(req.body as Partial<Project>)),
     })
@@ -202,7 +202,7 @@ describe('projects', () => {
   it('archives and restores a project', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
       'GET /api/projects/p1': () => json(project()),
       'PUT /api/projects/p1': (req) => json(project(req.body as Partial<Project>)),
     })
@@ -218,10 +218,10 @@ describe('projects', () => {
   it('deletes a project only after confirmation', async () => {
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
       'GET /api/projects/p1': () => json(project()),
       'DELETE /api/projects/p1': () => new Response(null, { status: 204 }),
-      'GET /api/projects?status=ACTIVE': () => json([]),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])),
     })
     const { router } = renderApp('/projects/p1')
     const user = await logIn()

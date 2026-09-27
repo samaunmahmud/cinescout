@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { Location, Scene } from '../api/types'
+import type { Location, Page, Scene } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useUpdateLocation } from '../components/locationHooks'
@@ -11,6 +11,8 @@ import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
 import { linkButton } from '../components/buttonStyles'
+import { Pager } from '../components/Pager'
+import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { MapPin as PinIcon, MapPinned, Plus, Radar, TriangleAlert } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
@@ -24,7 +26,13 @@ import { displayHost, safeHttpUrl } from '../lib/url'
 export function LocationsSection({ scene, locationArea }: { scene: Scene; locationArea: string | null | undefined }) {
   const { api } = useSession()
   const queryClient = useQueryClient()
-  const locations = useQuery({ queryKey: queryKeys.locationList(scene.id), queryFn: () => api.locations.list(scene.id) })
+  const [page, setPage] = usePageParam()
+  const locations = useQuery({
+    queryKey: queryKeys.locationPage(scene.id, page),
+    queryFn: () => api.locations.list(scene.id, page),
+    placeholderData: previousPageOf<Page<Location>>(queryKeys.locationList(scene.id)),
+  })
+  useStayInRange(locations.data, setPage)
 
   const scout = useMutation({
     mutationFn: () => api.scenes.scout(scene.id),
@@ -37,7 +45,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
   })
 
   const noArea = locationArea === null
-  const hasLocations = (locations.data?.length ?? 0) > 0
+  const hasLocations = (locations.data?.totalItems ?? 0) > 0
 
   return (
     <Section
@@ -86,7 +94,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         <Spinner label="Loading locations" />
       ) : locations.isError ? (
         <ErrorAlert error={locations.error} onRetry={() => locations.refetch()} />
-      ) : locations.data.length === 0 ? (
+      ) : locations.data.items.length === 0 ? (
         !scout.isPending && (
           <EmptyState icon={Radar}>
             No locations yet. Scouting searches the web for real venues that suit the scene and rates how well each one fits.
@@ -94,28 +102,30 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         )
       ) : (
         <>
-          <LocationsMap locations={locations.data} />
+          <LocationsMap locations={locations.data.items} paged={locations.data.totalPages > 1} />
           <ul aria-label="Candidate locations" className="space-y-3">
-            {locations.data.map((location) => (
+            {locations.data.items.map((location) => (
               <li key={location.id}>
                 <LocationCard location={location} />
               </li>
             ))}
           </ul>
+          <Pager data={locations.data} onChange={setPage} label="Location pages" />
         </>
       )}
     </Section>
   )
 }
 
-/** The venues that have a position, and a word on the ones that do not. */
-function LocationsMap({ locations }: { locations: Location[] }) {
+/** The venues that have a position, and a word on the ones that do not. `paged`: these are one page of several. */
+function LocationsMap({ locations, paged }: { locations: Location[]; paged: boolean }) {
   const pins = locations.map((location) => locationPin(location)).filter((pin): pin is MapPin => pin !== null)
   const unplaced = locations.length - pins.length
   const hint = 'Scouted venues get a position when their logistics are worked out, or you can set one on the venue’s page.'
   return (
     <div className="space-y-2">
       {pins.length > 0 && <VenueMap pins={pins} label="Map of candidate locations" className="h-80 shadow-xl shadow-black/40" />}
+      {pins.length > 0 && paged && <p className="text-sm text-stone-400">The map shows the venues on this page.</p>}
       {unplaced > 0 && (
         <p className="text-sm text-stone-400">
           {pins.length === 0 ? 'None of these venues is on a map yet.' : `${unplaced} of ${locations.length} venues are not on the map yet.`} {hint}
@@ -136,7 +146,11 @@ function LocationCard({ location }: { location: Location }) {
     mutationFn: () => api.locations.remove(location.id),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: queryKeys.location(location.id) })
-      queryClient.setQueryData<Location[]>(queryKeys.locationList(location.sceneId), (list) => list?.filter((l) => l.id !== location.id))
+      // Out of the page at once; then the list again, as the pages and totals have moved.
+      queryClient.setQueriesData<Page<Location>>({ queryKey: queryKeys.locationList(location.sceneId) }, (page) =>
+        page && { ...page, items: page.items.filter((l) => l.id !== location.id) },
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.locationList(location.sceneId) })
     },
   })
 

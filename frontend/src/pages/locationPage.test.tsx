@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Location } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, location, logIn, project, scene, logisticsReport, locationVideos } from '../test/fixtures'
+import { ada, location, logIn, project, scene, logisticsReport, locationVideos, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = {}) {
@@ -10,7 +10,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current),
     'GET /api/scenes/s1': () => json(scene()),
-    'GET /api/locations/l1/outreach-drafts': () => json([]),
+    'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
     'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
   })
@@ -102,7 +102,7 @@ describe('a location', () => {
     const { requests } = serverFor(location(), {
       'DELETE /api/locations/l1': () => new Response(null, { status: 204 }),
       'GET /api/projects/p1': () => json(project()),
-      'GET /api/scenes/s1/locations': () => json([]),
+      'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([])),
     })
     const { router } = renderApp('/locations/l1')
     const user = await logIn()
@@ -137,9 +137,9 @@ describe('adding a venue by hand', () => {
     const created = location({ id: 'l9', name: 'Corner Bistro', fitScore: null, sourceUrl: 'https://bistro.example/', latitude: 40.738, longitude: -74.004 })
     const { requests } = serverForNew({
       'GET /api/projects/p1': () => json(project()),
-      'GET /api/scenes/s1/locations': () => json([]),
+      'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([])),
       'POST /api/scenes/s1/locations': () => json(created, 201),
-      'GET /api/locations/l9/outreach-drafts': () => json([]),
+      'GET /api/locations/l9/outreach-drafts?page=0&size=24': () => json(pageOf([])),
       'GET /api/locations/l9/videos': () => json(locationVideos({ videos: [] })),
     })
     const { router } = renderApp('/scenes/s1')

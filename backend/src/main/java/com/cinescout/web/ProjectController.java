@@ -2,6 +2,8 @@ package com.cinescout.web;
 
 import com.cinescout.domain.ProjectStatus;
 import com.cinescout.dto.CreateProjectRequest;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.security.AuthenticatedUser;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,12 +51,12 @@ class ProjectController {
                 .map(project -> ResponseEntity.created(URI.create("/api/projects/" + project.id())).body(project));
     }
 
-    /** The caller's projects, newest first; {@code status} narrows the list. */
-    @Operation(summary = "List the caller's projects")
+    /** The caller's projects, newest first, a page at a time; {@code status} narrows the list. */
+    @Operation(summary = "List the caller's projects, newest first")
     @GetMapping
-    Mono<List<ProjectResponse>> list(@AuthenticationPrincipal AuthenticatedUser user,
-                                     @RequestParam(required = false) ProjectStatus status) {
-        return projects.list(user.id(), status);
+    Mono<PageResponse<ProjectResponse>> list(@AuthenticationPrincipal AuthenticatedUser user,
+                                             @RequestParam(required = false) ProjectStatus status, @Valid @ParameterObject PageQuery page) {
+        return projects.list(user.id(), status, page);
     }
 
     @Operation(summary = "Get a project")

@@ -3,6 +3,8 @@ package com.cinescout.service;
 import com.cinescout.domain.Project;
 import com.cinescout.domain.ProjectStatus;
 import com.cinescout.dto.CreateProjectRequest;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.persistence.BlockingTransactions;
@@ -11,7 +13,6 @@ import com.cinescout.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 /** A user's projects. Every operation is scoped to {@code ownerId}; entities never leave this class. */
@@ -37,11 +38,11 @@ public class ProjectService {
     }
 
     /** Newest first; {@code status} null means all. */
-    public Mono<List<ProjectResponse>> list(UUID ownerId, ProjectStatus status) {
-        return db.call(() -> (status == null
-                ? projects.findByOwnerIdOrderByCreatedAtDesc(ownerId)
-                : projects.findByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, status))
-                .stream().map(ProjectResponse::from).toList());
+    public Mono<PageResponse<ProjectResponse>> list(UUID ownerId, ProjectStatus status, PageQuery page) {
+        return db.call(() -> PageResponse.from(status == null
+                ? projects.findByOwnerIdOrderByCreatedAtDescIdDesc(ownerId, page.pageable())
+                : projects.findByOwnerIdAndStatusOrderByCreatedAtDescIdDesc(ownerId, status, page.pageable()),
+                ProjectResponse::from));
     }
 
     public Mono<ProjectResponse> get(UUID ownerId, UUID projectId) {

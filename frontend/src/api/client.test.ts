@@ -50,10 +50,10 @@ describe('request', () => {
 
 describe('createApi', () => {
   it('reports a rejected login so the app can log out', async () => {
-    fakeServer({ 'GET /api/projects': () => problem(401, 'Unauthorized', 'Valid credentials are required') })
+    fakeServer({ 'GET /api/projects?status=ACTIVE&page=0&size=24': () => problem(401, 'Unauthorized', 'Valid credentials are required') })
     const onUnauthorized = vi.fn()
 
-    await expect(createApi(onUnauthorized).projects.list()).rejects.toMatchObject({ status: 401 })
+    await expect(createApi(onUnauthorized).projects.list('ACTIVE')).rejects.toMatchObject({ status: 401 })
     expect(onUnauthorized).toHaveBeenCalledOnce()
   })
 

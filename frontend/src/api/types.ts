@@ -2,6 +2,16 @@
 
 export type UserRole = 'USER' | 'ADMIN'
 
+/** One page of a list. `page` is zero-based; a page past the end is empty but still has the totals. */
+export interface Page<T> {
+  items: T[]
+  page: number
+  size: number
+  totalItems: number
+  /** 0 when the list is empty. */
+  totalPages: number
+}
+
 export interface User {
   id: string
   email: string

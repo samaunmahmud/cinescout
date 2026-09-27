@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { Location } from '../api/types'
 import { formatDate } from '../lib/format'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, location, logIn, logisticsReport, scene, locationVideos } from '../test/fixtures'
+import { ada, location, logIn, logisticsReport, scene, locationVideos, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(current: () => Location, extra: Parameters<typeof fakeServer>[0] = {}) {
@@ -11,7 +11,7 @@ function serverFor(current: () => Location, extra: Parameters<typeof fakeServer>
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current()),
     'GET /api/scenes/s1': () => json(scene()),
-    'GET /api/locations/l1/outreach-drafts': () => json([]),
+    'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
     'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
   })
@@ -26,7 +26,7 @@ describe("a location's logistics", () => {
         current = location({ logistics: report, latitude: 40.67447, longitude: -73.963316 })
         return json(report)
       },
-      'GET /api/scenes/s1/locations': () => json([current]),
+      'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([current])),
     })
     renderApp('/locations/l1?tab=logistics')
     const user = await logIn()

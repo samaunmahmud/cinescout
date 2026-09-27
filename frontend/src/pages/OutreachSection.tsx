@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { fieldErrors } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
-import type { GenerateOutreachRequest, Location, OutreachDraft, OutreachStatus, OutreachTone, UpdateOutreachRequest } from '../api/types'
+import type { GenerateOutreachRequest, Location, OutreachDraft, OutreachStatus, OutreachTone, Page, UpdateOutreachRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { ConfirmDelete } from '../components/ConfirmDelete'
+import { Pager } from '../components/Pager'
+import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { Mail, Sparkles } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
@@ -34,19 +36,30 @@ export function OutreachSection({ location }: { location: Location }) {
   const { api } = useSession()
   const queryClient = useQueryClient()
   const listKey = queryKeys.outreachList(location.id)
-  const drafts = useQuery({ queryKey: listKey, queryFn: () => api.outreach.list(location.id) })
+  const [page, setPage] = usePageParam()
+  const drafts = useQuery({
+    queryKey: queryKeys.outreachPage(location.id, page),
+    queryFn: () => api.outreach.list(location.id, page),
+    placeholderData: previousPageOf<Page<OutreachDraft>>(listKey),
+  })
+  useStayInRange(drafts.data, setPage)
   const [composing, setComposing] = useState(false)
 
   const generate = useMutation({
     mutationFn: (body: GenerateOutreachRequest) => api.outreach.generate(location.id, body),
     onSuccess: (draft) => {
-      queryClient.setQueryData<OutreachDraft[]>(listKey, (list) => [draft, ...(list ?? [])])
+      // Newest first: the new draft heads the first page, and every page after it has shifted by one.
+      queryClient.setQueryData<Page<OutreachDraft>>(queryKeys.outreachPage(location.id, 0), (first) =>
+        first && { ...first, items: [draft, ...first.items].slice(0, first.size), totalItems: first.totalItems + 1 },
+      )
+      queryClient.invalidateQueries({ queryKey: listKey })
+      setPage(0)
       setComposing(false)
     },
   })
 
   // Whoever the last email went to is the likeliest recipient of the next one.
-  const latest = drafts.data?.[0]
+  const latest = drafts.data?.items[0]
 
   return (
     <Section
@@ -84,20 +97,23 @@ export function OutreachSection({ location }: { location: Location }) {
         <Spinner label="Loading emails" />
       ) : drafts.isError ? (
         <ErrorAlert error={drafts.error} onRetry={() => drafts.refetch()} />
-      ) : drafts.data.length === 0 ? (
+      ) : drafts.data.items.length === 0 ? (
         !composing && (
           <EmptyState icon={Mail}>
             No emails yet. The AI drafts a request to film here from the venue and the scene's needs, for you to check and send.
           </EmptyState>
         )
       ) : (
-        <ul aria-label="Emails" className="space-y-3">
-          {drafts.data.map((draft) => (
-            <li key={draft.id}>
-              <DraftCard draft={draft} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul aria-label="Emails" className="space-y-3">
+            {drafts.data.items.map((draft) => (
+              <li key={draft.id}>
+                <DraftCard draft={draft} />
+              </li>
+            ))}
+          </ul>
+          <Pager data={drafts.data} onChange={setPage} label="Email pages" />
+        </>
       )}
     </Section>
   )
@@ -205,14 +221,21 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
   const update = useMutation({
     mutationFn: (body: UpdateOutreachRequest) => api.outreach.update(draft.id, body),
     onSuccess: (updated) => {
-      queryClient.setQueryData<OutreachDraft[]>(listKey, (list) => list?.map((d) => (d.id === updated.id ? updated : d)))
+      queryClient.setQueriesData<Page<OutreachDraft>>({ queryKey: listKey }, (page) =>
+        page && { ...page, items: page.items.map((d) => (d.id === updated.id ? updated : d)) },
+      )
       setEditing(false)
     },
   })
 
   const remove = useMutation({
     mutationFn: () => api.outreach.remove(draft.id),
-    onSuccess: () => queryClient.setQueryData<OutreachDraft[]>(listKey, (list) => list?.filter((d) => d.id !== draft.id)),
+    onSuccess: () => {
+      queryClient.setQueriesData<Page<OutreachDraft>>({ queryKey: listKey }, (page) =>
+        page && { ...page, items: page.items.filter((d) => d.id !== draft.id) },
+      )
+      queryClient.invalidateQueries({ queryKey: listKey })
+    },
   })
 
   // A full replacement: everything but the changed fields goes back as it was.

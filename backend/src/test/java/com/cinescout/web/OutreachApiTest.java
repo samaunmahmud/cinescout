@@ -211,7 +211,23 @@ class OutreachApiTest extends ApiTest {
         generate(ada, location, Map.of("tone", "CONCISE"));
 
         JsonNode drafts = json(ada.client().get().uri("/api/locations/" + location + "/outreach-drafts").exchange().expectStatus().isOk());
-        assertThat(drafts.findValuesAsText("subject")).containsExactly("Second", "First");
+        assertThat(drafts.path("items").findValuesAsText("subject")).containsExactly("Second", "First");
+    }
+
+    @Test
+    void draftsArePagedNewestFirst() {
+        Account ada = register("Ada");
+        String location = locationOf(ada);
+        for (String subject : new String[] {"One", "Two", "Three"}) {
+            when(llm.generate(any(), any(), eq(OutreachEmail.class))).thenReturn(Mono.just(new OutreachEmail(subject, "Body")));
+            generate(ada, location, Map.of());
+        }
+
+        JsonNode page0 = json(ada.client().get().uri("/api/locations/" + location + "/outreach-drafts?size=2").exchange().expectStatus().isOk());
+        JsonNode page1 = json(ada.client().get().uri("/api/locations/" + location + "/outreach-drafts?size=2&page=1").exchange().expectStatus().isOk());
+        assertThat(page0.path("items").findValuesAsText("subject")).containsExactly("Three", "Two");
+        assertThat(page1.path("items").findValuesAsText("subject")).containsExactly("One");
+        assertThat(page1.path("totalItems").asLong()).isEqualTo(3);
     }
 
     @Test

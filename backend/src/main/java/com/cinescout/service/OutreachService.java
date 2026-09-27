@@ -2,6 +2,8 @@ package com.cinescout.service;
 
 import com.cinescout.domain.OutreachDraft;
 import com.cinescout.dto.OutreachDraftResponse;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.UpdateOutreachRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
@@ -9,7 +11,6 @@ import com.cinescout.repository.OutreachDraftRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -31,10 +32,10 @@ public class OutreachService {
     }
 
     /** Newest first. */
-    public Mono<List<OutreachDraftResponse>> list(UUID ownerId, UUID locationId) {
+    public Mono<PageResponse<OutreachDraftResponse>> list(UUID ownerId, UUID locationId, PageQuery page) {
         return db.call(() -> {
             locations.findOwned(locationId, ownerId).orElseThrow(() -> new NotFoundException("Location", locationId));
-            return drafts.findOwnedByLocation(locationId, ownerId).stream().map(OutreachDraftResponse::from).toList();
+            return PageResponse.from(drafts.findOwnedByLocation(locationId, ownerId, page.pageable()), OutreachDraftResponse::from);
         });
     }
 

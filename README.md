@@ -202,6 +202,10 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
 | Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
+The four lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,
+default `0`) and `?size=` (default `50`, at most `100`). The answer is
+`{ "items": [...], "page", "size", "totalItems", "totalPages" }`, each list in its own fixed order.
+
 `PUT` is a full replacement. Someone else's resource is always a `404`. The two scouting routes and
 `generate` call paid services and can take many seconds; they answer `503` when the server has no
 AI keys (`generate` needs only the watsonx.ai key), and `429` past the user's [rate limit](#rate-limits). Listing, editing and deleting drafts always works.

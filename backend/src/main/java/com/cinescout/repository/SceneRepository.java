@@ -1,11 +1,12 @@
 package com.cinescout.repository;
 
 import com.cinescout.domain.Scene;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,9 +20,10 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
     Optional<Scene> findOwned(@Param("sceneId") UUID sceneId, @Param("ownerId") UUID ownerId);
 
     /** A project's scenes in script order (numbered ones first, by number), if the project is the owner's. */
-    @Query("""
+    @Query(value = """
             select s from Scene s join fetch s.project p
             where p.id = :projectId and p.owner.id = :ownerId
-            order by s.sceneNumber asc nulls last, s.createdAt asc""")
-    List<Scene> findOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId);
+            order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""",
+            countQuery = "select count(s) from Scene s where s.project.id = :projectId and s.project.owner.id = :ownerId")
+    Page<Scene> findOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId, Pageable pageable);
 }

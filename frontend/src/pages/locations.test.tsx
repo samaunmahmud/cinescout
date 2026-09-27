@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Location, Scene } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, location, logIn, project, scene } from '../test/fixtures'
+import { ada, location, logIn, project, scene, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(locations: Location[], extra: Parameters<typeof fakeServer>[0] = {}, current: Scene = scene()) {
@@ -10,7 +10,7 @@ function serverFor(locations: Location[], extra: Parameters<typeof fakeServer>[0
     'GET /api/auth/me': () => json(ada),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/scenes/s1': () => json(current),
-    'GET /api/scenes/s1/locations': () => json(locations),
+    'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(locations)),
     ...extra,
   })
 }
@@ -64,8 +64,8 @@ describe("a scene's locations", () => {
       [],
       {
         'GET /api/scenes/s1': () => json(current),
-        'GET /api/scenes/s1/locations': () => json(saved),
-        'GET /api/projects/p1/scenes': () => json([current]),
+        'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(saved)),
+        'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([current])),
         'POST /api/scenes/s1/scout': () => {
           saved = [location()]
           current = scene({ parseStatus: 'PARSED', requirements: { settingType: 'Late-night diner', visualMood: null, lightingNeeds: null, timeOfDay: null, acousticSensitivity: null, estimatedCastAndCrewSize: null } })
@@ -127,8 +127,12 @@ describe("a scene's locations", () => {
   })
 
   it('can be removed after confirmation', async () => {
-    const { requests } = serverFor([location(), location({ id: 'l2', name: 'Corner Bistro', sourceUrl: 'https://bistro.example' })], {
-      'DELETE /api/locations/l1': () => new Response(null, { status: 204 }),
+    const locations = [location(), location({ id: 'l2', name: 'Corner Bistro', sourceUrl: 'https://bistro.example' })]
+    const { requests } = serverFor(locations, {
+      'DELETE /api/locations/l1': () => {
+        locations.splice(0, 1)
+        return new Response(null, { status: 204 })
+      },
     })
     renderApp('/scenes/s1')
     const user = await logIn()

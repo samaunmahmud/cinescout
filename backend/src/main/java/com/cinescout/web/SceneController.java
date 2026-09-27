@@ -1,5 +1,7 @@
 package com.cinescout.web;
 
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.security.AuthenticatedUser;
@@ -8,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,8 +51,9 @@ class SceneController {
     /** The project's scenes in script order: numbered ones by number, then unnumbered ones. */
     @Operation(summary = "List a project's scenes in script order")
     @GetMapping("/projects/{projectId}/scenes")
-    Mono<List<SceneResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
-        return scenes.list(user.id(), projectId);
+    Mono<PageResponse<SceneResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                           @Valid @ParameterObject PageQuery page) {
+        return scenes.list(user.id(), projectId, page);
     }
 
     @Operation(summary = "Get a scene")

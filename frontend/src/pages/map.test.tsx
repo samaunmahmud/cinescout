@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Location } from '../api/types'
 import { fakeServer, json } from '../test/fakeServer'
-import { ada, location, logIn, project, scene, locationVideos } from '../test/fixtures'
+import { ada, location, logIn, project, scene, locationVideos, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 // Leaflet is loaded on demand, and the first import in a test run takes a moment.
@@ -17,7 +17,7 @@ function sceneServer(locations: Location[]) {
     'GET /api/auth/me': () => json(ada),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/scenes/s1': () => json(scene()),
-    'GET /api/scenes/s1/locations': () => json(locations),
+    'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(locations)),
   })
 }
 
@@ -65,7 +65,7 @@ describe('the location map', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/locations/l1': () => json(current),
       'GET /api/scenes/s1': () => json(scene()),
-      'GET /api/locations/l1/outreach-drafts': () => json([]),
+      'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
       'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
       ...extra,
     })

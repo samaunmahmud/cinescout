@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Scene, SceneRequirements } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, logIn, project, scene } from '../test/fixtures'
+import { ada, logIn, project, scene, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 const requirements: SceneRequirements = {
@@ -19,11 +19,13 @@ describe('the scenes of a project', () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
-      'GET /api/projects/p1/scenes': () =>
-        json([
-          scene({ parseStatus: 'PARSED', requirements, shootDateStart: '2026-10-12', shootDateEnd: '2026-10-12' }),
-          scene({ id: 's2', sceneNumber: null, title: 'Montage', parseStatus: 'FAILED' }),
-        ]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () =>
+        json(
+          pageOf([
+            scene({ parseStatus: 'PARSED', requirements, shootDateStart: '2026-10-12', shootDateEnd: '2026-10-12' }),
+            scene({ id: 's2', sceneNumber: null, title: 'Montage', parseStatus: 'FAILED' }),
+          ]),
+        ),
     })
     renderApp('/projects/p1')
     await logIn()
@@ -44,9 +46,9 @@ describe('the scenes of a project', () => {
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
       'POST /api/projects/p1/scenes': () => json(created, 201),
-      'GET /api/scenes/s9/locations': () => json([]),
+      'GET /api/scenes/s9/locations?page=0&size=24': () => json(pageOf([])),
     })
     const { router } = renderApp('/projects/p1')
     const user = await logIn()
@@ -112,7 +114,7 @@ describe('a scene', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/scenes/s1': () => json(current),
-      'GET /api/scenes/s1/locations': () => json([]),
+      'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([])),
       ...extra,
     })
   }
@@ -181,7 +183,7 @@ describe('a scene', () => {
     const parsed = scene({ parseStatus: 'PARSED', requirements, shootDateStart: '2026-10-12' })
     const { requests } = serverFor(parsed, {
       'PUT /api/scenes/s1': (req) => json({ ...parsed, ...(req.body as object), parseStatus: 'PENDING', requirements: null }),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
     })
     renderApp('/scenes/s1')
     const user = await logIn()
@@ -205,7 +207,7 @@ describe('a scene', () => {
   it('is deleted after confirmation, returning to its project', async () => {
     const { requests } = serverFor(scene(), {
       'DELETE /api/scenes/s1': () => new Response(null, { status: 204 }),
-      'GET /api/projects/p1/scenes': () => json([]),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
     })
     const { router } = renderApp('/scenes/s1')
     const user = await logIn()

@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { OutreachDraft } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, draft, location, logIn, scene, locationVideos } from '../test/fixtures'
+import { ada, draft, location, logIn, scene, locationVideos, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(drafts: OutreachDraft[], extra: Parameters<typeof fakeServer>[0] = {}) {
@@ -10,7 +10,7 @@ function serverFor(drafts: OutreachDraft[], extra: Parameters<typeof fakeServer>
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(location()),
     'GET /api/scenes/s1': () => json(scene()),
-    'GET /api/locations/l1/outreach-drafts': () => json(drafts),
+    'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf(drafts)),
     'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
   })
@@ -48,8 +48,12 @@ describe("a location's outreach emails", () => {
 
   it('are written by the AI on request, addressed to the last recipient by default', async () => {
     const written = draft({ id: 'd9', subject: 'Could we film at Tom’s?', tone: 'FRIENDLY' })
-    const { requests } = serverFor([draft()], {
-      'POST /api/locations/l1/outreach-drafts/generate': () => json(written, 201),
+    const drafts = [draft()]
+    const { requests } = serverFor(drafts, {
+      'POST /api/locations/l1/outreach-drafts/generate': () => {
+        drafts.unshift(written)
+        return json(written, 201)
+      },
     })
     renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
@@ -178,7 +182,13 @@ describe("a location's outreach emails", () => {
   })
 
   it('are deleted after confirmation', async () => {
-    const { requests } = serverFor([draft()], { 'DELETE /api/outreach-drafts/d1': () => new Response(null, { status: 204 }) })
+    const drafts = [draft()]
+    const { requests } = serverFor(drafts, {
+      'DELETE /api/outreach-drafts/d1': () => {
+        drafts.splice(0, 1)
+        return new Response(null, { status: 204 })
+      },
+    })
     renderApp('/locations/l1?tab=outreach')
     const user = await logIn()
 

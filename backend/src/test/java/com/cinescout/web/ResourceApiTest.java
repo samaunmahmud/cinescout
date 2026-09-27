@@ -29,9 +29,10 @@ class ResourceApiTest extends ApiTest {
         return fields;
     }
 
-    private static List<String> ids(JsonNode array) {
+    /** The ids on a page of a list, in order. */
+    private static List<String> ids(JsonNode page) {
         List<String> ids = new ArrayList<>();
-        array.forEach(n -> ids.add(n.path("id").asText()));
+        page.path("items").forEach(n -> ids.add(n.path("id").asText()));
         return ids;
     }
 
@@ -95,6 +96,47 @@ class ResourceApiTest extends ApiTest {
         assertThat(ids(json(ada.client().get().uri("/api/projects?status=ACTIVE").exchange().expectStatus().isOk()))).containsExactly(second);
         ada.client().get().uri("/api/projects?status=NOPE").exchange()
                 .expectStatus().isBadRequest().expectHeader().contentType(PROBLEM);
+    }
+
+    @Test
+    void listsComeAPageAtATimeWithTheTotals() {
+        Account ada = register("Ada");
+        String first = project(ada, "First");
+        String second = project(ada, "Second");
+        String third = project(ada, "Third");
+
+        JsonNode page0 = json(ada.client().get().uri("/api/projects?size=2").exchange().expectStatus().isOk());
+        assertThat(ids(page0)).containsExactly(third, second);
+        assertThat(page0.path("page").asInt()).isZero();
+        assertThat(page0.path("size").asInt()).isEqualTo(2);
+        assertThat(page0.path("totalItems").asLong()).isEqualTo(3);
+        assertThat(page0.path("totalPages").asInt()).isEqualTo(2);
+
+        JsonNode page1 = json(ada.client().get().uri("/api/projects?page=1&size=2").exchange().expectStatus().isOk());
+        assertThat(ids(page1)).containsExactly(first);
+        assertThat(page1.path("page").asInt()).isEqualTo(1);
+
+        JsonNode past = json(ada.client().get().uri("/api/projects?page=7&size=2").exchange().expectStatus().isOk());
+        assertThat(ids(past)).isEmpty();
+        assertThat(past.path("totalItems").asLong()).isEqualTo(3);
+
+        JsonNode defaults = json(ada.client().get().uri("/api/projects").exchange().expectStatus().isOk());
+        assertThat(defaults.path("size").asInt()).isEqualTo(50);
+        assertThat(defaults.path("totalPages").asInt()).isEqualTo(1);
+    }
+
+    @Test
+    void anOutOfRangePageOrSizeIsA400NamingTheParameter() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon");
+
+        for (String query : new String[] {"page=-1", "size=0", "size=101", "page=abc"}) {
+            JsonNode problem = json(ada.client().get().uri("/api/projects?" + query).exchange()
+                    .expectStatus().isBadRequest().expectHeader().contentType(PROBLEM));
+            assertThat(errorFields(problem)).as(query).containsExactly(query.substring(0, query.indexOf('=')));
+        }
+        ada.client().get().uri("/api/projects/" + project + "/scenes?size=101").exchange().expectStatus().isBadRequest();
+        ada.client().get().uri("/api/projects?size=100").exchange().expectStatus().isOk();
     }
 
     @Test
@@ -205,6 +247,21 @@ class ResourceApiTest extends ApiTest {
     }
 
     @Test
+    void scenesArePagedInScriptOrder() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon");
+        String three = scene(ada, project, 3, "Three");
+        String unnumbered = scene(ada, project, null, "No number");
+        String one = scene(ada, project, 1, "One");
+
+        assertThat(ids(json(ada.client().get().uri("/api/projects/" + project + "/scenes?size=2").exchange().expectStatus().isOk())))
+                .containsExactly(one, three);
+        JsonNode last = json(ada.client().get().uri("/api/projects/" + project + "/scenes?size=2&page=1").exchange().expectStatus().isOk());
+        assertThat(ids(last)).containsExactly(unnumbered);
+        assertThat(last.path("totalItems").asLong()).isEqualTo(3);
+    }
+
+    @Test
     void editingTheScriptForgetsItsRequirementsButRetitlingKeepsThem() {
         Account ada = register("Ada");
         String scene = scene(ada, project(ada, "Neon Nights"), 1, "A rainy rooftop bar.");
@@ -307,6 +364,21 @@ class ResourceApiTest extends ApiTest {
 
         assertThat(ids(json(ada.client().get().uri("/api/scenes/" + scene + "/locations").exchange().expectStatus().isOk())))
                 .containsExactly(high, low, manual);
+    }
+
+    @Test
+    void locationsArePaged() {
+        Account ada = register("Ada");
+        String scene = scene(ada, project(ada, "Neon"), 1, "INT. BAR");
+        String a = location(ada, scene, "A", null);
+        String b = location(ada, scene, "B", null);
+        String c = location(ada, scene, "C", null);
+
+        JsonNode page0 = json(ada.client().get().uri("/api/scenes/" + scene + "/locations?size=2").exchange().expectStatus().isOk());
+        JsonNode page1 = json(ada.client().get().uri("/api/scenes/" + scene + "/locations?size=2&page=1").exchange().expectStatus().isOk());
+        assertThat(ids(page0)).containsExactly(a, b);
+        assertThat(ids(page1)).containsExactly(c);
+        assertThat(page1.path("totalPages").asInt()).isEqualTo(2);
     }
 
     @Test

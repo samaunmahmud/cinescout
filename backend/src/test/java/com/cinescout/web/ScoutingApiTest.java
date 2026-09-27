@@ -143,7 +143,7 @@ class ScoutingApiTest extends ApiTest {
         assertThat(added.findValuesAsText("name")).containsExactly("Venue Best", "Venue Middle", "Venue Worst");
 
         JsonNode listed = json(ada.client().get().uri("/api/scenes/" + scene + "/locations").exchange().expectStatus().isOk());
-        assertThat(listed.findValuesAsText("name")).containsExactly("Venue Best", "Venue Middle", "Venue Worst");
+        assertThat(listed.path("items").findValuesAsText("name")).containsExactly("Venue Best", "Venue Middle", "Venue Worst");
     }
 
     @Test

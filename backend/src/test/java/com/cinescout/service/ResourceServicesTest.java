@@ -9,6 +9,7 @@ import com.cinescout.domain.User;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.CreateProjectRequest;
 import com.cinescout.dto.LocationResponse;
+import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
@@ -121,7 +122,7 @@ class ResourceServicesTest {
         assertThat(first.locationArea()).isEqualTo("Brooklyn, New York");
         assertThat(first.status()).isEqualTo(ProjectStatus.ACTIVE);
         assertThat(first.createdAt()).isNotNull();
-        assertThat(projectService.list(ada, null).block()).extracting(ProjectResponse::id).containsExactly(second.id(), first.id());
+        assertThat(projectService.list(ada, null, PageQuery.first()).block().items()).extracting(ProjectResponse::id).containsExactly(second.id(), first.id());
     }
 
     @Test
@@ -131,10 +132,10 @@ class ResourceServicesTest {
         projectService.update(ada, archived.id(), new UpdateProjectRequest("Archived", null, null, ProjectStatus.ARCHIVED)).block();
         project(grace, "Grace's");
 
-        assertThat(projectService.list(ada, ProjectStatus.ACTIVE).block()).extracting(ProjectResponse::id).containsExactly(active.id());
-        assertThat(projectService.list(ada, ProjectStatus.ARCHIVED).block()).extracting(ProjectResponse::id).containsExactly(archived.id());
-        assertThat(projectService.list(ada, null).block()).hasSize(2);
-        assertThat(projectService.list(grace, null).block()).hasSize(1);
+        assertThat(projectService.list(ada, ProjectStatus.ACTIVE, PageQuery.first()).block().items()).extracting(ProjectResponse::id).containsExactly(active.id());
+        assertThat(projectService.list(ada, ProjectStatus.ARCHIVED, PageQuery.first()).block().items()).extracting(ProjectResponse::id).containsExactly(archived.id());
+        assertThat(projectService.list(ada, null, PageQuery.first()).block().items()).hasSize(2);
+        assertThat(projectService.list(grace, null, PageQuery.first()).block().items()).hasSize(1);
     }
 
     @Test
@@ -188,7 +189,7 @@ class ResourceServicesTest {
         SceneResponse three = scene(ada, project.id(), 3, "Three");
         SceneResponse one = scene(ada, project.id(), 1, "One");
 
-        assertThat(sceneService.list(ada, project.id()).block()).extracting(SceneResponse::id)
+        assertThat(sceneService.list(ada, project.id(), PageQuery.first()).block().items()).extracting(SceneResponse::id)
                 .containsExactly(one.id(), three.id(), unnumbered.id());
     }
 
@@ -240,11 +241,11 @@ class ResourceServicesTest {
         SceneResponse graceScene = scene(grace, graces.id(), 1, "Grace's scene");
 
         assertNotFound(() -> sceneService.create(ada, graces.id(), new SceneRequest(2, "Intruder", "text", null, null)).block());
-        assertNotFound(() -> sceneService.list(ada, graces.id()).block());
+        assertNotFound(() -> sceneService.list(ada, graces.id(), PageQuery.first()).block());
         assertNotFound(() -> sceneService.get(ada, graceScene.id()).block());
         assertNotFound(() -> sceneService.update(ada, graceScene.id(), new SceneRequest(1, "Mine", "text", null, null)).block());
         assertNotFound(() -> sceneService.delete(ada, graceScene.id()).block());
-        assertThat(sceneService.list(grace, graces.id()).block()).hasSize(1);
+        assertThat(sceneService.list(grace, graces.id(), PageQuery.first()).block().items()).hasSize(1);
     }
 
     @Test
@@ -255,7 +256,7 @@ class ResourceServicesTest {
         sceneService.delete(ada, scene.id()).block();
 
         assertNotFound(() -> sceneService.get(ada, scene.id()).block());
-        assertThat(sceneService.list(ada, project.id()).block()).isEmpty();
+        assertThat(sceneService.list(ada, project.id(), PageQuery.first()).block().items()).isEmpty();
     }
 
     // --- locations ------------------------------------------------------------------------------
@@ -306,7 +307,7 @@ class ResourceServicesTest {
             }
         });
 
-        assertThat(locationService.list(ada, scene.id()).block()).extracting(LocationResponse::name)
+        assertThat(locationService.list(ada, scene.id(), PageQuery.first()).block().items()).extracting(LocationResponse::name)
                 .containsExactly("Scored 90", "Scored 65", "Scored 40", "Manual");
     }
 
@@ -330,7 +331,7 @@ class ResourceServicesTest {
         LocationResponse graceLocation = locationService.create(grace, graceScene.id(),
                 new CreateLocationRequest("Loft", null, null, null, null, null)).block();
 
-        assertNotFound(() -> locationService.list(ada, graceScene.id()).block());
+        assertNotFound(() -> locationService.list(ada, graceScene.id(), PageQuery.first()).block());
         assertNotFound(() -> locationService.create(ada, graceScene.id(), new CreateLocationRequest("X", null, null, null, null, null)).block());
         assertNotFound(() -> locationService.get(ada, graceLocation.id()).block());
         assertNotFound(() -> locationService.update(ada, graceLocation.id(), new UpdateLocationRequest(LocationStatus.REJECTED, null)).block());
@@ -359,7 +360,7 @@ class ResourceServicesTest {
             }
         });
 
-        new ProjectService(projects, users, db).list(ada, null).block();
+        new ProjectService(projects, users, db).list(ada, null, PageQuery.first()).block();
 
         assertThat(threads).hasSize(1).allSatisfy(name -> assertThat(name).startsWith("boundedElastic"));
     }

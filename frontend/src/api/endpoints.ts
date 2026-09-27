@@ -8,6 +8,7 @@ import type {
   LocationVideos,
   LogisticsReport,
   OutreachDraft,
+  Page,
   Project,
   ProjectStatus,
   RegisterRequest,
@@ -20,6 +21,11 @@ import type {
   UpdateProjectRequest,
   User,
 } from './types'
+
+/** Items per page for every list the app shows. */
+export const PAGE_SIZE = 24
+
+const pageQuery = (page: number) => `page=${page}&size=${PAGE_SIZE}`
 
 export const authApi = {
   register: (body: RegisterRequest) => request<User>('/api/auth/register', { method: 'POST', body }),
@@ -46,7 +52,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
 
   return {
     projects: {
-      list: (status?: ProjectStatus) => call<Project[]>(`/api/projects${status ? `?status=${status}` : ''}`),
+      /** Newest first. */
+      list: (status: ProjectStatus, page = 0) => call<Page<Project>>(`/api/projects?status=${status}&${pageQuery(page)}`),
       get: (id: string) => call<Project>(`/api/projects/${encodeURIComponent(id)}`),
       create: (body: CreateProjectRequest) => call<Project>('/api/projects', { method: 'POST', body }),
       update: (id: string, body: UpdateProjectRequest) =>
@@ -54,7 +61,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       remove: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
     scenes: {
-      list: (projectId: string) => call<Scene[]>(`/api/projects/${encodeURIComponent(projectId)}/scenes`),
+      /** In script order. */
+      list: (projectId: string, page = 0) =>
+        call<Page<Scene>>(`/api/projects/${encodeURIComponent(projectId)}/scenes?${pageQuery(page)}`),
       get: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`),
       create: (projectId: string, body: SceneRequest) =>
         call<Scene>(`/api/projects/${encodeURIComponent(projectId)}/scenes`, { method: 'POST', body }),
@@ -70,7 +79,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
     },
     locations: {
       /** Best fit first; venues added by hand (no score) last. */
-      list: (sceneId: string) => call<Location[]>(`/api/scenes/${encodeURIComponent(sceneId)}/locations`),
+      list: (sceneId: string, page = 0) =>
+        call<Page<Location>>(`/api/scenes/${encodeURIComponent(sceneId)}/locations?${pageQuery(page)}`),
       get: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}`),
       /** Adds a venue by hand; 409 when the same source URL is already saved for the scene. */
       create: (sceneId: string, body: CreateLocationRequest) =>
@@ -92,7 +102,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
     },
     outreach: {
       /** Newest first. */
-      list: (locationId: string) => call<OutreachDraft[]>(`/api/locations/${encodeURIComponent(locationId)}/outreach-drafts`),
+      list: (locationId: string, page = 0) =>
+        call<Page<OutreachDraft>>(`/api/locations/${encodeURIComponent(locationId)}/outreach-drafts?${pageQuery(page)}`),
       /**
        * Has the AI write a new draft (each call adds one). Takes seconds; 503 when generation is not configured.
        * The AI sees the venue, the scene's requirements, the sender's name and the shoot dates, never the script.

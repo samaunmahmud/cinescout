@@ -2,6 +2,8 @@ package com.cinescout.web;
 
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -42,8 +44,9 @@ class LocationController {
     /** The scene's candidate locations, best fit first; venues added by hand (no score) come last. */
     @Operation(summary = "List a scene's candidate locations, best fit first")
     @GetMapping("/scenes/{sceneId}/locations")
-    Mono<List<LocationResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {
-        return locations.list(user.id(), sceneId);
+    Mono<PageResponse<LocationResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
+                                              @Valid @ParameterObject PageQuery page) {
+        return locations.list(user.id(), sceneId, page);
     }
 
     /** Adds a venue the user found themselves. Venues found by scouting are saved by the scout endpoint. */

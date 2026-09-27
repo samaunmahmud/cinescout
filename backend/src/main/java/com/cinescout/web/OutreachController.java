@@ -2,6 +2,8 @@ package com.cinescout.web;
 
 import com.cinescout.dto.GenerateOutreachRequest;
 import com.cinescout.dto.OutreachDraftResponse;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.UpdateOutreachRequest;
 import com.cinescout.outreach.OutreachGenerationService;
 import com.cinescout.ratelimit.RateLimit;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -53,8 +55,9 @@ class OutreachController {
     /** A location's drafts, newest first. */
     @Operation(summary = "List a location's outreach drafts, newest first")
     @GetMapping("/locations/{locationId}/outreach-drafts")
-    Mono<List<OutreachDraftResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {
-        return outreach.list(user.id(), locationId);
+    Mono<PageResponse<OutreachDraftResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
+                                                   @Valid @ParameterObject PageQuery page) {
+        return outreach.list(user.id(), locationId, page);
     }
 
     /**

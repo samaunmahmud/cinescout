@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { ProjectStatus } from '../api/types'
+import type { Page, Project, ProjectStatus } from '../api/types'
 import { useSession } from '../auth/context'
 import { Clapperboard, Film, MapPin, Plus } from 'lucide-react'
+import { Pager } from '../components/Pager'
+import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { Card, EmptyState, Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterGradient } from '../lib/poster'
@@ -19,7 +21,14 @@ export function ProjectsPage() {
   const status: ProjectStatus = params.get('status') === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE'
   const [creating, setCreating] = useState(false)
 
-  const projects = useQuery({ queryKey: queryKeys.projectList(status), queryFn: () => api.projects.list(status) })
+  const [page, setPage] = usePageParam()
+
+  const projects = useQuery({
+    queryKey: queryKeys.projectPage(status, page),
+    queryFn: () => api.projects.list(status, page),
+    placeholderData: previousPageOf<Page<Project>>(['projects', 'list', status]),
+  })
+  useStayInRange(projects.data, setPage)
 
   const create = useMutation({
     mutationFn: (values: ProjectFormValues) =>
@@ -92,32 +101,35 @@ export function ProjectsPage() {
         <Spinner label="Loading projects" />
       ) : projects.isError ? (
         <ErrorAlert error={projects.error} onRetry={() => projects.refetch()} />
-      ) : projects.data.length === 0 ? (
+      ) : projects.data.items.length === 0 ? (
         <EmptyState icon={Film}>{status === 'ACTIVE' ? 'No projects yet. Create one to start scouting.' : 'No archived projects.'}</EmptyState>
       ) : (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.data.map((project) => (
-            <li key={project.id}>
-              <Link
-                to={`/projects/${project.id}`}
-                className="group block h-full overflow-hidden rounded-xl border border-white/[0.07] bg-reel shadow-lg shadow-black/40 transition hover:-translate-y-0.5 hover:border-amber-400/40 hover:shadow-amber-950/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
-              >
-                <div aria-hidden className="relative h-28 overflow-hidden" style={{ background: posterGradient(project.title) }}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-reel via-reel/20 to-transparent" />
-                  <Film className="absolute top-4 right-4 size-5 text-white/40" />
-                </div>
-                <div className="-mt-8 space-y-2 p-5 pt-0">
-                  <h2 className="relative font-display text-3xl leading-none text-stone-50 transition group-hover:text-amber-300">{project.title}</h2>
-                  <p className="flex items-center gap-1.5 text-sm text-stone-400">
-                    <MapPin aria-hidden className="size-3.5 text-amber-400/80" />
-                    {project.locationArea ?? 'No location area set'}
-                  </p>
-                  {project.description && <p className="line-clamp-2 text-sm text-stone-300">{project.description}</p>}
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.data.items.map((project) => (
+              <li key={project.id}>
+                <Link
+                  to={`/projects/${project.id}`}
+                  className="group block h-full overflow-hidden rounded-xl border border-white/[0.07] bg-reel shadow-lg shadow-black/40 transition hover:-translate-y-0.5 hover:border-amber-400/40 hover:shadow-amber-950/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+                >
+                  <div aria-hidden className="relative h-28 overflow-hidden" style={{ background: posterGradient(project.title) }}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-reel via-reel/20 to-transparent" />
+                    <Film className="absolute top-4 right-4 size-5 text-white/40" />
+                  </div>
+                  <div className="-mt-8 space-y-2 p-5 pt-0">
+                    <h2 className="relative font-display text-3xl leading-none text-stone-50 transition group-hover:text-amber-300">{project.title}</h2>
+                    <p className="flex items-center gap-1.5 text-sm text-stone-400">
+                      <MapPin aria-hidden className="size-3.5 text-amber-400/80" />
+                      {project.locationArea ?? 'No location area set'}
+                    </p>
+                    {project.description && <p className="line-clamp-2 text-sm text-stone-300">{project.description}</p>}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Pager data={projects.data} onChange={setPage} label="Project pages" />
+        </>
       )}
     </div>
   )

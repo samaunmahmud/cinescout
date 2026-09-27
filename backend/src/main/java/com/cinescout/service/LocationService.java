@@ -4,6 +4,8 @@ import com.cinescout.domain.Location;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
+import com.cinescout.dto.PageQuery;
+import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.persistence.BlockingTransactions;
@@ -13,7 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -37,10 +38,10 @@ public class LocationService {
     }
 
     /** Best fit first; venues without an assessment (added by hand) come last. */
-    public Mono<List<LocationResponse>> list(UUID ownerId, UUID sceneId) {
+    public Mono<PageResponse<LocationResponse>> list(UUID ownerId, UUID sceneId, PageQuery page) {
         return db.call(() -> {
             scenes.findOwned(sceneId, ownerId).orElseThrow(() -> new NotFoundException("Scene", sceneId));
-            return locations.findOwnedByScene(sceneId, ownerId).stream().map(LocationResponse::from).toList();
+            return PageResponse.from(locations.findOwnedByScene(sceneId, ownerId, page.pageable()), LocationResponse::from);
         });
     }
 

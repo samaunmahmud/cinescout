@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Location, LocationVideos, LogisticsReport, OutreachDraft, Project, Scene, User } from '../api/types'
+import type { Location, LocationVideos, LogisticsReport, OutreachDraft, Page, Project, Scene, User } from '../api/types'
 
 export const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
 export const PASSWORD = 'a-long-password'
@@ -173,4 +173,9 @@ export async function logIn(user = userEvent.setup()) {
   await user.type(screen.getByLabelText('Password'), PASSWORD)
   await user.click(screen.getByRole('button', { name: 'Log in' }))
   return user
+}
+
+/** A list as the API pages it: by default everything on one page, as the app asks for it. */
+export function pageOf<T>(items: T[], overrides: Partial<Page<T>> = {}): Page<T> {
+  return { items, page: 0, size: 24, totalItems: items.length, totalPages: items.length === 0 ? 0 : 1, ...overrides }
 }
