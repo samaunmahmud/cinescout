@@ -49,6 +49,20 @@ final class ParallelQueryBuilder {
         return objective.length() > MAX_OBJECTIVE_CHARS ? objective.substring(0, MAX_OBJECTIVE_CHARS) : objective.toString();
     }
 
+    /** The objective for finding one named venue's own pages. */
+    static String venueObjective(String name, String area) {
+        String objective = "Find the official website of the venue \"" + clean(name) + "\" in " + clean(area)
+                + ", or failing that its own page on a venue-hire site. Only pages about this one venue: skip directories,"
+                + " lists of several venues, reviews and articles.";
+        return objective.length() > MAX_OBJECTIVE_CHARS ? objective.substring(0, MAX_OBJECTIVE_CHARS) : objective;
+    }
+
+    /** The venue's name in the area, and the name alone as its official site would give it. */
+    static List<String> venueQueries(String name, String area) {
+        String venue = clean(name);
+        return List.of(fit(venue + " " + clean(area)), fit(venue + " official site"));
+    }
+
     /** Two or three distinct short queries, each within Parallel's per-query limit. */
     static List<String> queries(LocationSearchRequest request) {
         String setting = clean(request.requirements().settingType());

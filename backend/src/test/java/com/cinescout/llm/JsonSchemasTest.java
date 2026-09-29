@@ -29,7 +29,7 @@ class JsonSchemasTest {
         assertThat(schema.path("additionalProperties").asBoolean(true)).isFalse();
         assertThat(names(schema.path("required")))
                 .containsExactlyInAnyOrder("singleVenue", "fitScore", "fitReason", "bookingFriction", "frictionNote", "footprintWarnings",
-                        "venueName", "address");
+                        "venueName", "address", "listedVenues");
     }
 
     @Test

@@ -102,11 +102,17 @@ PARALLEL_LIVE_TEST=true PARALLEL_API_KEY=... mvn test -Dtest=ParallelLiveSmokeTe
 
 Scouting (extract requirements, search, assess venues, save candidates) needs **both** keys, so
 without them the app still starts but has no scouting beans. Outreach email generation needs only the
-watsonx.ai key. Optional tuning, all with defaults:
+watsonx.ai key.
+
+For many settings the web's first answers are directories ("The 16 best rooftop venues in Brooklyn")
+rather than venues. The model says which results are about one venue; the others are left out and
+counted in the result's `notVenues`, and the venues they name are looked up by name and assessed
+too. A venue found on several of its pages is saved once. Optional tuning, all with defaults:
 
 | Property | Default |
 |---|---|
 | `cinescout.scouting.assessment-concurrency` | `4` venues assessed by the LLM at once |
+| `cinescout.scouting.follow-up-venues` | `5` venues named on directory pages looked up per run (`0` turns it off) |
 | `cinescout.resilience.max-attempts` | `3` tries per LLM or search call |
 | `cinescout.resilience.initial-backoff` / `max-backoff` | `500ms` / `5s` |
 | `cinescout.resilience.breaker-window-size` / `-minimum-calls` | `10` / `5` |

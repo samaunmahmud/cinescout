@@ -183,14 +183,14 @@ class SceneScoutingServiceTest {
     private static ScoutedVenue venue(String name, int score, String venueName, String address) {
         return new ScoutedVenue(
                 new SearchResult("Venue " + name + " | Official Site", "https://" + name.toLowerCase() + ".example.com/", "Excerpt " + name, "parallel"),
-                new LocationAssessment(true, score, "Reason " + name, BookingFriction.COMMERCIAL, null, List.of(), venueName, address));
+                new LocationAssessment(true, score, "Reason " + name, BookingFriction.COMMERCIAL, null, List.of(), venueName, address, List.of()));
     }
 
     private static ScoutedVenue venue(String name, int score) {
         return new ScoutedVenue(
                 new SearchResult("Venue " + name, "https://" + name.toLowerCase() + ".example.com/", "Excerpt " + name, "parallel"),
                 new LocationAssessment(true, score, "Reason " + name, BookingFriction.COMMERCIAL, "Enquire via events team",
-                        List.of("Lift access only", "Noise curfew 22:00"), null, null));
+                        List.of("Lift access only", "Noise curfew 22:00"), null, null, List.of()));
     }
 
     private void pipelineFinds(ScoutingOutcome outcome) {

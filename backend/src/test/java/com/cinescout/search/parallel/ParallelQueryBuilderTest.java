@@ -82,4 +82,13 @@ class ParallelQueryBuilderTest {
         assertThat(ParallelQueryBuilder.objective(request(noisy)))
                 .hasSizeLessThanOrEqualTo(ParallelQueryBuilder.MAX_OBJECTIVE_CHARS).doesNotContain("\n");
     }
+
+    @Test
+    void aNamedVenueIsSoughtByItsNameInTheArea() {
+        assertThat(ParallelQueryBuilder.venueObjective("  MEILI   Rooftop ", "Brooklyn, New York"))
+                .startsWith("Find the official website of the venue \"MEILI Rooftop\" in Brooklyn, New York")
+                .contains("skip directories");
+        assertThat(ParallelQueryBuilder.venueQueries("MEILI Rooftop", "Brooklyn, New York"))
+                .containsExactly("MEILI Rooftop Brooklyn, New York", "MEILI Rooftop official site");
+    }
 }

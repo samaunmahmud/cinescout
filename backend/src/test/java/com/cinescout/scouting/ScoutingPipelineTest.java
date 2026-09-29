@@ -28,6 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -76,7 +79,7 @@ class ScoutingPipelineTest {
         ResilienceProperties resilience = new ResilienceProperties(3, Duration.ofMillis(1), Duration.ofMillis(5),
                 10, 5, 50, Duration.ofSeconds(30));
         return new ScoutingPipeline(llm, search, new GuardFactory(resilience, CircuitBreakerRegistry.ofDefaults()),
-                new ScoutingProperties(concurrency, Duration.ZERO));
+                new ScoutingProperties(concurrency, Duration.ZERO, 5));
     }
 
     private static SearchResult venue(String name) {
@@ -84,7 +87,7 @@ class ScoutingPipelineTest {
     }
 
     private static LocationAssessment assessment(int score) {
-        return new LocationAssessment(true, score, "Reason for " + score, BookingFriction.COMMERCIAL, null, List.of(), null, null);
+        return new LocationAssessment(true, score, "Reason for " + score, BookingFriction.COMMERCIAL, null, List.of(), null, null, List.of());
     }
 
     private static LlmException llmFailure(Kind kind) {
@@ -363,7 +366,7 @@ class ScoutingPipelineTest {
 
     private static Function<FakeLlm.Call, Mono<?>> aDirectory() {
         return call -> Mono.just(new LocationAssessment(false, 0, "A list of 16 rooftop venues", BookingFriction.COMMERCIAL,
-                null, List.of(), null, null));
+                null, List.of(), null, null, List.of()));
     }
 
     @Test
@@ -394,7 +397,7 @@ class ScoutingPipelineTest {
 
     private static ScoutedVenue page(String url, int score, String venueName, String address) {
         return new ScoutedVenue(new SearchResult("Page " + url, "https://" + url, "Excerpt", "parallel"),
-                new LocationAssessment(true, score, "Reason", BookingFriction.COMMERCIAL, null, List.of(), venueName, address));
+                new LocationAssessment(true, score, "Reason", BookingFriction.COMMERCIAL, null, List.of(), venueName, address, List.of()));
     }
 
     @Test
@@ -424,10 +427,112 @@ class ScoutingPipelineTest {
     void scoutingReturnsEachVenueOnce() {
         searchReturns(venue("A"), venue("B"));
         llm.handler = call -> Mono.just(new LocationAssessment(true, 70, "ok", BookingFriction.COMMERCIAL, null, List.of(),
-                "Golden Blue", null));
+                "Golden Blue", null, List.of()));
 
         ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
 
         assertThat(outcome.venues()).hasSize(1);
+    }
+
+    // --- venues named by directories -----------------------------------------------------------------
+
+    private static Function<FakeLlm.Call, Mono<?>> aDirectoryNaming(String... names) {
+        return call -> Mono.just(new LocationAssessment(false, 0, "A list of venues", BookingFriction.COMMERCIAL,
+                null, List.of(), null, null, List.of(names)));
+    }
+
+    private static Function<FakeLlm.Call, Mono<?>> named(String venueName, int score) {
+        return call -> Mono.just(new LocationAssessment(true, score, "ok", BookingFriction.COMMERCIAL, null, List.of(),
+                venueName, null, List.of()));
+    }
+
+    private void lookupFinds(String name, SearchResult... hits) {
+        when(search.findVenue(eq(name), eq(AREA), anyInt())).thenReturn(Mono.just(List.of(hits)));
+    }
+
+    @Test
+    void venuesADirectoryNamesAreLookedUpAndAssessedToo() {
+        searchReturns(venue("List"), venue("Own"));
+        lookupFinds("Bar Blondeau", venue("Blondeau"));
+        lookupFinds("MEILI Rooftop", venue("Meili"));
+        assessments(java.util.Map.of(
+                "List", aDirectoryNaming("Bar Blondeau", "MEILI Rooftop"),
+                "Own", named("Own Bar", 50),
+                "Blondeau", named("Bar Blondeau", 90),
+                "Meili", named("MEILI Rooftop", 70)));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        assertThat(outcome.venues()).extracting(v -> v.assessment().venueName())
+                .containsExactly("Bar Blondeau", "MEILI Rooftop", "Own Bar");
+        assertThat(outcome.notVenues()).isEqualTo(1);
+        verify(search).findVenue("Bar Blondeau", AREA, ScoutingPipeline.RESULTS_PER_NAMED_VENUE);
+    }
+
+    @Test
+    void aVenueAlreadyFoundIsNotLookedUpAgainNorIsAPageAlreadyAssessed() {
+        searchReturns(venue("List"), venue("Own"));
+        lookupFinds("Other", venue("Own"), venue("Other"));
+        assessments(java.util.Map.of(
+                "List", aDirectoryNaming("The Own Bar", "Other"),
+                "Own", named("Own Bar", 50),
+                "Other", named("Other", 60)));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        verify(search, never()).findVenue(eq("The Own Bar"), anyString(), anyInt());
+        assertThat(outcome.venues()).extracting(v -> v.assessment().venueName()).containsExactly("Other", "Own Bar");
+        assertThat(llm.callsOfType(LocationAssessment.class)).isEqualTo(3); // List, Own, Other: Own not twice
+    }
+
+    @Test
+    void aFailedLookupCostsOnlyThatVenue() {
+        searchReturns(venue("List"));
+        when(search.findVenue(eq("Gone"), anyString(), anyInt()))
+                .thenReturn(Mono.error(new SearchException(SearchException.Kind.INVALID_REQUEST, "scripted")));
+        lookupFinds("Found", venue("Found"));
+        assessments(java.util.Map.of("List", aDirectoryNaming("Gone", "Found"), "Found", named("Found", 70)));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        assertThat(outcome.venues()).extracting(v -> v.assessment().venueName()).containsExactly("Found");
+    }
+
+    @Test
+    void lookupsAreCappedAndCanBeTurnedOff() {
+        List<ScoutingPipeline.Assessed> first = List.of(
+                new ScoutingPipeline.Assessed(new ScoutedVenue(venue("L1"), new LocationAssessment(false, 0, "list", BookingFriction.COMMERCIAL,
+                        null, List.of(), null, null, List.of("A", "B", "C")))),
+                new ScoutingPipeline.Assessed(new ScoutedVenue(venue("L2"), new LocationAssessment(false, 0, "list", BookingFriction.COMMERCIAL,
+                        null, List.of(), null, null, List.of("the a", "D")))));
+
+        assertThat(ScoutingPipeline.namedByDirectories(first, 3)).containsExactly("A", "B", "C");
+        assertThat(ScoutingPipeline.namedByDirectories(first, 10)).containsExactly("A", "B", "C", "D");
+        assertThat(ScoutingPipeline.namedByDirectories(first, 0)).isEmpty();
+    }
+
+    @Test
+    void twoNamesAtOneStreetAddressAreOneVenue() {
+        List<ScoutedVenue> kept = ScoutingPipeline.sameVenueOnce(List.of(
+                page("tagvenue.example.com/venues/49419", 80, "Massive Rooftop Terrace w/ Skyline View", "829 Broadway, Brooklyn, NY 11206"),
+                page("tagvenue.example.com/rooms/82046", 80, "Massive Terrace w/ Skyline", "829 Broadway, Brooklyn")));
+
+        assertThat(kept).hasSize(1);
+    }
+
+    @Test
+    void copiesOfOneListingAreOneVenue() {
+        assertThat(ScoutingPipeline.sameListing("https://www.peerspace.com/pages/listings/66876899a8dfc287ba3aeb50",
+                "https://peerspace.com/au/pages/listings/66876899a8dfc287ba3aeb50/")).isTrue();
+        assertThat(ScoutingPipeline.sameListing("https://www.peerspace.com/pages/listings/66876899a8dfc287ba3aeb50",
+                "https://www.peerspace.com/pages/listings/11112222a8dfc287ba3aeb50")).isFalse();
+        assertThat(ScoutingPipeline.sameListing("https://a.example.com/events", "https://a.example.com/fr/events"))
+                .as("a page name is not a listing id").isFalse();
+        assertThat(ScoutingPipeline.sameListing("https://a.example.com/listing/12345678", "https://b.example.com/listing/12345678"))
+                .as("different sites").isFalse();
+        assertThat(ScoutingPipeline.sameListing("not a url", "not a url")).isFalse();
+        assertThat(ScoutingPipeline.sameVenueOnce(List.of(
+                page("www.peerspace.com/pages/listings/66876899a8dfc287ba3aeb50", 60, "Private Rooftop Terrace", null),
+                page("www.peerspace.com/au/pages/listings/66876899a8dfc287ba3aeb50", 60, "503DTLA", null)))).hasSize(1);
     }
 }

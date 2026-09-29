@@ -163,21 +163,14 @@ public class SceneScoutingService {
      * venue found again on another of its pages, or added by hand).
      */
     private Saved saved(UUID sceneId) {
-        Set<String> names = new HashSet<>();
-        for (String name : locations.findNamesBySceneId(sceneId)) {
-            String key = VenueNames.key(name);
-            if (key != null) {
-                names.add(key);
-            }
-        }
-        return new Saved(new HashSet<>(locations.findSourceUrlsBySceneId(sceneId)), names);
+        return new Saved(new HashSet<>(locations.findSourceUrlsBySceneId(sceneId)), new ArrayList<>(locations.findNamesBySceneId(sceneId)));
     }
 
-    private record Saved(Set<String> urls, Set<String> names) {
+    private record Saved(Set<String> urls, List<String> names) {
         /** True, and remembers it, if {@code venue} is not saved yet. */
         boolean addIfNew(ScoutedVenue venue) {
-            String name = VenueNames.key(venue.assessment().venueName());
-            if (urls.contains(venue.source().url()) || (name != null && names.contains(name))) {
+            String name = venue.assessment().venueName();
+            if (urls.contains(venue.source().url()) || names.stream().anyMatch(saved -> VenueNames.sameVenue(saved, name))) {
                 return false;
             }
             urls.add(venue.source().url());

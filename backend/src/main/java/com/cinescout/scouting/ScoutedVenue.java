@@ -10,6 +10,6 @@ public record ScoutedVenue(SearchResult source, LocationAssessment assessment) {
     ScoutedVenue withAddress(String address) {
         LocationAssessment a = assessment;
         return new ScoutedVenue(source, new LocationAssessment(a.singleVenue(), a.fitScore(), a.fitReason(), a.bookingFriction(),
-                a.frictionNote(), a.footprintWarnings(), a.venueName(), address));
+                a.frictionNote(), a.footprintWarnings(), a.venueName(), address, a.listedVenues()));
     }
 }

@@ -320,4 +320,41 @@ class ParallelSearchClientTest {
         assertThatThrownBy(() -> client().search(null).block()).isInstanceOf(IllegalArgumentException.class);
         api.verify(0, postRequestedFor(urlEqualTo(SEARCH)));
     }
+
+    // --- one named venue ------------------------------------------------------------------------
+
+    @Test
+    void findsANamedVenueWithItsOwnObjectiveAndQueries() {
+        stubSearch(200, """
+                {"search_id": "s2", "results": [
+                  {"url": "https://www.barblondeau.com/", "title": "Bar Blondeau", "excerpts": ["Rooftop bar at the Wythe Hotel."]}
+                ]}
+                """);
+
+        List<SearchResult> hits = client().findVenue("Bar Blondeau, Wythe Hotel", "Brooklyn, New York", 2).block();
+
+        assertThat(hits).extracting(SearchResult::url).containsExactly("https://www.barblondeau.com/");
+        api.verify(postRequestedFor(urlEqualTo(SEARCH))
+                .withRequestBody(matchingJsonPath("$.objective", com.github.tomakehurst.wiremock.client.WireMock.containing(
+                        "official website of the venue \"Bar Blondeau, Wythe Hotel\" in Brooklyn, New York")))
+                .withRequestBody(matchingJsonPath("$.search_queries[0]", equalTo("Bar Blondeau, Wythe Hotel Brooklyn, New York")))
+                .withRequestBody(matchingJsonPath("$.search_queries[1]", equalTo("Bar Blondeau, Wythe Hotel official site")))
+                .withRequestBody(matchingJsonPath("$.advanced_settings.max_results", equalTo("2"))));
+    }
+
+    @Test
+    void aNamedVenueSearchFailsLikeAnyOther() {
+        stubSearch(503, "{}");
+
+        assertThat(failureOf(() -> client().findVenue("Bar Blondeau", "Brooklyn", 2).block()).kind())
+                .isEqualTo(SearchException.Kind.UNAVAILABLE);
+    }
+
+    @Test
+    void aNamedVenueSearchNeedsANameAnAreaAndASensibleLimit() {
+        assertThatThrownBy(() -> client().findVenue(" ", "Brooklyn", 2).block()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> client().findVenue("Bar", null, 2).block()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> client().findVenue("Bar", "Brooklyn", 0).block()).isInstanceOf(IllegalArgumentException.class);
+        api.verify(0, postRequestedFor(urlEqualTo(SEARCH)));
+    }
 }

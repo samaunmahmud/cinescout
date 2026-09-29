@@ -58,7 +58,7 @@ class ScoutingApiTest extends ApiTest {
             String prompt = call.getArgument(1);
             int score = prompt.contains("Venue Best") ? 92 : prompt.contains("Venue Middle") ? 71 : 40;
             return Mono.just(new LocationAssessment(true, score, "Reason " + score, BookingFriction.COMMERCIAL, "Enquire via events team",
-                    List.of("Lift access only"), null, null));
+                    List.of("Lift access only"), null, null, List.of()));
         });
         when(search.search(any())).thenReturn(Mono.just(List.of(hit("Middle"), hit("Best"), hit("Worst"))));
     }
@@ -184,7 +184,7 @@ class ScoutingApiTest extends ApiTest {
             String prompt = call.getArgument(1);
             return prompt.contains("Venue Worst")
                     ? Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable"))
-                    : Mono.just(new LocationAssessment(true, 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null));
+                    : Mono.just(new LocationAssessment(true, 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null, List.of()));
         });
         Account ada = register("Ada");
 
@@ -198,7 +198,7 @@ class ScoutingApiTest extends ApiTest {
     void aDirectoryOfVenuesIsLeftOutAndCounted() {
         when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
             boolean directory = call.<String>getArgument(1).contains("Venue Worst");
-            return Mono.just(new LocationAssessment(!directory, directory ? 0 : 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null));
+            return Mono.just(new LocationAssessment(!directory, directory ? 0 : 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null, List.of()));
         });
         Account ada = register("Ada");
 

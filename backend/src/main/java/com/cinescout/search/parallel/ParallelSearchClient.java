@@ -69,6 +69,28 @@ public class ParallelSearchClient implements LocationSearchClient {
                     }
                     return post(requestBody(request));
                 })
+                .transform(call -> guarded(call, request == null ? 0 : request.maxResults()));
+    }
+
+    @Override
+    public Mono<List<SearchResult>> findVenue(String name, String area, int maxResults) {
+        return Mono.defer(() -> {
+                    if (name == null || name.isBlank() || area == null || area.isBlank()) {
+                        return Mono.error(new IllegalArgumentException("name and area must not be blank"));
+                    }
+                    if (maxResults < 1 || maxResults > LocationSearchRequest.MAX_RESULTS) {
+                        return Mono.error(new IllegalArgumentException("maxResults must be between 1 and " + LocationSearchRequest.MAX_RESULTS));
+                    }
+                    return post(new SearchBody(ParallelQueryBuilder.venueObjective(name, area),
+                            ParallelQueryBuilder.venueQueries(name, area), mode(),
+                            new AdvancedSettings(maxResults, new ExcerptSettings(props.excerptChars()))));
+                })
+                .transform(call -> guarded(call, maxResults));
+    }
+
+    /** Timeouts and transport failures classified as {@link SearchException}, and the answer mapped to results. */
+    private Mono<List<SearchResult>> guarded(Mono<SearchResponse> call, int maxResults) {
+        return call
                 .timeout(props.timeout())
                 .onErrorMap(TimeoutException.class,
                         e -> new SearchException(Kind.UNAVAILABLE, SERVICE + " did not answer within " + props.timeout(), e))
@@ -76,16 +98,19 @@ public class ParallelSearchClient implements LocationSearchClient {
                                 || e instanceof DecodingException
                                 || e instanceof UnsupportedMediaTypeException,
                         e -> new SearchException(Kind.UNAVAILABLE, SERVICE + " is unreachable or returned an unreadable response", e))
-                .map(response -> toResults(response, request.maxResults()));
+                .map(response -> toResults(response, maxResults));
     }
 
     private SearchBody requestBody(LocationSearchRequest request) {
-        String mode = props.mode() == null || props.mode().isBlank() ? null : props.mode();
         return new SearchBody(
                 ParallelQueryBuilder.objective(request),
                 ParallelQueryBuilder.queries(request),
-                mode,
+                mode(),
                 new AdvancedSettings(request.maxResults(), new ExcerptSettings(props.excerptChars())));
+    }
+
+    private String mode() {
+        return props.mode() == null || props.mode().isBlank() ? null : props.mode();
     }
 
     private Mono<SearchResponse> post(SearchBody body) {

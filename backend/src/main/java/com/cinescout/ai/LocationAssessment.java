@@ -28,6 +28,9 @@ import java.util.Objects;
  * @param venueName          the venue's own name, cleaner than the page title it was found under; optional
  * @param address            the venue's street address when the excerpt states it, used to find it on the
  *                           map; optional, never guessed
+ * @param listedVenues       for a page that is not one venue: the venues it names that could suit the scene, so
+ *                           scouting can look each one up. Never null; empty for a single venue's page. Blank
+ *                           and repeated names are dropped and at most {@value #MAX_LISTED_VENUES} kept
  */
 public record LocationAssessment(
         @NotNull Boolean singleVenue,
@@ -37,8 +40,11 @@ public record LocationAssessment(
         String frictionNote,
         List<@NotBlank String> footprintWarnings,
         String venueName,
-        String address
+        String address,
+        List<String> listedVenues
 ) {
+
+    public static final int MAX_LISTED_VENUES = 5;
 
     /**
      * Models often omit an empty array or pad it with nulls, so both mean "no warnings"; a blank name or
@@ -50,6 +56,12 @@ public record LocationAssessment(
                 : footprintWarnings.stream().filter(Objects::nonNull).toList();
         venueName = blankToNull(venueName);
         address = blankToNull(address);
+        listedVenues = listedVenues == null ? List.of() : listedVenues.stream()
+                .map(LocationAssessment::blankToNull)
+                .filter(Objects::nonNull)
+                .distinct()
+                .limit(MAX_LISTED_VENUES)
+                .toList();
     }
 
     private static String blankToNull(String value) {
