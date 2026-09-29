@@ -13,7 +13,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
@@ -57,15 +56,14 @@ class SecurityConfig {
     }
 
     /**
-     * Checks an email and password; HTTP Basic and the login endpoint both use it. Failures are limited per client
+     * Checks an email and password, taking as long for an unknown email as for a known one
+     * ({@link PasswordAuthentication}); HTTP Basic and the login endpoint both use it. Failures are limited per client
      * address ({@link ThrottledAuthentication}), which {@link ClientAddress} makes known to it.
      */
     @Bean
     ReactiveAuthenticationManager passwordAuthentication(ReactiveUserDetailsService userDetails, PasswordEncoder encoder,
                                                          RateLimiter limits) {
-        UserDetailsRepositoryReactiveAuthenticationManager manager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetails);
-        manager.setPasswordEncoder(encoder);
-        return new ThrottledAuthentication(manager, limits);
+        return new ThrottledAuthentication(new PasswordAuthentication(userDetails, encoder), limits);
     }
 
     /** Runs before Spring Security's filters, so the address is known to the password check. */
