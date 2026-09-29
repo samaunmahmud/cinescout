@@ -88,7 +88,7 @@ public class Scene extends BaseEntity {
         this.estimatedCrewSize = requirements.estimatedCastAndCrewSize();
         this.requirementsJson = raw;
         this.parseStatus = ParseStatus.PARSED;
-        this.parsedAt = Instant.now();
+        this.parsedAt = DatabaseTime.now();
     }
 
     /** Forgets the extracted requirements, e.g. because the script they came from has changed. */

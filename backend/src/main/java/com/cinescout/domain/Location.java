@@ -106,7 +106,7 @@ public class Location extends BaseEntity {
 
     public void cacheLogistics(JsonNode logistics) {
         this.logisticsJson = logistics;
-        this.logisticsFetchedAt = Instant.now();
+        this.logisticsFetchedAt = DatabaseTime.now();
     }
 
     public void cacheVideos(JsonNode videos, String query, Instant fetchedAt) {

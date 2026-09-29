@@ -1,5 +1,6 @@
 package com.cinescout.video;
 
+import com.cinescout.domain.DatabaseTime;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.resilience.GuardFactory;
@@ -8,8 +9,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.Clock;
 
 /**
  * Wires venue videos. Like the client they need, they exist only when the YouTube key is set (a condition on
@@ -23,6 +22,6 @@ class VideoConfig {
     @Bean
     VideoService videoService(VideoSearchClient client, GuardFactory guards, LocationRepository locations, BlockingTransactions db,
                               ObjectMapper mapper, VideoProperties props) {
-        return new VideoService(client, guards, locations, db, mapper, props, Clock.systemUTC());
+        return new VideoService(client, guards, locations, db, mapper, props, DatabaseTime.clock());
     }
 }

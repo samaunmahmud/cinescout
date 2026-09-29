@@ -91,7 +91,7 @@ public class OutreachDraft extends BaseEntity {
         if (next == OutreachStatus.DRAFT) {
             this.sentAt = null;
         } else if (this.sentAt == null) {
-            this.sentAt = Instant.now();
+            this.sentAt = DatabaseTime.now();
         }
     }
 }

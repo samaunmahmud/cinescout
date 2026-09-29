@@ -1,5 +1,6 @@
 package com.cinescout.security;
 
+import com.cinescout.domain.DatabaseTime;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.repository.AuthSessionRepository;
@@ -24,8 +25,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import reactor.core.publisher.Mono;
-
-import java.time.Clock;
 
 /**
  * Everything requires a login except registering, logging in and out, and the API description. There are
@@ -78,7 +77,7 @@ class SecurityConfig {
 
     @Bean
     SessionService sessionService(AuthSessionRepository sessions, UserRepository users, BlockingTransactions db, SecurityProperties props) {
-        return new SessionService(sessions, users, db, props.sessionTtl(), Clock.systemUTC());
+        return new SessionService(sessions, users, db, props.sessionTtl(), DatabaseTime.clock());
     }
 
     @Bean
