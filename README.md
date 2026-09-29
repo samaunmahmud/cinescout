@@ -75,7 +75,12 @@ still starts without IBM credentials. When it is set, the other two are required
 | `WATSONX_API_KEY` | none, IBM Cloud API key |
 | `WATSONX_PROJECT_ID` | none, must be set with the key |
 | `WATSONX_MODEL_ID` | none, must be set with the key |
-| `WATSONX_URL` | `https://us-south.ml.cloud.ibm.com` |
+| `WATSONX_URL` | `https://us-south.ml.cloud.ibm.com` (the region your watsonx project is in, e.g. `https://eu-gb.ml.cloud.ibm.com` for London) |
+| `WATSONX_MAX_REQUESTS_PER_SECOND` | `2`, the free (Lite) plan's limit; raise it on a paid plan |
+
+Calls to the model are spaced out app-wide to stay under that rate: extra calls wait their turn
+(up to 30 seconds) instead of being refused by IBM, so a scouting run that assesses ten venues
+takes a few seconds longer rather than losing most of them.
 
 To check the client against the real service (skipped by default, billed to your project):
 
@@ -229,7 +234,7 @@ comes back with that section marked `UNAVAILABLE`.
 
 1. Schema and design - done
 2. Domain models and DTOs - done
-3. External API clients: LLM (watsonx.ai) and search (Parallel) - implemented, live checks pending
+3. External API clients: LLM (watsonx.ai) and search (Parallel) - done, both checked against the live services
 4. Orchestration service (extract, search, assess, save) with retry and circuit breaker - done
 5. REST controllers, authentication, validation and OpenAPI docs - done
 6. Outreach email generator and draft management (module C) - done

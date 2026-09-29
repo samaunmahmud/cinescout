@@ -1,6 +1,6 @@
 package com.cinescout.scouting;
 
-import com.cinescout.llm.watsonx.WatsonxLlmClient;
+import com.cinescout.llm.RateLimitedLlmClient;
 import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
@@ -64,7 +64,7 @@ class ScoutingConfigTest {
     void withBothKeysThePipelineIsBuiltFromTheRealClients() {
         runner.withPropertyValues(LLM).withPropertyValues(SEARCH).run(context -> {
             assertThat(context).hasSingleBean(ScoutingPipeline.class).hasSingleBean(SceneScoutingService.class);
-            assertThat(context.getBean(com.cinescout.llm.LlmClient.class)).isInstanceOf(WatsonxLlmClient.class);
+            assertThat(context.getBean(com.cinescout.llm.LlmClient.class)).isInstanceOf(RateLimitedLlmClient.class); // around the watsonx client
             assertThat(context.getBean(com.cinescout.search.LocationSearchClient.class)).isInstanceOf(ParallelSearchClient.class);
             assertThat(context.getBean(ScoutingProperties.class).assessmentConcurrency()).isEqualTo(4);
             assertThat(context).hasSingleBean(VenuePlacer.class);

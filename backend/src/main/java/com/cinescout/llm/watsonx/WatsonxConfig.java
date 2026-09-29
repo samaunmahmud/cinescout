@@ -2,6 +2,7 @@ package com.cinescout.llm.watsonx;
 
 import com.cinescout.llm.JsonSchemas;
 import com.cinescout.llm.LlmClient;
+import com.cinescout.llm.RateLimitedLlmClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
 import jakarta.validation.Validator;
@@ -39,7 +40,9 @@ class WatsonxConfig {
     @Bean
     LlmClient watsonxLlmClient(WebClient.Builder builder, WatsonxProperties props, IamTokenProvider tokens,
                                JsonSchemas schemas, ObjectMapper mapper, Validator validator) {
-        return new WatsonxLlmClient(webClient(builder, props, props.baseUrl()), tokens, props, schemas, mapper, validator);
+        return new RateLimitedLlmClient(
+                new WatsonxLlmClient(webClient(builder, props, props.baseUrl()), tokens, props, schemas, mapper, validator),
+                props.maxRequestsPerSecond(), props.maxWait());
     }
 
     private static WebClient webClient(WebClient.Builder builder, WatsonxProperties props, String baseUrl) {

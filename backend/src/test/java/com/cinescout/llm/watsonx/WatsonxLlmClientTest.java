@@ -86,7 +86,7 @@ class WatsonxLlmClientTest {
 
     private WatsonxLlmClient client(Duration timeout, String baseUrl) {
         WatsonxProperties props = new WatsonxProperties("test-key", "proj-1", "ibm/test-model",
-                baseUrl, api.baseUrl(), "2024-03-14", 0, 1024, true, timeout);
+                baseUrl, api.baseUrl(), "2024-03-14", 0, 1024, true, timeout, 2, Duration.ofSeconds(30));
         IamTokenProvider tokens = new IamTokenProvider(WebClient.create(api.baseUrl()), props.apiKey());
         return new WatsonxLlmClient(WebClient.create(baseUrl), tokens, props, new JsonSchemas(), json, validator);
     }

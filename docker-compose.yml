@@ -44,6 +44,7 @@ services:
       WATSONX_PROJECT_ID: ${WATSONX_PROJECT_ID:-}
       WATSONX_MODEL_ID: ${WATSONX_MODEL_ID:-}
       WATSONX_URL: ${WATSONX_URL:-https://us-south.ml.cloud.ibm.com}
+      WATSONX_MAX_REQUESTS_PER_SECOND: ${WATSONX_MAX_REQUESTS_PER_SECOND:-2}
       PARALLEL_API_KEY: ${PARALLEL_API_KEY:-}
       # Optional: videos of each venue (YouTube Data API v3).
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}

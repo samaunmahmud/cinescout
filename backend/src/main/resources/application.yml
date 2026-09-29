@@ -19,6 +19,7 @@ cinescout:
       project-id: ${WATSONX_PROJECT_ID:}
       model-id: ${WATSONX_MODEL_ID:}
       base-url: ${WATSONX_URL:https://us-south.ml.cloud.ibm.com}
+      max-requests-per-second: ${WATSONX_MAX_REQUESTS_PER_SECOND:2}   # the free (Lite) plan's limit
   search:
     parallel:                  # the search client is only created when PARALLEL_API_KEY is set
       api-key: ${PARALLEL_API_KEY:}

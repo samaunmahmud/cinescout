@@ -1,6 +1,7 @@
 package com.cinescout.llm.watsonx;
 
 import com.cinescout.llm.LlmClient;
+import com.cinescout.llm.RateLimitedLlmClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
@@ -39,7 +40,7 @@ class WatsonxConfigTest {
                         "cinescout.llm.watsonx.model-id=ibm/test-model")
                 .run(context -> {
                     assertThat(context).hasSingleBean(LlmClient.class);
-                    assertThat(context.getBean(LlmClient.class)).isInstanceOf(WatsonxLlmClient.class);
+                    assertThat(context.getBean(LlmClient.class)).isInstanceOf(RateLimitedLlmClient.class); // around the watsonx client
 
                     WatsonxProperties props = context.getBean(WatsonxProperties.class);
                     assertThat(props.baseUrl()).isEqualTo("https://us-south.ml.cloud.ibm.com");
@@ -60,7 +61,7 @@ class WatsonxConfigTest {
     @Test
     void theApiKeyNeverAppearsInToString() {
         WatsonxProperties props = new WatsonxProperties("secret-key", "proj-1", "ibm/test-model",
-                "https://x", "https://y", "2024-03-14", 0, 1024, true, Duration.ofSeconds(1));
+                "https://x", "https://y", "2024-03-14", 0, 1024, true, Duration.ofSeconds(1), 2, Duration.ofSeconds(30));
 
         assertThat(props.toString()).doesNotContain("secret-key").contains("proj-1");
     }

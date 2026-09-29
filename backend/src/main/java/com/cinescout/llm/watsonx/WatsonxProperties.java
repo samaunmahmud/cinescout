@@ -26,6 +26,9 @@ import java.time.Duration;
  * @param strictSchema send the JSON schema in strict mode (the model is constrained to it);
  *                     turn off if a model rejects strict schemas
  * @param timeout      whole-call budget, including fetching an IAM token
+ * @param maxRequestsPerSecond the account's request rate: 2 on the free (Lite) plan, higher on paid plans. Calls
+ *                     beyond it wait their turn rather than being refused with 429
+ * @param maxWait      how long a call may wait for its turn before it fails as rate-limited
  */
 @Validated
 @ConfigurationProperties("cinescout.llm.watsonx")
@@ -39,7 +42,9 @@ public record WatsonxProperties(
         @DefaultValue("0") @Min(0) @Max(2) double temperature,
         @DefaultValue("1024") @Min(1) int maxTokens,
         @DefaultValue("true") boolean strictSchema,
-        @DefaultValue("60s") @NotNull Duration timeout
+        @DefaultValue("60s") @NotNull Duration timeout,
+        @DefaultValue("2") @Min(1) int maxRequestsPerSecond,
+        @DefaultValue("30s") @NotNull Duration maxWait
 ) {
 
     /** Redacts the API key so an accidental log line or failed-binding message cannot leak it. */
