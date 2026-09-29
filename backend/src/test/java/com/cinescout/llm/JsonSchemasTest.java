@@ -28,7 +28,7 @@ class JsonSchemasTest {
         assertThat(schema.path("type").asText()).isEqualTo("object");
         assertThat(schema.path("additionalProperties").asBoolean(true)).isFalse();
         assertThat(names(schema.path("required")))
-                .containsExactlyInAnyOrder("fitScore", "fitReason", "bookingFriction", "frictionNote", "footprintWarnings",
+                .containsExactlyInAnyOrder("singleVenue", "fitScore", "fitReason", "bookingFriction", "frictionNote", "footprintWarnings",
                         "venueName", "address");
     }
 

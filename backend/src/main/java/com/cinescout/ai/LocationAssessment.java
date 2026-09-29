@@ -15,6 +15,10 @@ import java.util.Objects;
  * contract for the model's structured JSON output; the LLM client validates it
  * before anything is persisted, since model output is untrusted.
  *
+ * @param singleVenue        whether the page is about one specific venue (its own site, or one listing on a
+ *                           booking site). False for directories, "best rooftops in town" lists and articles
+ *                           naming several places: those are dropped, since a page of ten venues is not a
+ *                           location anyone can book or put on a map
  * @param fitScore           how well the venue suits the scene, 0 (unusable) to 100 (ideal)
  * @param fitReason          one or two sentences explaining the score
  * @param bookingFriction    who has to say yes: public space, commercial venue or private owner
@@ -26,6 +30,7 @@ import java.util.Objects;
  *                           map; optional, never guessed
  */
 public record LocationAssessment(
+        @NotNull Boolean singleVenue,
         @NotNull @Min(0) @Max(100) Integer fitScore,
         @NotBlank String fitReason,
         @NotNull BookingFriction bookingFriction,

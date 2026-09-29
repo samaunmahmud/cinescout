@@ -41,7 +41,7 @@ class VenuePlacerTest {
 
     private static ScoutedVenue venue(String key, String venueName, String address) {
         return new ScoutedVenue(new SearchResult("Title " + key, "https://" + key + ".example/", null, "parallel"),
-                new LocationAssessment(70, "ok", BookingFriction.PUBLIC, null, List.of(), venueName, address));
+                new LocationAssessment(true, 70, "ok", BookingFriction.PUBLIC, null, List.of(), venueName, address));
     }
 
     @Test

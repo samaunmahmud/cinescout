@@ -42,8 +42,9 @@ final class ParallelQueryBuilder {
         if (r.estimatedCastAndCrewSize() != null && r.estimatedCastAndCrewSize() > 0) {
             objective.append(" The venue must accommodate about ").append(r.estimatedCastAndCrewSize()).append(" cast and crew.");
         }
-        objective.append(" Prefer the venue's own website or a location-hire listing that shows how to enquire about filming"
-                + " or hire. Avoid articles, listicles and news pages.");
+        objective.append(" Each result should be about one specific venue: the venue's own website, or that single venue's"
+                + " listing on a location-hire site, showing how to enquire about filming or hire. Avoid directories and"
+                + " search-result pages that list many venues, 'best of' lists, articles and news pages.");
 
         return objective.length() > MAX_OBJECTIVE_CHARS ? objective.substring(0, MAX_OBJECTIVE_CHARS) : objective.toString();
     }

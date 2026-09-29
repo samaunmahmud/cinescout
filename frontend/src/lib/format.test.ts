@@ -29,10 +29,16 @@ describe('sceneLabel', () => {
 
 describe('scoutingSummary', () => {
   it('only mentions what happened, in the right number', () => {
-    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 0 })).toBe('No new venues found.')
-    expect(scoutingSummary({ added: [location(), location({ id: 'l2' })], alreadySaved: 1, unassessed: 0 })).toBe(
+    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 0, notVenues: 0 })).toBe('No new venues found.')
+    expect(scoutingSummary({ added: [location(), location({ id: 'l2' })], alreadySaved: 1, unassessed: 0, notVenues: 0 })).toBe(
       'Found 2 new venues. 1 venue was already saved and left as it was.',
     )
-    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 3 })).toBe('No new venues found. 3 venues could not be assessed and were left out.')
+    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 3, notVenues: 0 })).toBe('No new venues found. 3 venues could not be assessed and were left out.')
+    expect(scoutingSummary({ added: [location()], alreadySaved: 0, unassessed: 0, notVenues: 7 })).toBe(
+      'Found 1 new venue. Skipped 7 pages that listed several venues rather than one.',
+    )
+    expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 0, notVenues: 1 })).toBe(
+      'No new venues found. Skipped 1 page that listed several venues rather than one.',
+    )
   })
 })

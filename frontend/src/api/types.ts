@@ -200,6 +200,8 @@ export interface ScoutingResult {
   alreadySaved: number
   /** Venues found but dropped because the AI could not assess them. */
   unassessed: number
+  /** Search results left out because they were not about one venue (a directory, a "best of" list, an article). */
+  notVenues: number
 }
 
 // The logistics report (com.cinescout.logistics.LogisticsReport). Local times are ISO-8601 with the

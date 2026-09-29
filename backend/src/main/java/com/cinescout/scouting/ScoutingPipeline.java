@@ -94,14 +94,18 @@ public class ScoutingPipeline {
     private Mono<ScoutingOutcome> toOutcome(List<Assessed> assessed) {
         List<ScoutedVenue> venues = new ArrayList<>();
         List<LlmException> failures = new ArrayList<>();
+        int notVenues = 0;
         for (Assessed a : assessed) {
-            if (a.venue() != null) {
+            if (a.venue() != null && !a.venue().assessment().singleVenue()) {
+                notVenues++; // a directory or an article: nothing anyone can book or put on the map
+                log.debug("Not one venue: {} ({})", a.venue().source().title(), a.venue().source().url());
+            } else if (a.venue() != null) {
                 venues.add(a.venue());
             } else {
                 failures.add(a.failure());
             }
         }
-        if (venues.isEmpty() && !failures.isEmpty()) {
+        if (venues.isEmpty() && notVenues == 0 && !failures.isEmpty()) {
             // Nothing could be assessed: that is an outage or a misconfiguration, not a quiet search.
             return Mono.error(failures.get(0));
         }
@@ -111,7 +115,10 @@ public class ScoutingPipeline {
         }
         // List.sort is stable, so equal scores keep the search's own relevance order.
         venues.sort(Comparator.comparing((ScoutedVenue v) -> v.assessment().fitScore()).reversed());
-        return Mono.just(new ScoutingOutcome(venues, failures.size()));
+        if (notVenues > 0) {
+            log.info("Scouting dropped {} of {} search result(s) that were not about one venue", notVenues, assessed.size());
+        }
+        return Mono.just(new ScoutingOutcome(venues, failures.size(), notVenues));
     }
 
     /** One venue's assessment attempt: exactly one of the two is set. */

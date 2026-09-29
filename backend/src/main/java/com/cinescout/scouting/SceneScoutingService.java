@@ -169,7 +169,7 @@ public class SceneScoutingService {
             }
         }
         List<LocationResponse> added = locations.saveAllAndFlush(toSave).stream().map(LocationResponse::from).toList();
-        return new ScoutingResult(added, outcome.venues().size() - added.size(), outcome.unassessed());
+        return new ScoutingResult(added, outcome.venues().size() - added.size(), outcome.unassessed(), outcome.notVenues());
     }
 
     private static Location toLocation(Scene scene, ScoutedVenue venue, GeoPoint point) {

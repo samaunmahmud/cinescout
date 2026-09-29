@@ -28,9 +28,11 @@ class ParallelQueryBuilderTest {
     }
 
     @Test
-    void theObjectiveAsksForBookablePagesNotArticles() {
+    void theObjectiveAsksForOneBookableVenuePerResultNotDirectoriesOrArticles() {
         assertThat(ParallelQueryBuilder.objective(request(FULL)))
-                .contains("how to enquire about filming or hire").contains("Avoid articles, listicles and news pages");
+                .contains("Each result should be about one specific venue")
+                .contains("how to enquire about filming or hire")
+                .contains("Avoid directories and search-result pages that list many venues");
     }
 
     @Test

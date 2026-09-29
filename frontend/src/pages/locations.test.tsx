@@ -69,7 +69,7 @@ describe("a scene's locations", () => {
         'POST /api/scenes/s1/scout': () => {
           saved = [location()]
           current = scene({ parseStatus: 'PARSED', requirements: { settingType: 'Late-night diner', visualMood: null, lightingNeeds: null, timeOfDay: null, acousticSensitivity: null, estimatedCastAndCrewSize: null } })
-          return json({ added: saved, alreadySaved: 2, unassessed: 1 })
+          return json({ added: saved, alreadySaved: 2, unassessed: 1, notVenues: 0 })
         },
       },
       scene(),

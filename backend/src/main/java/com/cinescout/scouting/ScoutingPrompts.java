@@ -40,6 +40,7 @@ final class ScoutingPrompts {
             excerpt of the page.
 
             Return:
+            - singleVenue: true if the page is about one specific venue: the venue's own website, or a             single venue's listing on a booking site such as Peerspace or Giggster. false if it covers             several venues (a directory, search results, a "best rooftop bars" list, a news or travel             article) or is not about a venue at all. When false, still fill in the other fields, with             fitScore 0.
             - fitScore: 0 to 100, how well the venue's setting, mood, lighting, sound and capacity match \
             the requirements. 90-100 ideal; 70-89 good with minor compromises; 40-69 possible with \
             significant adaptation; below 40 poor. When the excerpt says too little to judge, score \

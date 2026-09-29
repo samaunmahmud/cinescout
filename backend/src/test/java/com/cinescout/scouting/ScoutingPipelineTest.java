@@ -84,7 +84,7 @@ class ScoutingPipelineTest {
     }
 
     private static LocationAssessment assessment(int score) {
-        return new LocationAssessment(score, "Reason for " + score, BookingFriction.COMMERCIAL, null, List.of(), null, null);
+        return new LocationAssessment(true, score, "Reason for " + score, BookingFriction.COMMERCIAL, null, List.of(), null, null);
     }
 
     private static LlmException llmFailure(Kind kind) {
@@ -357,5 +357,36 @@ class ScoutingPipelineTest {
         assertThatThrownBy(() -> pipeline.extractRequirements("scene").block())
                 .isInstanceOfSatisfying(LlmException.class, e -> assertThat(e.getMessage()).contains("circuit breaker is open"));
         assertThat(llm.calls).hasSize(callsBefore);
+    }
+
+    // --- pages that are not one venue ---------------------------------------------------------------
+
+    private static Function<FakeLlm.Call, Mono<?>> aDirectory() {
+        return call -> Mono.just(new LocationAssessment(false, 0, "A list of 16 rooftop venues", BookingFriction.COMMERCIAL,
+                null, List.of(), null, null));
+    }
+
+    @Test
+    void directoriesAndArticlesAreDroppedAndCounted() {
+        searchReturns(venue("A"), venue("List"), venue("B"), venue("Article"));
+        assessments(java.util.Map.of("A", scores(60), "List", aDirectory(), "B", scores(80), "Article", aDirectory()));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        assertThat(outcome.venues()).extracting(v -> v.source().title()).containsExactly("Venue B", "Venue A");
+        assertThat(outcome.notVenues()).isEqualTo(2);
+        assertThat(outcome.unassessed()).isZero();
+    }
+
+    @Test
+    void aSearchThatFoundOnlyDirectoriesIsAnEmptyResultNotAnOutage() {
+        searchReturns(venue("List"), venue("Broken"));
+        assessments(java.util.Map.of("List", aDirectory(), "Broken", call -> Mono.error(llmFailure(Kind.INVALID_OUTPUT))));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        assertThat(outcome.venues()).isEmpty();
+        assertThat(outcome.notVenues()).isEqualTo(1);
+        assertThat(outcome.unassessed()).isEqualTo(1);
     }
 }

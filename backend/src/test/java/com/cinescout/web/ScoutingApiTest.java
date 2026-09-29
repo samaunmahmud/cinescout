@@ -57,7 +57,7 @@ class ScoutingApiTest extends ApiTest {
         when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
             String prompt = call.getArgument(1);
             int score = prompt.contains("Venue Best") ? 92 : prompt.contains("Venue Middle") ? 71 : 40;
-            return Mono.just(new LocationAssessment(score, "Reason " + score, BookingFriction.COMMERCIAL, "Enquire via events team",
+            return Mono.just(new LocationAssessment(true, score, "Reason " + score, BookingFriction.COMMERCIAL, "Enquire via events team",
                     List.of("Lift access only"), null, null));
         });
         when(search.search(any())).thenReturn(Mono.just(List.of(hit("Middle"), hit("Best"), hit("Worst"))));
@@ -132,6 +132,7 @@ class ScoutingApiTest extends ApiTest {
 
         assertThat(result.path("alreadySaved").asInt()).isZero();
         assertThat(result.path("unassessed").asInt()).isZero();
+        assertThat(result.path("notVenues").asInt()).isZero();
         JsonNode added = result.path("added");
         assertThat(added).hasSize(3);
         assertThat(added.get(0).path("name").asText()).isEqualTo("Venue Best");
@@ -183,7 +184,7 @@ class ScoutingApiTest extends ApiTest {
             String prompt = call.getArgument(1);
             return prompt.contains("Venue Worst")
                     ? Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable"))
-                    : Mono.just(new LocationAssessment(80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null));
+                    : Mono.just(new LocationAssessment(true, 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null));
         });
         Account ada = register("Ada");
 
@@ -191,6 +192,21 @@ class ScoutingApiTest extends ApiTest {
 
         assertThat(result.path("added")).hasSize(2);
         assertThat(result.path("unassessed").asInt()).isEqualTo(1);
+    }
+
+    @Test
+    void aDirectoryOfVenuesIsLeftOutAndCounted() {
+        when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
+            boolean directory = call.<String>getArgument(1).contains("Venue Worst");
+            return Mono.just(new LocationAssessment(!directory, directory ? 0 : 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null));
+        });
+        Account ada = register("Ada");
+
+        JsonNode result = json(ada.client().post().uri("/api/scenes/" + sceneWithArea(ada) + "/scout").exchange().expectStatus().isOk());
+
+        assertThat(result.path("added")).hasSize(2);
+        assertThat(result.path("added").findValuesAsText("name")).noneMatch(name -> name.contains("Worst"));
+        assertThat(result.path("notVenues").asInt()).isEqualTo(1);
     }
 
     @Test

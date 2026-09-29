@@ -46,7 +46,7 @@ class WatsonxLlmClientTest {
     private static final String USER_PROMPT = "INT. ROOFTOP BAR - NIGHT. Neon signs hum; a secret deal goes wrong.";
 
     private static final String VALID_ASSESSMENT = """
-            {"fitScore": 87, "fitReason": "Neon-lit rooftop with skyline views.",
+            {"singleVenue": true, "fitScore": 87, "fitReason": "Neon-lit rooftop with skyline views.",
              "bookingFriction": "COMMERCIAL", "frictionNote": null,
              "footprintWarnings": ["Lift access only"]}
             """;
@@ -221,7 +221,7 @@ class WatsonxLlmClientTest {
 
     @Test
     void ignoresPropertiesTheTypeDoesNotKnow() {
-        stubAnswer("{\"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\", "
+        stubAnswer("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\", "
                 + "\"frictionNote\": null, \"footprintWarnings\": [], \"reasoning\": \"extra\"}");
 
         assertThat(assess().fitScore()).isEqualTo(50);
@@ -229,7 +229,7 @@ class WatsonxLlmClientTest {
 
     @Test
     void anOmittedWarningsArrayBecomesEmpty() {
-        stubAnswer("{\"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\"}");
+        stubAnswer("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\"}");
 
         assertThat(assess().footprintWarnings()).isEmpty();
     }
@@ -239,14 +239,14 @@ class WatsonxLlmClientTest {
     static Stream<Arguments> unusableAnswers() {
         return Stream.of(
                 Arguments.of("not JSON at all", "stop", "not valid JSON"),
-                Arguments.of("{\"fitScore\": 50, \"fitReason\":", "stop", "not valid JSON"),
+                Arguments.of("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\":", "stop", "not valid JSON"),
                 Arguments.of("", "stop", "empty"),
                 Arguments.of("null", "stop", "JSON null"),
-                Arguments.of("{\"fitScore\": 150, \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\"}", "stop", "fitScore"),
-                Arguments.of("{\"fitScore\": 50, \"fitReason\": \" \", \"bookingFriction\": \"PUBLIC\"}", "stop", "fitReason"),
-                Arguments.of("{\"fitScore\": 50, \"fitReason\": \"ok\"}", "stop", "bookingFriction"),
-                Arguments.of("{\"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"MAYBE\"}", "stop", "bookingFriction"),
-                Arguments.of("{\"fitScore\": \"high\", \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\"}", "stop", "fitScore"),
+                Arguments.of("{\"singleVenue\": true, \"fitScore\": 150, \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\"}", "stop", "fitScore"),
+                Arguments.of("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\": \" \", \"bookingFriction\": \"PUBLIC\"}", "stop", "fitReason"),
+                Arguments.of("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\": \"ok\"}", "stop", "bookingFriction"),
+                Arguments.of("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"MAYBE\"}", "stop", "bookingFriction"),
+                Arguments.of("{\"singleVenue\": true, \"fitScore\": \"high\", \"fitReason\": \"ok\", \"bookingFriction\": \"PUBLIC\"}", "stop", "fitScore"),
                 Arguments.of(VALID_ASSESSMENT, "length", "incomplete")
         );
     }
@@ -272,7 +272,7 @@ class WatsonxLlmClientTest {
 
     @Test
     void errorMessagesNeverQuoteTheModelOutputOrThePrompt() {
-        stubAnswer("{\"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"LEAKED-MODEL-TEXT\"}");
+        stubAnswer("{\"singleVenue\": true, \"fitScore\": 50, \"fitReason\": \"ok\", \"bookingFriction\": \"LEAKED-MODEL-TEXT\"}");
 
         LlmException error = failureOf(this::assess);
 
