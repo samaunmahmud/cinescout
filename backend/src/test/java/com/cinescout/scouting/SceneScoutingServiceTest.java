@@ -330,6 +330,22 @@ class SceneScoutingServiceTest {
     }
 
     @Test
+    void aSavedVenueFoundAgainOnAnotherOfItsPagesIsAlreadySaved() {
+        Fixture f = fixture(AREA, true);
+        pipelineFinds(new ScoutingOutcome(List.of(venue("Home", 60, "Golden Blue Bar & Restaurant", null)), 0, 0));
+        service.scout(f.ownerId(), f.sceneId(), 10).block();
+        geocoder.queries.clear();
+
+        pipelineFinds(new ScoutingOutcome(List.of(venue("Menu", 70, "The Golden Blue Bar and Restaurant", "2172 Clarendon Rd")), 0, 0));
+        ScoutingResult again = service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        assertThat(again.added()).isEmpty();
+        assertThat(again.alreadySaved()).isEqualTo(1);
+        assertThat(geocoder.queries).isEmpty();
+        assertThat(savedLocations(f)).hasSize(1);
+    }
+
+    @Test
     void aGeocoderThatFailsLeavesTheVenuesWithoutCoordinatesButSavesThem() {
         Fixture f = fixture(AREA, true);
         service = new SceneScoutingService(pipeline, new VenuePlacer(new FakeGeocoder() {

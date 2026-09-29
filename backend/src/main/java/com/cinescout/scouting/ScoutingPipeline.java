@@ -3,6 +3,7 @@ package com.cinescout.scouting;
 import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.SceneRequirements;
+import com.cinescout.domain.VenueNames;
 import com.cinescout.llm.LlmClient;
 import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmGuards;
@@ -18,7 +19,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -115,10 +118,38 @@ public class ScoutingPipeline {
         }
         // List.sort is stable, so equal scores keep the search's own relevance order.
         venues.sort(Comparator.comparing((ScoutedVenue v) -> v.assessment().fitScore()).reversed());
+        venues = sameVenueOnce(venues);
         if (notVenues > 0) {
             log.info("Scouting dropped {} of {} search result(s) that were not about one venue", notVenues, assessed.size());
         }
         return Mono.just(new ScoutingOutcome(venues, failures.size(), notVenues));
+    }
+
+    /**
+     * One result per venue: a venue's own site often comes back as several pages (home, menu, events), each assessed
+     * separately. Results the model gave the same venue name (see {@link VenueNames}) are one venue, kept at its best
+     * score; if that page gave no address, the first of the others that did lends it. Results without a venue name
+     * are all kept, since nothing says they are the same place.
+     */
+    static List<ScoutedVenue> sameVenueOnce(List<ScoutedVenue> bestFirst) {
+        List<ScoutedVenue> kept = new ArrayList<>();
+        Map<String, Integer> keptAt = new HashMap<>();
+        for (ScoutedVenue venue : bestFirst) {
+            String name = VenueNames.key(venue.assessment().venueName());
+            Integer at = name == null ? null : keptAt.get(name);
+            if (at == null) {
+                if (name != null) {
+                    keptAt.put(name, kept.size());
+                }
+                kept.add(venue);
+            } else if (kept.get(at).assessment().address() == null && venue.assessment().address() != null) {
+                kept.set(at, kept.get(at).withAddress(venue.assessment().address()));
+            }
+        }
+        if (kept.size() < bestFirst.size()) {
+            log.debug("Scouting merged {} result(s) that were pages of a venue already found", bestFirst.size() - kept.size());
+        }
+        return kept;
     }
 
     /** One venue's assessment attempt: exactly one of the two is set. */

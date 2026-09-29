@@ -389,4 +389,45 @@ class ScoutingPipelineTest {
         assertThat(outcome.notVenues()).isEqualTo(1);
         assertThat(outcome.unassessed()).isEqualTo(1);
     }
+
+    // --- one result per venue ------------------------------------------------------------------------
+
+    private static ScoutedVenue page(String url, int score, String venueName, String address) {
+        return new ScoutedVenue(new SearchResult("Page " + url, "https://" + url, "Excerpt", "parallel"),
+                new LocationAssessment(true, score, "Reason", BookingFriction.COMMERCIAL, null, List.of(), venueName, address));
+    }
+
+    @Test
+    void pagesOfOneVenueAreKeptOnceAtTheirBestScore() {
+        List<ScoutedVenue> kept = ScoutingPipeline.sameVenueOnce(List.of(
+                page("goldenblue.example.com/", 60, "Golden Blue Bar & Restaurant", null),
+                page("other.example.com/", 50, "Other Bar", null),
+                page("goldenblue.example.com/menu", 40, "golden blue bar and restaurant", "2172 Clarendon Rd"),
+                page("goldenblue.example.com/events", 30, "The Golden Blue Bar & Restaurant", "somewhere else")));
+
+        assertThat(kept).extracting(v -> v.source().url())
+                .containsExactly("https://goldenblue.example.com/", "https://other.example.com/");
+        // The kept page gave no address, so the first duplicate that did lends it.
+        assertThat(kept.get(0).assessment().address()).isEqualTo("2172 Clarendon Rd");
+        assertThat(kept.get(0).assessment().fitScore()).isEqualTo(60);
+    }
+
+    @Test
+    void resultsWithoutAVenueNameAreNeverMerged() {
+        List<ScoutedVenue> kept = ScoutingPipeline.sameVenueOnce(List.of(
+                page("a.example.com/", 60, null, null), page("b.example.com/", 50, null, null)));
+
+        assertThat(kept).hasSize(2);
+    }
+
+    @Test
+    void scoutingReturnsEachVenueOnce() {
+        searchReturns(venue("A"), venue("B"));
+        llm.handler = call -> Mono.just(new LocationAssessment(true, 70, "ok", BookingFriction.COMMERCIAL, null, List.of(),
+                "Golden Blue", null));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        assertThat(outcome.venues()).hasSize(1);
+    }
 }

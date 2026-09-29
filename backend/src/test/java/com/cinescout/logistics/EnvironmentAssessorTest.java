@@ -1,6 +1,7 @@
 package com.cinescout.logistics;
 
 import com.cinescout.domain.AcousticSensitivity;
+import com.cinescout.domain.VenueNames;
 import com.cinescout.logistics.LogisticsReport.Environment;
 import com.cinescout.logistics.LogisticsReport.NearbyService;
 import com.cinescout.logistics.LogisticsReport.NoiseLevel;
@@ -121,7 +122,7 @@ class EnvironmentAssessorTest {
 
     @Test
     void namesMatchByWordsIgnoringCaseAccentsPunctuationAndALeadingThe() {
-        List<String> venue = EnvironmentAssessor.words("The Blue Note Jazz Club");
+        List<String> venue = VenueNames.words("The Blue Note Jazz Club");
 
         assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Blue Note", 30), venue)).isTrue();
         assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "BLUE NOTE JAZZ CLUB!", 30), venue)).isTrue();
@@ -131,6 +132,5 @@ class EnvironmentAssessorTest {
         assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Jazz", 30), venue)).as("too short to tell").isFalse();
         assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Bluenote", 30), venue)).isFalse();
         assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, null, 0), venue)).as("unnamed").isFalse();
-        assertThat(EnvironmentAssessor.words("  Crème—Brûlée, the Bar ")).containsExactly("creme", "brulee", "the", "bar");
     }
 }

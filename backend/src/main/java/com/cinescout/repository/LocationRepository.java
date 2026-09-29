@@ -30,4 +30,8 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     /** The pages already saved for a scene; the same page must not be saved twice (uq_locations_scene_source). */
     @Query("select l.sourceUrl from Location l where l.scene.id = :sceneId and l.sourceUrl is not null")
     Set<String> findSourceUrlsBySceneId(@Param("sceneId") UUID sceneId);
+
+    /** The names of a scene's locations, so a venue found again on another page is recognised as already saved. */
+    @Query("select l.name from Location l where l.scene.id = :sceneId")
+    Set<String> findNamesBySceneId(@Param("sceneId") UUID sceneId);
 }

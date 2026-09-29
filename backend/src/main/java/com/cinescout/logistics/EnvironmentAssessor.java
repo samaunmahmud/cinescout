@@ -1,6 +1,7 @@
 package com.cinescout.logistics;
 
 import com.cinescout.domain.AcousticSensitivity;
+import com.cinescout.domain.VenueNames;
 import com.cinescout.logistics.LogisticsReport.Environment;
 import com.cinescout.logistics.LogisticsReport.NearbyService;
 import com.cinescout.logistics.LogisticsReport.NoiseLevel;
@@ -9,17 +10,12 @@ import com.cinescout.logistics.LogisticsReport.SectionStatus;
 import com.cinescout.logistics.places.Place;
 import com.cinescout.logistics.places.PlaceKind;
 
-import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -45,8 +41,6 @@ final class EnvironmentAssessor {
     static final int VENUE_RADIUS_METERS = 150;
     /** A shorter name ("Bar") says too little to identify the venue by containment. */
     private static final int MIN_CONTAINED_NAME_LENGTH = 5;
-    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^\\p{L}\\p{N}]+");
-    private static final Pattern MARKS = Pattern.compile("\\p{M}+");
 
     private static final Map<PlaceKind, String> ADVICE = advice();
 
@@ -59,7 +53,7 @@ final class EnvironmentAssessor {
 
     /** @param venueName the location's name, or null to keep every place */
     static Environment assess(List<Place> places, AcousticSensitivity sensitivity, String venueName) {
-        List<String> venue = words(venueName);
+        List<String> venue = VenueNames.words(venueName);
         if (!venue.isEmpty()) {
             places = places.stream().filter(place -> !isVenue(place, venue)).toList();
         }
@@ -74,7 +68,7 @@ final class EnvironmentAssessor {
         if (place.distanceMeters() > VENUE_RADIUS_METERS) {
             return false;
         }
-        List<String> name = words(place.name());
+        List<String> name = VenueNames.words(place.name());
         if (name.isEmpty()) {
             return false;
         }
@@ -87,19 +81,6 @@ final class EnvironmentAssessor {
                 && Collections.indexOfSubList(longer, shorter) >= 0;
     }
 
-    /** The name as lower-case words without accents or punctuation, and without a leading "the". */
-    static List<String> words(String name) {
-        if (name == null) {
-            return List.of();
-        }
-        String plain = MARKS.matcher(Normalizer.normalize(name, Normalizer.Form.NFD)).replaceAll("");
-        List<String> words = new ArrayList<>(Arrays.stream(NON_ALPHANUMERIC.split(plain.toLowerCase(Locale.ROOT)))
-                .filter(word -> !word.isEmpty()).toList());
-        if (words.size() > 1 && words.getFirst().equals("the")) {
-            words.removeFirst();
-        }
-        return words;
-    }
 
     static Environment unavailable(String message, AcousticSensitivity sensitivity) {
         return new Environment(SectionStatus.UNAVAILABLE, message, sensitivity, null, List.of(), List.of());

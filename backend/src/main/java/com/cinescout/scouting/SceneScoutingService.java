@@ -5,6 +5,7 @@ import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
+import com.cinescout.domain.VenueNames;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.llm.LlmException;
@@ -38,8 +39,8 @@ import java.util.UUID;
  * reassigned mid-run fails cleanly instead of being written to.
  *
  * <p>New venues are placed on the map before they are saved (by the address the page gives, or their
- * name in the search area), on a best-effort basis; see {@link VenuePlacer}. Venues already saved are
- * not looked up again.
+ * name in the search area), on a best-effort basis; see {@link VenuePlacer}. Venues already saved (the same
+ * page, or a location of the same name) are not looked up again.
  *
  * <p>Two runs racing on the same scene can both pass the "already saved" check; the loser then
  * fails on the unique (scene, source url) index, which surfaces as a {@code ConflictException}, so
@@ -153,18 +154,48 @@ public class SceneScoutingService {
     /** The venues not saved for the scene yet: only these are worth placing on the map. */
     private List<ScoutedVenue> unsaved(UUID ownerId, UUID sceneId, ScoutingOutcome outcome) {
         load(ownerId, sceneId);
-        Set<String> seen = new HashSet<>(locations.findSourceUrlsBySceneId(sceneId));
-        return outcome.venues().stream().filter(venue -> seen.add(venue.source().url())).toList();
+        Saved saved = saved(sceneId);
+        return outcome.venues().stream().filter(saved::addIfNew).toList();
+    }
+
+    /**
+     * What a scene already has: a venue counts as saved if its page is, or if a location of the same name is (the
+     * venue found again on another of its pages, or added by hand).
+     */
+    private Saved saved(UUID sceneId) {
+        Set<String> names = new HashSet<>();
+        for (String name : locations.findNamesBySceneId(sceneId)) {
+            String key = VenueNames.key(name);
+            if (key != null) {
+                names.add(key);
+            }
+        }
+        return new Saved(new HashSet<>(locations.findSourceUrlsBySceneId(sceneId)), names);
+    }
+
+    private record Saved(Set<String> urls, Set<String> names) {
+        /** True, and remembers it, if {@code venue} is not saved yet. */
+        boolean addIfNew(ScoutedVenue venue) {
+            String name = VenueNames.key(venue.assessment().venueName());
+            if (urls.contains(venue.source().url()) || (name != null && names.contains(name))) {
+                return false;
+            }
+            urls.add(venue.source().url());
+            if (name != null) {
+                names.add(name);
+            }
+            return true;
+        }
     }
 
     private ScoutingResult saveVenues(UUID ownerId, UUID sceneId, ScoutingOutcome outcome, Map<String, GeoPoint> placed) {
         Scene scene = load(ownerId, sceneId);
         // Checked again: another run may have saved some of these while they were being placed.
-        Set<String> seen = new HashSet<>(locations.findSourceUrlsBySceneId(sceneId));
+        Saved saved = saved(sceneId);
 
         List<Location> toSave = new ArrayList<>();
         for (ScoutedVenue venue : outcome.venues()) {
-            if (seen.add(venue.source().url())) {
+            if (saved.addIfNew(venue)) {
                 toSave.add(toLocation(scene, venue, placed.get(venue.source().url())));
             }
         }
