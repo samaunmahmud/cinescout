@@ -10,8 +10,10 @@ import java.util.List;
  *                   assessment; they are not guessed at. Zero when everything was assessed
  * @param notVenues  how many search results the model found were not about one venue (a directory, a list, an
  *                   article) and were dropped
+ * @param unsuitable how many venues the model scored 0, unusable for the scene (e.g. outside the search area), and
+ *                   were dropped
  */
-public record ScoutingOutcome(List<ScoutedVenue> venues, int unassessed, int notVenues) {
+public record ScoutingOutcome(List<ScoutedVenue> venues, int unassessed, int notVenues, int unsuitable) {
 
     public ScoutingOutcome {
         venues = List.copyOf(venues);

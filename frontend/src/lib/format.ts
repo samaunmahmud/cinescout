@@ -24,7 +24,7 @@ export function sceneLabel(scene: { sceneNumber: number | null; title: string })
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** One sentence on what a scouting run did, for the banner after it. */
-export function scoutingSummary({ added, alreadySaved, unassessed, notVenues }: ScoutingResult): string {
+export function scoutingSummary({ added, alreadySaved, unassessed, notVenues, unsuitable }: ScoutingResult): string {
   const parts = [added.length > 0 ? `Found ${plural(added.length, 'new venue', 'new venues')}.` : 'No new venues found.']
   if (alreadySaved > 0) {
     parts.push(`${plural(alreadySaved, 'venue was', 'venues were')} already saved and left as ${alreadySaved === 1 ? 'it was' : 'they were'}.`)
@@ -32,6 +32,9 @@ export function scoutingSummary({ added, alreadySaved, unassessed, notVenues }: 
   if (unassessed > 0) parts.push(`${plural(unassessed, 'venue', 'venues')} could not be assessed and ${unassessed === 1 ? 'was' : 'were'} left out.`)
   if (notVenues > 0) {
     parts.push(`Skipped ${plural(notVenues, 'page that listed', 'pages that listed')} several venues rather than one.`)
+  }
+  if (unsuitable > 0) {
+    parts.push(`Left out ${plural(unsuitable, 'venue', 'venues')} that could not work for this scene, such as ones in another area.`)
   }
   return parts.join(' ')
 }

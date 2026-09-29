@@ -13,6 +13,7 @@ import java.util.List;
  * @param unassessed   venues found but dropped because the model could not assess them
  * @param notVenues    search results dropped because they were not about one venue (a directory, a "best of"
  *                     list, an article)
+ * @param unsuitable   venues dropped because the model found them unusable for the scene, e.g. in another city
  */
-public record ScoutingResult(List<LocationResponse> added, int alreadySaved, int unassessed, int notVenues) {
+public record ScoutingResult(List<LocationResponse> added, int alreadySaved, int unassessed, int notVenues, int unsuitable) {
 }

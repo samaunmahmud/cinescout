@@ -202,6 +202,8 @@ export interface ScoutingResult {
   unassessed: number
   /** Search results left out because they were not about one venue (a directory, a "best of" list, an article). */
   notVenues: number
+  /** Venues left out because the AI found them unusable for the scene, e.g. in another city. */
+  unsuitable: number
 }
 
 // The logistics report (com.cinescout.logistics.LogisticsReport). Local times are ISO-8601 with the

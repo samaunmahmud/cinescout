@@ -133,6 +133,7 @@ class ScoutingApiTest extends ApiTest {
         assertThat(result.path("alreadySaved").asInt()).isZero();
         assertThat(result.path("unassessed").asInt()).isZero();
         assertThat(result.path("notVenues").asInt()).isZero();
+        assertThat(result.path("unsuitable").asInt()).isZero();
         JsonNode added = result.path("added");
         assertThat(added).hasSize(3);
         assertThat(added.get(0).path("name").asText()).isEqualTo("Venue Best");
@@ -192,6 +193,20 @@ class ScoutingApiTest extends ApiTest {
 
         assertThat(result.path("added")).hasSize(2);
         assertThat(result.path("unassessed").asInt()).isEqualTo(1);
+    }
+
+    @Test
+    void aVenueScoredZeroIsLeftOutAndCounted() {
+        when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
+            boolean elsewhere = call.<String>getArgument(1).contains("Venue Worst");
+            return Mono.just(new LocationAssessment(true, elsewhere ? 0 : 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null, List.of()));
+        });
+        Account ada = register("Ada");
+
+        JsonNode result = json(ada.client().post().uri("/api/scenes/" + sceneWithArea(ada) + "/scout").exchange().expectStatus().isOk());
+
+        assertThat(result.path("added")).hasSize(2);
+        assertThat(result.path("unsuitable").asInt()).isEqualTo(1);
     }
 
     @Test

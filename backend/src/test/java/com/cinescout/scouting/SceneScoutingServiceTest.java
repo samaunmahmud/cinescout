@@ -263,7 +263,7 @@ class SceneScoutingServiceTest {
     @Test
     void scoutingSavesEachVenueAsASuggestedLocationWithItsProvenanceAndAssessment() {
         Fixture f = fixture(AREA, true);
-        pipelineFinds(new ScoutingOutcome(List.of(venue("B", 90), venue("A", 60)), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("B", 90), venue("A", 60)), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
@@ -293,7 +293,7 @@ class SceneScoutingServiceTest {
         pipelineFinds(new ScoutingOutcome(List.of(
                 venue("W", 90, "Wythe Hotel", "80 Wythe Ave, Brooklyn, NY 11249"),
                 venue("I", 70, "Industry City", null),
-                venue("N", 50, null, null)), 0, 0));
+                venue("N", 50, null, null)), 0, 0, 0));
 
         service.scout(f.ownerId(), f.sceneId(), 10).block();
 
@@ -318,11 +318,11 @@ class SceneScoutingServiceTest {
     @Test
     void venuesAlreadySavedAreNotLookedUpOnTheMapAgain() {
         Fixture f = fixture(AREA, true);
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, null, "1 First St")), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, null, "1 First St")), 0, 0, 0));
         service.scout(f.ownerId(), f.sceneId(), 10).block();
         geocoder.queries.clear();
 
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, null, "1 First St"), venue("B", 70, null, "2 Second St")), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, null, "1 First St"), venue("B", 70, null, "2 Second St")), 0, 0, 0));
         ScoutingResult again = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
         assertThat(geocoder.queries).containsExactly("2 Second St");
@@ -332,11 +332,11 @@ class SceneScoutingServiceTest {
     @Test
     void aSavedVenueFoundAgainOnAnotherOfItsPagesIsAlreadySaved() {
         Fixture f = fixture(AREA, true);
-        pipelineFinds(new ScoutingOutcome(List.of(venue("Home", 60, "Golden Blue Bar & Restaurant", null)), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("Home", 60, "Golden Blue Bar & Restaurant", null)), 0, 0, 0));
         service.scout(f.ownerId(), f.sceneId(), 10).block();
         geocoder.queries.clear();
 
-        pipelineFinds(new ScoutingOutcome(List.of(venue("Menu", 70, "The Golden Blue Bar and Restaurant", "2172 Clarendon Rd")), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("Menu", 70, "The Golden Blue Bar and Restaurant", "2172 Clarendon Rd")), 0, 0, 0));
         ScoutingResult again = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
         assertThat(again.added()).isEmpty();
@@ -354,7 +354,7 @@ class SceneScoutingServiceTest {
                 return Mono.error(new LogisticsException(LogisticsException.Kind.UNAVAILABLE, "down"));
             }
         }, Duration.ofSeconds(5)), scenes, locations, new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, "Alpha", "1 First St")), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, "Alpha", "1 First St")), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
@@ -367,7 +367,7 @@ class SceneScoutingServiceTest {
     @Test
     void scoutingSearchesTheProjectsAreaWithTheStoredRequirementsAndDoesNotReExtract() {
         Fixture f = fixture(AREA, true);
-        pipelineFinds(new ScoutingOutcome(List.of(), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(), 0, 0, 0));
 
         service.scout(f.ownerId(), f.sceneId(), 7).block();
 
@@ -379,7 +379,7 @@ class SceneScoutingServiceTest {
     void anUnparsedSceneIsParsedFirstAndThenSearchedWithWhatWasExtracted() {
         Fixture f = fixture(AREA, false);
         when(pipeline.extractRequirements(anyString())).thenReturn(Mono.just(REQUIREMENTS));
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 70)), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 70)), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
@@ -411,14 +411,14 @@ class SceneScoutingServiceTest {
     @Test
     void scoutingAgainSavesOnlyNewVenuesAndLeavesTheUsersWorkUntouched() {
         Fixture f = fixture(AREA, true);
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 80), venue("B", 60)), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 80), venue("B", 60)), 0, 0, 0));
         service.scout(f.ownerId(), f.sceneId(), 10).block();
         setup.executeWithoutResult(status -> {
             Location shortlisted = locations.findAll().stream().filter(l -> l.getName().equals("Venue A")).findFirst().orElseThrow();
             shortlisted.setStatus(LocationStatus.SHORTLISTED);
             shortlisted.setNotes("Call the events manager");
         });
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 10), venue("C", 75), venue("B", 60)), 1, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 10), venue("C", 75), venue("B", 60)), 1, 0, 0));
 
         ScoutingResult second = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
@@ -436,7 +436,7 @@ class SceneScoutingServiceTest {
     @Test
     void theSameVenueTwiceInOneRunIsSavedOnce() {
         Fixture f = fixture(AREA, true);
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 80), venue("A", 70)), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 80), venue("A", 70)), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
 
@@ -470,7 +470,7 @@ class SceneScoutingServiceTest {
     void noDatabaseWorkRunsOnTheCallersThread() {
         Fixture f = fixture(AREA, false);
         when(pipeline.extractRequirements(anyString())).thenReturn(Mono.just(REQUIREMENTS));
-        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 70)), 0, 0));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("A", 70)), 0, 0, 0));
 
         service.scout(f.ownerId(), f.sceneId(), 10).block();
 

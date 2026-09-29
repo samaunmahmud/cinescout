@@ -107,7 +107,8 @@ watsonx.ai key.
 For many settings the web's first answers are directories ("The 16 best rooftop venues in Brooklyn")
 rather than venues. The model says which results are about one venue; the others are left out and
 counted in the result's `notVenues`, and the venues they name are looked up by name and assessed
-too. A venue found on several of its pages is saved once. Optional tuning, all with defaults:
+too. A venue found on several of its pages is saved once, and one the model scores 0 (unusable, e.g. in
+another city) is left out and counted in `unsuitable`. Optional tuning, all with defaults:
 
 | Property | Default |
 |---|---|

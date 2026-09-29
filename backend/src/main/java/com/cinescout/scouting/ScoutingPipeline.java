@@ -186,10 +186,14 @@ public class ScoutingPipeline {
         // List.sort is stable, so equal scores keep the search's own relevance order.
         venues.sort(Comparator.comparing((ScoutedVenue v) -> v.assessment().fitScore()).reversed());
         venues = sameVenueOnce(venues);
-        if (notVenues > 0) {
-            log.info("Scouting dropped {} of {} search result(s) that were not about one venue", notVenues, assessed.size());
+        // Scored 0 is unusable by the assessment's own scale (e.g. in another city): not worth a place on the list.
+        List<ScoutedVenue> usable = venues.stream().filter(v -> v.assessment().fitScore() > 0).toList();
+        int unsuitable = venues.size() - usable.size();
+        if (notVenues > 0 || unsuitable > 0) {
+            log.info("Scouting dropped {} of {} search result(s) that were not about one venue and {} unsuitable venue(s)",
+                    notVenues, assessed.size(), unsuitable);
         }
-        return Mono.just(new ScoutingOutcome(venues, failures.size(), notVenues));
+        return Mono.just(new ScoutingOutcome(usable, failures.size(), notVenues, unsuitable));
     }
 
     /**

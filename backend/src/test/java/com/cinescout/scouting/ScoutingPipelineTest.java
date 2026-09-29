@@ -535,4 +535,20 @@ class ScoutingPipelineTest {
                 page("www.peerspace.com/pages/listings/66876899a8dfc287ba3aeb50", 60, "Private Rooftop Terrace", null),
                 page("www.peerspace.com/au/pages/listings/66876899a8dfc287ba3aeb50", 60, "503DTLA", null)))).hasSize(1);
     }
+
+    // --- unusable venues ---------------------------------------------------------------------------------
+
+    @Test
+    void venuesScoredZeroAreDroppedAndCountedUnlessAnotherPageOfThemScoredBetter() {
+        searchReturns(venue("Far"), venue("Good"), venue("GoodAgain"));
+        assessments(java.util.Map.of(
+                "Far", named("Downtown LA Loft", 0),
+                "Good", named("Bar Blondeau", 70),
+                "GoodAgain", named("Bar Blondeau", 0)));
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, AREA, 10).block();
+
+        assertThat(outcome.venues()).extracting(v -> v.assessment().venueName()).containsExactly("Bar Blondeau");
+        assertThat(outcome.unsuitable()).isEqualTo(1);
+    }
 }
