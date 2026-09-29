@@ -141,8 +141,9 @@ public class LogisticsService {
      * @param point        the stored coordinates, or null
      * @param geocodeQuery what to look the venue up by if it has no coordinates
      * @param byAddress    whether that query is the venue's address (rather than its name)
+     * @param venueName    the location's name, to tell the venue itself apart from the places around it
      */
-    record Brief(GeoPoint point, String geocodeQuery, boolean byAddress, LocalDate shootStart, LocalDate shootEnd,
+    record Brief(GeoPoint point, String geocodeQuery, boolean byAddress, String venueName, LocalDate shootStart, LocalDate shootEnd,
                  String timeOfDay, AcousticSensitivity sensitivity) {
     }
 
@@ -153,6 +154,7 @@ public class LogisticsService {
                 : new GeoPoint(location.getLatitude().doubleValue(), location.getLongitude().doubleValue());
         boolean byAddress = location.getAddress() != null && !location.getAddress().isBlank();
         return new Brief(point, geocodeQuery(location, byAddress, scene.getProject().getLocationArea()), byAddress,
+                location.getName(),
                 scene.getShootDateStart(), scene.getShootDateEnd(),
                 requirements == null ? null : requirements.timeOfDay(),
                 requirements == null ? null : requirements.acousticSensitivity());
@@ -194,7 +196,7 @@ public class LogisticsService {
         Mono<Fetch> forecast = fetch(plan.forecastRange(), range -> weather.forecast(located.point(), range.from(), range.to()));
         Mono<Fetch> history = fetch(plan.historyRange(), range -> weather.history(located.point(), range.from(), range.to()));
         Mono<Environment> environment = placesGuard.call(() -> places.around(located.point()))
-                .map(found -> EnvironmentAssessor.assess(found, brief.sensitivity()))
+                .map(found -> EnvironmentAssessor.assess(found, brief.sensitivity(), brief.venueName()))
                 .onErrorResume(LogisticsException.class, e -> {
                     log.warn("Places lookup failed ({}): {}", e.kind(), e.getMessage());
                     return Mono.just(EnvironmentAssessor.unavailable(

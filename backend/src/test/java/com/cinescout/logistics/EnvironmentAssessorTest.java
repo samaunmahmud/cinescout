@@ -105,4 +105,32 @@ class EnvironmentAssessorTest {
 
         assertThat(EnvironmentAssessor.assess(many, null).noiseSources()).hasSize(EnvironmentAssessor.MAX_NOISE_SOURCES);
     }
+
+    @Test
+    void theVenueIsNotItsOwnNeighbour() {
+        Place itself = new Place(PlaceKind.FOOD, "Café Noir", SOMEWHERE, 0);
+        Place otherCafe = new Place(PlaceKind.FOOD, "Café Blanc", SOMEWHERE, 40);
+        Place itsBell = place(PlaceKind.PLACE_OF_WORSHIP, "Café Noir", 20); // same entry, second kind
+
+        Environment environment = EnvironmentAssessor.assess(List.of(itself, otherCafe, itsBell), null, "cafe noir");
+
+        assertThat(environment.nearbyServices()).extracting(NearbyService::name).containsExactly("Café Blanc");
+        assertThat(environment.noiseSources()).isEmpty();
+        assertThat(EnvironmentAssessor.assess(List.of(itself), null, null).nearbyServices()).hasSize(1);
+    }
+
+    @Test
+    void namesMatchByWordsIgnoringCaseAccentsPunctuationAndALeadingThe() {
+        List<String> venue = EnvironmentAssessor.words("The Blue Note Jazz Club");
+
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Blue Note", 30), venue)).isTrue();
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "BLUE NOTE JAZZ CLUB!", 30), venue)).isTrue();
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Blue Note", EnvironmentAssessor.VENUE_RADIUS_METERS + 1), venue))
+                .as("too far away to be the venue").isFalse();
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Note Blue", 30), venue)).as("words out of order").isFalse();
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Jazz", 30), venue)).as("too short to tell").isFalse();
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, "Bluenote", 30), venue)).isFalse();
+        assertThat(EnvironmentAssessor.isVenue(place(PlaceKind.NIGHTLIFE, null, 0), venue)).as("unnamed").isFalse();
+        assertThat(EnvironmentAssessor.words("  Crème—Brûlée, the Bar ")).containsExactly("creme", "brulee", "the", "bar");
+    }
 }

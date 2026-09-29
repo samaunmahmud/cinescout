@@ -9,11 +9,17 @@ import com.cinescout.logistics.LogisticsReport.SectionStatus;
 import com.cinescout.logistics.places.Place;
 import com.cinescout.logistics.places.PlaceKind;
 
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -24,11 +30,23 @@ import java.util.stream.Collectors;
  * source, raised one level for a scene whose sound is sensitive and lowered one for a scene whose isn't (LOW
  * when there is no known source). It is a rule of thumb from the map, not a measurement; the advice says what
  * to check on the recce.
+ *
+ * <p>The venue is usually on the map itself (a café is a FOOD place, a church a PLACE_OF_WORSHIP) and would
+ * otherwise be listed as its own neighbour at 0 m. A place counts as the venue, and is left out, when it is
+ * within {@value #VENUE_RADIUS_METERS} m and its name matches the venue's: the same words, or one name's words
+ * found in order in the other's ("Blue Note" and "The Blue Note Jazz Club"). A crew that books the venue
+ * controls its noise, so it is not a noise source either.
  */
 final class EnvironmentAssessor {
 
     static final int MAX_NOISE_SOURCES = 10;
     static final int SERVICES_PER_KIND = 3;
+    /** How far from the venue's point its own map entry may be: a building's centre, the far side of a park. */
+    static final int VENUE_RADIUS_METERS = 150;
+    /** A shorter name ("Bar") says too little to identify the venue by containment. */
+    private static final int MIN_CONTAINED_NAME_LENGTH = 5;
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^\\p{L}\\p{N}]+");
+    private static final Pattern MARKS = Pattern.compile("\\p{M}+");
 
     private static final Map<PlaceKind, String> ADVICE = advice();
 
@@ -36,11 +54,51 @@ final class EnvironmentAssessor {
     }
 
     static Environment assess(List<Place> places, AcousticSensitivity sensitivity) {
+        return assess(places, sensitivity, null);
+    }
+
+    /** @param venueName the location's name, or null to keep every place */
+    static Environment assess(List<Place> places, AcousticSensitivity sensitivity, String venueName) {
+        List<String> venue = words(venueName);
+        if (!venue.isEmpty()) {
+            places = places.stream().filter(place -> !isVenue(place, venue)).toList();
+        }
         List<NoiseSource> noise = noiseSources(places);
         // With no known source there is nothing for a sensitive scene to be more exposed to.
         NoiseLevel risk = noise.stream().map(NoiseSource::level).max(Comparator.naturalOrder())
                 .map(loudest -> adjust(loudest, sensitivity)).orElse(NoiseLevel.LOW);
         return new Environment(SectionStatus.OK, null, sensitivity, risk, noise, services(places));
+    }
+
+    static boolean isVenue(Place place, List<String> venueWords) {
+        if (place.distanceMeters() > VENUE_RADIUS_METERS) {
+            return false;
+        }
+        List<String> name = words(place.name());
+        if (name.isEmpty()) {
+            return false;
+        }
+        if (name.equals(venueWords)) {
+            return true;
+        }
+        List<String> shorter = name.size() <= venueWords.size() ? name : venueWords;
+        List<String> longer = shorter == name ? venueWords : name;
+        return String.join("", shorter).length() >= MIN_CONTAINED_NAME_LENGTH
+                && Collections.indexOfSubList(longer, shorter) >= 0;
+    }
+
+    /** The name as lower-case words without accents or punctuation, and without a leading "the". */
+    static List<String> words(String name) {
+        if (name == null) {
+            return List.of();
+        }
+        String plain = MARKS.matcher(Normalizer.normalize(name, Normalizer.Form.NFD)).replaceAll("");
+        List<String> words = new ArrayList<>(Arrays.stream(NON_ALPHANUMERIC.split(plain.toLowerCase(Locale.ROOT)))
+                .filter(word -> !word.isEmpty()).toList());
+        if (words.size() > 1 && words.getFirst().equals("the")) {
+            words.removeFirst();
+        }
+        return words;
     }
 
     static Environment unavailable(String message, AcousticSensitivity sensitivity) {

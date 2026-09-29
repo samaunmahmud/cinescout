@@ -73,6 +73,7 @@ class LogisticsApiTest extends ApiTest {
         when(weather.history(any(), any(), any())).thenAnswer(call -> Mono.just(series(call.getArgument(1), call.getArgument(2))));
         when(places.around(any())).thenReturn(Mono.just(List.of(
                 new Place(PlaceKind.RAILWAY, "Main Line", null, 100),
+                new Place(PlaceKind.NIGHTLIFE, "Sky Bar", new GeoPoint(40.7128, -74.006), 0), // the venue itself
                 new Place(PlaceKind.HOSPITAL, "General Hospital", new GeoPoint(40.72, -74.0), 2_000))));
         when(geocoder.locate(any())).thenReturn(Mono.just(BROOKLYN));
     }
@@ -205,6 +206,7 @@ class LogisticsApiTest extends ApiTest {
         assertThat(environment.path("status").asText()).isEqualTo("OK");
         assertThat(environment.path("acousticSensitivity").asText()).isEqualTo("HIGH");
         assertThat(environment.path("noiseRisk").asText()).isEqualTo("HIGH");
+        assertThat(environment.path("noiseSources")).hasSize(1); // not the Sky Bar, which is the venue
         assertThat(environment.path("noiseSources").get(0).path("name").asText()).isEqualTo("Main Line");
         assertThat(environment.path("noiseSources").get(0).path("advice").asText()).contains("timetable");
         assertThat(environment.path("nearbyServices").get(0).path("kind").asText()).isEqualTo("HOSPITAL");
