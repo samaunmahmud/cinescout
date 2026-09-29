@@ -1,5 +1,7 @@
 # CineScout
 
+[![CI](https://github.com/samaunmahmud/cinescout/actions/workflows/ci.yml/badge.svg)](https://github.com/samaunmahmud/cinescout/actions/workflows/ci.yml)
+
 AI production and location scouting. A filmmaker submits a scene; the platform extracts the
 physical location requirements, finds real venues with grounded web search, assesses booking
 friction, computes shoot logistics (light, weather, noise risk, nearby services) and drafts
@@ -45,6 +47,9 @@ npm run dev      # http://localhost:5173, proxies /api to the backend
 npm test
 npm run build
 ```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the same checks on every push to `main` and every pull
+request: the backend tests, the web app's lint, tests and build, and both Docker image builds.
 
 The dev server proxies `/api` to `http://localhost:8081`; set `BACKEND_URL` to point it elsewhere. The web app
 logs in with a session cookie (see Authentication), so a reload keeps you logged in.
