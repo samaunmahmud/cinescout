@@ -43,7 +43,7 @@ class OutreachApiTest extends ApiTest {
 
     private static final MediaType PROBLEM = MediaType.APPLICATION_PROBLEM_JSON;
     private static final String SCRIPT = "INT. ROOFTOP BAR - NIGHT. SECRET-PLOT: the detective is the killer.";
-    private static final OutreachEmail EMAIL = new OutreachEmail("Location enquiry: Neon Nights", "Hello,\n\nMay we film at your bar?\n\nAda");
+    private static final OutreachEmail EMAIL = new OutreachEmail("Location enquiry: Neon Nights", "Hello,", List.of("May we film at your bar?"), "Ada");
 
     @MockitoBean LlmClient llm;
 
@@ -161,7 +161,7 @@ class OutreachApiTest extends ApiTest {
                 .contains("Sender: Ada", "Production: Neon Nights", "Recipient: Sam", "Tone: CONCISE",
                         "Booking route: COMMERCIAL", "Booking note: Enquire via the events team",
                         "Shoot dates: 2026-10-01 to 2026-10-03",
-                        "- Setting: rooftop bar", "- Time of day: night", "- People on set: 12",
+                        "- Setting: rooftop bar", "- Time of day: night", "- People on set (estimate): 12",
                         "Venue: The Sky Bar", "Address: 1 Roof St, Brooklyn",
                         "<venue_notes>\nA rooftop bar with skyline views\n</venue_notes>",
                         "<sender_notes>\nWe can shoot on a weekday\n</sender_notes>")
@@ -191,13 +191,13 @@ class OutreachApiTest extends ApiTest {
     @Test
     void theSubjectIsTidiedToOneLineAndTheBodyTrimmed() {
         when(llm.generate(any(), any(), eq(OutreachEmail.class)))
-                .thenReturn(Mono.just(new OutreachEmail("  Location\nenquiry \n  for Neon Nights ", "\n\n  Hello,\n\nMay we film?  \n\n")));
+                .thenReturn(Mono.just(new OutreachEmail("  Location\nenquiry \n  for Neon Nights ", "\n  Hello, ", java.util.Arrays.asList(" May we film?  ", null, " "), " Ada\n")));
         Account ada = register("Ada");
 
         JsonNode draft = generate(ada, locationOf(ada), Map.of());
 
         assertThat(draft.path("subject").asText()).isEqualTo("Location enquiry for Neon Nights");
-        assertThat(draft.path("body").asText()).isEqualTo("Hello,\n\nMay we film?");
+        assertThat(draft.path("body").asText()).isEqualTo("Hello,\n\nMay we film?\n\nAda");
     }
 
     @Test
@@ -205,7 +205,7 @@ class OutreachApiTest extends ApiTest {
         Account ada = register("Ada");
         String location = locationOf(ada);
         when(llm.generate(any(), any(), eq(OutreachEmail.class)))
-                .thenReturn(Mono.just(new OutreachEmail("First", "one")), Mono.just(new OutreachEmail("Second", "two")));
+                .thenReturn(Mono.just(new OutreachEmail("First", "Hi,", List.of("one"), "Ada")), Mono.just(new OutreachEmail("Second", "Hi,", List.of("two"), "Ada")));
 
         generate(ada, location, Map.of("tone", "FRIENDLY"));
         generate(ada, location, Map.of("tone", "CONCISE"));
@@ -219,7 +219,7 @@ class OutreachApiTest extends ApiTest {
         Account ada = register("Ada");
         String location = locationOf(ada);
         for (String subject : new String[] {"One", "Two", "Three"}) {
-            when(llm.generate(any(), any(), eq(OutreachEmail.class))).thenReturn(Mono.just(new OutreachEmail(subject, "Body")));
+            when(llm.generate(any(), any(), eq(OutreachEmail.class))).thenReturn(Mono.just(new OutreachEmail(subject, "Hi,", List.of("Body"), "Ada")));
             generate(ada, location, Map.of());
         }
 
