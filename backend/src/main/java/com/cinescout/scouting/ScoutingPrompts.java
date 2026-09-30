@@ -40,12 +40,21 @@ final class ScoutingPrompts {
             excerpt of the page.
 
             Return:
-            - singleVenue: true if the page is about one specific venue: the venue's own website, or a             single venue's listing on a booking site such as Peerspace or Giggster. false if it covers             several venues (a directory, search results, a "best rooftop bars" list, a news or travel             article) or is not about a venue at all. When false, still fill in the other fields, with             fitScore 0.
-            - fitScore: 0 to 100, how well the venue's setting, mood, lighting, sound and capacity match \
-            the requirements. 90-100 ideal; 70-89 good with minor compromises; 40-69 possible with \
-            significant adaptation; below 40 poor. When the excerpt says too little to judge, score \
-            conservatively (60 at most) and say so in fitReason. A venue the page shows is outside the \
-            search area (another city or region) is unusable: fitScore 0, and say where it is.
+            - singleVenue: true if the page is about one specific venue: the venue's own website, or a \
+            single venue's listing on a booking site such as Peerspace or Giggster. false if it covers \
+            several venues (a directory, search results, a "best rooftop bars" list, a news or travel \
+            article) or is not about a venue at all. When false, still fill in the other fields, with \
+            fitScore 0.
+            - fitScore: 0 to 100, how well the venue suits the scene. Judge the setting first: is this the \
+            kind of place the scene needs? A different kind of place that would have to be dressed to pass \
+            for it (a loft for a diner) scores below 40. The right kind of place starts at 60. Then move the \
+            score for what the excerpt shows about mood, lighting, time of day, sound and capacity: up, as \
+            far as 100, for each requirement it clearly meets; down, as far as 40, for each it clearly \
+            fails (too small for the cast and crew, the wrong look, a noisy room for a quiet scene). What \
+            the excerpt does not mention neither raises nor lowers the score: name it in fitReason as \
+            something to check. Use the whole range, so that a venue with more in its favour scores \
+            higher than one with less. A venue the page shows is outside the search area (another city \
+            or region) is unusable: fitScore 0, and say where it is.
             - fitReason: one or two sentences saying what in the excerpt supports the score.
             - bookingFriction: who has to say yes. PUBLIC = a public space needing a permit from a city or \
             film office. COMMERCIAL = a business with a hire or location-enquiry process (bar, studio, \
