@@ -114,12 +114,14 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
     { label: 'Status', cell: (venue) => <Status venue={venue} /> },
   ]
   return (
+    <>
+    <p className="text-sm text-stone-500 sm:hidden">Swipe sideways to see every venue.</p>
     <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 shadow-lg shadow-black/30">
       <table className="w-full min-w-[44rem] table-fixed border-collapse text-left text-sm text-stone-300">
         <caption className="sr-only">Venues compared</caption>
         <thead>
           <tr className="border-b border-white/[0.07]">
-            <td className="w-32 p-4" />
+            <td className="sticky left-0 z-10 w-28 bg-frame p-4 sm:w-32" />
             {venues.map((venue) => (
               <th key={venue.id} scope="col" className="p-4 align-top">
                 <Link to={`/locations/${venue.id}`} className="text-lg font-semibold text-stone-50 hover:text-amber-300">
@@ -132,7 +134,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
         <tbody className="divide-y divide-white/[0.05]">
           {rows.map((row) => (
             <tr key={row.label}>
-              <th scope="row" className="p-4 align-top text-[11px] font-semibold tracking-wider text-stone-500 uppercase">
+              <th scope="row" className="sticky left-0 z-10 bg-frame p-4 align-top text-[11px] font-semibold tracking-wider text-stone-500 uppercase">
                 {row.label}
               </th>
               {venues.map((venue) => (
@@ -145,6 +147,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
         </tbody>
       </table>
     </div>
+    </>
   )
 }
 

@@ -113,7 +113,7 @@ export function ProjectsPage() {
       ) : (
         <>
           {/* One-sheets in a cinema lobby: each production is its own poster. */}
-          <ul className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-3 xl:grid-cols-4">
             {projects.data.items.map((project) => (
               <li key={project.id}>
                 <Link
@@ -131,16 +131,16 @@ export function ProjectsPage() {
                   <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_18%,rgb(255_243_196/0.22),transparent_55%)]" />
                   <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
                   <div aria-hidden className="absolute inset-2 rounded-sm ring-1 ring-white/10" />
-                  <p aria-hidden className="relative mt-5 text-center text-[10px] font-semibold tracking-[0.4em] text-amber-100/70 uppercase">
+                  <p aria-hidden className="relative mt-4 px-2 text-center text-[8px] font-semibold tracking-[0.3em] text-amber-100/70 uppercase sm:mt-5 sm:text-[10px] sm:tracking-[0.4em]">
                     A CineScout production
                   </p>
-                  <div className="relative mt-auto space-y-3 p-5 text-center">
-                    <h2 className="font-display text-5xl leading-[0.92] break-words text-stone-50 drop-shadow-[0_2px_12px_rgb(0_0_0/0.8)] transition group-hover:text-amber-200">
+                  <div className="relative mt-auto space-y-2 p-3 text-center sm:space-y-3 sm:p-5">
+                    <h2 className="font-display text-3xl leading-[0.92] break-words sm:text-5xl text-stone-50 drop-shadow-[0_2px_12px_rgb(0_0_0/0.8)] transition group-hover:text-amber-200">
                       {project.title}
                     </h2>
-                    {project.description && <p className="line-clamp-2 font-serif text-sm text-stone-200/90 italic">{project.description}</p>}
+                    {project.description && <p className="line-clamp-2 hidden font-serif text-sm text-stone-200/90 italic sm:block">{project.description}</p>}
                     <div aria-hidden className="deco-rule text-[9px]">◆</div>
-                    <p className="flex items-center justify-center gap-1.5 text-xs tracking-wider text-stone-300 uppercase">
+                    <p className="flex items-center justify-center gap-1.5 text-[10px] tracking-wider text-stone-300 uppercase sm:text-xs">
                       <MapPin aria-hidden className="size-3.5 text-amber-300" />
                       {project.locationArea ?? 'No location area set'}
                     </p>
