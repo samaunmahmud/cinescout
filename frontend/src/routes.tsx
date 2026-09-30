@@ -5,6 +5,7 @@ import { AccountPage } from './pages/AccountPage'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
 import { CallSheetPage } from './pages/CallSheetPage'
 import { ComparePage } from './pages/ComparePage'
+import { CrashPage } from './pages/CrashPage'
 import { ImportScriptPage } from './pages/ImportScriptPage'
 import { LocationPage } from './pages/LocationPage'
 import { NewLocationPage } from './pages/NewLocationPage'
@@ -15,27 +16,34 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { ScenePage } from './pages/ScenePage'
 
 export const routes: RouteObject[] = [
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
+  { path: '/login', element: <LoginPage />, errorElement: <CrashPage /> },
+  { path: '/register', element: <RegisterPage />, errorElement: <CrashPage /> },
   {
     element: (
       <RequireAuth>
         <Layout />
       </RequireAuth>
     ),
+    errorElement: <CrashPage />,
     children: [
-      { path: '/', element: <Navigate to="/projects" replace /> },
-      { path: '/projects', element: <ProjectsPage /> },
-      { path: '/account', element: <AccountPage /> },
-      { path: '/projects/:projectId', element: <ProjectPage /> },
-      { path: '/projects/:projectId/call-sheet', element: <CallSheetPage /> },
-      { path: '/projects/:projectId/scenes/new', element: <NewScenePage /> },
-      { path: '/projects/:projectId/scenes/import', element: <ImportScriptPage /> },
-      { path: '/scenes/:sceneId', element: <ScenePage /> },
-      { path: '/scenes/:sceneId/locations/new', element: <NewLocationPage /> },
-      { path: '/scenes/:sceneId/compare', element: <ComparePage /> },
-      { path: '/locations/:locationId', element: <LocationPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      // A page that fails is shown inside the frame, so the header and its way out stay.
+      {
+        errorElement: <CrashPage />,
+        children: [
+          { path: '/', element: <Navigate to="/projects" replace /> },
+          { path: '/projects', element: <ProjectsPage /> },
+          { path: '/account', element: <AccountPage /> },
+          { path: '/projects/:projectId', element: <ProjectPage /> },
+          { path: '/projects/:projectId/call-sheet', element: <CallSheetPage /> },
+          { path: '/projects/:projectId/scenes/new', element: <NewScenePage /> },
+          { path: '/projects/:projectId/scenes/import', element: <ImportScriptPage /> },
+          { path: '/scenes/:sceneId', element: <ScenePage /> },
+          { path: '/scenes/:sceneId/locations/new', element: <NewLocationPage /> },
+          { path: '/scenes/:sceneId/compare', element: <ComparePage /> },
+          { path: '/locations/:locationId', element: <LocationPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ]
