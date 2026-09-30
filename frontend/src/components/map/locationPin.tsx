@@ -1,10 +1,11 @@
 import { Link } from 'react-router'
 import type { Location } from '../../api/types'
 import { fitBand } from '../../lib/fit'
+import { VenuePicture } from '../VenuePicture'
 import type { MapPin, PinTone } from './types'
 
 /** What a pin shows of a venue; a row of a project-wide list has it too. */
-export type PinnedVenue = Pick<Location, 'id' | 'name' | 'address' | 'latitude' | 'longitude' | 'fitScore' | 'status'>
+export type PinnedVenue = Pick<Location, 'id' | 'name' | 'address' | 'latitude' | 'longitude' | 'fitScore' | 'status' | 'imageUrl'>
 
 function toneOf(location: PinnedVenue): PinTone {
   if (location.status === 'REJECTED') return 'muted'
@@ -22,6 +23,7 @@ export function locationPin(location: PinnedVenue, { withLink = true } = {}): Ma
     tone: toneOf(location),
     popup: withLink ? (
       <div className="space-y-1">
+        {location.imageUrl && <VenuePicture src={location.imageUrl} className="!mb-1 h-24 w-48 rounded" />}
         <Link to={`/locations/${location.id}`} className="font-semibold text-amber-300 hover:underline">
           {location.name}
         </Link>
