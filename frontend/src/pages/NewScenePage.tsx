@@ -7,6 +7,7 @@ import { useSession } from '../auth/context'
 import { ErrorAlert, Spinner } from '../components/ui'
 import { NotFoundPage } from './NotFoundPage'
 import { SceneForm } from './SceneForm'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function NewScenePage() {
   const { projectId = '' } = useParams()
@@ -14,6 +15,7 @@ export function NewScenePage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const project = useQuery({ queryKey: queryKeys.project(projectId), queryFn: () => api.projects.get(projectId) })
+  usePageTitle('New scene')
 
   const create = useMutation({
     mutationFn: (body: SceneRequest) => api.scenes.create(projectId, body),

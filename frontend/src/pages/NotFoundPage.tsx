@@ -1,7 +1,9 @@
 import { Link } from 'react-router'
 import { linkButton } from '../components/buttonStyles'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function NotFoundPage() {
+  usePageTitle('Not found')
   return (
     <div className="animate-fade-in space-y-6 py-20 text-center">
       <p aria-hidden className="font-marquee text-[8rem] leading-none text-stone-800">Cut!</p>

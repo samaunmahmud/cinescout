@@ -15,6 +15,7 @@ import { frictionLabel } from '../lib/fit'
 import { formatDate, sceneLabel } from '../lib/format'
 import { localTime, temperatureRange } from '../lib/logisticsFormat'
 import { NotFoundPage } from './NotFoundPage'
+import { usePageTitle } from '../lib/usePageTitle'
 
 const noiseTones: Record<NoiseLevel, 'green' | 'amber' | 'red'> = { LOW: 'green', MEDIUM: 'amber', HIGH: 'red' }
 const noiseLabels: Record<NoiseLevel, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' }
@@ -28,6 +29,7 @@ export function ComparePage() {
   const { sceneId = '' } = useParams()
   const { api } = useSession()
   const scene = useQuery({ queryKey: queryKeys.scene(sceneId), queryFn: () => api.scenes.get(sceneId) })
+  usePageTitle(scene.data && `Compare venues: ${scene.data.title}`)
   // Refetched on every visit: statuses and notes change on the scene and venue pages.
   const locations = useQuery({
     queryKey: queryKeys.locationTop(sceneId),

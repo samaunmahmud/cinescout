@@ -152,6 +152,24 @@ describe('projects', () => {
     expect(screen.queryByText('Night Shift')).not.toBeInTheDocument()
   })
 
+  it('names the browser tab after the page', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([project()])),
+      'GET /api/projects/p1': () => json(project()),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
+    })
+    renderApp('/projects')
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    expect(document.title).toBe('Log in · CineScout')
+    const user = await logIn()
+
+    await screen.findByRole('link', { name: /Night Shift/ })
+    expect(document.title).toBe('Projects · CineScout')
+    await user.click(screen.getByRole('link', { name: /Night Shift/ }))
+    await waitFor(() => expect(document.title).toBe('Night Shift · CineScout'))
+  })
+
   it('shows on each poster how many scenes have their location locked', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),

@@ -159,7 +159,7 @@ describe("a location's outreach emails", () => {
     await user.selectOptions(await screen.findByLabelText(/^Status of “Filming request/), 'Sent')
 
     expect(await screen.findByText(`Sent ${dateOf('2026-09-26T08:00:00Z')}`)).toBeInTheDocument()
-    const { status, ...rest } = requests.find((r) => r.method === 'PUT')?.body as Record<string, unknown>
+    const { status, ...rest } = requests.find((r) => r.method === 'PUT')!.body as Record<string, unknown>
     expect(status).toBe('SENT')
     expect(rest).toEqual({
       subject: draft().subject,

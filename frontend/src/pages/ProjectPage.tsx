@@ -17,11 +17,13 @@ import { ProjectLocationsSection } from './ProjectLocationsSection'
 import { ProjectOutreachSection } from './ProjectOutreachSection'
 import { ScenesSection } from './ScenesSection'
 import { ScheduleSection } from './ScheduleSection'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function ProjectPage() {
   const { projectId = '' } = useParams()
   const { api } = useSession()
   const project = useQuery({ queryKey: queryKeys.project(projectId), queryFn: () => api.projects.get(projectId) })
+  usePageTitle(project.data?.title)
 
   if (project.isPending) return <Spinner label="Loading project" />
   if (project.isError) {

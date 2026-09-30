@@ -7,6 +7,7 @@ import { Mail, MapPinned, ScrollText, Sunset } from 'lucide-react'
 import { Logo } from '../components/Layout'
 import { Card } from '../components/surfaces'
 import { fieldErrors } from '../api/errors'
+import { usePageTitle } from '../lib/usePageTitle'
 import { Button, ErrorAlert, TextField } from '../components/ui'
 
 const features = [
@@ -17,6 +18,7 @@ const features = [
 ]
 
 function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
+  usePageTitle(title)
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
       {/* Premiere night: searchlights over the theatre, the marquee lit, velvet in the wings. */}

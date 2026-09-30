@@ -15,11 +15,13 @@ import { LocationsSection } from './LocationsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
 import { SceneForm } from './SceneForm'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function ScenePage() {
   const { sceneId = '' } = useParams()
   const { api } = useSession()
   const scene = useQuery({ queryKey: queryKeys.scene(sceneId), queryFn: () => api.scenes.get(sceneId) })
+  usePageTitle(scene.data && sceneLabel(scene.data))
 
   if (scene.isPending) return <Spinner label="Loading scene" />
   if (scene.isError) {

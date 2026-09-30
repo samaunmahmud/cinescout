@@ -9,6 +9,7 @@ import { useSession } from '../auth/context'
 import { EmptyState, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner, TextArea } from '../components/ui'
 import { NotFoundPage } from './NotFoundPage'
+import { usePageTitle } from '../lib/usePageTitle'
 
 /** As the server limits it; a feature-length screenplay is well under. */
 const MAX_SCRIPT_LENGTH = 500_000
@@ -26,6 +27,7 @@ export function ImportScriptPage() {
   const [script, setScript] = useState('')
   const [fileError, setFileError] = useState<string | null>(null)
   const project = useQuery({ queryKey: queryKeys.project(projectId), queryFn: () => api.projects.get(projectId) })
+  usePageTitle('Import script')
 
   const preview = useMutation({ mutationFn: (text: string) => api.scenes.previewImport(projectId, text) })
   const importScript = useMutation({

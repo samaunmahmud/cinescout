@@ -11,6 +11,7 @@ import { parseCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { safeHttpUrl } from '../lib/url'
 import { NotFoundPage } from './NotFoundPage'
+import { usePageTitle } from '../lib/usePageTitle'
 
 /** Adds a venue the user found themselves to a scene. */
 export function NewLocationPage() {
@@ -19,6 +20,7 @@ export function NewLocationPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const scene = useQuery({ queryKey: queryKeys.scene(sceneId), queryFn: () => api.scenes.get(sceneId) })
+  usePageTitle('Add a venue')
   const [values, setValues] = useState({ name: '', address: '', sourceUrl: '', coordinates: '', notes: '' })
   const set = (field: keyof typeof values) => (e: { target: { value: string } }) => setValues({ ...values, [field]: e.target.value })
 

@@ -9,6 +9,7 @@ import { Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatDate, formatDay } from '../lib/format'
 import { NotFoundPage } from './NotFoundPage'
+import { usePageTitle } from '../lib/usePageTitle'
 
 /**
  * The shoot on paper: for each day, which scenes, where, and who to call there. Laid out as a typed sheet
@@ -19,6 +20,7 @@ export function CallSheetPage() {
   const { projectId = '' } = useParams()
   const { api, user } = useSession()
   const project = useQuery({ queryKey: queryKeys.project(projectId), queryFn: () => api.projects.get(projectId) })
+  usePageTitle(project.data && `Call sheet: ${project.data.title}`)
   const schedule = useQuery({
     queryKey: queryKeys.projectSchedule(projectId),
     queryFn: () => api.projects.schedule(projectId),

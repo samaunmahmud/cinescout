@@ -43,11 +43,13 @@ import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
 import { VideosSection } from './VideosSection'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function LocationPage() {
   const { locationId = '' } = useParams()
   const { api } = useSession()
   const location = useQuery({ queryKey: queryKeys.location(locationId), queryFn: () => api.locations.get(locationId) })
+  usePageTitle(location.data?.name)
 
   if (location.isPending) return <Spinner label="Loading location" />
   if (location.isError) {

@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -65,6 +67,21 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     private static Map<String, String> describe(ObjectError error) {
         String field = error instanceof FieldError fieldError ? fieldError.getField() : "";
         return Map.of("field", FRIENDLY_FIELDS.getOrDefault(field, field), "message", String.valueOf(error.getDefaultMessage()));
+    }
+
+    /**
+     * An address nothing answers at. The framework's own message names the path as a "static resource", which
+     * tells a client nothing and says more about the server than it should.
+     */
+    @Override
+    protected Mono<ResponseEntity<Object>> handleResponseStatusException(
+            ResponseStatusException ex, HttpHeaders headers, HttpStatusCode status, ServerWebExchange exchange) {
+        if (!(ex instanceof NoResourceFoundException)) {
+            return super.handleResponseStatusException(ex, headers, status, exchange);
+        }
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "There is nothing at this address");
+        problem.setTitle("Not found");
+        return handleExceptionInternal(ex, problem, headers, status, exchange);
     }
 
     // --- our own domain errors -------------------------------------------------------------------

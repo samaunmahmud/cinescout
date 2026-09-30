@@ -156,7 +156,8 @@ class AuthApiTest extends ApiTest {
         register("Ada").client().get().uri("/api/nothing-here").exchange()
                 .expectStatus().isNotFound()
                 .expectHeader().contentType(PROBLEM)
-                .expectBody().jsonPath("$.status").isEqualTo(404);
+                .expectBody().jsonPath("$.status").isEqualTo(404)
+                .jsonPath("$.detail").isEqualTo("There is nothing at this address");
     }
 
     @Test

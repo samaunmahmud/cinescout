@@ -12,6 +12,7 @@ import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterGradient } from '../lib/poster'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function ProjectsPage() {
   const { api } = useSession()
@@ -20,6 +21,7 @@ export function ProjectsPage() {
   const [params, setParams] = useSearchParams()
   const status: ProjectStatus = params.get('status') === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE'
   const [creating, setCreating] = useState(false)
+  usePageTitle('Projects')
 
   const [page, setPage] = usePageParam()
 

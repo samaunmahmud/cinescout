@@ -5,12 +5,14 @@ import { fieldErrors } from '../api/errors'
 import { useAuth, useSession } from '../auth/context'
 import { Card, Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, TextField } from '../components/ui'
+import { usePageTitle } from '../lib/usePageTitle'
 
 const MIN_PASSWORD_LENGTH = 8
 
 /** The user's own account: the name emails are signed with, the password, and the way out. */
 export function AccountPage() {
   const { user } = useSession()
+  usePageTitle('Account')
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="space-y-2">
