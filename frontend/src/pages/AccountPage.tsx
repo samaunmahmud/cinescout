@@ -15,7 +15,7 @@ export function AccountPage() {
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="space-y-2">
         <Eyebrow icon={UserRound}>Account</Eyebrow>
-        <h1 className="font-display text-6xl leading-none text-stone-50">{user.displayName}</h1>
+        <h1 className="gold-leaf font-display text-6xl leading-none">{user.displayName}</h1>
         <p className="text-stone-400">{user.email}</p>
       </header>
       <ProfileForm />
@@ -31,7 +31,7 @@ function Panel({ titleId, title, icon, description, children }: { titleId: strin
     <Card className="p-6">
       <section aria-labelledby={titleId} className="space-y-4">
         <div className="space-y-1">
-          <h2 id={titleId} className="flex items-center gap-2 font-display text-3xl leading-none text-stone-50">
+          <h2 id={titleId} className="flex items-center gap-2 gold-leaf font-display text-3xl leading-none">
             <Icon aria-hidden className="size-5 text-amber-400" />
             {title}
           </h2>

@@ -18,44 +18,62 @@ const features = [
 
 function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
-      {/* The poster side: decoration and a word on what CineScout does. */}
-      <aside className="relative hidden overflow-hidden border-r border-white/[0.06] lg:block">
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgb(245_158_11/0.28),transparent_55%),radial-gradient(ellipse_at_80%_90%,rgb(180_83_9/0.22),transparent_50%)]" />
-        <div aria-hidden className="film-strip absolute inset-x-0 top-0" />
-        <div aria-hidden className="film-strip absolute inset-x-0 bottom-0" />
-        <div className="relative flex h-full flex-col justify-between p-12">
+    <div className="grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
+      {/* Premiere night: searchlights over the theatre, the marquee lit, velvet in the wings. */}
+      <aside className="relative hidden overflow-hidden border-r border-amber-300/15 bg-black lg:block">
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_115%,rgb(223_184_73/0.30),transparent_60%),radial-gradient(ellipse_at_50%_-20%,rgb(23_37_84/0.55),transparent_60%)]" />
+        <div aria-hidden className="searchlight left-[8%] animate-sweep" />
+        <div aria-hidden className="searchlight right-[6%] animate-sweep-slow" />
+        <div aria-hidden className="searchlight left-[38%] animate-sweep-slow opacity-60" />
+        <div aria-hidden className="velvet absolute inset-y-0 left-0 w-10 opacity-90 shadow-[8px_0_24px_rgb(0_0_0/0.7)]" />
+        <div aria-hidden className="velvet absolute inset-y-0 right-0 w-10 opacity-90 shadow-[-8px_0_24px_rgb(0_0_0/0.7)]" />
+
+        <div className="relative flex h-full flex-col items-center justify-between px-20 py-12 text-center">
           <Logo size="lg" />
-          <div className="space-y-8">
-            <p className="font-display text-7xl leading-[0.9] text-stone-50">
-              Find the place
-              <br />
-              your scene was
-              <br />
-              <span className="text-amber-400">written for.</span>
-            </p>
-            <ul className="space-y-3">
+
+          {/* The marquee. */}
+          <div className="w-full max-w-lg">
+            <div className="rounded-lg bg-gradient-to-b from-amber-200/90 via-amber-400 to-amber-600 p-[3px] shadow-[0_0_70px_-8px_rgb(223_184_73/0.65)]">
+              <div className="rounded-[5px] bg-gradient-to-b from-stone-950 to-black">
+                <div aria-hidden className="bulbs mx-3 mt-2" />
+                <div className="space-y-3 px-8 py-7">
+                  <p className="text-[11px] font-semibold tracking-[0.45em] text-amber-200/80 uppercase">Now scouting</p>
+                  <p className="gold-leaf animate-flicker font-marquee text-5xl leading-[1.05] xl:text-6xl">
+                    The place your scene was written for
+                  </p>
+                  <div aria-hidden className="deco-rule text-xs">◆</div>
+                  <p className="font-serif text-lg text-stone-300 italic">From the page to the perfect location.</p>
+                </div>
+                <div aria-hidden className="bulbs mx-3 mb-2" />
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full max-w-lg space-y-6">
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-4 text-left">
               {features.map(({ icon: Icon, text }) => (
-                <li key={text} className="flex items-center gap-3 text-stone-300">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 ring-1 ring-amber-400/25">
+                <li key={text} className="flex items-start gap-3 text-sm text-stone-300">
+                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-300/10 text-amber-300 ring-1 ring-amber-300/30">
                     <Icon aria-hidden className="size-4" />
                   </span>
                   {text}
                 </li>
               ))}
             </ul>
+            <p className="billing text-[10px] text-stone-500">AI location scouting for film and television</p>
           </div>
-          <p className="text-xs tracking-[0.3em] text-stone-500 uppercase">AI location scouting for film and TV</p>
         </div>
       </aside>
 
-      <div className="flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="space-y-3 text-center">
+      <div className="relative flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm animate-fade-in space-y-6">
+          <div className="space-y-4 text-center">
             <span className="lg:hidden">
               <Logo size="lg" />
             </span>
-            <h1 className="font-display text-5xl leading-none text-stone-50">{title}</h1>
+            <p className="text-[11px] font-semibold tracking-[0.4em] text-amber-300/80 uppercase">Admit one</p>
+            <h1 className="gold-leaf font-display text-6xl leading-none">{title}</h1>
+            <div aria-hidden className="deco-rule text-xs">◆</div>
           </div>
           <Card className="p-6">{children}</Card>
           <p className="text-center text-sm text-stone-400">{footer}</p>

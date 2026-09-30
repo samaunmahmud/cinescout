@@ -51,7 +51,7 @@ export function ComparePage() {
       </Link>
       <header className="space-y-2">
         <Eyebrow icon={Columns3}>Side by side</Eyebrow>
-        <h1 className="font-display text-6xl leading-none text-stone-50">Compare venues</h1>
+        <h1 className="gold-leaf font-display text-6xl leading-none">Compare venues</h1>
         {compared && compared.venues.length > 1 && (
           <p className="max-w-prose text-stone-400">
             {compared.shortlist

@@ -94,7 +94,7 @@ function LocationDetails({ location }: { location: Location }) {
             <div className="min-w-0 space-y-2">
               <Eyebrow icon={MapPinned}>Location</Eyebrow>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="font-display text-5xl leading-none text-stone-50 sm:text-6xl">{location.name}</h1>
+                <h1 className="gold-leaf font-display text-5xl leading-none sm:text-6xl">{location.name}</h1>
                 <LocationBadges location={location} />
               </div>
               {location.address && (
@@ -193,7 +193,7 @@ function Assessment({ location }: { location: Location }) {
     <section aria-labelledby="assessment-heading" className="space-y-5 rounded-xl border border-amber-400/15 bg-gradient-to-br from-amber-500/[0.07] via-frame/90 to-reel p-6">
       <div className="space-y-1">
         <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
-        <h2 id="assessment-heading" className="font-display text-3xl leading-none">
+        <h2 id="assessment-heading" className="gold-leaf font-display text-3xl leading-none">
           Assessment
         </h2>
       </div>

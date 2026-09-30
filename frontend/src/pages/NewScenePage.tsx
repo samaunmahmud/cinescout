@@ -36,7 +36,7 @@ export function NewScenePage() {
         ← {project.data.title}
       </Link>
       <section aria-labelledby="new-scene" className="mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
-        <h1 id="new-scene" className="mb-6 font-display text-5xl leading-none text-stone-50">
+        <h1 id="new-scene" className="mb-6 gold-leaf font-display text-5xl leading-none">
           New scene
         </h1>
         <SceneForm

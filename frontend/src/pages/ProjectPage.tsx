@@ -94,8 +94,8 @@ function ProjectDetails({ project }: { project: Project }) {
       </Link>
 
       {editing ? (
-        <section aria-labelledby="edit-project" className="rounded-xl border border-white/[0.07] bg-frame/80 p-6">
-          <h1 id="edit-project" className="mb-4 font-display text-4xl leading-none">
+        <section aria-labelledby="edit-project" className="gilt rounded-xl border border-white/[0.07] bg-frame/80 p-6">
+          <h1 id="edit-project" className="gold-leaf mb-4 font-display text-5xl leading-none">
             Edit project
           </h1>
           <ProjectForm
@@ -111,35 +111,39 @@ function ProjectDetails({ project }: { project: Project }) {
           />
         </section>
       ) : (
-        <header className="relative space-y-4 overflow-hidden rounded-2xl border border-white/[0.07] p-6 sm:p-8">
-          <div aria-hidden className="absolute inset-0 -z-10 opacity-70" style={{ background: posterGradient(project.title) }} />
-          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-ink via-ink/85 to-ink/40" />
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
-              <Eyebrow icon={Clapperboard}>Production</Eyebrow>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="font-display text-6xl leading-none text-stone-50">{project.title}</h1>
-                {archived && <Badge>Archived</Badge>}
+        // The title card: a widescreen frame, the production's name in lights.
+        <header className="letterbox gilt relative animate-fade-in overflow-hidden rounded-xl shadow-2xl shadow-black/70 ring-1 ring-amber-300/20">
+          <div aria-hidden className="absolute inset-0 -z-10" style={{ background: posterGradient(project.title) }} />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_22%_0%,rgb(255_243_196/0.20),transparent_55%)]" />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/30" />
+          <div className="space-y-5 p-6 sm:p-10">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-3">
+                <Eyebrow icon={Clapperboard}>A CineScout production</Eyebrow>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="gold-leaf font-display text-7xl leading-[0.9] sm:text-8xl">{project.title}</h1>
+                  {archived && <Badge>Archived</Badge>}
+                </div>
+                <p className="flex items-center gap-1.5 text-stone-200">
+                  <MapPin aria-hidden className="size-4 text-amber-300" />
+                  {project.locationArea ?? 'No location area set. Scouting needs one.'}
+                </p>
               </div>
-              <p className="flex items-center gap-1.5 text-stone-300">
-                <MapPin aria-hidden className="size-4 text-amber-400" />
-                {project.locationArea ?? 'No location area set. Scouting needs one.'}
-              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={() => setEditing(true)}>
+                  Edit
+                </Button>
+                <Button variant="secondary" onClick={toggleArchived} busy={update.isPending}>
+                  {archived ? 'Restore' : 'Archive'}
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                  Delete
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => setEditing(true)}>
-                Edit
-              </Button>
-              <Button variant="secondary" onClick={toggleArchived} busy={update.isPending}>
-                {archived ? 'Restore' : 'Archive'}
-              </Button>
-              <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
-                Delete
-              </Button>
-            </div>
+            {project.description && <p className="max-w-prose font-serif text-lg whitespace-pre-line text-stone-200/90 italic">{project.description}</p>}
+            <ErrorAlert error={update.error} />
           </div>
-          {project.description && <p className="max-w-prose whitespace-pre-line text-stone-300/90">{project.description}</p>}
-          <ErrorAlert error={update.error} />
         </header>
       )}
 

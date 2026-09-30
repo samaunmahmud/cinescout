@@ -276,3 +276,4 @@ comes back with that section marked `UNAVAILABLE`.
 14. Project-wide outreach: every email with its venue and scene, by status - done
 15. Venue comparison: a scene's shortlist side by side (fit, booking, warnings, noise, light and weather) - done
 16. Scene search, and a contact (name, email, phone) on each venue that outreach emails start from - done
+17. Premiere-night look for the web app: gold-leaf titles, marquee lights, poster cards for projects - done

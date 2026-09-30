@@ -78,7 +78,7 @@ export function ImportScriptPage() {
       </Link>
       <section aria-labelledby="import-script" className="mx-auto max-w-3xl space-y-6 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
         <div className="space-y-2">
-          <h1 id="import-script" className="font-display text-5xl leading-none text-stone-50">
+          <h1 id="import-script" className="gold-leaf font-display text-5xl leading-none">
             Import script
           </h1>
           <p className="max-w-prose text-sm text-stone-400">
@@ -146,7 +146,7 @@ function FoundScenes({ found, busy, onImport }: { found: ScriptImport; busy: boo
   return (
     <section aria-labelledby="found-scenes" className="space-y-4 border-t border-white/[0.07] pt-6">
       <div className="space-y-1">
-        <h2 id="found-scenes" className="font-display text-3xl leading-none text-stone-50">
+        <h2 id="found-scenes" className="gold-leaf font-display text-3xl leading-none">
           {count === 1 ? '1 scene found' : `${count} scenes found`}
         </h2>
         <p className="text-sm text-stone-400">

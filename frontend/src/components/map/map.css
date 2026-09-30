@@ -1,4 +1,4 @@
-/* Leaflet's light chrome, adjusted to the app's dark theme. Tiles are darkened, not inverted, so map colours still read. */
+/* Leaflet's light chrome, adjusted to the app's dark theme. Tiles are graded, not inverted, so map colours still read. */
 .cinescout-map .leaflet-container {
   background: #1c1917;
   font: inherit;
@@ -9,7 +9,8 @@
 }
 
 .cinescout-map .leaflet-tile-pane {
-  filter: brightness(0.75) saturate(0.8);
+  /* Graded like a night exterior: down a stop, less colour, a little warmth. */
+  filter: brightness(0.72) saturate(0.6) sepia(0.28) contrast(1.06);
 }
 
 .cinescout-map .leaflet-popup-content-wrapper,
@@ -35,7 +36,7 @@
 }
 
 .cinescout-map .leaflet-control-attribution a {
-  color: #fcd34d;
+  color: #ecd078;
 }
 
 .cinescout-map .leaflet-bar a {

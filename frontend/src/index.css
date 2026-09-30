@@ -1,42 +1,104 @@
 @import "tailwindcss";
 
 /*
- * CineScout's look: a dark screening room lit by tungsten. Deep warm blacks, amber light, poster type for
- * titles, a screenplay face for scripts, and a faint film grain over everything.
+ * CineScout's look: premiere night. A black house, searchlights crossing the sky, gold leaf on the titles,
+ * red velvet at the edges, and the marquee's bulbs over the door. Poster type for titles, a deco face for
+ * the sign, a serif for the taglines, a screenplay face for scripts, and a faint film grain over everything.
  */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bebas Neue", "Inter Variable", ui-sans-serif, sans-serif;
+  --font-marquee: "Limelight", "Bebas Neue", ui-serif, serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
   --font-script: "Courier Prime", ui-monospace, "Courier New", monospace;
 
   /* Surfaces, darkest first. */
-  --color-ink: #0b0a09;
-  --color-reel: #13110f;
-  --color-frame: #1b1815;
-  --color-gate: #26221e;
+  --color-ink: #070606;
+  --color-reel: #100e0c;
+  --color-frame: #191613;
+  --color-gate: #25211c;
   /* The screenplay page. */
   --color-paper: #f4efe4;
 
+  /* Gold leaf, in place of Tailwind's orange-leaning amber: every accent in the app is one of these. */
+  --color-amber-50: #fdf9ec;
+  --color-amber-100: #faf0cf;
+  --color-amber-200: #f4e2a3;
+  --color-amber-300: #ecd078;
+  --color-amber-400: #dfb849;
+  --color-amber-500: #c99a2e;
+  --color-amber-600: #a87a22;
+  --color-amber-700: #84591d;
+  --color-amber-800: #5f3f19;
+  --color-amber-900: #3d2912;
+  --color-amber-950: #1f1508;
+
+  /* Red velvet: the curtain, the carpet, the rope. */
+  --color-velvet-400: #d6455a;
+  --color-velvet-500: #b3263d;
+  --color-velvet-600: #8e1b30;
+  --color-velvet-700: #6b1426;
+  --color-velvet-900: #33090f;
+
   --animate-flicker: flicker 6s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-reel: reel 1.1s linear infinite;
+  --animate-sweep: sweep 14s ease-in-out infinite alternate;
+  --animate-sweep-slow: sweep 19s ease-in-out infinite alternate-reverse;
+
   @keyframes flicker {
     0%, 100% { opacity: 1; }
     48% { opacity: 1; }
     50% { opacity: 0.85; }
     52% { opacity: 1; }
   }
+  /* A scene fading up from black. */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes reel {
+    to { transform: rotate(360deg); }
+  }
+  /* A searchlight swinging across the sky. */
+  @keyframes sweep {
+    from { transform: rotate(-14deg); }
+    to { transform: rotate(14deg); }
+  }
+  /* The marquee's bulbs, chasing. */
+  @keyframes chase {
+    to { background-position: 28px 0; }
+  }
+  /* Light catching gold leaf. */
+  @keyframes shine {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
 }
 
 :root {
   color-scheme: dark;
+  --gold-leaf: linear-gradient(180deg, #fff3c4 0%, #f0d27a 28%, #d9ae45 52%, #b8862a 74%, #ecd078 100%);
 }
 
 body {
   @apply bg-ink font-sans text-stone-100 antialiased;
-  /* A soft pool of light from above, like a lamp over the cutting table. */
+  /* The glow of the marquee above, and a little velvet in the wings. */
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(245 158 11 / 0.10), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(180 83 9 / 0.06), transparent 70%);
+    radial-gradient(ellipse 70% 42% at 50% -12%, rgb(223 184 73 / 0.13), transparent 70%),
+    radial-gradient(ellipse 45% 60% at -8% 30%, rgb(142 27 48 / 0.10), transparent 70%),
+    radial-gradient(ellipse 45% 60% at 108% 30%, rgb(142 27 48 / 0.10), transparent 70%);
   background-attachment: fixed;
+}
+
+/* The house lights down: darker towards the edges of the screen. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  pointer-events: none;
+  background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.55) 100%);
 }
 
 /* Film grain: fixed, faint, and never in the way of a click. */
@@ -46,15 +108,46 @@ body::after {
   inset: -50%;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.045;
+  opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: rgb(223 184 73 / 0.35);
+  color: #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Printing a schedule or a comparison: ink on paper, without the theatre. */
+@media print {
+  body { background: #fff; color: #000; }
+  body::before, body::after { display: none; }
+}
+
+.font-display {
+  letter-spacing: 0.03em;
+}
+
+.font-marquee {
+  letter-spacing: 0.04em;
+}
+
+/* Gold leaf lettering: for the titles that would be in lights. */
+.gold-leaf {
+  background-image: var(--gold-leaf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* The descenders of poster type are clipped by background-clip without a little room. */
+  padding-bottom: 0.06em;
+  filter: drop-shadow(0 2px 10px rgb(223 184 73 / 0.18));
 }
 
 /* The perforated edge of a film strip, used as a divider. */
@@ -67,11 +160,116 @@ body::after {
   background-repeat: repeat-x;
 }
 
+/* A row of marquee bulbs, every other one lit, chasing along. */
+.bulbs {
+  height: 12px;
+  background-image:
+    radial-gradient(circle at 7px 6px, #fff3c4 0 1.6px, rgb(236 208 120 / 0.9) 1.7px 2.6px, rgb(223 184 73 / 0.28) 2.7px 5.5px, transparent 6px),
+    radial-gradient(circle at 21px 6px, rgb(168 122 34 / 0.75) 0 2.2px, transparent 2.6px);
+  background-size: 28px 12px;
+  background-repeat: repeat-x;
+  animation: chase 0.9s steps(2, jump-none) infinite;
+}
+
 /* The black-and-white bar across the top of a clapperboard. */
 .clapper {
   background-image: repeating-linear-gradient(-45deg, #f5f5f4 0 14px, #0c0a09 14px 28px);
 }
 
-.font-display {
-  letter-spacing: 0.03em;
+/* Heavy red velvet, in folds. */
+.velvet {
+  background-color: var(--color-velvet-700);
+  background-image:
+    linear-gradient(180deg, rgb(0 0 0 / 0.15), transparent 30%, rgb(0 0 0 / 0.55)),
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.42) 0,
+      rgb(179 38 61 / 0.55) 22px,
+      rgb(214 69 90 / 0.35) 34px,
+      rgb(107 20 38 / 0.2) 48px,
+      rgb(0 0 0 / 0.5) 72px
+    );
+}
+
+/* One searchlight: a narrow cone of light from the foot of the page, swinging. */
+.searchlight {
+  position: absolute;
+  bottom: -10%;
+  width: 22rem;
+  height: 140%;
+  transform-origin: 50% 100%;
+  background: linear-gradient(0deg, rgb(255 243 196 / 0.22), rgb(255 243 196 / 0.05) 55%, transparent 85%);
+  clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+/* A thin gold rule with a diamond at its middle, as on a title card. */
+.deco-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgb(223 184 73 / 0.75);
+}
+.deco-rule::before,
+.deco-rule::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+}
+.deco-rule::before { background: linear-gradient(90deg, transparent, currentColor); }
+.deco-rule::after { background: linear-gradient(90deg, currentColor, transparent); }
+
+/* The billing block at the foot of a poster: tall, tight, spaced capitals. */
+.billing {
+  font-family: var(--font-display);
+  letter-spacing: 0.16em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  transform: scaleY(1.25);
+  transform-origin: bottom;
+}
+
+/* A surface with a gold hairline along its top edge, where the light would catch it. */
+.gilt {
+  position: relative;
+}
+.gilt::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgb(236 208 120 / 0.55) 30%, rgb(255 243 196 / 0.75) 50%, rgb(236 208 120 / 0.55) 70%, transparent);
+  pointer-events: none;
+}
+
+/* The main button: gold leaf that catches the light when the pointer passes over it. */
+.btn-gold {
+  color: #1a1206;
+  background-image:
+    linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%),
+    linear-gradient(180deg, #f6e3a1 0%, #e3bf5a 45%, #c99a2e 100%);
+  background-size: 250% 100%, 100% 100%;
+  background-position: 200% 0, 0 0;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    inset 0 -1px 0 rgb(95 63 25 / 0.5),
+    0 0 0 1px rgb(168 122 34 / 0.7),
+    0 10px 28px -10px rgb(223 184 73 / 0.55);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.35);
+}
+.btn-gold:hover:not(:disabled) {
+  animation: shine 0.9s ease-out;
+  filter: brightness(1.06);
+}
+
+/* The 2.39:1 frame: black bars above and below whatever is inside. */
+.letterbox {
+  border-block: 14px solid #000;
+}
+
+/* The serif's default figures are old-style, and a "1" among them reads as an "i": line them up. */
+.font-serif {
+  font-variant-numeric: lining-nums;
 }

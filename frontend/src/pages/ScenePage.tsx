@@ -68,7 +68,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
 
       {editing ? (
         <section aria-labelledby="edit-scene" className="rounded-xl border border-white/[0.07] bg-frame/80 p-6">
-          <h1 id="edit-scene" className="mb-4 font-display text-4xl leading-none">
+          <h1 id="edit-scene" className="mb-4 gold-leaf font-display text-4xl leading-none">
             Edit scene
           </h1>
           <SceneForm
@@ -101,7 +101,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
             <div className="min-w-0 space-y-2">
               <Eyebrow icon={Clapperboard}>{project.data?.title ?? 'Scene'}</Eyebrow>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="font-display text-5xl leading-none text-stone-50">{sceneLabel(scene)}</h1>
+                <h1 className="gold-leaf font-display text-5xl leading-none">{sceneLabel(scene)}</h1>
                 <ParseStatusBadge status={scene.parseStatus} />
               </div>
               <p className="flex items-center gap-1.5 text-stone-400">
@@ -142,7 +142,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
           </div>
           <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
             <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>
-            <h2 id="script-heading" className="font-display text-3xl leading-none">
+            <h2 id="script-heading" className="gold-leaf font-display text-3xl leading-none">
               Script
             </h2>
             {/* A page of the script, as it would come off the printer. */}

@@ -10,14 +10,15 @@ function hash(text: string): number {
 
 /**
  * A warm, cinematic gradient for a project card, chosen from the title so each production keeps its own
- * look. Hues stay in the tungsten-to-crimson range, with an occasional cool accent, so cards sit well
- * together on the dark page.
+ * look. The hues are the ones film posters live in, deep and saturated, so the posters sit well together
+ * on the dark page.
  */
 export function posterGradient(title: string): string {
   const h = hash(title)
-  const hues = [18, 28, 38, 350, 8, 200, 265]
+  // Film-poster palettes: noir gold, desert sunset, crimson drama, midnight blue, teal thriller, violet dusk.
+  const hues = [38, 22, 350, 222, 190, 268, 8]
   const a = hues[h % hues.length]
   const b = hues[(h >>> 8) % hues.length]
-  const angle = 110 + ((h >>> 16) % 70)
-  return `linear-gradient(${angle}deg, hsl(${a} 70% 32%), hsl(${b} 55% 16%) 60%, hsl(${b} 40% 9%))`
+  const angle = 150 + ((h >>> 16) % 60)
+  return `linear-gradient(${angle}deg, hsl(${a} 72% 38%), hsl(${b} 60% 20%) 55%, hsl(${b} 45% 8%))`
 }
