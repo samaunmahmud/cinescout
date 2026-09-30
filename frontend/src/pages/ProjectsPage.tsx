@@ -10,6 +10,7 @@ import { previousPageOf, usePageParam, useStayInRange } from '../components/pagi
 import { Card, EmptyState, Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterGradient } from '../lib/poster'
+import { sampleProject, sampleScript } from '../lib/sampleScript'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { usePageTitle } from '../lib/usePageTitle'
@@ -187,6 +188,37 @@ const acts = [
 ]
 
 /** The empty lobby: what CineScout does, in three acts, and the way in. */
+/** Sets up a short sample production, its script cut into scenes, and opens it: the whole flow, no typing. */
+function SampleProjectButton() {
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const sample = useMutation({
+    mutationFn: async () => {
+      const project = await api.projects.create(sampleProject)
+      await api.scenes.importScript(project.id, sampleScript)
+      return project
+    },
+    onSuccess: (project) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects })
+      navigate(`/projects/${project.id}`)
+    },
+  })
+  return (
+    <>
+      <Button variant="secondary" busy={sample.isPending} onClick={() => sample.mutate()}>
+        {!sample.isPending && <Clapperboard aria-hidden className="size-4" />}
+        Try a sample script
+      </Button>
+      {sample.isError && (
+        <div className="basis-full">
+          <ErrorAlert error={sample.error} />
+        </div>
+      )}
+    </>
+  )
+}
+
 function FirstReel({ onStart, creating }: { onStart: () => void; creating: boolean }) {
   return (
     <section aria-labelledby="first-reel" className="gilt relative overflow-hidden rounded-xl border border-amber-300/15 bg-reel/70 px-6 py-12 text-center sm:px-12">
@@ -206,11 +238,12 @@ function FirstReel({ onStart, creating }: { onStart: () => void; creating: boole
         ))}
       </ol>
       {!creating && (
-        <div className="relative mt-10">
+        <div className="relative mt-10 flex flex-wrap items-center justify-center gap-3">
           <Button onClick={onStart}>
             <Plus aria-hidden className="size-4" />
             Create your first project
           </Button>
+          <SampleProjectButton />
         </div>
       )}
     </section>

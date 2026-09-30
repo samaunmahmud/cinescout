@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Project } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { PASSWORD, ada, logIn, project, pageOf } from '../test/fixtures'
+import { PASSWORD, ada, logIn, project, pageOf, scene } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 describe('logging in', () => {
@@ -198,6 +198,28 @@ describe('projects', () => {
 
     expect(screen.getByRole('heading', { name: 'New project' })).toBeInTheDocument()
     expect(intro.queryByRole('button', { name: 'Create your first project' })).not.toBeInTheDocument()
+  })
+
+  it('sets up a sample production with its script cut into scenes, for a new user to try', async () => {
+    const created = project({ id: 'p9', title: 'The Night Ferry' })
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])),
+      'POST /api/projects': () => json(created, 201),
+      'POST /api/projects/p9/scenes/import': () => json({ scenes: [], scriptNumbersKept: true }, 201),
+      'GET /api/projects/p9': () => json(created),
+      'GET /api/projects/p9/scenes?page=0&size=24': () => json(pageOf([scene({ projectId: 'p9', title: 'INT. ALL-NIGHT DINER - NIGHT', sceneNumber: 1 })])),
+    })
+    const { router } = renderApp('/projects')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Try a sample script' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'The Night Ferry' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/projects/p9')
+    const imported = requests.find((r) => r.path === '/api/projects/p9/scenes/import')!.body as { script: string }
+    expect(imported.script).toContain('1 INT. ALL-NIGHT DINER - NIGHT 1')
+    expect(requests.find((r) => r.path === '/api/projects' && r.method === 'POST')?.body).toMatchObject({ title: 'The Night Ferry', locationArea: 'Brooklyn, New York' })
   })
 
   it('shows on each poster how many scenes have their location locked', async () => {
