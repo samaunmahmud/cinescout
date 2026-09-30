@@ -297,7 +297,10 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-white/[0.06] bg-ink/60 p-4 text-sm leading-relaxed whitespace-pre-wrap text-stone-200">{draft.body}</div>
+      {/* The letter, as it would come out of the typewriter. */}
+      <div className="rounded-sm bg-paper px-6 py-6 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-stone-900 shadow-xl shadow-black/50 ring-1 ring-black/20 sm:px-8">
+        {draft.body}
+      </div>
 
       <ErrorAlert error={update.error} />
 
