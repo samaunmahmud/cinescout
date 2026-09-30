@@ -83,9 +83,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
     },
     scenes: {
-      /** In script order. */
-      list: (projectId: string, page = 0) =>
-        call<Page<Scene>>(`/api/projects/${encodeURIComponent(projectId)}/scenes?${pageQuery(page)}`),
+      /** In script order; `search` keeps the scenes whose title, script or setting contains it. */
+      list: (projectId: string, page = 0, search = '') =>
+        call<Page<Scene>>(
+          `/api/projects/${encodeURIComponent(projectId)}/scenes?${search ? `q=${encodeURIComponent(search)}&` : ''}${pageQuery(page)}`,
+        ),
       get: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`),
       create: (projectId: string, body: SceneRequest) =>
         call<Scene>(`/api/projects/${encodeURIComponent(projectId)}/scenes`, { method: 'POST', body }),

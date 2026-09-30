@@ -262,6 +262,32 @@ class ResourceApiTest extends ApiTest {
     }
 
     @Test
+    void scenesCanBeSearchedByTitleScriptOrSettingIgnoringCaseAndTakingWildcardsLiterally() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon");
+        String diner = json(ada.client().post().uri("/api/projects/" + project + "/scenes")
+                .bodyValue(Map.of("sceneNumber", 2, "title", "INT. DINER - NIGHT", "sourceText", "Two detectives talk.")).exchange()).path("id").asText();
+        String pier = json(ada.client().post().uri("/api/projects/" + project + "/scenes")
+                .bodyValue(Map.of("sceneNumber", 1, "title", "EXT. PIER - DAWN", "sourceText", "A detective waits. 100% alone.")).exchange()).path("id").asText();
+        String loft = scene(ada, project, 3, "An empty room.");
+        jdbc.update("UPDATE scenes SET parse_status = 'PARSED', setting_type = 'Artist''s loft' WHERE id = ?::uuid", loft);
+        String base = "/api/projects/" + project + "/scenes?q=";
+
+        assertThat(ids(json(ada.client().get().uri(base + "diner").exchange().expectStatus().isOk()))).containsExactly(diner);
+        assertThat(ids(json(ada.client().get().uri(base + "DETECTIVE").exchange().expectStatus().isOk()))).containsExactly(pier, diner);
+        assertThat(ids(json(ada.client().get().uri(base + "loft").exchange().expectStatus().isOk()))).containsExactly(loft);
+        assertThat(ids(json(ada.client().get().uri(base + "{q}", "100%").exchange().expectStatus().isOk()))).containsExactly(pier);
+        assertThat(ids(json(ada.client().get().uri(base + "{q}", "%").exchange().expectStatus().isOk()))).containsExactly(pier);
+        assertThat(ids(json(ada.client().get().uri(base + "{q}", "_").exchange().expectStatus().isOk()))).isEmpty();
+        assertThat(ids(json(ada.client().get().uri(base + "nothing-like-it").exchange().expectStatus().isOk()))).isEmpty();
+        assertThat(ids(json(ada.client().get().uri(base + "{q}", "  ").exchange().expectStatus().isOk()))).hasSize(3);
+        JsonNode paged = json(ada.client().get().uri(base + "detective&size=1&page=1").exchange().expectStatus().isOk());
+        assertThat(ids(paged)).containsExactly(diner);
+        assertThat(paged.path("totalItems").asLong()).isEqualTo(2);
+        ada.client().get().uri(base + "x".repeat(101)).exchange().expectStatus().isBadRequest();
+    }
+
+    @Test
     void editingTheScriptForgetsItsRequirementsButRetitlingKeepsThem() {
         Account ada = register("Ada");
         String scene = scene(ada, project(ada, "Neon Nights"), 1, "A rainy rooftop bar.");

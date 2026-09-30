@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -76,11 +78,13 @@ class SceneController {
     }
 
     /** The project's scenes in script order: numbered ones by number, then unnumbered ones. */
-    @Operation(summary = "List a project's scenes in script order")
+    @Operation(summary = "List a project's scenes in script order",
+            description = "`q` narrows the list to the scenes whose title, script or extracted setting contains it, ignoring case.")
     @GetMapping("/projects/{projectId}/scenes")
     Mono<PageResponse<SceneResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                           @RequestParam(required = false) @Size(max = 100) String q,
                                            @Valid @ParameterObject PageQuery page) {
-        return scenes.list(user.id(), projectId, page);
+        return scenes.list(user.id(), projectId, q, page);
     }
 
     @Operation(summary = "Get a scene")

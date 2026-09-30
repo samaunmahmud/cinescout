@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Scene, SceneRequirements } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, logIn, project, scene, pageOf } from '../test/fixtures'
@@ -105,6 +105,60 @@ describe('the scenes of a project', () => {
     await user.click(screen.getByRole('button', { name: 'Add scene' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('A scene with that number already exists in this project')
+  })
+})
+
+describe('searching the scenes of a project', () => {
+  it('asks the server for the scenes that mention the words, keeps them in the address and can show all again', async () => {
+    const all = [scene(), scene({ id: 's2', sceneNumber: 13, title: 'EXT. PIER - DAWN' })]
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf(all)),
+      'GET /api/projects/p1/scenes?page=2&size=24': () => json(pageOf(all, { page: 0 })),
+      'GET /api/projects/p1/scenes?q=red%20booths%20%26%20rain&page=0&size=24': () => json(pageOf([all[0]])),
+    })
+    const { router } = renderApp('/projects/p1?page=3')
+    const user = await logIn()
+
+    await user.type(await screen.findByRole('searchbox', { name: 'Search scenes' }), ' red booths & rain {Enter}')
+
+    await vi.waitFor(() => expect(router.state.location.search).toBe('?q=red+booths+%26+rain'))
+    await vi.waitFor(() => expect(screen.queryByRole('link', { name: /EXT. PIER - DAWN/ })).not.toBeInTheDocument())
+    expect(screen.getByRole('link', { name: /INT. DINER - NIGHT/ })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search scenes' })).toHaveValue('red booths & rain')
+
+    await user.click(screen.getByRole('button', { name: 'Show all' }))
+
+    expect(await screen.findByRole('link', { name: /EXT. PIER - DAWN/ })).toBeInTheDocument()
+    expect(router.state.location.search).toBe('')
+    expect(screen.getByRole('searchbox', { name: 'Search scenes' })).toHaveValue('')
+  })
+
+  it('says when nothing matches, keeping the box to search again', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'GET /api/projects/p1/scenes?q=spaceship&page=0&size=24': () => json(pageOf([])),
+    })
+    renderApp('/projects/p1?q=spaceship')
+    await logIn()
+
+    expect(await screen.findByText('No scene mentions “spaceship”.')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search scenes' })).toHaveValue('spaceship')
+  })
+
+  it('is not offered for a project with at most one scene', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([scene()])),
+    })
+    renderApp('/projects/p1')
+    await logIn()
+
+    expect(await screen.findByRole('link', { name: /INT. DINER - NIGHT/ })).toBeInTheDocument()
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 })
 

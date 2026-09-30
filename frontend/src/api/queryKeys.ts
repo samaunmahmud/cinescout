@@ -9,7 +9,7 @@ export const queryKeys = {
   projectPage: (status: ProjectStatus, page: number) => ['projects', 'list', status, page] as const,
   project: (id: string) => ['projects', 'detail', id] as const,
   sceneList: (projectId: string) => ['scenes', 'list', projectId] as const,
-  scenePage: (projectId: string, page: number) => ['scenes', 'list', projectId, page] as const,
+  scenePage: (projectId: string, page: number, search = '') => ['scenes', 'list', projectId, page, search] as const,
   scene: (id: string) => ['scenes', 'detail', id] as const,
   locationList: (sceneId: string) => ['locations', 'list', sceneId] as const,
   locationPage: (sceneId: string, page: number) => ['locations', 'list', sceneId, page] as const,

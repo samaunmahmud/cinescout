@@ -189,7 +189,7 @@ class ResourceServicesTest {
         SceneResponse three = scene(ada, project.id(), 3, "Three");
         SceneResponse one = scene(ada, project.id(), 1, "One");
 
-        assertThat(sceneService.list(ada, project.id(), PageQuery.first()).block().items()).extracting(SceneResponse::id)
+        assertThat(sceneService.list(ada, project.id(), null, PageQuery.first()).block().items()).extracting(SceneResponse::id)
                 .containsExactly(one.id(), three.id(), unnumbered.id());
     }
 
@@ -241,11 +241,11 @@ class ResourceServicesTest {
         SceneResponse graceScene = scene(grace, graces.id(), 1, "Grace's scene");
 
         assertNotFound(() -> sceneService.create(ada, graces.id(), new SceneRequest(2, "Intruder", "text", null, null)).block());
-        assertNotFound(() -> sceneService.list(ada, graces.id(), PageQuery.first()).block());
+        assertNotFound(() -> sceneService.list(ada, graces.id(), null, PageQuery.first()).block());
         assertNotFound(() -> sceneService.get(ada, graceScene.id()).block());
         assertNotFound(() -> sceneService.update(ada, graceScene.id(), new SceneRequest(1, "Mine", "text", null, null)).block());
         assertNotFound(() -> sceneService.delete(ada, graceScene.id()).block());
-        assertThat(sceneService.list(grace, graces.id(), PageQuery.first()).block().items()).hasSize(1);
+        assertThat(sceneService.list(grace, graces.id(), null, PageQuery.first()).block().items()).hasSize(1);
     }
 
     @Test
@@ -256,7 +256,7 @@ class ResourceServicesTest {
         sceneService.delete(ada, scene.id()).block();
 
         assertNotFound(() -> sceneService.get(ada, scene.id()).block());
-        assertThat(sceneService.list(ada, project.id(), PageQuery.first()).block().items()).isEmpty();
+        assertThat(sceneService.list(ada, project.id(), null, PageQuery.first()).block().items()).isEmpty();
     }
 
     // --- locations ------------------------------------------------------------------------------

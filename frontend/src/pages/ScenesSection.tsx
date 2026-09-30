@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, ChevronRight, FileText, Film, Plus, Sparkles } from 'lucide-react'
-import { Link } from 'react-router'
+import { useState, type FormEvent } from 'react'
+import { CalendarDays, ChevronRight, FileText, Film, Plus, Search, Sparkles } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import { useSession } from '../auth/context'
 import type { Page, Scene } from '../api/types'
@@ -16,9 +17,11 @@ import { batchParseSummary, formatShootWindow, sceneLabel } from '../lib/format'
 export function ScenesSection({ projectId }: { projectId: string }) {
   const { api } = useSession()
   const [page, setPage] = usePageParam()
+  const [params, setParams] = useSearchParams()
+  const search = params.get('q')?.trim() ?? ''
   const scenes = useQuery({
-    queryKey: queryKeys.scenePage(projectId, page),
-    queryFn: () => api.scenes.list(projectId, page),
+    queryKey: queryKeys.scenePage(projectId, page, search),
+    queryFn: () => api.scenes.list(projectId, page, search),
     placeholderData: previousPageOf<Page<Scene>>(queryKeys.sceneList(projectId)),
   })
   useStayInRange(scenes.data, setPage)
@@ -72,10 +75,29 @@ export function ScenesSection({ projectId }: { projectId: string }) {
         )
       )}
 
+      {/* Worth a search box once there is a list to search, and while a search is what emptied it. */}
+      {(search !== '' || (scenes.data?.totalItems ?? 0) > 1) && (
+        <SceneSearch
+          key={search}
+          current={search}
+          onSearch={(next) =>
+            setParams((current) => {
+              const updated = new URLSearchParams(current)
+              if (next) updated.set('q', next)
+              else updated.delete('q')
+              updated.delete('page')
+              return updated
+            })
+          }
+        />
+      )}
+
       {scenes.isPending ? (
         <Spinner label="Loading scenes" />
       ) : scenes.isError ? (
         <ErrorAlert error={scenes.error} onRetry={() => scenes.refetch()} />
+      ) : scenes.data.items.length === 0 && search !== '' ? (
+        <EmptyState icon={Search}>No scene mentions “{search}”.</EmptyState>
       ) : scenes.data.items.length === 0 ? (
         <EmptyState icon={Film}>No scenes yet. Add one with its script, or import a whole screenplay, and CineScout works out what kind of location each scene needs.</EmptyState>
       ) : (
@@ -111,5 +133,40 @@ export function ScenesSection({ projectId }: { projectId: string }) {
         </>
       )}
     </Section>
+  )
+}
+
+/** Searches on submit, not per keystroke; clearing the box and submitting shows every scene again. */
+function SceneSearch({ current, onSearch }: { current: string; onSearch: (search: string) => void }) {
+  const [text, setText] = useState(current)
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    onSearch(text.trim())
+  }
+
+  return (
+    <form role="search" onSubmit={submit} className="flex flex-wrap items-center gap-2">
+      <label className="relative min-w-0 flex-1 sm:max-w-sm">
+        <span className="sr-only">Search scenes</span>
+        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-500" />
+        <input
+          type="search"
+          value={text}
+          maxLength={100}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Search titles, scripts and settings"
+          className="w-full rounded-lg border border-white/10 bg-ink/70 py-2 pr-3 pl-9 text-sm text-stone-100 shadow-inner shadow-black/40 placeholder:text-stone-500 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/30 focus:outline-none"
+        />
+      </label>
+      <Button type="submit" variant="secondary">
+        Search
+      </Button>
+      {current !== '' && (
+        <Button variant="ghost" onClick={() => onSearch('')}>
+          Show all
+        </Button>
+      )}
+    </form>
   )
 }

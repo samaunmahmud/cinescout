@@ -13,6 +13,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -44,12 +45,24 @@ public class SceneService {
                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
     }
 
-    /** In script order: numbered scenes by number, then unnumbered ones by creation. */
-    public Mono<PageResponse<SceneResponse>> list(UUID ownerId, UUID projectId, PageQuery page) {
+    /**
+     * In script order: numbered scenes by number, then unnumbered ones by creation. With {@code search}, only
+     * the scenes whose title, script or extracted setting contains it, ignoring case; blank means all.
+     */
+    public Mono<PageResponse<SceneResponse>> list(UUID ownerId, UUID projectId, String search, PageQuery page) {
         return db.call(() -> {
             projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
-            return PageResponse.from(scenes.findOwnedByProject(projectId, ownerId, page.pageable()), SceneResponse::from);
+            return PageResponse.from(search == null || search.isBlank()
+                    ? scenes.findOwnedByProject(projectId, ownerId, page.pageable())
+                    : scenes.searchOwnedByProject(projectId, ownerId, containing(search), page.pageable()),
+                    SceneResponse::from);
         });
+    }
+
+    /** A LIKE pattern matching text that contains {@code search} literally: its own % and _ are not wildcards. */
+    static String containing(String search) {
+        String literal = search.strip().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return "%" + literal + "%";
     }
 
     public Mono<SceneResponse> get(UUID ownerId, UUID sceneId) {

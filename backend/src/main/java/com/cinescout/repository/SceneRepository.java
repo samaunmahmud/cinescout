@@ -30,6 +30,24 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
             countQuery = "select count(s) from Scene s where s.project.id = :projectId and s.project.owner.id = :ownerId")
     Page<Scene> findOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId, Pageable pageable);
 
+    /**
+     * As {@link #findOwnedByProject}, only the scenes whose title, script or extracted setting contains
+     * {@code pattern}: a LIKE pattern in lower case, with {@code \} as its escape character.
+     */
+    @Query(value = """
+            select s from Scene s join fetch s.project p
+            where p.id = :projectId and p.owner.id = :ownerId
+              and (lower(s.title) like :pattern escape '\\' or lower(s.sourceText) like :pattern escape '\\'
+                   or lower(s.settingType) like :pattern escape '\\')
+            order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""",
+            countQuery = """
+            select count(s) from Scene s
+            where s.project.id = :projectId and s.project.owner.id = :ownerId
+              and (lower(s.title) like :pattern escape '\\' or lower(s.sourceText) like :pattern escape '\\'
+                   or lower(s.settingType) like :pattern escape '\\')""")
+    Page<Scene> searchOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId,
+                                     @Param("pattern") String pattern, Pageable pageable);
+
     /** The scene numbers in use in a project; each can be used once (uq_scenes_project_number). */
     @Query("select s.sceneNumber from Scene s where s.project.id = :projectId and s.sceneNumber is not null")
     Set<Integer> findSceneNumbersByProjectId(@Param("projectId") UUID projectId);
