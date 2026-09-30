@@ -18,7 +18,9 @@ import java.util.UUID;
  * included) against a real PostgreSQL. The container is started once and shared by every context.
  */
 @SpringBootTest
-@AutoConfigureWebTestClient
+// Some calls (scouting, the API description on first use) take seconds; a busy machine can push them past the
+// client's default five.
+@AutoConfigureWebTestClient(timeout = "PT30S")
 abstract class ApiTest {
 
     @ServiceConnection

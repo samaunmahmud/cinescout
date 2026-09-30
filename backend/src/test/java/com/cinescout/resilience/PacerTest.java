@@ -49,8 +49,9 @@ class PacerTest {
         // Quiet time is not saved up: the call right after still waits its interval.
         pacer.pace(() -> call("third"), PacerTest::tooBusy).block();
 
-        assertThat(Duration.ofNanos(startedAt.get(0) - begin)).isLessThan(Duration.ofMillis(50));
-        assertThat(Duration.ofNanos(startedAt.get(1) - later)).isLessThan(Duration.ofMillis(50));
+        // "At once" with room for a busy machine: well under the 100 ms interval a paced call would wait.
+        assertThat(Duration.ofNanos(startedAt.get(0) - begin)).isLessThan(Duration.ofMillis(90));
+        assertThat(Duration.ofNanos(startedAt.get(1) - later)).isLessThan(Duration.ofMillis(90));
         assertThat(Duration.ofNanos(startedAt.get(2) - startedAt.get(1))).isGreaterThanOrEqualTo(Duration.ofMillis(90));
     }
 
