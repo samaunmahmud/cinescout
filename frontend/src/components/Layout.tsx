@@ -19,6 +19,13 @@ export function Layout() {
   const { logOut } = useAuth()
   return (
     <div className="flex min-h-dvh flex-col">
+      {/* For keyboard and screen reader users: past the header, straight to the page. */}
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-amber-300 px-4 py-2 font-semibold text-stone-950 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to content
+      </a>
       <header className="sticky top-0 z-30 border-b border-amber-300/15 bg-black/85 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
@@ -58,7 +65,7 @@ export function Layout() {
         </div>
         <div aria-hidden className="bulbs opacity-80" />
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 focus:outline-none">
         <Outlet />
       </main>
       {/* The end credits. */}

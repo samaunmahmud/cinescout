@@ -152,6 +152,19 @@ describe('projects', () => {
     expect(screen.queryByText('Night Shift')).not.toBeInTheDocument()
   })
 
+  it('lets a keyboard user skip past the header to the page', async () => {
+    fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])) }, { loggedIn: true })
+    renderApp('/projects')
+    const user = userEvent.setup()
+
+    await screen.findByRole('heading', { name: 'Projects' })
+    await user.tab()
+
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveFocus()
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main')
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main')
+  })
+
   it('names the browser tab after the page', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
