@@ -47,6 +47,8 @@ export interface Project {
   sceneCount: number
   /** Scenes with a confirmed location. */
   confirmedSceneCount: number
+  /** A picture of one of its venues (a confirmed one first), for its poster; null while none has one. */
+  posterImageUrl: string | null
   createdAt: string
   updatedAt: string
 }

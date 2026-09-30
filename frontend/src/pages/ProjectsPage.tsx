@@ -13,6 +13,7 @@ import { posterGradient } from '../lib/poster'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { usePageTitle } from '../lib/usePageTitle'
+import { VenuePicture } from '../components/VenuePicture'
 
 export function ProjectsPage() {
   const { api } = useSession()
@@ -120,6 +121,13 @@ export function ProjectsPage() {
                   className="group relative flex aspect-[2/3] flex-col overflow-hidden rounded-md bg-black shadow-2xl shadow-black/70 ring-1 ring-amber-300/20 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-18px_rgb(223_184_73/0.45)] hover:ring-amber-300/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300"
                 >
                   <div aria-hidden className="absolute inset-0 transition duration-500 group-hover:scale-105" style={{ background: posterGradient(project.title) }} />
+                  {project.posterImageUrl && (
+                    // A still of one of its locations, washed in the production's colours.
+                    <VenuePicture
+                      src={project.posterImageUrl}
+                      className="absolute inset-0 h-full w-full opacity-45 mix-blend-luminosity brightness-75 transition duration-500 group-hover:scale-105 group-hover:opacity-60"
+                    />
+                  )}
                   <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_18%,rgb(255_243_196/0.22),transparent_55%)]" />
                   <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
                   <div aria-hidden className="absolute inset-2 rounded-sm ring-1 ring-white/10" />

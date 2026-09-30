@@ -64,7 +64,7 @@ class ResponseMappingDbTest {
         assertThat(SceneResponse.from(loadedScene).projectId()).isEqualTo(project.getId());
         assertThat(LocationResponse.from(loadedLocation).sceneId()).isEqualTo(scene.getId());
         assertThat(OutreachDraftResponse.from(loadedDraft).locationId()).isEqualTo(location.getId());
-        assertThat(ProjectResponse.from(loadedProject, 0, 0).createdAt()).isNotNull();
+        assertThat(ProjectResponse.from(loadedProject, 0, 0, null).createdAt()).isNotNull();
         assertThat(LocationResponse.from(loadedLocation).footprintWarnings()).isEmpty();
     }
 }

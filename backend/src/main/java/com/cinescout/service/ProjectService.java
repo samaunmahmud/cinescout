@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class ProjectService {
         return db.call(() -> {
             Project project = new Project(users.getReferenceById(ownerId), request.title().strip(), blankToNull(request.description()));
             project.setLocationArea(request.locationArea());
-            return ProjectResponse.from(projects.saveAndFlush(project), 0, 0);
+            return ProjectResponse.from(projects.saveAndFlush(project), 0, 0, null);
         });
     }
 
@@ -107,22 +108,25 @@ public class ProjectService {
         return counts(List.of(project.getId())).respond(project);
     }
 
-    /** The scene counts of a page of projects, in two queries however many projects there are. */
+    /** The scene counts and poster pictures of a page of projects, in three queries however many projects there are. */
     private Counts counts(List<UUID> projectIds) {
         if (projectIds.isEmpty()) {
-            return new Counts(Map.of(), Map.of());
+            return new Counts(Map.of(), Map.of(), Map.of());
         }
+        Map<UUID, String> images = new HashMap<>();
+        locations.findImagesByProjects(projectIds).forEach(image -> images.putIfAbsent(image.getProjectId(), image.getImageUrl()));
         return new Counts(byProject(scenes.countByProjects(projectIds)),
-                byProject(locations.countScenesByProjectsAndStatus(projectIds, LocationStatus.CONFIRMED)));
+                byProject(locations.countScenesByProjectsAndStatus(projectIds, LocationStatus.CONFIRMED)), images);
     }
 
     private static Map<UUID, Long> byProject(List<SceneRepository.ProjectCount> counts) {
         return counts.stream().collect(Collectors.toMap(SceneRepository.ProjectCount::getProjectId, SceneRepository.ProjectCount::getTotal));
     }
 
-    private record Counts(Map<UUID, Long> scenes, Map<UUID, Long> confirmed) {
+    private record Counts(Map<UUID, Long> scenes, Map<UUID, Long> confirmed, Map<UUID, String> images) {
         ProjectResponse respond(Project project) {
-            return ProjectResponse.from(project, scenes.getOrDefault(project.getId(), 0L), confirmed.getOrDefault(project.getId(), 0L));
+            return ProjectResponse.from(project, scenes.getOrDefault(project.getId(), 0L), confirmed.getOrDefault(project.getId(), 0L),
+                    images.get(project.getId()));
         }
     }
 

@@ -82,10 +82,10 @@ class ResponseMappingTest {
     @Test
     void projectResponseMapsAllFields() {
         Project project = project();
-        ProjectResponse response = ProjectResponse.from(project, 12, 3);
+        ProjectResponse response = ProjectResponse.from(project, 12, 3, "https://cdn.example/a.jpg");
 
         assertThat(response).isEqualTo(new ProjectResponse(project.getId(), "Neon Nights", "A neo-noir short",
-                "Brooklyn, New York", project.getStatus(), 12, 3, CREATED, UPDATED));
+                "Brooklyn, New York", project.getStatus(), 12, 3, "https://cdn.example/a.jpg", CREATED, UPDATED));
     }
 
     @Test

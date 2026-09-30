@@ -87,6 +87,25 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     List<SceneRepository.ProjectCount> countScenesByProjectsAndStatus(@Param("projectIds") Collection<UUID> projectIds,
                                                                       @Param("status") LocationStatus status);
 
+    /**
+     * The venues with a picture in the given projects, the ones most worth showing first: confirmed, then
+     * shortlisted or contacted, then the rest, best fit first. The caller keeps the first per project.
+     */
+    @Query("""
+            select l.scene.project.id as projectId, l.imageUrl as imageUrl from Location l
+            where l.scene.project.id in :projectIds and l.imageUrl is not null and l.status <> com.cinescout.domain.LocationStatus.REJECTED
+            order by case l.status when com.cinescout.domain.LocationStatus.CONFIRMED then 0
+                                   when com.cinescout.domain.LocationStatus.SHORTLISTED then 1
+                                   when com.cinescout.domain.LocationStatus.CONTACTED then 1 else 2 end,
+                     l.fitScore desc nulls last, l.createdAt asc""")
+    List<ProjectImage> findImagesByProjects(@Param("projectIds") Collection<UUID> projectIds);
+
+    interface ProjectImage {
+        UUID getProjectId();
+
+        String getImageUrl();
+    }
+
     interface StatusCount {
         LocationStatus getStatus();
 

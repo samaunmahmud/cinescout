@@ -123,6 +123,24 @@ class ResourceApiTest extends ApiTest {
     }
 
     @Test
+    void aProjectsPosterShowsAPictureOfAVenueAConfirmedOneFirst() {
+        Account ada = register("Ada");
+        String project = project(ada, "Pictured");
+        String scene = scene(ada, project, 1, "one");
+        String best = location(ada, scene, "Best fit", null);
+        String confirmed = location(ada, scene, "Confirmed", null);
+        String rejected = location(ada, scene, "Rejected", null);
+        jdbc.update("UPDATE locations SET image_url = 'https://cdn.example/best.jpg', fit_score = 95 WHERE id = ?::uuid", best);
+        jdbc.update("UPDATE locations SET image_url = 'https://cdn.example/rejected.jpg', fit_score = 99, status = 'REJECTED' WHERE id = ?::uuid", rejected);
+        ada.client().get().uri("/api/projects/" + project).exchange().expectBody().jsonPath("$.posterImageUrl").isEqualTo("https://cdn.example/best.jpg");
+
+        jdbc.update("UPDATE locations SET image_url = 'https://cdn.example/confirmed.jpg', fit_score = 60, status = 'CONFIRMED' WHERE id = ?::uuid", confirmed);
+        JsonNode listed = json(ada.client().get().uri("/api/projects").exchange().expectStatus().isOk()).path("items");
+        assertThat(listed.get(0).path("posterImageUrl").asText()).isEqualTo("https://cdn.example/confirmed.jpg");
+        ada.client().get().uri("/api/projects/" + project(ada, "Bare")).exchange().expectBody().jsonPath("$.posterImageUrl").isEmpty();
+    }
+
+    @Test
     void listsComeAPageAtATimeWithTheTotals() {
         Account ada = register("Ada");
         String first = project(ada, "First");

@@ -205,6 +205,20 @@ describe('projects', () => {
     expect(screen.getByRole('link', { name: /Solo/ })).toHaveTextContent('1 scene · 1 locked')
   })
 
+  it('puts a picture of one of its venues on a poster when there is one', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () =>
+        json(pageOf([project({ posterImageUrl: 'https://cdn.example/roof.jpg' }), project({ id: 'p2', title: 'Paper Moons' })])),
+    })
+    renderApp('/projects')
+    await logIn()
+
+    const pictured = await screen.findByRole('link', { name: /Night Shift/ })
+    expect(pictured.querySelector('img')).toHaveAttribute('src', 'https://cdn.example/roof.jpg')
+    expect(screen.getByRole('link', { name: /Paper Moons/ }).querySelector('img')).toBeNull()
+  })
+
   it('creates a project, sending blank optional fields as null, and opens it', async () => {
     const created = project({ id: 'p9', title: 'New Film', description: null, locationArea: null })
     const { requests } = fakeServer({
