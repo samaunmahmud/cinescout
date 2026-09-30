@@ -99,6 +99,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       importScript: (projectId: string, script: string) =>
         call<ScriptImport>(`/api/projects/${encodeURIComponent(projectId)}/scenes/import`, { method: 'POST', body: { script } }),
       update: (id: string, body: SceneRequest) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      /** Sets the shoot window and nothing else; a null date clears it. */
+      reschedule: (id: string, body: { shootDateStart: string | null; shootDateEnd: string | null }) =>
+        call<Scene>(`/api/scenes/${encodeURIComponent(id)}/shoot-dates`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Extracts the filming requirements with the AI. Takes seconds; answers 503 when scouting is not configured. */
       parse: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}/parse`, { method: 'POST' }),

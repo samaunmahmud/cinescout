@@ -6,6 +6,7 @@ import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
+import com.cinescout.dto.ShootDatesRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
@@ -85,6 +86,16 @@ public class SceneService {
                     return SceneResponse.from(scenes.saveAndFlush(scene));
                 })
                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
+    }
+
+    /** Sets when the scene is shot and nothing else: the script and its requirements stay as they are. */
+    public Mono<SceneResponse> reschedule(UUID ownerId, UUID sceneId, ShootDatesRequest request) {
+        return db.call(() -> {
+            Scene scene = owned(ownerId, sceneId);
+            scene.setShootDateStart(request.shootDateStart());
+            scene.setShootDateEnd(request.shootDateEnd());
+            return SceneResponse.from(scenes.saveAndFlush(scene));
+        });
     }
 
     public Mono<Void> delete(UUID ownerId, UUID sceneId) {

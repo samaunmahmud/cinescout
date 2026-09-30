@@ -329,6 +329,27 @@ class ResourceApiTest extends ApiTest {
     }
 
     @Test
+    void shootDatesCanBeSetOnTheirOwnLeavingTheScriptAndItsRequirementsAlone() {
+        Account ada = register("Ada");
+        String scene = scene(ada, project(ada, "Neon Nights"), 1, "A rainy rooftop bar.");
+        jdbc.update("UPDATE scenes SET parse_status = 'PARSED', setting_type = 'rooftop bar', parsed_at = now() WHERE id = ?::uuid", scene);
+
+        ada.client().put().uri("/api/scenes/" + scene + "/shoot-dates")
+                .bodyValue(Map.of("shootDateStart", "2026-10-12", "shootDateEnd", "2026-10-13")).exchange()
+                .expectStatus().isOk().expectBody()
+                .jsonPath("$.shootDateStart").isEqualTo("2026-10-12").jsonPath("$.shootDateEnd").isEqualTo("2026-10-13")
+                .jsonPath("$.sourceText").isEqualTo("A rainy rooftop bar.").jsonPath("$.requirements.settingType").isEqualTo("rooftop bar");
+
+        ada.client().put().uri("/api/scenes/" + scene + "/shoot-dates").bodyValue(Map.of("shootDateStart", "2026-10-20")).exchange()
+                .expectStatus().isOk().expectBody().jsonPath("$.shootDateStart").isEqualTo("2026-10-20").jsonPath("$.shootDateEnd").isEmpty();
+
+        JsonNode problem = json(ada.client().put().uri("/api/scenes/" + scene + "/shoot-dates")
+                .bodyValue(Map.of("shootDateStart", "2026-10-20", "shootDateEnd", "2026-10-19")).exchange().expectStatus().isBadRequest());
+        assertThat(errorFields(problem)).containsExactly("shootDateEnd");
+        register("Grace").client().put().uri("/api/scenes/" + scene + "/shoot-dates").bodyValue(Map.of()).exchange().expectStatus().isNotFound();
+    }
+
+    @Test
     void deletingASceneReturns204() {
         Account ada = register("Ada");
         String scene = scene(ada, project(ada, "Neon Nights"), 1, "text");

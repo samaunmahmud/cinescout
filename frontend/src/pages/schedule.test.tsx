@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Schedule } from '../api/types'
 import { fakeServer, json } from '../test/fakeServer'
-import { ada, logIn, pageOf, project, schedule, scheduled } from '../test/fixtures'
+import { ada, logIn, pageOf, project, scene, schedule, scheduled } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 const base = {
@@ -47,6 +47,49 @@ describe('the schedule of a project', () => {
     renderApp('/projects/p1?tab=schedule')
     expect(await screen.findByText('No scene has a shoot date yet.')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Not scheduled yet' })).toBeInTheDocument()
+  })
+
+  it('schedules an unscheduled scene in place, and it moves to its day', async () => {
+    let current: Schedule = schedule
+    const { requests } = fakeServer({
+      ...base,
+      'GET /api/projects/p1/schedule': () => json(current),
+      'PUT /api/scenes/s4/shoot-dates': () => {
+        const car = { ...schedule.unscheduled[0], shootDateStart: '2026-10-20', shootDateEnd: null }
+        current = { days: [schedule.days[0], { date: '2026-10-20', scenes: [...schedule.days[1].scenes, car] }], unscheduled: [] }
+        return json(scene({ id: 's4', shootDateStart: '2026-10-20' }))
+      },
+    })
+    renderApp('/projects/p1?tab=schedule')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Schedule INT. CAR - DAY' }))
+    const form = within(screen.getByRole('form', { name: 'Shoot dates of INT. CAR - DAY' }))
+    await user.type(form.getByLabelText('Last shoot day'), '2026-10-18')
+    await user.type(form.getByLabelText('First shoot day'), '2026-10-20')
+    expect(form.getByText('The last shoot day cannot be before the first.')).toBeInTheDocument()
+    expect(form.getByRole('button', { name: 'Save dates' })).toBeDisabled()
+    await user.clear(form.getByLabelText('Last shoot day'))
+    await user.click(form.getByRole('button', { name: 'Save dates' }))
+
+    const day = within(await screen.findByRole('region', { name: /Tuesday.*October.*2026/ }))
+    expect(await day.findByRole('link', { name: 'INT. CAR - DAY' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Not scheduled yet' })).not.toBeInTheDocument()
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ shootDateStart: '2026-10-20', shootDateEnd: null })
+  })
+
+  it('opens a dated scene with its dates filled in, to move it', async () => {
+    fakeServer({ ...base, 'GET /api/projects/p1/schedule': () => json(schedule) })
+    renderApp('/projects/p1?tab=schedule')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Change the dates of EXT. ROOFTOP - DAWN' }))
+
+    const form = within(screen.getByRole('form', { name: 'Shoot dates of EXT. ROOFTOP - DAWN' }))
+    expect(form.getByLabelText('First shoot day')).toHaveValue('2026-10-12')
+    expect(form.getByLabelText('Last shoot day')).toHaveValue('2026-10-14')
+    await user.click(form.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
 
   it('explains itself for a project without scenes', async () => {

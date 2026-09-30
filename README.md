@@ -220,7 +220,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 |---|---|
 | Accounts | `POST /auth/register` (public), `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `PUT /account`, `PUT /account/password`, `POST /account/delete` |
 | Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress`, `GET /projects/{id}/schedule` |
-| Scenes | `POST /projects/{id}/scenes`, `GET /projects/{id}/scenes[?q=]`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
+| Scenes | `POST /projects/{id}/scenes`, `GET /projects/{id}/scenes[?q=]`, `GET`/`PUT`/`DELETE /scenes/{id}`, `PUT /scenes/{id}/shoot-dates`, `POST /projects/{id}/scenes/import[/preview]` |
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `PUT /locations/{id}/contact`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /projects/{id}/scenes/parse`, `POST /scenes/{id}/scout[?maxResults=]` |

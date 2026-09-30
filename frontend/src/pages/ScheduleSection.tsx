@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, CalendarOff, MapPin as PinIcon, Printer, TriangleAlert } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, type FormEvent } from 'react'
+import { CalendarClock, CalendarDays, CalendarOff, MapPin as PinIcon, Printer, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { ScheduledScene } from '../api/types'
 import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
-import { ErrorAlert, Spinner } from '../components/ui'
+import { Button, ErrorAlert, Spinner, TextField } from '../components/ui'
 import { formatDate, formatDay, scheduleSummary } from '../lib/format'
 
 /**
@@ -48,10 +49,10 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
       ) : (
         <div className="space-y-6">
           {schedule.data.days.map((day) => (
-            <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated />
+            <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated projectId={projectId} />
           ))}
           {schedule.data.unscheduled.length > 0 && (
-            <Day titleId="day-unscheduled" title="Not scheduled yet" scenes={schedule.data.unscheduled} dated={false} />
+            <Day titleId="day-unscheduled" title="Not scheduled yet" scenes={schedule.data.unscheduled} dated={false} projectId={projectId} />
           )}
         </div>
       )}
@@ -59,7 +60,19 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
   )
 }
 
-function Day({ titleId, title, scenes, dated }: { titleId: string; title: string; scenes: ScheduledScene[]; dated: boolean }) {
+function Day({
+  titleId,
+  title,
+  scenes,
+  dated,
+  projectId,
+}: {
+  titleId: string
+  title: string
+  scenes: ScheduledScene[]
+  dated: boolean
+  projectId: string
+}) {
   const Icon = dated ? CalendarDays : CalendarOff
   return (
     <section aria-labelledby={titleId} className="overflow-hidden rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 shadow-lg shadow-black/30">
@@ -69,26 +82,95 @@ function Day({ titleId, title, scenes, dated }: { titleId: string; title: string
       </h3>
       <ul className="divide-y divide-white/[0.05]">
         {scenes.map((scene) => (
-          <li key={scene.id} className="flex flex-wrap items-center gap-4 px-4 py-3">
-            <Slate number={scene.sceneNumber} />
-            <div className="min-w-0 flex-1 space-y-1">
-              <Link to={`/scenes/${scene.id}`} className="block truncate text-lg font-semibold text-stone-100 hover:text-amber-200">
-                {scene.title}
-              </Link>
-              <p className="flex flex-wrap gap-x-3 text-sm text-stone-400">
-                {scene.settingType && <span className="text-stone-300">{scene.settingType}</span>}
-                {scene.timeOfDay && <span>{scene.timeOfDay}</span>}
-                {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
-                  <span>until {formatDate(scene.shootDateEnd)}</span>
-                )}
-                {!scene.shootDateStart && scene.shootDateEnd && <span>last day; no first day set</span>}
-              </p>
-            </div>
-            <Venues scene={scene} urgent={dated} />
+          <li key={scene.id}>
+            <SceneRow scene={scene} projectId={projectId} dated={dated} />
           </li>
         ))}
       </ul>
     </section>
+  )
+}
+
+/**
+ * One scene of the schedule. Its dates can be set right here, which is how an unscheduled scene gets onto a day
+ * and a scheduled one is moved: saving refetches the schedule, and the scene turns up under its new day.
+ */
+function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectId: string; dated: boolean }) {
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+  const save = useMutation({
+    mutationFn: () => api.scenes.reschedule(scene.id, { shootDateStart: start || null, shootDateEnd: end || null }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.scene(updated.id), updated)
+      queryClient.invalidateQueries({ queryKey: queryKeys.sceneList(projectId) })
+      setEditing(false)
+      return queryClient.invalidateQueries({ queryKey: queryKeys.projectSchedule(projectId) })
+    },
+  })
+  const backwards = start !== '' && end !== '' && end < start
+
+  function edit() {
+    setStart(scene.shootDateStart ?? '')
+    setEnd(scene.shootDateEnd ?? '')
+    save.reset()
+    setEditing(true)
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    if (!backwards) save.mutate()
+  }
+
+  return (
+    <div className="space-y-3 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-4">
+        <Slate number={scene.sceneNumber} />
+        <div className="min-w-0 flex-1 space-y-1">
+          <Link to={`/scenes/${scene.id}`} className="block truncate text-lg font-semibold text-stone-100 hover:text-amber-200">
+            {scene.title}
+          </Link>
+          <p className="flex flex-wrap gap-x-3 text-sm text-stone-400">
+            {scene.settingType && <span className="text-stone-300">{scene.settingType}</span>}
+            {scene.timeOfDay && <span>{scene.timeOfDay}</span>}
+            {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
+              <span>until {formatDate(scene.shootDateEnd)}</span>
+            )}
+            {!scene.shootDateStart && scene.shootDateEnd && <span>last day; no first day set</span>}
+          </p>
+        </div>
+        <Venues scene={scene} urgent={dated} />
+        {!editing && (
+          <Button variant="ghost" aria-label={`${dated ? 'Change the dates of' : 'Schedule'} ${scene.title}`} onClick={edit}>
+            <CalendarClock aria-hidden className="size-4" />
+            {dated ? 'Dates' : 'Schedule'}
+          </Button>
+        )}
+      </div>
+      {editing && (
+        <form onSubmit={submit} aria-label={`Shoot dates of ${scene.title}`} className="flex flex-wrap items-end gap-3 rounded-lg bg-black/30 p-3 ring-1 ring-amber-300/10" noValidate>
+          <ErrorAlert error={save.error} />
+          <TextField label="First shoot day" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+          <TextField
+            label="Last shoot day"
+            type="date"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            error={backwards ? 'The last shoot day cannot be before the first.' : undefined}
+          />
+          <div className="flex gap-2">
+            <Button type="submit" busy={save.isPending} disabled={backwards}>
+              Save dates
+            </Button>
+            <Button variant="ghost" disabled={save.isPending} onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
   )
 }
 

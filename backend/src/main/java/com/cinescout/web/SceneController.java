@@ -5,6 +5,7 @@ import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
+import com.cinescout.dto.ShootDatesRequest;
 import com.cinescout.dto.ScriptImportResponse;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.SceneService;
@@ -99,6 +100,15 @@ class SceneController {
     Mono<SceneResponse> update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                @Valid @RequestBody SceneRequest request) {
         return scenes.update(user.id(), sceneId, request);
+    }
+
+    /** For scheduling from a list of scenes, where the script is not at hand to send back with a full replacement. */
+    @Operation(summary = "Set a scene's shoot dates",
+            description = "Replaces the shoot window and nothing else: an omitted date is cleared. The last day must not be before the first (400).")
+    @PutMapping("/scenes/{sceneId}/shoot-dates")
+    Mono<SceneResponse> reschedule(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
+                                   @Valid @RequestBody ShootDatesRequest request) {
+        return scenes.reschedule(user.id(), sceneId, request);
     }
 
     @Operation(summary = "Delete a scene", description = "Also deletes its locations.")
