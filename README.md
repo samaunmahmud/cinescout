@@ -7,6 +7,13 @@ physical location requirements, finds real venues with grounded web search, asse
 friction, computes shoot logistics (light, weather, noise risk, nearby services) and drafts
 outreach to venue owners.
 
+| | |
+|---|---|
+| ![The login page: a lit marquee](docs/screenshots/login.jpg) | ![Projects as film posters](docs/screenshots/projects.jpg) |
+| ![A project's title card and scenes](docs/screenshots/project.jpg) | ![A venue with its assessment, contact and map](docs/screenshots/location.jpg) |
+
+The schedule prints as a [call sheet](docs/screenshots/callsheet.jpg). The screenshots show made-up productions.
+
 > Work in progress. The backend is being built one step at a time; see [Status](#status).
 
 ## Stack
