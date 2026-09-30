@@ -8,7 +8,7 @@ import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner, TextField } from '../components/ui'
-import { formatDate, formatDay, scheduleSummary } from '../lib/format'
+import { dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
 
 /**
  * The shoot laid out by day: which scenes start when, and where each is shot. What is missing stands out: a
@@ -187,6 +187,7 @@ function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
                 {venue.name}
               </Link>
               {venue.address && <span className="block truncate text-stone-400">{venue.address}</span>}
+              {dayConditions(venue.day) && <span className="block text-xs text-amber-200/70">{dayConditions(venue.day)}</span>}
             </span>
           </li>
         ))}

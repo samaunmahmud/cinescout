@@ -7,7 +7,7 @@ import type { Project, Schedule, ScheduledScene } from '../api/types'
 import { useSession } from '../auth/context'
 import { Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
-import { formatDate, formatDay } from '../lib/format'
+import { dayConditions, formatDate, formatDay } from '../lib/format'
 import { NotFoundPage } from './NotFoundPage'
 import { usePageTitle } from '../lib/usePageTitle'
 
@@ -138,6 +138,7 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                     <span key={venue.id} className="block">
                       <span className="font-bold">{venue.name}</span>
                       {venue.address && <span className="block">{venue.address}</span>}
+                      {dayConditions(venue.day) && <span className="block text-stone-600">{dayConditions(venue.day)}</span>}
                     </span>
                   ))
                 )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatShootWindow, sceneLabel, scoutingSummary } from './format'
+import { dayConditions, formatDate, formatShootWindow, sceneLabel, scoutingSummary } from './format'
 import { location } from '../test/fixtures'
 
 describe('formatDate', () => {
@@ -43,5 +43,17 @@ describe('scoutingSummary', () => {
     expect(scoutingSummary({ added: [location()], alreadySaved: 0, unassessed: 0, notVenues: 0, unsuitable: 2 })).toBe(
       'Found 1 new venue. Left out 2 venues that could not work for this scene, such as ones in another area.',
     )
+  })
+})
+
+describe('dayConditions', () => {
+  it('puts the light and the weather in one line, leaving out what is not known', () => {
+    expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1 })).toBe(
+      'Sun 07:04–18:20 · Clear sky, 12–23 °C',
+    )
+    expect(dayConditions({ sunrise: null, sunset: null, weather: 'Rain', temperatureMinC: null, temperatureMaxC: null })).toBe('Rain')
+    expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: null, temperatureMinC: null, temperatureMaxC: null })).toBe('Sun 07:04–18:20')
+    expect(dayConditions({ sunrise: null, sunset: null, weather: null, temperatureMinC: null, temperatureMaxC: null })).toBeNull()
+    expect(dayConditions(null)).toBeNull()
   })
 })

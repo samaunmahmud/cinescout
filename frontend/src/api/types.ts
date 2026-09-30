@@ -96,6 +96,17 @@ export interface ScheduledVenue {
   /** Who to call there on the day, when the user has recorded it. */
   contactName: string | null
   contactPhone: string | null
+  /** The light and weather there on the scene's day; null until the venue's logistics cover that day. */
+  day: DayConditions | null
+}
+
+/** One day at a venue, as a call sheet gives it; times are the venue's own clock ("07:04"). */
+export interface DayConditions {
+  sunrise: string | null
+  sunset: string | null
+  weather: string | null
+  temperatureMinC: number | null
+  temperatureMaxC: number | null
 }
 
 export interface ScheduledScene {

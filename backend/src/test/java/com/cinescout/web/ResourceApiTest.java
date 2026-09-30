@@ -534,6 +534,10 @@ class ResourceApiTest extends ApiTest {
         jdbc.update("UPDATE locations SET address = '80 Wythe Ave', latitude = 40.722, longitude = -73.958 WHERE id = ?::uuid", venue);
         ada.client().put().uri("/api/locations/" + venue + "/contact").bodyValue(Map.of("name", "Dana Reyes", "phone", "718 555 0100"))
                 .exchange().expectStatus().isOk();
+        jdbc.update("""
+                UPDATE locations SET logistics_json = '{"solar":{"days":[{"date":"2026-10-12","sunrise":"2026-10-12T07:04:00-04:00",
+                  "sunset":"2026-10-12T18:20:00-04:00"}]},"weather":{"days":[{"date":"2026-10-12","summary":"Clear sky",
+                  "temperatureMinC":12.4,"temperatureMaxC":23.1}]}}'::jsonb WHERE id = ?::uuid""", venue);
         jdbc.update("UPDATE scenes SET parse_status = 'PARSED', setting_type = 'rooftop bar', time_of_day = 'night' WHERE id = ?::uuid", second);
 
         JsonNode schedule = json(ada.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isOk());
@@ -551,6 +555,12 @@ class ResourceApiTest extends ApiTest {
         assertThat(day.get(0).path("venues").get(0).path("address").asText()).isEqualTo("80 Wythe Ave");
         assertThat(day.get(0).path("venues").get(0).path("contactName").asText()).isEqualTo("Dana Reyes");
         assertThat(day.get(0).path("venues").get(0).path("contactPhone").asText()).isEqualTo("718 555 0100");
+        JsonNode conditions = day.get(0).path("venues").get(0).path("day");
+        assertThat(conditions.path("sunrise").asText()).isEqualTo("07:04");
+        assertThat(conditions.path("sunset").asText()).isEqualTo("18:20");
+        assertThat(conditions.path("weather").asText()).isEqualTo("Clear sky");
+        assertThat(conditions.path("temperatureMinC").asDouble()).isEqualTo(12.4);
+        assertThat(conditions.path("temperatureMaxC").asDouble()).isEqualTo(23.1);
         assertThat(day.get(1).path("venues")).isEmpty();
         assertThat(day.get(1).path("candidates").asInt()).isZero();
         assertThat(day.get(1).path("settingType").isNull()).isTrue();

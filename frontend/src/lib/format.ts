@@ -1,4 +1,5 @@
-import type { BatchParseResult, ProjectProgress, Schedule, ScoutingResult } from '../api/types'
+import type { BatchParseResult, DayConditions, ProjectProgress, Schedule, ScoutingResult } from '../api/types'
+import { temperatureRange } from './logisticsFormat'
 
 // Shoot dates are plain calendar dates (yyyy-mm-dd) with no time zone, so they are formatted in UTC:
 // formatting them in the viewer's zone could show the day before.
@@ -72,4 +73,12 @@ export function scheduleSummary({ days, unscheduled }: Schedule): string {
   else if (scheduled.length > 0) parts.push('Every dated scene has a confirmed location.')
   if (unscheduled.length > 0 && days.length > 0) parts.push(`${plural(unscheduled.length, 'scene has', 'scenes have')} no shoot date.`)
   return parts.join(' ')
+}
+
+/** "Sun 07:04–18:20 · Clear sky, 12–23 °C", or null when nothing is known. */
+export function dayConditions(day: DayConditions | null): string | null {
+  if (!day) return null
+  const sun = day.sunrise && day.sunset ? `Sun ${day.sunrise}–${day.sunset}` : null
+  const weather = [day.weather, temperatureRange(day.temperatureMinC, day.temperatureMaxC)].filter(Boolean).join(', ')
+  return [sun, weather || null].filter(Boolean).join(' · ') || null
 }
