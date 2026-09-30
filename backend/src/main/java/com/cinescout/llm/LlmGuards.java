@@ -9,7 +9,10 @@ import com.cinescout.resilience.GuardFactory;
  * scouting also stops outreach from hammering the same model, and the other way round.
  *
  * <p>Only outages trip the breaker: a model that returns unusable JSON, or a request the vendor
- * rejects, means "no" to this call, not "down". Unusable output is still worth a retry.
+ * rejects, means "no" to this call, not "down". Unusable output is still worth a retry. So is "too many
+ * requests" (429), and that does not trip the breaker either: the vendor is up and asking for a slower pace,
+ * which the retry's back-off gives it. Counted as failures, a burst of 429s that all succeed on the second
+ * try would open the breaker and fail the calls behind them for nothing.
  */
 public final class LlmGuards {
 
@@ -19,8 +22,7 @@ public final class LlmGuards {
     public static Guard create(GuardFactory guards) {
         return guards.create("llm",
                 error -> error instanceof LlmException e && e.isRetryable(),
-                error -> error instanceof LlmException e
-                        && (e.kind() == LlmException.Kind.UNAVAILABLE || e.kind() == LlmException.Kind.RATE_LIMITED),
+                error -> error instanceof LlmException e && e.kind() == LlmException.Kind.UNAVAILABLE,
                 open -> new LlmException(LlmException.Kind.UNAVAILABLE,
                         "The LLM circuit breaker is open; the call was not made", open));
     }

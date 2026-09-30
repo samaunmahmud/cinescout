@@ -3,6 +3,8 @@ package com.cinescout.resilience;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -19,6 +21,8 @@ import java.util.function.Supplier;
  * <p>Create instances with {@link GuardFactory}.
  */
 public final class Guard {
+
+    private static final Logger log = LoggerFactory.getLogger(Guard.class);
 
     private static final double JITTER = 0.5;
 
@@ -49,6 +53,9 @@ public final class Guard {
     public <T> Mono<T> call(Supplier<Mono<T>> supplier) {
         return Mono.defer(supplier)
                 .transformDeferred(CircuitBreakerOperator.of(breaker))
+                // Each failed attempt, retried or not: without this a breaker opens with no trace of why.
+                .doOnError(error -> !(error instanceof CallNotPermittedException),
+                        error -> log.info("A call to '{}' failed: {}", breaker.getName(), error.toString()))
                 .retryWhen(Retry.backoff(maxAttempts - 1L, initialBackoff)
                         .maxBackoff(maxBackoff)
                         .jitter(JITTER)

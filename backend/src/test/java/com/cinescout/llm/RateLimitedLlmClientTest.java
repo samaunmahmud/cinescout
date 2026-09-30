@@ -29,15 +29,31 @@ class RateLimitedLlmClientTest {
     };
 
     @Test
-    void aBurstOfCallsIsSpreadOverSecondsInsteadOfRefused() {
-        LlmClient limited = new RateLimitedLlmClient(delegate, 2, Duration.ofSeconds(10));
+    void aBurstOfCallsIsStartedAtAnEvenPaceInsteadOfRefused() {
+        LlmClient limited = new RateLimitedLlmClient(delegate, 4, Duration.ofSeconds(10));
 
         List<String> answers = Flux.range(0, 5).flatMap(i -> limited.generate("system", "venue " + i, String.class)).collectList().block();
 
         assertThat(answers).hasSize(5);
         List<Long> sorted = calledAt.stream().sorted().toList();
-        // Two calls a second: the fifth falls in the third second, at least a whole second after the first.
-        assertThat(Duration.ofNanos(sorted.get(4) - sorted.get(0))).isGreaterThanOrEqualTo(Duration.ofSeconds(1));
+        // Four a second is one every 250 ms. Never two close together, which a vendor counting over a sliding
+        // second would refuse; a little slack for the timer's own precision.
+        for (int i = 1; i < sorted.size(); i++) {
+            assertThat(Duration.ofNanos(sorted.get(i) - sorted.get(i - 1))).as("gap before call " + i).isGreaterThanOrEqualTo(Duration.ofMillis(240));
+        }
+    }
+
+    @Test
+    void aCallAfterAQuietSpellStartsAtOnce() {
+        LlmClient limited = new RateLimitedLlmClient(delegate, 1, Duration.ofSeconds(10));
+        limited.generate("system", "first", String.class).block();
+        long before = System.nanoTime();
+
+        // Not yet a second later: this one waits. It does not get two turns for the quiet time before the first.
+        limited.generate("system", "second", String.class).block();
+
+        assertThat(Duration.ofNanos(System.nanoTime() - before)).isGreaterThanOrEqualTo(Duration.ofMillis(900));
+        assertThat(Duration.ofNanos(calledAt.get(0) - before)).isLessThan(Duration.ofMillis(200));
     }
 
     @Test

@@ -56,4 +56,16 @@ class LlmGuardsTest {
         // Still closed: every call reached the model and got its own answer.
         assertThat(calls.get()).isEqualTo(5);
     }
+
+    @Test
+    void beingToldToSlowDownIsNotAnOutageEither() {
+        Guard guard = LlmGuards.create(factory);
+
+        for (int i = 0; i < 5; i++) {
+            assertThatThrownBy(() -> guard.call(() -> failing(Kind.RATE_LIMITED)).block()).isInstanceOf(LlmException.class);
+        }
+
+        // Still closed: a burst of 429s must not stop the calls behind it from reaching the model.
+        assertThat(calls.get()).isEqualTo(5);
+    }
 }

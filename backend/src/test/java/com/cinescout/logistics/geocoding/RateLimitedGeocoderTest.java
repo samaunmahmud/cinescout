@@ -38,8 +38,8 @@ class RateLimitedGeocoderTest {
 
         assertThat(points).hasSize(3);
         List<Long> sorted = calledAt.stream().sorted().toList();
-        // One call per 200 ms window: the third call cannot start before the second window has passed.
-        assertThat(Duration.ofNanos(sorted.get(2) - sorted.get(0))).isGreaterThanOrEqualTo(Duration.ofMillis(190));
+        // 200 ms between one call and the next, so the third starts 400 ms after the first (less the timer's slack).
+        assertThat(Duration.ofNanos(sorted.get(2) - sorted.get(0))).isGreaterThanOrEqualTo(Duration.ofMillis(390));
     }
 
     @Test
