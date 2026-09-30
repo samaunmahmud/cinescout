@@ -97,7 +97,9 @@ function SceneDetails({ scene }: { scene: Scene }) {
           />
         </section>
       ) : (
-        <header className="flex flex-wrap items-start justify-between gap-6">
+        // The scene's slate, as it would be held up before the take.
+        <header className="letterbox gilt relative flex animate-fade-in flex-wrap items-start justify-between gap-6 overflow-hidden rounded-xl bg-gradient-to-br from-frame to-black p-6 shadow-2xl shadow-black/70 ring-1 ring-amber-300/20 sm:p-8">
+          <div aria-hidden className="pointer-events-none absolute -top-24 left-10 h-64 w-96 bg-[radial-gradient(ellipse_at_top,rgb(255_243_196/0.14),transparent_65%)]" />
           <div className="flex min-w-0 items-start gap-5">
             <Slate number={scene.sceneNumber} className="w-24 scale-110" />
             <div className="min-w-0 space-y-2">
