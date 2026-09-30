@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Location } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, location, logIn, project, scene, logisticsReport, locationVideos, pageOf } from '../test/fixtures'
@@ -110,6 +110,29 @@ describe('a location', () => {
     await user.click(await screen.findByRole('button', { name: 'Write an email' }))
     expect(screen.getByLabelText('Recipient name')).toHaveValue('Tom Miller')
     expect(screen.getByLabelText(/Recipient email/)).toHaveValue('tom@toms-diner.example')
+  })
+
+  it('looks up the venue’s picture the first time it is opened, and shows it', async () => {
+    const { requests } = serverFor(location({ imageCheckedAt: null }), {
+      'POST /api/locations/l1/image': () => json(location({ imageUrl: 'https://cdn.example/diner.jpg', imageCheckedAt: '2026-09-30T10:00:00Z' })),
+    })
+    const { container } = renderApp('/locations/l1')
+    await logIn()
+
+    await screen.findByRole('heading', { level: 1, name: 'Tom’s Diner' })
+    await vi.waitFor(() => expect(container.querySelector('img[src="https://cdn.example/diner.jpg"]')).not.toBeNull())
+    expect(container.querySelector('img[src="https://cdn.example/diner.jpg"]')).toHaveAttribute('referrerpolicy', 'no-referrer')
+    expect(requests.filter((r) => r.path === '/api/locations/l1/image')).toHaveLength(1)
+  })
+
+  it('does not look the picture up again once it has been, nor for a venue without a web page', async () => {
+    const { requests } = serverFor(location({ sourceUrl: null, imageCheckedAt: null }))
+    const { container } = renderApp('/locations/l1')
+    await logIn()
+
+    await screen.findByRole('heading', { level: 1, name: 'Tom’s Diner' })
+    expect(requests.some((r) => r.path.endsWith('/image'))).toBe(false)
+    expect(container.querySelector('img[referrerpolicy]')).toBeNull()
   })
 
   it('can have its pin set from coordinates copied from a map', async () => {

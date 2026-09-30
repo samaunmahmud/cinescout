@@ -28,6 +28,7 @@ public record ProjectLocationResponse(
         BookingFriction bookingFriction,
         LocationStatus status,
         String notes,
+        String imageUrl,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -37,6 +38,6 @@ public record ProjectLocationResponse(
         return new ProjectLocationResponse(location.getId(), scene.getId(), scene.getSceneNumber(), scene.getTitle(),
                 location.getName(), location.getAddress(), location.getLatitude(), location.getLongitude(),
                 location.getSourceUrl(), location.getFitScore(), location.getFitReason(), location.getBookingFriction(),
-                location.getStatus(), location.getNotes(), location.getCreatedAt(), location.getUpdatedAt());
+                location.getStatus(), location.getNotes(), location.getImageUrl(), location.getCreatedAt(), location.getUpdatedAt());
     }
 }

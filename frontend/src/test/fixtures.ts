@@ -75,6 +75,9 @@ export function location(overrides: Partial<Location> = {}): Location {
     contactEmail: null,
     contactPhone: null,
     quote: null,
+    // Looked up already, so a page showing it does not look it up again unless a test asks for that.
+    imageUrl: null,
+    imageCheckedAt: '2026-09-01T10:00:00Z',
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
     ...overrides,
@@ -98,6 +101,7 @@ export function projectLocation(overrides: Partial<ProjectLocation> = {}): Proje
     bookingFriction: 'COMMERCIAL',
     status: 'SUGGESTED',
     notes: null,
+    imageUrl: null,
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
     ...overrides,

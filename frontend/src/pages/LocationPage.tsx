@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { fieldErrors, isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
@@ -34,6 +34,7 @@ import { Eyebrow, Fact, Section, Tabs, type TabItem } from '../components/surfac
 import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
+import { VenuePicture } from '../components/VenuePicture'
 import { Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { sceneLabel } from '../lib/format'
 import { looksLikeEmail } from '../lib/email'
@@ -63,6 +64,14 @@ export function LocationPage() {
 function LocationDetails({ location }: { location: Location }) {
   const { api } = useSession()
   const queryClient = useQueryClient()
+  const store = useStoreLocation()
+  // The venue's picture is looked up the first time its page is opened, once, in the background.
+  const lookUp = location.imageCheckedAt === null && location.sourceUrl !== null
+  const image = useMutation({ mutationFn: () => api.locations.lookUpImage(location.id), onSuccess: store })
+  const { mutate: lookUpImage } = image
+  useEffect(() => {
+    if (lookUp) lookUpImage()
+  }, [lookUp, lookUpImage])
   const navigate = useNavigate()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [params, setParams] = useSearchParams()
@@ -89,6 +98,14 @@ function LocationDetails({ location }: { location: Location }) {
         <ChevronLeft aria-hidden className="size-4" />
         {scene.data ? sceneLabel(scene.data) : 'Scene'}
       </Link>
+
+      {location.imageUrl && (
+        // The venue itself, widescreen, fading into the page.
+        <div aria-hidden className="letterbox relative overflow-hidden rounded-xl shadow-2xl shadow-black/70 ring-1 ring-amber-300/20">
+          <VenuePicture src={location.imageUrl} className="h-56 w-full sm:h-72" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-black/30" />
+        </div>
+      )}
 
       <header className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-6">

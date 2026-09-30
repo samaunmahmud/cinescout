@@ -16,6 +16,7 @@ import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { saveFile } from '../lib/saveFile'
 import { progressSummary, sceneLabel } from '../lib/format'
 import { isLocationStatus, locationStatuses, statusLabels } from '../lib/status'
+import { VenuePicture } from '../components/VenuePicture'
 
 /**
  * Every scene's candidate venues in one place: where the scouting stands, a filter by status (the shortlist,
@@ -202,6 +203,7 @@ function LocationRow({ location, onSaved }: { location: ProjectLocation; onSaved
       className={`space-y-2 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-4 shadow-lg shadow-black/30 transition hover:border-white/15 ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
     >
       <div className="flex flex-wrap items-start gap-4">
+        {location.imageUrl && <VenuePicture src={location.imageUrl} className="hidden h-20 w-32 shrink-0 rounded-md ring-1 ring-white/10 sm:block" />}
         {location.fitScore != null && <FitScore score={location.fitScore} />}
         <div className="min-w-0 flex-1 basis-44 space-y-1">
           <div className="flex flex-wrap items-center gap-2">

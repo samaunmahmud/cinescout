@@ -146,6 +146,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Who to talk to at the venue: a full replacement of name, email and phone. */
       updateContact: (id: string, body: UpdateContactRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/contact`, { method: 'PUT', body }),
+      /** Looks up the picture the venue's page offers, once; later calls return the location as it is. */
+      lookUpImage: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}/image`, { method: 'POST' }),
       /** Moves the pin; the server drops the cached logistics, which were for the old spot. */
       updateCoordinates: (id: string, body: UpdateCoordinatesRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/coordinates`, { method: 'PUT', body }),

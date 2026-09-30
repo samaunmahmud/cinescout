@@ -219,6 +219,9 @@ export interface Location {
   contactPhone: string | null
   /** What the venue asks for the shoot, in the user's words. */
   quote: string | null
+  /** The picture the venue's web page offers; null before it is looked up (imageCheckedAt null) and when it has none. */
+  imageUrl: string | null
+  imageCheckedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -254,6 +257,7 @@ export interface ProjectLocation {
   bookingFriction: BookingFriction | null
   status: LocationStatus
   notes: string | null
+  imageUrl: string | null
   createdAt: string
   updatedAt: string
 }

@@ -14,7 +14,8 @@ import java.util.UUID;
  * {@code logistics} is the cached Module B output, a {@code LogisticsReport} passed through exactly as it
  * was stored (so its local times keep their offsets). It is null until logistics have been worked out.
  * The {@code contact...} fields are who to talk to at the venue, and {@code quote} what it asks for the shoot, as the user
- * entered them.
+ * entered them. {@code imageUrl} is the picture the venue's page offers; {@code imageCheckedAt} is null until it
+ * has been looked up.
  */
 public record LocationResponse(
         UUID id,
@@ -39,6 +40,8 @@ public record LocationResponse(
         String contactEmail,
         String contactPhone,
         String quote,
+        String imageUrl,
+        Instant imageCheckedAt,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -53,6 +56,7 @@ public record LocationResponse(
                 location.getLogisticsJson(), location.getLogisticsFetchedAt(),
                 location.getStatus(), location.getNotes(),
                 location.getContactName(), location.getContactEmail(), location.getContactPhone(), location.getQuote(),
+                location.getImageUrl(), location.getImageCheckedAt(),
                 location.getCreatedAt(), location.getUpdatedAt());
     }
 }

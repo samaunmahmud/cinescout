@@ -101,6 +101,13 @@ public class Location extends BaseEntity {
     /** What the venue asks for the shoot, as the user noted it. */
     private String quote;
 
+    /** The picture the venue's web page offers for sharing; null before the look-up and when there is none. */
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "image_checked_at")
+    private Instant imageCheckedAt;
+
     protected Location() {
     }
 
@@ -120,6 +127,12 @@ public class Location extends BaseEntity {
     public void cacheLogistics(JsonNode logistics) {
         this.logisticsJson = logistics;
         this.logisticsFetchedAt = DatabaseTime.now();
+    }
+
+    /** Records the look-up of the venue's picture: what was found, if anything, and when. */
+    public void setImage(String imageUrl, Instant checkedAt) {
+        this.imageUrl = imageUrl;
+        this.imageCheckedAt = checkedAt;
     }
 
     public void cacheVideos(JsonNode videos, String query, Instant fetchedAt) {
@@ -152,6 +165,8 @@ public class Location extends BaseEntity {
     public String getContactEmail() { return contactEmail; }
     public String getContactPhone() { return contactPhone; }
     public String getQuote() { return quote; }
+    public String getImageUrl() { return imageUrl; }
+    public Instant getImageCheckedAt() { return imageCheckedAt; }
 
     public void setName(String name) { this.name = name; }
     public void setAddress(String address) { this.address = address; }

@@ -7,6 +7,9 @@ import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectLocationResponse;
 import com.cinescout.dto.UpdateContactRequest;
+import com.cinescout.imagery.LocationImageService;
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
@@ -47,9 +50,13 @@ class LocationController {
     private static final MediaType CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
 
     private final LocationService locations;
+    private final LocationImageService images;
+    private final RateLimiter limits;
 
-    LocationController(LocationService locations) {
+    LocationController(LocationService locations, LocationImageService images, RateLimiter limits) {
         this.locations = locations;
+        this.images = images;
+        this.limits = limits;
     }
 
     /** The scene's candidate locations, best fit first; venues added by hand (no score) come last. */
@@ -128,6 +135,17 @@ class LocationController {
     Mono<LocationResponse> updateContact(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                          @Valid @RequestBody UpdateContactRequest request) {
         return locations.updateContact(user.id(), locationId, request);
+    }
+
+    /** Looks up the picture the venue's own web page offers, once; later calls return what was found. */
+    @Operation(summary = "Look up a picture of the venue",
+            description = "Reads the image the venue's web page offers for sharing (og:image) and keeps it on the location as imageUrl. "
+                    + "Done once: later calls return the location as it is. Best effort: a page that cannot be read, or offers no image, "
+                    + "leaves imageUrl null. Counts as one lookup against the user's allowance.")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of lookups is used up; see Retry-After")
+    @PostMapping("/locations/{locationId}/image")
+    Mono<LocationResponse> lookUpImage(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {
+        return limits.acquire(RateLimit.LOOKUPS, user.id()).then(Mono.defer(() -> images.lookUp(user.id(), locationId)));
     }
 
     @Operation(summary = "Delete a location")
