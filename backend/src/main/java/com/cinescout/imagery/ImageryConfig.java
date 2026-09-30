@@ -11,6 +11,6 @@ class ImageryConfig {
     /** Keyless and always on, like the logistics providers, and it introduces itself the same way. */
     @Bean
     PageImageFinder pageImageFinder(WebClient.Builder builder, LogisticsProperties logistics) {
-        return new PageImageFinder(builder, logistics.userAgent(), PublicAddresses::isPublic);
+        return new PageImageFinder(builder, logistics.userAgent(), PublicAddresses::isPublic, true);
     }
 }

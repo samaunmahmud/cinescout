@@ -18,7 +18,7 @@ class PageImageFinderTest {
     static WireMockExtension site = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
     /** The test site is on localhost, which the real check refuses; these tests are about everything else. */
-    private final PageImageFinder finder = new PageImageFinder(WebClient.builder(), "CineScout-test", host -> true);
+    private final PageImageFinder finder = new PageImageFinder(WebClient.builder(), "CineScout-test", host -> true, false);
 
     private void page(String path, int status, String type, String body) {
         site.stubFor(get(urlEqualTo(path)).willReturn(aResponse().withStatus(status).withHeader("Content-Type", type).withBody(body)));
@@ -56,11 +56,21 @@ class PageImageFinderTest {
     @Test
     void neverAsksAHostThatIsNotPublicNorAnAddressThatIsNotAWebAddress() {
         page("/roof", 200, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
-        PageImageFinder guarded = new PageImageFinder(WebClient.builder(), "CineScout-test", PublicAddresses::isPublic);
+        PageImageFinder guarded = new PageImageFinder(WebClient.builder(), "CineScout-test", PublicAddresses::isPublic, true);
 
         assertThat(guarded.imageOf(site.baseUrl() + "/roof").block()).isNull();
         assertThat(finder.imageOf("file:///etc/passwd").block()).isNull();
         assertThat(finder.imageOf("not a url at all").block()).isNull();
+        site.verify(0, getRequestedFor(urlEqualTo("/roof")));
+    }
+
+    @Test
+    void neverConnectsToALocalAddressEvenWhenTheNameLooksFineToTheFirstCheck() {
+        page("/roof", 200, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
+        // As when a name resolves to a public address for the check and to a local one for the connection.
+        PageImageFinder fooled = new PageImageFinder(WebClient.builder(), "CineScout-test", host -> true, true);
+
+        assertThat(fooled.imageOf(site.baseUrl() + "/roof").block()).isNull();
         site.verify(0, getRequestedFor(urlEqualTo("/roof")));
     }
 }

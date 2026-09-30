@@ -19,8 +19,9 @@ import java.util.function.Predicate;
 /**
  * Finds the picture a venue's web page offers for sharing. Best effort in every way: a page that cannot be
  * reached, is not HTML, is too large or offers no picture all simply give none. Pages are fetched only from
- * public hosts ({@link PublicAddresses}), without following redirects (a redirect could lead anywhere), and
- * only the first megabyte is read.
+ * public hosts ({@link PublicAddresses}, checked again on the addresses actually connected to by
+ * {@link PublicOnlyResolverGroup}), without following redirects (a redirect could lead anywhere), and only the
+ * first megabyte is read.
  */
 public class PageImageFinder {
 
@@ -31,8 +32,14 @@ public class PageImageFinder {
     private final WebClient web;
     private final Predicate<String> hostAllowed;
 
-    public PageImageFinder(WebClient.Builder builder, String userAgent, Predicate<String> hostAllowed) {
-        HttpClient http = HttpClient.create()
+    /**
+     * @param hostAllowed checked before a page is asked for (and nothing is sent when it says no)
+     * @param publicOnly  also refuse to connect to a local or private address, whatever the name resolves to at
+     *                    that moment; off only for tests that serve pages from this machine
+     */
+    public PageImageFinder(WebClient.Builder builder, String userAgent, Predicate<String> hostAllowed, boolean publicOnly) {
+        HttpClient base = HttpClient.create();
+        HttpClient http = (publicOnly ? base.resolver(PublicOnlyResolverGroup.INSTANCE) : base)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5_000)
                 .responseTimeout(TIMEOUT)
                 .followRedirect(false);
