@@ -274,3 +274,4 @@ comes back with that section marked `UNAVAILABLE`.
 12. Account page: display name, password change, account deletion - done
 13. Shoot schedule: scenes by shoot day with their confirmed venues, and what still lacks a date or a venue - done
 14. Project-wide outreach: every email with its venue and scene, by status - done
+15. Venue comparison: a scene's shortlist side by side (fit, booking, warnings, noise, light and weather) - done

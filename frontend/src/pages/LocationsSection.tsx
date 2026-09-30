@@ -13,7 +13,7 @@ import { VenueMap } from '../components/map/VenueMap'
 import { linkButton } from '../components/buttonStyles'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
-import { MapPin as PinIcon, MapPinned, Plus, Radar, TriangleAlert } from 'lucide-react'
+import { Columns3, MapPin as PinIcon, MapPinned, Plus, Radar, TriangleAlert } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { scoutingSummary } from '../lib/format'
@@ -56,6 +56,12 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
       description={locationArea && `Scouting in ${locationArea}`}
       actions={
         <>
+          {(locations.data?.totalItems ?? 0) > 1 && (
+            <Link to={`/scenes/${scene.id}/compare`} className={linkButton('ghost')}>
+              <Columns3 aria-hidden className="size-4" />
+              Compare
+            </Link>
+          )}
           <Link to={`/scenes/${scene.id}/locations/new`} className={linkButton('ghost')}>
             <Plus aria-hidden className="size-4" />
             Add venue

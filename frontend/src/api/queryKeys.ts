@@ -13,6 +13,7 @@ export const queryKeys = {
   scene: (id: string) => ['scenes', 'detail', id] as const,
   locationList: (sceneId: string) => ['locations', 'list', sceneId] as const,
   locationPage: (sceneId: string, page: number) => ['locations', 'list', sceneId, page] as const,
+  locationTop: (sceneId: string) => ['locations', 'top', sceneId] as const,
   location: (id: string) => ['locations', 'detail', id] as const,
   projectLocationList: (projectId: string) => ['locations', 'project', projectId] as const,
   projectLocationPage: (projectId: string, status: LocationStatus | null, page: number) =>

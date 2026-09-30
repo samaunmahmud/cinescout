@@ -115,6 +115,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Best fit first; venues added by hand (no score) last. */
       list: (sceneId: string, page = 0) =>
         call<Page<Location>>(`/api/scenes/${encodeURIComponent(sceneId)}/locations?${pageQuery(page)}`),
+      /** The scene's best 100 candidates in one go, best fit first, for comparing them side by side. */
+      listTop: (sceneId: string) => call<Page<Location>>(`/api/scenes/${encodeURIComponent(sceneId)}/locations?page=0&size=100`),
       /** Across the project's scenes, in script order and best fit first within a scene; `status` null means all. */
       listForProject: (projectId: string, status: LocationStatus | null, page = 0) =>
         call<Page<ProjectLocation>>(
