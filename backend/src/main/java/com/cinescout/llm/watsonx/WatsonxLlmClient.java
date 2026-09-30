@@ -130,6 +130,9 @@ public class WatsonxLlmClient implements LlmClient {
                 .switchIfEmpty(Mono.error(() -> new LlmException(Kind.UNAVAILABLE, SERVICE + " returned an empty response")));
     }
 
+    /** The error code watsonx.ai sends, with HTTP 403, when the account's token quota is spent. */
+    private static final String QUOTA_REACHED = "token_quota_reached";
+
     private Mono<Throwable> toException(ClientResponse response) {
         int status = response.statusCode().value();
         return response.bodyToMono(String.class)
@@ -138,6 +141,10 @@ public class WatsonxLlmClient implements LlmClient {
                     if (status == 401) {
                         // The cached token may have been revoked; make the next call fetch a fresh one.
                         tokens.invalidate();
+                    }
+                    if (status == 403 && raw.contains(QUOTA_REACHED)) {
+                        // Not a rejected credential: the plan's token allowance is spent (the free plan's is monthly).
+                        return new LlmException(Kind.QUOTA_EXHAUSTED, SERVICE + "'s token quota is used up");
                     }
                     LlmException error = LlmException.forStatus(SERVICE, status, null);
                     if (error.kind() == Kind.INVALID_REQUEST) {

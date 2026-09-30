@@ -65,7 +65,10 @@ final class ScoutingPrompts {
             access (stairs, lifts, loading), noise curfews, power, parking, capacity. An empty array if none. \
             Never invent warnings.
             - venueName: the venue's own name, e.g. "Wythe Hotel" for a page titled "Wythe Hotel | Rooftop \
-            Bar in Williamsburg - Official Site". Null if the result is not about one specific venue.
+            Bar in Williamsburg - Official Site". For a listing on a booking site, the name of the space as \
+            the listing titles it (e.g. "Sunny Loft with Roof Deck"): never the host, manager or company \
+            offering it, and never the booking site's own name. Null if the result is not about one \
+            specific venue.
             - address: the venue's street address, only if the excerpt states it (e.g. "80 Wythe Ave, \
             Brooklyn, NY 11249"). Null otherwise: never guess or complete an address.
             - listedVenues: only when singleVenue is false: the proper names of up to 5 venues the \

@@ -121,6 +121,14 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             case RATE_LIMITED -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The AI service is busy; try again shortly", true);
             case UNAVAILABLE -> upstream(HttpStatus.SERVICE_UNAVAILABLE, "The AI service is unavailable; try again shortly", true);
             case INVALID_OUTPUT -> upstream(HttpStatus.BAD_GATEWAY, "The AI service returned an unusable answer; try again", true);
+            case QUOTA_EXHAUSTED -> {
+                // No Retry-After: it renews with the provider's billing period, not in seconds.
+                ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                        "The AI service's usage allowance is used up; it works again when the allowance renews");
+                problem.setTitle("Service unavailable");
+                problem.setProperty("retryable", false);
+                yield ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+            }
             case AUTHENTICATION, INVALID_REQUEST ->
                     upstream(HttpStatus.BAD_GATEWAY, "The AI service rejected our request; this is a server configuration problem", false);
         };

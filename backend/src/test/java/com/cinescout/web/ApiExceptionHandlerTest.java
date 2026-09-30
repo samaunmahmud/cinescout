@@ -64,6 +64,16 @@ class ApiExceptionHandlerTest {
         }
     }
 
+    @Test
+    void aSpentQuotaIsUnavailableWithoutAPromiseThatWaitingHelps() {
+        ResponseEntity<ProblemDetail> response = handler.llm(new LlmException(LlmException.Kind.QUOTA_EXHAUSTED, SECRET));
+
+        assertProblem(response, HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER)).isNull();
+        assertThat(response.getBody().getProperties()).containsEntry("retryable", false);
+        assertThat(response.getBody().getDetail()).contains("allowance is used up");
+    }
+
     // --- search ------------------------------------------------------------------------------------
 
     @Test

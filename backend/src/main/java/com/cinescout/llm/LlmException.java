@@ -12,6 +12,11 @@ public class LlmException extends RuntimeException {
     public enum Kind {
         /** Credentials or project access rejected. Retrying cannot help; configuration must change. */
         AUTHENTICATION(false),
+        /**
+         * The account's usage allowance (a monthly token quota, say) is used up. Unlike a rate limit, waiting a
+         * moment does not help: nothing works until the allowance renews or the plan changes.
+         */
+        QUOTA_EXHAUSTED(false),
         /** Vendor rate limit hit. Retry with back-off. */
         RATE_LIMITED(true),
         /** Timeout, connection failure or 5xx. Retry with back-off; feeds the circuit breaker. */

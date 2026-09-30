@@ -304,6 +304,16 @@ class WatsonxLlmClientTest {
     }
 
     @Test
+    void aSpentTokenQuotaIsToldApartFromARejectedCredential() {
+        stubChat(403, "{\"errors\":[{\"code\":\"token_quota_reached\",\"message\":\"Request of 1 token(s) from quota was rejected\"}],\"status_code\":403}");
+
+        LlmException error = failureOf(this::assess);
+
+        assertThat(error.kind()).isEqualTo(Kind.QUOTA_EXHAUSTED);
+        assertThat(error.isRetryable()).isFalse();
+    }
+
+    @Test
     void throttlingIsRetryable() {
         stubChat(429, "{}");
 
