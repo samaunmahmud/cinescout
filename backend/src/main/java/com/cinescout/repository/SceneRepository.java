@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -61,4 +62,14 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
             select s.id from Scene s where s.project.id = :projectId and s.parseStatus = :status
             order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""")
     List<UUID> findIdsByProjectAndParseStatus(@Param("projectId") UUID projectId, @Param("status") ParseStatus status, Pageable pageable);
+
+    /** How many scenes each of the given projects has; projects without scenes are left out. */
+    @Query("select s.project.id as projectId, count(s) as total from Scene s where s.project.id in :projectIds group by s.project.id")
+    List<ProjectCount> countByProjects(@Param("projectIds") Collection<UUID> projectIds);
+
+    interface ProjectCount {
+        UUID getProjectId();
+
+        long getTotal();
+    }
 }

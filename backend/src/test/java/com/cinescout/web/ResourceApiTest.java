@@ -99,6 +99,30 @@ class ResourceApiTest extends ApiTest {
     }
 
     @Test
+    void aProjectSaysHowManyScenesItHasAndHowManyHaveAConfirmedLocation() {
+        Account ada = register("Ada");
+        String busy = project(ada, "Busy");
+        String empty = project(ada, "Empty");
+        String one = scene(ada, busy, 1, "one");
+        String two = scene(ada, busy, 2, "two");
+        scene(ada, busy, 3, "three");
+        setStatus(ada, location(ada, one, "A", null), "CONFIRMED");
+        setStatus(ada, location(ada, one, "B", null), "CONFIRMED");
+        setStatus(ada, location(ada, two, "C", null), "SHORTLISTED");
+
+        JsonNode listed = json(ada.client().get().uri("/api/projects").exchange().expectStatus().isOk()).path("items");
+        assertThat(listed.get(0).path("id").asText()).isEqualTo(empty);
+        assertThat(listed.get(0).path("sceneCount").asLong()).isZero();
+        assertThat(listed.get(0).path("confirmedSceneCount").asLong()).isZero();
+        assertThat(listed.get(1).path("sceneCount").asLong()).isEqualTo(3);
+        assertThat(listed.get(1).path("confirmedSceneCount").asLong()).isEqualTo(1);
+        ada.client().get().uri("/api/projects/" + busy).exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.sceneCount").isEqualTo(3).jsonPath("$.confirmedSceneCount").isEqualTo(1);
+        ada.client().put().uri("/api/projects/" + busy).bodyValue(Map.of("title", "Busy", "status", "ACTIVE")).exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.sceneCount").isEqualTo(3);
+    }
+
+    @Test
     void listsComeAPageAtATimeWithTheTotals() {
         Account ada = register("Ada");
         String first = project(ada, "First");

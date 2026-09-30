@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -78,6 +79,13 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
 
         long getLocations();
     }
+
+    /** How many scenes of each of the given projects have a location in {@code status}; projects with none are left out. */
+    @Query("""
+            select l.scene.project.id as projectId, count(distinct l.scene.id) as total from Location l
+            where l.scene.project.id in :projectIds and l.status = :status group by l.scene.project.id""")
+    List<SceneRepository.ProjectCount> countScenesByProjectsAndStatus(@Param("projectIds") Collection<UUID> projectIds,
+                                                                      @Param("status") LocationStatus status);
 
     interface StatusCount {
         LocationStatus getStatus();

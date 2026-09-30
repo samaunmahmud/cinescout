@@ -23,7 +23,7 @@ class DtoJsonTest {
     @Test
     void timestampsAreWrittenAsIsoStrings() throws Exception {
         ProjectResponse response = new ProjectResponse(UUID.randomUUID(), "Neon Nights", null, null,
-                ProjectStatus.ACTIVE, Instant.parse("2026-09-20T10:00:00Z"), Instant.parse("2026-09-20T11:00:00Z"));
+                ProjectStatus.ACTIVE, 0, 0, Instant.parse("2026-09-20T10:00:00Z"), Instant.parse("2026-09-20T11:00:00Z"));
 
         assertThat(json.writeValueAsString(response)).contains("\"createdAt\":\"2026-09-20T10:00:00Z\"");
     }

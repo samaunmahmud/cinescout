@@ -44,6 +44,9 @@ export interface Project {
   description: string | null
   locationArea: string | null
   status: ProjectStatus
+  sceneCount: number
+  /** Scenes with a confirmed location. */
+  confirmedSceneCount: number
   createdAt: string
   updatedAt: string
 }

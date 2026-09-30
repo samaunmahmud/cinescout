@@ -130,6 +130,7 @@ export function ProjectsPage() {
                       <MapPin aria-hidden className="size-3.5 text-amber-300" />
                       {project.locationArea ?? 'No location area set'}
                     </p>
+                    <PosterProgress project={project} />
                   </div>
                 </Link>
               </li>
@@ -138,6 +139,29 @@ export function ProjectsPage() {
           <Pager data={projects.data} onChange={setPage} label="Project pages" />
         </>
       )}
+    </div>
+  )
+}
+
+/** The foot of a poster: how many scenes, and how many of them have their location locked. */
+function PosterProgress({ project }: { project: Project }) {
+  const { sceneCount, confirmedSceneCount } = project
+  if (sceneCount === 0) return <p className="billing text-[10px] text-stone-400">No scenes yet</p>
+  return (
+    <div className="space-y-1.5">
+      <div
+        role="progressbar"
+        aria-label="Scenes with a confirmed location"
+        aria-valuemin={0}
+        aria-valuemax={sceneCount}
+        aria-valuenow={confirmedSceneCount}
+        className="h-1 overflow-hidden rounded-full bg-white/15"
+      >
+        <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-200" style={{ width: `${(confirmedSceneCount / sceneCount) * 100}%` }} />
+      </div>
+      <p className="billing text-[10px] text-stone-300">
+        {sceneCount === 1 ? '1 scene' : `${sceneCount} scenes`} · {confirmedSceneCount} locked
+      </p>
     </div>
   )
 }

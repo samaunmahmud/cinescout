@@ -25,6 +25,8 @@ export function project(overrides: Partial<Project> = {}): Project {
     description: 'A thriller set in a hospital.',
     locationArea: 'Brooklyn, New York',
     status: 'ACTIVE',
+    sceneCount: 12,
+    confirmedSceneCount: 3,
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
     ...overrides,

@@ -152,6 +152,24 @@ describe('projects', () => {
     expect(screen.queryByText('Night Shift')).not.toBeInTheDocument()
   })
 
+  it('shows on each poster how many scenes have their location locked', async () => {
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () =>
+        json(pageOf([project(), project({ id: 'p2', title: 'Paper Moons', sceneCount: 0, confirmedSceneCount: 0 }), project({ id: 'p3', title: 'Solo', sceneCount: 1, confirmedSceneCount: 1 })])),
+    })
+    renderApp('/projects')
+    await logIn()
+
+    const night = await screen.findByRole('link', { name: /Night Shift/ })
+    expect(night).toHaveTextContent('12 scenes · 3 locked')
+    expect(within(night).getByRole('progressbar', { name: 'Scenes with a confirmed location' })).toHaveAttribute('aria-valuenow', '3')
+    const empty = screen.getByRole('link', { name: /Paper Moons/ })
+    expect(empty).toHaveTextContent('No scenes yet')
+    expect(within(empty).queryByRole('progressbar')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Solo/ })).toHaveTextContent('1 scene · 1 locked')
+  })
+
   it('creates a project, sending blank optional fields as null, and opens it', async () => {
     const created = project({ id: 'p9', title: 'New Film', description: null, locationArea: null })
     const { requests } = fakeServer({
