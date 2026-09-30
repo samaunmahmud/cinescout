@@ -170,6 +170,23 @@ describe('projects', () => {
     await waitFor(() => expect(document.title).toBe('Night Shift · CineScout'))
   })
 
+  it('introduces itself to a new user in three acts, with the way in', async () => {
+    fakeServer({ 'GET /api/auth/me': () => json(ada), 'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([])) })
+    renderApp('/projects')
+    const user = await logIn()
+
+    const intro = within(await screen.findByRole('region', { name: 'Your first production' }))
+    expect(intro.getAllByRole('listitem').map((act) => within(act).getByRole('heading').textContent)).toEqual([
+      'Bring the script',
+      'Find the places',
+      'Lock them in',
+    ])
+    await user.click(intro.getByRole('button', { name: 'Create your first project' }))
+
+    expect(screen.getByRole('heading', { name: 'New project' })).toBeInTheDocument()
+    expect(intro.queryByRole('button', { name: 'Create your first project' })).not.toBeInTheDocument()
+  })
+
   it('shows on each poster how many scenes have their location locked', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),

@@ -104,7 +104,11 @@ export function ProjectsPage() {
       ) : projects.isError ? (
         <ErrorAlert error={projects.error} onRetry={() => projects.refetch()} />
       ) : projects.data.items.length === 0 ? (
-        <EmptyState icon={Film}>{status === 'ACTIVE' ? 'No projects yet. Create one to start scouting.' : 'No archived projects.'}</EmptyState>
+        status === 'ACTIVE' ? (
+          <FirstReel onStart={() => setCreating(true)} creating={creating} />
+        ) : (
+          <EmptyState icon={Film}>No archived projects.</EmptyState>
+        )
       ) : (
         <>
           {/* One-sheets in a cinema lobby: each production is its own poster. */}
@@ -165,5 +169,42 @@ function PosterProgress({ project }: { project: Project }) {
         {sceneCount === 1 ? '1 scene' : `${sceneCount} scenes`} · {confirmedSceneCount} locked
       </p>
     </div>
+  )
+}
+
+const acts = [
+  { act: 'Act one', title: 'Bring the script', text: 'Create a production, then paste or import its screenplay. It is cut into scenes at the INT. and EXT. headings.' },
+  { act: 'Act two', title: 'Find the places', text: 'The AI reads each scene for the location it needs, then scouts real venues in your area and rates how well each fits.' },
+  { act: 'Act three', title: 'Lock them in', text: 'Compare the shortlist, check the light and the weather, write to the owners, and print the call sheet.' },
+]
+
+/** The empty lobby: what CineScout does, in three acts, and the way in. */
+function FirstReel({ onStart, creating }: { onStart: () => void; creating: boolean }) {
+  return (
+    <section aria-labelledby="first-reel" className="gilt relative overflow-hidden rounded-xl border border-amber-300/15 bg-reel/70 px-6 py-12 text-center sm:px-12">
+      <div aria-hidden className="absolute inset-x-0 -top-32 mx-auto h-72 w-[36rem] max-w-full bg-[radial-gradient(ellipse_at_top,rgb(255_243_196/0.16),transparent_65%)]" />
+      <div className="relative space-y-3">
+        <p className="text-[11px] font-semibold tracking-[0.4em] text-amber-300/80 uppercase">No projects yet</p>
+        <h2 id="first-reel" className="gold-leaf font-display text-5xl leading-none">Your first production</h2>
+        <p className="mx-auto max-w-xl font-serif text-lg text-stone-400 italic">From the page to the perfect location, in three acts.</p>
+      </div>
+      <ol className="relative mt-10 grid gap-6 text-left sm:grid-cols-3">
+        {acts.map(({ act, title, text }) => (
+          <li key={act} className="space-y-2 rounded-lg bg-black/30 p-5 ring-1 ring-amber-300/10">
+            <p className="billing text-[10px] text-amber-300/80">{act}</p>
+            <h3 className="font-display text-2xl leading-none text-stone-50">{title}</h3>
+            <p className="text-sm leading-relaxed text-stone-400">{text}</p>
+          </li>
+        ))}
+      </ol>
+      {!creating && (
+        <div className="relative mt-10">
+          <Button onClick={onStart}>
+            <Plus aria-hidden className="size-4" />
+            Create your first project
+          </Button>
+        </div>
+      )}
+    </section>
   )
 }
