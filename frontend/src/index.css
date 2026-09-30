@@ -33,6 +33,13 @@
   --color-amber-900: #3d2912;
   --color-amber-950: #1f1508;
 
+  /*
+   * The muted greys, lifted so small text in them stays readable on these near-black surfaces (WCAG AA, 4.5:1
+   * on cards): Tailwind's own stone-500 and stone-600 fall to about 3.8:1 and 2.4:1 here.
+   */
+  --color-stone-500: #908983;
+  --color-stone-600: #7a736d;
+
   /* Red velvet: the curtain, the carpet, the rope. */
   --color-velvet-400: #d6455a;
   --color-velvet-500: #b3263d;
