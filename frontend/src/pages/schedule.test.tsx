@@ -114,6 +114,16 @@ describe('the schedule of a project', () => {
     expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1)
   })
 
+  it('shows which of the cast works on which day', async () => {
+    fakeServer({ ...base, 'GET /api/projects/p1/schedule': () => json(schedule) })
+    renderApp('/projects/p1?tab=schedule')
+    await logIn()
+
+    const table = within(await screen.findByRole('table', { name: 'Which of the cast works on which shoot day' }))
+    const mara = within(table.getByRole('row', { name: /^MARA/ }))
+    expect(mara.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['Works', 'Works', '2'])
+  })
+
   it('explains itself for a project without scenes', async () => {
     fakeServer({ ...base, 'GET /api/projects/p1/schedule': () => json({ days: [], unscheduled: [] }) })
     renderApp('/projects/p1?tab=schedule')

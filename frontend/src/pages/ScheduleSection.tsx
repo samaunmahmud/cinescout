@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { CalendarClock, CalendarDays, CalendarOff, MapPin as PinIcon, Printer, SunMedium, TriangleAlert } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarOff, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { ScheduledScene } from '../api/types'
+import type { Schedule, ScheduledScene } from '../api/types'
+import { dayOutOfDays } from '../lib/dayOutOfDays'
 import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
@@ -81,6 +82,7 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
           {schedule.data.unscheduled.length > 0 && (
             <Day titleId="day-unscheduled" title="Not scheduled yet" scenes={schedule.data.unscheduled} dated={false} projectId={projectId} />
           )}
+          <CastDays schedule={schedule.data} />
         </div>
       )}
     </Section>
@@ -116,6 +118,64 @@ function Day({
       </ul>
     </section>
   )
+}
+
+/** Day out of days: who of the cast works on which shoot day, for planning their calls. */
+function CastDays({ schedule }: { schedule: Schedule }) {
+  const report = dayOutOfDays(schedule)
+  if (report.cast.length === 0 || report.days.length === 0) return null
+  return (
+    <section aria-labelledby="cast-days" className="space-y-3">
+      <h3 id="cast-days" className="flex items-center gap-2 font-display text-2xl leading-none text-stone-50">
+        <Users aria-hidden className="size-5 text-amber-300" />
+        Day out of days
+      </h3>
+      <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-reel/70">
+        <table className="w-full border-collapse text-sm">
+          <caption className="sr-only">Which of the cast works on which shoot day</caption>
+          <thead>
+            <tr className="border-b border-white/[0.07] text-left text-[11px] tracking-wider text-stone-500 uppercase">
+              <th scope="col" className="px-4 py-2 font-semibold">Cast</th>
+              {report.days.map((day) => (
+                <th key={day} scope="col" className="px-3 py-2 text-center font-semibold">
+                  {shortDay(day)}
+                </th>
+              ))}
+              <th scope="col" className="px-4 py-2 text-right font-semibold">Days</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.05]">
+            {report.cast.map(({ name, days }) => (
+              <tr key={name}>
+                <th scope="row" className="px-4 py-2 text-left font-semibold text-stone-100">
+                  {name}
+                </th>
+                {report.days.map((day) => (
+                  <td key={day} className="px-3 py-2 text-center">
+                    {days.has(day) ? (
+                      <span className="inline-flex size-6 items-center justify-center rounded bg-amber-300/15 text-xs font-bold text-amber-200 ring-1 ring-amber-300/30">
+                        W<span className="sr-only">orks</span>
+                      </span>
+                    ) : (
+                      <span className="text-stone-600">·</span>
+                    )}
+                  </td>
+                ))}
+                <td className="px-4 py-2 text-right text-stone-300">{days.size}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+const shortDayFormat = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+
+/** "Mon 12 Oct", for a column heading. */
+function shortDay(isoDate: string): string {
+  return shortDayFormat.format(new Date(`${isoDate}T00:00:00Z`))
 }
 
 /**
