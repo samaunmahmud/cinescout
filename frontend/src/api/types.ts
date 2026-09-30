@@ -122,6 +122,8 @@ export interface ScheduledScene {
   /** Null until the scene has been analysed. */
   settingType: string | null
   timeOfDay: string | null
+  /** The speaking parts, from the script. */
+  characters: string[]
   /** The scene's confirmed locations; empty while none is confirmed. */
   venues: ScheduledVenue[]
   /** How many candidate locations the scene has in all. */
@@ -176,6 +178,8 @@ export interface Scene {
   parseStatus: ParseStatus
   /** Null until the scene has been parsed. */
   requirements: SceneRequirements | null
+  /** The speaking parts, read from the script's format, in the order they first speak. */
+  characters: string[]
   parsedAt: string | null
   createdAt: string
   updatedAt: string

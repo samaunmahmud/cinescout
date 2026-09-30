@@ -368,6 +368,20 @@ class ResourceApiTest extends ApiTest {
     }
 
     @Test
+    void aScenesSpeakingPartsAreReadFromItsScript() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon");
+        JsonNode scene = json(ada.client().post().uri("/api/projects/" + project + "/scenes")
+                .bodyValue(Map.of("title", "Diner", "sourceText", "INT. DINER - NIGHT\n\nMARA\nYou're late.\n\nJONES (O.S.)\nTraffic.\n",
+                        "shootDateStart", "2026-10-12"))
+                .exchange().expectStatus().isCreated());
+
+        assertThat(scene.path("characters").toString()).isEqualTo("[\"MARA\",\"JONES\"]");
+        JsonNode schedule = json(ada.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isOk());
+        assertThat(schedule.path("days").get(0).path("scenes").get(0).path("characters").toString()).isEqualTo("[\"MARA\",\"JONES\"]");
+    }
+
+    @Test
     void deletingASceneReturns204() {
         Account ada = register("Ada");
         String scene = scene(ada, project(ada, "Neon Nights"), 1, "text");

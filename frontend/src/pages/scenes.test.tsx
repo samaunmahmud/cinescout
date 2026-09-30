@@ -221,14 +221,15 @@ describe('a scene', () => {
     })
   }
 
-  it('shows its script and shoot window', async () => {
-    serverFor(scene({ shootDateStart: '2026-10-12', shootDateEnd: '2026-10-14' }))
+  it('shows its script, shoot window and speaking parts', async () => {
+    serverFor(scene({ shootDateStart: '2026-10-12', shootDateEnd: '2026-10-14', characters: ['MARA', 'JONES'] }))
     renderApp('/scenes/s1')
     await logIn()
 
     expect(await screen.findByRole('heading', { name: 'Scene 12: INT. DINER - NIGHT' })).toBeInTheDocument()
     expect(screen.getByText(/Rain on the windows/)).toBeInTheDocument()
     expect(screen.getByText(/12.*2026 – .*14.*2026/)).toBeInTheDocument()
+    expect(screen.getByText('MARA, JONES')).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Night Shift' })).toHaveAttribute('href', '/projects/p1')
   })
 

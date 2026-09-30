@@ -162,6 +162,7 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
           <p className="flex flex-wrap gap-x-3 text-sm text-stone-400">
             {scene.settingType && <span className="text-stone-300">{scene.settingType}</span>}
             {scene.timeOfDay && <span>{scene.timeOfDay}</span>}
+            {scene.characters.length > 0 && <span className="text-stone-300">{scene.characters.join(', ')}</span>}
             {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
               <span>until {formatDate(scene.shootDateEnd)}</span>
             )}

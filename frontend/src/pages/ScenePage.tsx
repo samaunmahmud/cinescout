@@ -7,7 +7,7 @@ import type { Scene, SceneRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
-import { CalendarDays, ChevronLeft, Clapperboard, ScrollText } from 'lucide-react'
+import { CalendarDays, ChevronLeft, Clapperboard, ScrollText, Users } from 'lucide-react'
 import { Eyebrow, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
@@ -112,6 +112,15 @@ function SceneDetails({ scene }: { scene: Scene }) {
                 <CalendarDays aria-hidden className="size-4 text-amber-400/80" />
                 {shootWindow ?? 'No shoot dates yet'}
               </p>
+              {scene.characters.length > 0 && (
+                <p className="flex items-start gap-1.5 text-stone-400">
+                  <Users aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-400/80" />
+                  <span>
+                    <span className="sr-only">Speaking parts: </span>
+                    {scene.characters.join(', ')}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

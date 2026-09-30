@@ -2,6 +2,7 @@ package com.cinescout.dto;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.Scene;
+import com.cinescout.script.ScriptCharacters;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
@@ -37,6 +38,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             LocalDate shootDateEnd,
             String settingType,
             String timeOfDay,
+            List<String> characters,
             List<Venue> venues,
             long candidates
     ) {
@@ -52,6 +54,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
                     scene.getShootDateStart(), scene.getShootDateEnd(),
                     requirements == null ? null : requirements.settingType(),
                     requirements == null ? null : requirements.timeOfDay(),
+                    ScriptCharacters.in(scene.getSourceText()),
                     confirmed.stream().map(location -> Venue.from(location, dayOf(scene))).toList(), candidates);
         }
     }

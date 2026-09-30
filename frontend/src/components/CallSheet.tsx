@@ -69,6 +69,7 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
               <td className="px-3 py-2 font-bold">{scene.sceneNumber ?? '—'}</td>
               <td className="px-3 py-2">
                 <span className="font-bold">{scene.title}</span>
+                {scene.characters.length > 0 && <span className="block">Cast: {scene.characters.join(', ')}</span>}
                 {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
                   <span className="block text-stone-600">until {formatDate(scene.shootDateEnd)}</span>
                 )}
