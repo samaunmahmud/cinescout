@@ -30,6 +30,10 @@ public class Project extends BaseEntity {
     @Column(nullable = false)
     private ProjectStatus status = ProjectStatus.ACTIVE;
 
+    /** The token of the project's shared call sheet link; null while it is not shared. */
+    @Column(name = "call_sheet_token")
+    private String callSheetToken;
+
     protected Project() {
     }
 
@@ -44,8 +48,10 @@ public class Project extends BaseEntity {
     public String getDescription() { return description; }
     public String getLocationArea() { return locationArea; }
     public ProjectStatus getStatus() { return status; }
+    public String getCallSheetToken() { return callSheetToken; }
 
     public void setTitle(String title) { this.title = title; }
+    public void setCallSheetToken(String callSheetToken) { this.callSheetToken = callSheetToken; }
     public void setDescription(String description) { this.description = description; }
 
     /** Blank means "not set": it is stored as null, which the database constraint requires. */

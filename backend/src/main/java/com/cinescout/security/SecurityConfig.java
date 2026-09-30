@@ -97,6 +97,8 @@ class SecurityConfig {
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
                         // Up or down, nothing more (show-details: never): for the container health check.
                         .pathMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                        // Shared call sheets: the token in the path is the permission.
+                        .pathMatchers(HttpMethod.GET, "/api/public/call-sheets/*").permitAll()
                         .anyExchange().authenticated())
                 .build();
     }

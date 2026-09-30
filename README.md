@@ -224,6 +224,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `PUT /locations/{id}/contact`, `POST /locations/{id}/image`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics`, `POST /projects/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /projects/{id}/scenes/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
+| Call sheet sharing | `GET`/`POST`/`DELETE /projects/{id}/call-sheet-link`, `GET /public/call-sheets/{token}` (no login) |
 | Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET /projects/{id}/outreach-drafts[?status=]`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
 The lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,

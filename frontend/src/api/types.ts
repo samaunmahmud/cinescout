@@ -468,3 +468,11 @@ export interface LocationVideos {
   fetchedAt: string
   videos: Video[]
 }
+
+/** A call sheet as the crew sees it through a shared link. */
+export interface PublicCallSheet {
+  projectTitle: string
+  locationArea: string | null
+  preparedBy: string
+  schedule: Schedule
+}

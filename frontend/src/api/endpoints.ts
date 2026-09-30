@@ -19,6 +19,7 @@ import type {
   ProjectOutreach,
   ProjectProgress,
   ProjectStatus,
+  PublicCallSheet,
   RegisterRequest,
   Scene,
   Schedule,
@@ -37,6 +38,11 @@ import type {
 export const PAGE_SIZE = 24
 
 const pageQuery = (page: number) => `page=${page}&size=${PAGE_SIZE}`
+
+/** What needs no login: a shared call sheet, whose token is the permission. */
+export const publicApi = {
+  callSheet: (token: string) => request<PublicCallSheet>(`/api/public/call-sheets/${encodeURIComponent(token)}`),
+}
 
 export const authApi = {
   register: (body: RegisterRequest) => request<User>('/api/auth/register', { method: 'POST', body }),
@@ -83,6 +89,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       progress: (id: string) => call<ProjectProgress>(`/api/projects/${encodeURIComponent(id)}/progress`),
       /** Works out the logistics of the confirmed venues that have none, up to ten a call; the answer says how many are left. */
       refreshLogistics: (id: string) => call<BatchLogisticsResult>(`/api/projects/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
+      /** The call sheet's shared link; 404 while it is not shared. */
+      callSheetLink: (id: string) => call<{ token: string }>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`),
+      /** A new shared link, replacing any earlier one. */
+      shareCallSheet: (id: string) => call<{ token: string }>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`, { method: 'POST' }),
+      stopSharingCallSheet: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`, { method: 'DELETE' }),
       /** The scenes by the day their shoot starts, each with its confirmed locations. */
       schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
     },
