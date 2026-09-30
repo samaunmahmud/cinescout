@@ -14,12 +14,15 @@ export function useStoreLocation() {
   }
 }
 
-/** Saves the user's workflow fields (a full replacement: pass both). */
-export function useUpdateLocation(location: Location) {
+/** Saves the user's workflow fields (a full replacement: pass both). `onSaved` runs after the caches are updated. */
+export function useUpdateLocation(location: Pick<Location, 'id'>, onSaved?: (updated: Location) => void) {
   const { api } = useSession()
   const store = useStoreLocation()
   return useMutation({
     mutationFn: (body: UpdateLocationRequest) => api.locations.update(location.id, body),
-    onSuccess: store,
+    onSuccess: (updated) => {
+      store(updated)
+      onSaved?.(updated)
+    },
   })
 }

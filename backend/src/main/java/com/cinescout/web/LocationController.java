@@ -1,9 +1,11 @@
 package com.cinescout.web;
 
+import com.cinescout.domain.LocationStatus;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
+import com.cinescout.dto.ProjectLocationResponse;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -47,6 +50,17 @@ class LocationController {
     Mono<PageResponse<LocationResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                               @Valid @ParameterObject PageQuery page) {
         return locations.list(user.id(), sceneId, page);
+    }
+
+    /** The shortlist view: every scene's candidates in one list, optionally only those in one status. */
+    @Operation(summary = "List a project's candidate locations across all its scenes",
+            description = "Scene by scene in script order, best fit first within a scene; `status` narrows the list (e.g. SHORTLISTED). "
+                    + "Each row names its scene; the page excerpt, warnings and logistics are on the location itself.")
+    @GetMapping("/projects/{projectId}/locations")
+    Mono<PageResponse<ProjectLocationResponse>> listForProject(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                                               @RequestParam(required = false) LocationStatus status,
+                                                               @Valid @ParameterObject PageQuery page) {
+        return locations.listForProject(user.id(), projectId, status, page);
     }
 
     /** Adds a venue the user found themselves. Venues found by scouting are saved by the scout endpoint. */

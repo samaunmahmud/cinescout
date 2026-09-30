@@ -1,6 +1,17 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Location, LocationVideos, LogisticsReport, OutreachDraft, Page, Project, Scene, User } from '../api/types'
+import type {
+  Location,
+  LocationVideos,
+  LogisticsReport,
+  OutreachDraft,
+  Page,
+  Project,
+  ProjectLocation,
+  ProjectProgress,
+  Scene,
+  User,
+} from '../api/types'
 
 export const ada: User = { id: 'u1', email: 'ada@example.com', displayName: 'Ada', role: 'USER', createdAt: '2026-09-01T10:00:00Z' }
 export const PASSWORD = 'a-long-password'
@@ -58,6 +69,40 @@ export function location(overrides: Partial<Location> = {}): Location {
     notes: null,
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+/** A row of the project-wide list: the diner, for scene 12. */
+export function projectLocation(overrides: Partial<ProjectLocation> = {}): ProjectLocation {
+  return {
+    id: 'l1',
+    sceneId: 's1',
+    sceneNumber: 12,
+    sceneTitle: 'INT. DINER - NIGHT',
+    name: 'Tom’s Diner',
+    address: '782 Washington Ave, Brooklyn, NY',
+    latitude: null,
+    longitude: null,
+    sourceUrl: 'https://www.toms-diner.example/',
+    fitScore: 82,
+    fitReason: 'Neon sign and red booths match the mood.',
+    bookingFriction: 'COMMERCIAL',
+    status: 'SUGGESTED',
+    notes: null,
+    createdAt: '2026-09-01T10:00:00Z',
+    updatedAt: '2026-09-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+export function projectProgress(overrides: Partial<ProjectProgress> = {}): ProjectProgress {
+  return {
+    scenes: 12,
+    scenesWithLocations: 7,
+    scenesConfirmed: 3,
+    locations: 3,
+    locationsByStatus: { SUGGESTED: 2, SHORTLISTED: 1, REJECTED: 0, CONTACTED: 0, CONFIRMED: 0 },
     ...overrides,
   }
 }

@@ -3,13 +3,16 @@ import type { Location } from '../../api/types'
 import { fitBand } from '../../lib/fit'
 import type { MapPin, PinTone } from './types'
 
-function toneOf(location: Location): PinTone {
+/** What a pin shows of a venue; a row of a project-wide list has it too. */
+export type PinnedVenue = Pick<Location, 'id' | 'name' | 'address' | 'latitude' | 'longitude' | 'fitScore' | 'status'>
+
+function toneOf(location: PinnedVenue): PinTone {
   if (location.status === 'REJECTED') return 'muted'
   return location.fitScore == null ? 'neutral' : fitBand(location.fitScore)
 }
 
 /** A venue as a map pin, or null while it has no coordinates. */
-export function locationPin(location: Location, { withLink = true } = {}): MapPin | null {
+export function locationPin(location: PinnedVenue, { withLink = true } = {}): MapPin | null {
   if (location.latitude == null || location.longitude == null) return null
   const fit = location.fitScore == null ? 'added by hand' : `fit ${location.fitScore}`
   return {

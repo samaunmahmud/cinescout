@@ -1,15 +1,18 @@
 package com.cinescout.service;
 
 import com.cinescout.domain.Location;
+import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
+import com.cinescout.dto.ProjectLocationResponse;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -29,11 +32,13 @@ public class LocationService {
 
     private final LocationRepository locations;
     private final SceneRepository scenes;
+    private final ProjectRepository projects;
     private final BlockingTransactions db;
 
-    public LocationService(LocationRepository locations, SceneRepository scenes, BlockingTransactions db) {
+    public LocationService(LocationRepository locations, SceneRepository scenes, ProjectRepository projects, BlockingTransactions db) {
         this.locations = locations;
         this.scenes = scenes;
+        this.projects = projects;
         this.db = db;
     }
 
@@ -42,6 +47,20 @@ public class LocationService {
         return db.call(() -> {
             scenes.findOwned(sceneId, ownerId).orElseThrow(() -> new NotFoundException("Scene", sceneId));
             return PageResponse.from(locations.findOwnedByScene(sceneId, ownerId, page.pageable()), LocationResponse::from);
+        });
+    }
+
+    /**
+     * Every candidate location of a project: scene by scene in script order, best fit first within a scene.
+     * {@code status} null means all.
+     */
+    public Mono<PageResponse<ProjectLocationResponse>> listForProject(UUID ownerId, UUID projectId, LocationStatus status, PageQuery page) {
+        return db.call(() -> {
+            projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            return PageResponse.from(status == null
+                    ? locations.findOwnedByProject(projectId, ownerId, page.pageable())
+                    : locations.findOwnedByProjectAndStatus(projectId, ownerId, status, page.pageable()),
+                    ProjectLocationResponse::from);
         });
     }
 

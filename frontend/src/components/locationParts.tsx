@@ -1,21 +1,20 @@
 import { useId } from 'react'
 import type { BookingFriction, Location, LocationStatus } from '../api/types'
 import { fitBand, frictionLabel, type FitBand } from '../lib/fit'
+import { statusLabels } from '../lib/status'
 import type { useUpdateLocation } from './locationHooks'
 import { Badge } from './ui'
-
-const statusLabels: Record<LocationStatus, string> = {
-  SUGGESTED: 'Suggested',
-  SHORTLISTED: 'Shortlisted',
-  REJECTED: 'Rejected',
-  CONTACTED: 'Contacted',
-  CONFIRMED: 'Confirmed',
-}
 
 const frictionTones: Record<BookingFriction, 'green' | 'amber' | 'red'> = { PUBLIC: 'green', COMMERCIAL: 'amber', PRIVATE: 'red' }
 
 /** A status dropdown that saves on change, keeping the notes as they are. */
-export function StatusSelect({ location, update }: { location: Location; update: ReturnType<typeof useUpdateLocation> }) {
+export function StatusSelect({
+  location,
+  update,
+}: {
+  location: Pick<Location, 'name' | 'status' | 'notes'>
+  update: ReturnType<typeof useUpdateLocation>
+}) {
   const id = useId()
   return (
     <>
@@ -78,7 +77,7 @@ export function FitScore({ score, size = 'md' }: { score: number; size?: 'md' | 
 }
 
 /** The booking friction, or "Added by hand" for a venue the AI has not assessed. */
-export function LocationBadges({ location }: { location: Location }) {
+export function LocationBadges({ location }: { location: Pick<Location, 'bookingFriction' | 'fitScore'> }) {
   return (
     <>
       {location.bookingFriction && <Badge tone={frictionTones[location.bookingFriction]}>{frictionLabel(location.bookingFriction)}</Badge>}

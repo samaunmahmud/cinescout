@@ -78,9 +78,9 @@ class ResourceServicesTest {
     void setUp() {
         setup = new TransactionTemplate(transactionManager);
         BlockingTransactions db = new BlockingTransactions(setup);
-        projectService = new ProjectService(projects, users, db);
+        projectService = new ProjectService(projects, users, scenes, locations, db);
         sceneService = new SceneService(scenes, projects, db);
-        locationService = new LocationService(locations, scenes, db);
+        locationService = new LocationService(locations, scenes, projects, db);
         ada = newUser("Ada");
         grace = newUser("Grace");
     }
@@ -360,7 +360,7 @@ class ResourceServicesTest {
             }
         });
 
-        new ProjectService(projects, users, db).list(ada, null, PageQuery.first()).block();
+        new ProjectService(projects, users, scenes, locations, db).list(ada, null, PageQuery.first()).block();
 
         assertThat(threads).hasSize(1).allSatisfy(name -> assertThat(name).startsWith("boundedElastic"));
     }

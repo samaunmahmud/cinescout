@@ -212,14 +212,14 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Area | Routes |
 |---|---|
 | Accounts | `POST /auth/register` (public), `GET /auth/me` |
-| Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}` |
+| Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress` |
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
-| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates` |
+| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
 | Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
-The four lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,
+The lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,
 default `0`) and `?size=` (default `50`, at most `100`). The answer is
 `{ "items": [...], "page", "size", "totalItems", "totalPages" }`, each list in its own fixed order.
 
@@ -227,6 +227,11 @@ default `0`) and `?size=` (default `50`, at most `100`). The answer is
 `generate` call paid services and can take many seconds; they answer `503` when the server has no
 AI keys (`generate` needs only the watsonx.ai key), and `429` past the user's [rate limit](#rate-limits). Listing, editing and deleting drafts always works.
 The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
+
+`GET /projects/{id}/locations` is the project-wide view of the candidates: every scene's locations in one list,
+scene by scene in script order, each row naming its scene; `?status=SHORTLISTED` (or any other status) narrows
+it. `GET /projects/{id}/progress` counts the scenes, the ones with candidates and with a confirmed location,
+and the locations by status.
 
 `POST /projects/{id}/scenes/import` takes a whole screenplay as plain text (`{ "script": "..." }`, up to 500,000
 characters) and adds one scene per scene heading, the lines starting with `INT.` or `EXT.` (Fountain's forced
@@ -256,3 +261,4 @@ comes back with that section marked `UNAVAILABLE`.
 8. Web app: accounts, projects, scenes, scouting, locations with logistics and maps, outreach - done
 9. Session logins for the web app, Docker Compose deployment - done
 10. Script import: a pasted screenplay is cut into scenes at its headings - done
+11. Project-wide locations: every scene's candidates in one list and map, by status, with progress counts - done

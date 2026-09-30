@@ -31,4 +31,6 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
     /** The scene numbers in use in a project; each can be used once (uq_scenes_project_number). */
     @Query("select s.sceneNumber from Scene s where s.project.id = :projectId and s.sceneNumber is not null")
     Set<Integer> findSceneNumbersByProjectId(@Param("projectId") UUID projectId);
+
+    long countByProjectId(UUID projectId);
 }

@@ -303,6 +303,96 @@ class ResourceApiTest extends ApiTest {
         grace.client().get().uri("/api/scenes/" + graceScene).exchange().expectStatus().isOk();
     }
 
+    // --- a project's locations across its scenes -----------------------------------------------
+
+    private void setStatus(Account owner, String locationId, String status) {
+        owner.client().put().uri("/api/locations/" + locationId).bodyValue(Map.of("status", status)).exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void aProjectsLocationsComeSceneBySceneBestFitFirstEachWithItsScene() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon Nights");
+        String two = scene(ada, project, 2, "two");
+        String one = scene(ada, project, 1, "one");
+        String bar = location(ada, two, "Bar", null);
+        String low = location(ada, one, "Low", null);
+        String high = location(ada, one, "High", null);
+        jdbc.update("UPDATE locations SET fit_score = 30, latitude = 40.7, longitude = -73.9 WHERE id = ?::uuid", low);
+        jdbc.update("UPDATE locations SET fit_score = 95, logistics_json = '{}'::jsonb WHERE id = ?::uuid", high);
+        location(ada, scene(ada, project(ada, "Another project"), 1, "elsewhere"), "Elsewhere", null);
+
+        JsonNode page = json(ada.client().get().uri("/api/projects/" + project + "/locations").exchange().expectStatus().isOk());
+
+        assertThat(ids(page)).containsExactly(high, low, bar);
+        assertThat(page.path("totalItems").asLong()).isEqualTo(3);
+        JsonNode first = page.path("items").get(0);
+        assertThat(first.path("sceneId").asText()).isEqualTo(one);
+        assertThat(first.path("sceneNumber").asInt()).isEqualTo(1);
+        assertThat(first.path("sceneTitle").asText()).isEqualTo("Scene 1");
+        assertThat(first.path("fitScore").asInt()).isEqualTo(95);
+        assertThat(first.has("logistics")).isFalse();
+        assertThat(page.path("items").get(1).path("latitude").asDouble()).isEqualTo(40.7);
+
+        JsonNode paged = json(ada.client().get().uri("/api/projects/" + project + "/locations?size=2&page=1").exchange().expectStatus().isOk());
+        assertThat(ids(paged)).containsExactly(bar);
+    }
+
+    @Test
+    void aProjectsLocationsCanBeNarrowedToOneStatus() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon Nights");
+        String scene = scene(ada, project, 1, "one");
+        String kept = location(ada, scene, "Kept", null);
+        location(ada, scene, "Other", null);
+        setStatus(ada, kept, "SHORTLISTED");
+
+        JsonNode shortlisted = json(ada.client().get().uri("/api/projects/" + project + "/locations?status=SHORTLISTED").exchange().expectStatus().isOk());
+        assertThat(ids(shortlisted)).containsExactly(kept);
+        assertThat(shortlisted.path("totalItems").asLong()).isEqualTo(1);
+        assertThat(ids(json(ada.client().get().uri("/api/projects/" + project + "/locations?status=CONFIRMED").exchange().expectStatus().isOk()))).isEmpty();
+        ada.client().get().uri("/api/projects/" + project + "/locations?status=NOPE").exchange().expectStatus().isBadRequest();
+    }
+
+    @Test
+    void progressCountsScenesAndLocationsByStatus() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon Nights");
+        String one = scene(ada, project, 1, "one");
+        String two = scene(ada, project, 2, "two");
+        scene(ada, project, 3, "three");
+        setStatus(ada, location(ada, one, "A", null), "CONFIRMED");
+        setStatus(ada, location(ada, one, "B", null), "CONFIRMED");
+        setStatus(ada, location(ada, one, "C", null), "REJECTED");
+        location(ada, two, "D", null);
+        setStatus(ada, location(ada, scene(ada, project(ada, "Another project"), 1, "elsewhere"), "Elsewhere", null), "CONFIRMED");
+
+        JsonNode progress = json(ada.client().get().uri("/api/projects/" + project + "/progress").exchange().expectStatus().isOk());
+
+        assertThat(progress.path("scenes").asLong()).isEqualTo(3);
+        assertThat(progress.path("scenesWithLocations").asLong()).isEqualTo(2);
+        assertThat(progress.path("scenesConfirmed").asLong()).isEqualTo(1);
+        assertThat(progress.path("locations").asLong()).isEqualTo(4);
+        assertThat(progress.path("locationsByStatus").toString())
+                .isEqualTo("{\"SUGGESTED\":1,\"SHORTLISTED\":0,\"REJECTED\":1,\"CONTACTED\":0,\"CONFIRMED\":2}");
+
+        JsonNode empty = json(ada.client().get().uri("/api/projects/" + project(ada, "Empty") + "/progress").exchange().expectStatus().isOk());
+        assertThat(empty.path("scenes").asLong()).isZero();
+        assertThat(empty.path("locationsByStatus").path("CONFIRMED").asLong()).isZero();
+    }
+
+    @Test
+    void anotherUsersProjectLocationsAndProgressAreA404() {
+        Account ada = register("Ada");
+        Account grace = register("Grace");
+        String graceProject = project(grace, "Grace's");
+        location(grace, scene(grace, graceProject, 1, "scene"), "Venue", null);
+
+        ada.client().get().uri("/api/projects/" + graceProject + "/locations").exchange().expectStatus().isNotFound();
+        ada.client().get().uri("/api/projects/" + graceProject + "/progress").exchange().expectStatus().isNotFound();
+        grace.client().get().uri("/api/projects/" + graceProject + "/locations").exchange().expectStatus().isOk();
+    }
+
     // --- script import ---------------------------------------------------------------------------
 
     private static final String SCRIPT = """

@@ -4,6 +4,7 @@ import com.cinescout.domain.ProjectStatus;
 import com.cinescout.dto.CreateProjectRequest;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
+import com.cinescout.dto.ProjectProgressResponse;
 import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.security.AuthenticatedUser;
@@ -71,6 +72,14 @@ class ProjectController {
     Mono<ProjectResponse> update(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
                                  @Valid @RequestBody UpdateProjectRequest request) {
         return projects.update(user.id(), projectId, request);
+    }
+
+    /** A number for each stage of the project's scouting, for a progress display. */
+    @Operation(summary = "Get a project's scouting progress",
+            description = "How many scenes the project has, how many have candidate locations and a confirmed one, and the candidate locations by status.")
+    @GetMapping("/{projectId}/progress")
+    Mono<ProjectProgressResponse> progress(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
+        return projects.progress(user.id(), projectId);
     }
 
     /** Deletes the project with all its scenes, locations and drafts. */

@@ -5,11 +5,14 @@ import type {
   GenerateOutreachRequest,
   LoginRequest,
   Location,
+  LocationStatus,
   LocationVideos,
   LogisticsReport,
   OutreachDraft,
   Page,
   Project,
+  ProjectLocation,
+  ProjectProgress,
   ProjectStatus,
   RegisterRequest,
   Scene,
@@ -60,6 +63,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       update: (id: string, body: UpdateProjectRequest) =>
         call<Project>(`/api/projects/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** Counts of the project's scenes and candidate locations, by how far each has come. */
+      progress: (id: string) => call<ProjectProgress>(`/api/projects/${encodeURIComponent(id)}/progress`),
     },
     scenes: {
       /** In script order. */
@@ -88,6 +93,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Best fit first; venues added by hand (no score) last. */
       list: (sceneId: string, page = 0) =>
         call<Page<Location>>(`/api/scenes/${encodeURIComponent(sceneId)}/locations?${pageQuery(page)}`),
+      /** Across the project's scenes, in script order and best fit first within a scene; `status` null means all. */
+      listForProject: (projectId: string, status: LocationStatus | null, page = 0) =>
+        call<Page<ProjectLocation>>(
+          `/api/projects/${encodeURIComponent(projectId)}/locations?${status ? `status=${status}&` : ''}${pageQuery(page)}`,
+        ),
       get: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}`),
       /** Adds a venue by hand; 409 when the same source URL is already saved for the scene. */
       create: (sceneId: string, body: CreateLocationRequest) =>

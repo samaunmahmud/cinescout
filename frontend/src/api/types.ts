@@ -153,6 +153,37 @@ export interface UpdateLocationRequest {
 }
 
 /** A venue the user found themselves. Coordinates are given together or not at all. */
+/** A candidate location as a row of a project-wide list: the essentials, and the scene it is for. */
+export interface ProjectLocation {
+  id: string
+  sceneId: string
+  sceneNumber: number | null
+  sceneTitle: string
+  name: string
+  address: string | null
+  latitude: number | null
+  longitude: number | null
+  sourceUrl: string | null
+  fitScore: number | null
+  fitReason: string | null
+  bookingFriction: BookingFriction | null
+  status: LocationStatus
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** How far a project's scouting has come. */
+export interface ProjectProgress {
+  scenes: number
+  /** Scenes with at least one candidate location. */
+  scenesWithLocations: number
+  /** Scenes with a confirmed location. */
+  scenesConfirmed: number
+  locations: number
+  locationsByStatus: Record<LocationStatus, number>
+}
+
 export interface CreateLocationRequest {
   name: string
   address: string | null

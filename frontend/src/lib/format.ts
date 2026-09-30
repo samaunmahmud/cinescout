@@ -1,4 +1,4 @@
-import type { ScoutingResult } from '../api/types'
+import type { ProjectProgress, ScoutingResult } from '../api/types'
 
 // Shoot dates are plain calendar dates (yyyy-mm-dd) with no time zone, so they are formatted in UTC:
 // formatting them in the viewer's zone could show the day before.
@@ -37,4 +37,11 @@ export function scoutingSummary({ added, alreadySaved, unassessed, notVenues, un
     parts.push(`Left out ${plural(unsuitable, 'venue', 'venues')} that could not work for this scene, such as ones in another area.`)
   }
   return parts.join(' ')
+}
+
+/** "3 of 12 scenes have a confirmed location. 7 have candidates." */
+export function progressSummary({ scenes, scenesConfirmed, scenesWithLocations }: ProjectProgress): string {
+  if (scenes === 0) return 'This project has no scenes yet.'
+  const confirmed = `${scenesConfirmed} of ${plural(scenes, 'scene', 'scenes')} ${scenesConfirmed === 1 ? 'has' : 'have'} a confirmed location.`
+  return `${confirmed} ${scenesWithLocations} ${scenesWithLocations === 1 ? 'has' : 'have'} candidates.`
 }

@@ -1,18 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
 import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
-import { ChevronLeft, Clapperboard, MapPin } from 'lucide-react'
-import { Eyebrow } from '../components/surfaces'
+import { ChevronLeft, Clapperboard, Film, MapPin, MapPinned } from 'lucide-react'
+import { Eyebrow, Tabs, type TabItem } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterGradient } from '../lib/poster'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { NotFoundPage } from './NotFoundPage'
+import { ProjectLocationsSection } from './ProjectLocationsSection'
 import { ScenesSection } from './ScenesSection'
 
 export function ProjectPage() {
@@ -28,8 +29,19 @@ export function ProjectPage() {
   return <ProjectDetails project={project.data} />
 }
 
+type TabKey = 'scenes' | 'locations'
+
+const tabs: TabItem<TabKey>[] = [
+  { key: 'scenes', label: 'Scenes', icon: Film },
+  { key: 'locations', label: 'Locations', icon: MapPinned },
+]
+
 function ProjectDetails({ project }: { project: Project }) {
   const { api } = useSession()
+  const [params, setParams] = useSearchParams()
+  const tab: TabKey = params.get('tab') === 'locations' ? 'locations' : 'scenes'
+  // Each tab has its own list, so the page number and filter of the other do not carry over.
+  const selectTab = (key: TabKey) => setParams(key === 'scenes' ? {} : { tab: key })
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
@@ -140,7 +152,11 @@ function ProjectDetails({ project }: { project: Project }) {
         </ConfirmDelete>
       )}
 
-      {!editing && <ScenesSection projectId={project.id} />}
+      {!editing && (
+        <Tabs label="Project sections" items={tabs} selected={tab} onSelect={selectTab}>
+          {tab === 'scenes' ? <ScenesSection projectId={project.id} /> : <ProjectLocationsSection projectId={project.id} />}
+        </Tabs>
+      )}
     </div>
   )
 }

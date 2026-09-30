@@ -1,18 +1,24 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Project;
 import com.cinescout.domain.ProjectStatus;
 import com.cinescout.dto.CreateProjectRequest;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
+import com.cinescout.dto.ProjectProgressResponse;
 import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.persistence.BlockingTransactions;
+import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
+import com.cinescout.repository.SceneRepository;
 import com.cinescout.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.UUID;
 
 /** A user's projects. Every operation is scoped to {@code ownerId}; entities never leave this class. */
@@ -21,11 +27,16 @@ public class ProjectService {
 
     private final ProjectRepository projects;
     private final UserRepository users;
+    private final SceneRepository scenes;
+    private final LocationRepository locations;
     private final BlockingTransactions db;
 
-    public ProjectService(ProjectRepository projects, UserRepository users, BlockingTransactions db) {
+    public ProjectService(ProjectRepository projects, UserRepository users, SceneRepository scenes, LocationRepository locations,
+                          BlockingTransactions db) {
         this.projects = projects;
         this.users = users;
+        this.scenes = scenes;
+        this.locations = locations;
         this.db = db;
     }
 
@@ -58,6 +69,26 @@ public class ProjectService {
             project.setLocationArea(request.locationArea());
             project.setStatus(request.status());
             return ProjectResponse.from(projects.saveAndFlush(project));
+        });
+    }
+
+    /** How far the project's scouting has come: its scenes, and its candidate locations by status. */
+    public Mono<ProjectProgressResponse> progress(UUID ownerId, UUID projectId) {
+        return db.call(() -> {
+            owned(ownerId, projectId);
+            Map<LocationStatus, Long> byStatus = new EnumMap<>(LocationStatus.class);
+            for (LocationStatus status : LocationStatus.values()) {
+                byStatus.put(status, 0L);
+            }
+            long confirmedScenes = 0;
+            for (LocationRepository.StatusCount count : locations.countByStatus(projectId)) {
+                byStatus.put(count.getStatus(), count.getLocations());
+                if (count.getStatus() == LocationStatus.CONFIRMED) {
+                    confirmedScenes = count.getScenes();
+                }
+            }
+            return new ProjectProgressResponse(scenes.countByProjectId(projectId), locations.countScenesWithLocations(projectId),
+                    confirmedScenes, byStatus.values().stream().mapToLong(Long::longValue).sum(), byStatus);
         });
     }
 
