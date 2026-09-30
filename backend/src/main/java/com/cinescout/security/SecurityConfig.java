@@ -69,8 +69,8 @@ class SecurityConfig {
     /** Runs before Spring Security's filters, so the address is known to the password check. */
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    ClientAddress clientAddress() {
-        return new ClientAddress();
+    ClientAddress clientAddress(SecurityProperties props) {
+        return new ClientAddress(props.clientAddressHeader());
     }
 
     @Bean
@@ -99,6 +99,11 @@ class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         // Shared call sheets: the token in the path is the permission.
                         .pathMatchers(HttpMethod.GET, "/api/public/call-sheets/*").permitAll()
+                        .pathMatchers("/api/**", "/actuator/**").authenticated()
+                        // The web app's own files and pages, when the backend serves them (see WebAppConfig):
+                        // nothing in them is private; everything the app shows comes from the API above.
+                        .pathMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.svg", "/{page}", "/{page}/**").permitAll()
+                        .pathMatchers(HttpMethod.HEAD, "/", "/index.html", "/assets/**", "/favicon.svg", "/{page}", "/{page}/**").permitAll()
                         .anyExchange().authenticated())
                 .build();
     }

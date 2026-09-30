@@ -1,0 +1,39 @@
+# Render Blueprint: CineScout as one free web service (the backend serving the web app, see
+# deploy/render/Dockerfile) with its database elsewhere (DB_URL), e.g. a free Neon Postgres, as Render keeps
+# only one free database per account. Secrets are entered in the dashboard (sync: false), never here.
+services:
+  - type: web
+    name: cinescout
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: DB_URL          # jdbc:postgresql://<host>/<database>?sslmode=require
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Render's edge sets this header itself, so a client cannot pick the address its limits are kept under.
+      - key: CINESCOUT_SECURITY_CLIENTADDRESSHEADER
+        value: CF-Connecting-IP
+      - key: CINESCOUT_SECURITY_COOKIESECURE
+        value: "true"
+      - key: CINESCOUT_SECURITY_REGISTRATIONOPEN
+        value: "true"
+      - key: WATSONX_API_KEY
+        sync: false
+      - key: WATSONX_PROJECT_ID
+        sync: false
+      - key: WATSONX_MODEL_ID
+        sync: false
+      - key: WATSONX_URL
+        sync: false
+      - key: PARALLEL_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false

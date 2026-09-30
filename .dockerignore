@@ -1,0 +1,9 @@
+# For builds from the repository root (deploy/render/Dockerfile): only the sources go in.
+.git
+.github
+docs
+**/node_modules
+**/target
+**/dist
+**/*.log
+.env

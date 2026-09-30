@@ -1,5 +1,5 @@
 # Builds and tests the backend and the web app on every push to main and every pull request,
-# and checks that both deployment images still build. The live smoke tests stay skipped: they
+# and checks that the deployment images still build. The live smoke tests stay skipped: they
 # run only when their *_LIVE_TEST variable is set, and CI holds no API keys.
 name: CI
 
@@ -68,3 +68,4 @@ jobs:
       - uses: actions/checkout@v7
       - run: docker build --tag cinescout-backend:ci backend
       - run: docker build --tag cinescout-frontend:ci frontend
+      - run: docker build --file deploy/render/Dockerfile --tag cinescout-single:ci .

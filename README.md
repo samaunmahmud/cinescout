@@ -187,6 +187,14 @@ once your accounts exist, put your own contact in `OSM_USER_AGENT`, and consider
 maps (see `.env.example`). Remove the `/v3/api-docs` and `/swagger-ui` blocks from `frontend/nginx.conf` to
 keep the API docs private.
 
+### On Render (one free service)
+
+`deploy/render/Dockerfile` builds a single container in which the backend serves the web app itself, with the
+same page headers nginx would set, sized for a 512 MB instance; `render.yaml` describes it as a Render
+Blueprint. The database is separate (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`), for example a free Neon
+Postgres, since Render keeps one free database per account. On the free plan the service sleeps after 15
+minutes without visitors and takes about a minute to wake.
+
 ## Authentication
 
 Every endpoint needs a login except registering, logging in and out. There are two ways to log in, both
