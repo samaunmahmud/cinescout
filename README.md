@@ -14,7 +14,23 @@ outreach to venue owners.
 
 The schedule prints as a [call sheet](docs/screenshots/callsheet.jpg). The screenshots show made-up productions.
 
-> Work in progress. The backend is being built one step at a time; see [Status](#status).
+## What it does
+
+**Act one: bring the script.** Create a production and paste or import its screenplay; it is cut into scenes
+at the INT./EXT. headings, with the speaking parts read from the script's format. The AI (IBM watsonx.ai)
+reads each scene for the location it needs: the kind of place, the mood and light, the time of day, how
+quiet it must be, how many people will be on set.
+
+**Act two: find the places.** Scouting searches the web (Parallel) for real venues in the production's area,
+has the AI rate how well each fits and who would have to say yes, drops directory pages and duplicates, and
+puts the venues on a map with a picture from their own web page. For each venue it works out the shoot
+days' golden and blue hours, the weather, the noise risk and the nearest services.
+
+**Act three: lock them in.** Shortlist and compare venues side by side, keep each one's contact and quote,
+have the AI draft the email to the owner, and track who has answered. The schedule lays the shoot out by
+day, with a day-out-of-days report for the cast and a call sheet (light, weather and contacts included)
+that prints on one page and can be shared with the crew by a link that needs no account.
+
 
 ## Stack
 
@@ -266,7 +282,7 @@ parking, food, toilets...). A venue without coordinates is geocoded first (`409`
 set them with `PUT /locations/{id}/coordinates`). If the weather or map service is down, the report still
 comes back with that section marked `UNAVAILABLE`.
 
-## Status
+## Build history
 
 1. Schema and design - done
 2. Domain models and DTOs - done
