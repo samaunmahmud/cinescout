@@ -18,7 +18,7 @@ erDiagram
 | Table | Purpose | Key columns |
 |---|---|---|
 | `users` | Accounts (Spring Security principal) | `email` (unique, case-insensitive), `password_hash`, `role` |
-| `projects` | A film / production | `owner_id`, `title`, `location_area`, `status` |
+| `projects` | A film / production | `owner_id`, `title`, `location_area`, `status`, `call_sheet_token` (shared link, nullable) |
 | `scenes` | Scene text + LLM-extracted requirements | `source_text`, `setting_type`, `visual_mood`, `lighting_needs`, `time_of_day`, `acoustic_sensitivity`, `estimated_crew_size`, `shoot_date_start/end`, `requirements_json` |
 | `locations` | A candidate venue for one scene | `latitude/longitude`, `source_url`, `booking_friction`, `fit_score`, `footprint_warnings`, `logistics_json`, `status`, `contact_name/email/phone`, `quote`, `image_url` |
 | `outreach_drafts` | Emails to venue owners | `location_id`, `created_by`, `subject`, `body`, `tone`, `status` |
@@ -86,3 +86,12 @@ erDiagram
 - **TEXT + CHECK instead of native enums**, so adding a status is an ordinary
   migration.
 - **`updated_at` is maintained by a trigger**, not by application code.
+- **Sharing is a capability link, not an account.** A project's call sheet can be read by anyone holding its
+  token (`projects.call_sheet_token`, 256 random bits); there is one per project, a new one replaces it, and
+  clearing it stops sharing. The public endpoint returns the schedule and the production's name and nothing
+  else of the project.
+- **Venue pictures are fetched by the server, carefully.** A venue's `image_url` is the `og:image` of its web
+  page, read once (`image_checked_at`). Because a user can type a venue's address in, the fetch only goes to
+  public hosts, does not follow redirects, reads at most a megabyte and times out; the browser then loads the
+  picture straight from its host, without a referrer.
+
