@@ -393,6 +393,42 @@ class ResourceApiTest extends ApiTest {
         grace.client().get().uri("/api/projects/" + graceProject + "/locations").exchange().expectStatus().isOk();
     }
 
+    @Test
+    void aProjectsLocationsDownloadAsASpreadsheetSafeToOpen() {
+        Account ada = register("Ada");
+        String project = json(ada.client().post().uri("/api/projects").bodyValue(Map.of("title", "Café Noir: Part 2"))
+                .exchange().expectStatus().isCreated()).path("id").asText();
+        String scene = scene(ada, project, 7, "scene");
+        String diner = location(ada, scene, "Tom's \"Famous\" Diner, Brooklyn", "https://diner.example/");
+        String trap = location(ada, scene, "=HYPERLINK(\"http://evil.example\")", null);
+        jdbc.update("""
+                UPDATE locations SET fit_score = 82, booking_friction = 'COMMERCIAL', address = '782 Washington Ave', latitude = 40.674470,
+                    longitude = -73.963316, fit_reason = 'Neon and booths', friction_note = 'Ask the owner',
+                    footprint_warnings = '["No parking", "Subway noise"]'::jsonb WHERE id = ?::uuid""", diner);
+        ada.client().put().uri("/api/locations/" + diner).bodyValue(Map.of("status", "SHORTLISTED", "notes", "Call Tom\nafter 5")).exchange().expectStatus().isOk();
+
+        String csv = ada.client().get().uri("/api/projects/" + project + "/locations/export").exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType("text/csv;charset=UTF-8")
+                .expectHeader().valueEquals("Content-Disposition", "attachment; filename=\"cafe-noir-part-2-locations.csv\"")
+                .expectBody(String.class).returnResult().getResponseBody();
+
+        assertThat(csv.split("\r\n")).containsExactly(
+                "\uFEFFScene number,Scene,Venue,Status,Fit score,Booking,Address,Latitude,Longitude,Web page,Why it fits,Booking note,Warnings,Notes",
+                "7,Scene 7,\"Tom's \"\"Famous\"\" Diner, Brooklyn\",Shortlisted,82,Commercial,782 Washington Ave,40.674470,-73.963316,"
+                        + "https://diner.example/,Neon and booths,Ask the owner,No parking; Subway noise,\"Call Tom\nafter 5\"",
+                "7,Scene 7,\"'=HYPERLINK(\"\"http://evil.example\"\")\",Suggested,,,,,,,,,,");
+
+        String shortlisted = ada.client().get().uri("/api/projects/" + project + "/locations/export?status=SHORTLISTED").exchange()
+                .expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody();
+        assertThat(shortlisted.split("\r\n")).hasSize(2);
+        assertThat(shortlisted).doesNotContain("HYPERLINK");
+        assertThat(trap).isNotBlank();
+
+        register("Grace").client().get().uri("/api/projects/" + project + "/locations/export").exchange().expectStatus().isNotFound();
+        web.get().uri("/api/projects/" + project + "/locations/export").exchange().expectStatus().isUnauthorized();
+    }
+
     // --- script import ---------------------------------------------------------------------------
 
     private static final String SCRIPT = """

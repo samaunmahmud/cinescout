@@ -2,6 +2,7 @@ package com.cinescout.service;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
+import com.cinescout.domain.Project;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
@@ -10,11 +11,13 @@ import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectLocationResponse;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
+import com.cinescout.export.LocationExport;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -61,6 +64,16 @@ public class LocationService {
                     ? locations.findOwnedByProject(projectId, ownerId, page.pageable())
                     : locations.findOwnedByProjectAndStatus(projectId, ownerId, status, page.pageable()),
                     ProjectLocationResponse::from);
+        });
+    }
+
+    /** The same list as {@link #listForProject}, all of it, as a spreadsheet. */
+    public Mono<LocationExport> exportForProject(UUID ownerId, UUID projectId, LocationStatus status) {
+        return db.call(() -> {
+            Project project = projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            return LocationExport.of(project, (status == null
+                    ? locations.findOwnedByProject(projectId, ownerId, Pageable.unpaged())
+                    : locations.findOwnedByProjectAndStatus(projectId, ownerId, status, Pageable.unpaged())).getContent());
         });
     }
 

@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { MapPin as PinIcon, MapPinned } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Download, MapPin as PinIcon, MapPinned } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Location, LocationStatus, Page, ProjectLocation, ProjectProgress } from '../api/types'
@@ -12,7 +12,8 @@ import { VenueMap } from '../components/map/VenueMap'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { EmptyState, Section } from '../components/surfaces'
-import { ErrorAlert, Spinner } from '../components/ui'
+import { Button, ErrorAlert, Spinner } from '../components/ui'
+import { saveFile } from '../lib/saveFile'
 import { progressSummary, sceneLabel } from '../lib/format'
 import { isLocationStatus, locationStatuses, statusLabels } from '../lib/status'
 
@@ -42,6 +43,11 @@ export function ProjectLocationsSection({ projectId }: { projectId: string }) {
   })
   useStayInRange(locations.data, setPage)
 
+  const exportCsv = useMutation({
+    mutationFn: () => api.locations.exportForProject(projectId, status),
+    onSuccess: (file) => saveFile(file.blob, file.filename ?? 'locations.csv'),
+  })
+
   const selectStatus = (next: LocationStatus | null) =>
     setParams((current) => {
       const updated = new URLSearchParams(current)
@@ -67,7 +73,16 @@ export function ProjectLocationsSection({ projectId }: { projectId: string }) {
       eyebrow="Across every scene"
       icon={MapPinned}
       description={progress.data && progressSummary(progress.data)}
+      actions={
+        (locations.data?.totalItems ?? 0) > 0 && (
+          <Button variant="secondary" busy={exportCsv.isPending} onClick={() => exportCsv.mutate()}>
+            {!exportCsv.isPending && <Download aria-hidden className="size-4" />}
+            {status ? `Export ${statusLabels[status].toLowerCase()} as CSV` : 'Export as CSV'}
+          </Button>
+        )
+      }
     >
+      <ErrorAlert error={exportCsv.error} />
       {progress.data && progress.data.locations > 0 && <StatusFilter progress={progress.data} selected={status} onSelect={selectStatus} />}
 
       {locations.isPending ? (

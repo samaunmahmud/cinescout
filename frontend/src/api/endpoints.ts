@@ -1,4 +1,4 @@
-import { ApiError, request } from './client'
+import { ApiError, download, request } from './client'
 import type {
   CreateLocationRequest,
   CreateProjectRequest,
@@ -45,14 +45,15 @@ export const authApi = {
  * was ended elsewhere, say), so the app can send the user back to the login page.
  */
 export function createApi(onUnauthorized: () => void = () => {}) {
-  const call = async <T>(path: string, options: Parameters<typeof request>[1] = {}) => {
+  const guarded = async <T>(work: () => Promise<T>) => {
     try {
-      return await request<T>(path, options)
+      return await work()
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) onUnauthorized()
       throw e
     }
   }
+  const call = <T>(path: string, options: Parameters<typeof request>[1] = {}) => guarded(() => request<T>(path, options))
 
   return {
     projects: {
@@ -98,6 +99,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<Page<ProjectLocation>>(
           `/api/projects/${encodeURIComponent(projectId)}/locations?${status ? `status=${status}&` : ''}${pageQuery(page)}`,
         ),
+      /** The whole project-wide list (or one status of it) as a CSV file. */
+      exportForProject: (projectId: string, status: LocationStatus | null) =>
+        guarded(() => download(`/api/projects/${encodeURIComponent(projectId)}/locations/export${status ? `?status=${status}` : ''}`, 'text/csv')),
       get: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}`),
       /** Adds a venue by hand; 409 when the same source URL is already saved for the scene. */
       create: (sceneId: string, body: CreateLocationRequest) =>

@@ -11,11 +11,15 @@ import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,12 +35,15 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Locations", description = "Candidate venues for a scene: found by scouting or added by hand.")
 class LocationController {
+
+    private static final MediaType CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
 
     private final LocationService locations;
 
@@ -61,6 +68,22 @@ class LocationController {
                                                                @RequestParam(required = false) LocationStatus status,
                                                                @Valid @ParameterObject PageQuery page) {
         return locations.listForProject(user.id(), projectId, status, page);
+    }
+
+    /** The project-wide list as a file, for people who do not use the app. */
+    @Operation(summary = "Download a project's candidate locations as a spreadsheet",
+            description = "The same list as GET /projects/{projectId}/locations, all of it, as CSV (UTF-8): one venue a row with its scene, "
+                    + "status, fit, booking friction, address, coordinates, web page, warnings and notes. `status` narrows it.")
+    @ApiResponse(responseCode = "200", description = "The CSV file, as an attachment",
+            content = @Content(mediaType = "text/csv", schema = @Schema(type = "string")))
+    @GetMapping(value = "/projects/{projectId}/locations/export", produces = "text/csv")
+    Mono<ResponseEntity<String>> exportForProject(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                                  @RequestParam(required = false) LocationStatus status) {
+        return locations.exportForProject(user.id(), projectId, status)
+                .map(export -> ResponseEntity.ok()
+                        .contentType(CSV)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + export.filename() + "\"")
+                        .body(export.csv()));
     }
 
     /** Adds a venue the user found themselves. Venues found by scouting are saved by the scout endpoint. */

@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, location, logIn, pageOf, project, projectLocation, projectProgress } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
@@ -115,5 +115,44 @@ describe('the locations of a project', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Try again shortly')
     await user.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByRole('article', { name: 'Tom’s Diner' })).toBeInTheDocument()
+  })
+
+  it('download as a spreadsheet, only the chosen status when one is chosen', async () => {
+    const csv = () =>
+      new Response('Venue\r\nCorner Bistro\r\n', {
+        headers: { 'Content-Type': 'text/csv;charset=UTF-8', 'Content-Disposition': 'attachment; filename="night-shift-locations.csv"' },
+      })
+    const { requests } = fakeServer({
+      ...base,
+      'GET /api/projects/p1/locations?status=SHORTLISTED&page=0&size=24': () => json(pageOf([bistro])),
+      'GET /api/projects/p1/locations/export?status=SHORTLISTED': csv,
+    })
+    const saved: { name: string; href: string }[] = []
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:csv'), revokeObjectURL: vi.fn() }))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      saved.push({ name: this.download, href: this.href })
+    })
+    renderApp('/projects/p1?tab=locations&status=SHORTLISTED')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Export shortlisted as CSV' }))
+
+    await vi.waitFor(() => expect(saved).toEqual([{ name: 'night-shift-locations.csv', href: 'blob:csv' }]))
+    expect(requests.find((r) => r.path.includes('/export'))?.headers).toMatchObject({ Accept: 'text/csv, application/problem+json', 'X-Requested-With': 'XMLHttpRequest' })
+    click.mockRestore()
+  })
+
+  it('say why an export failed', async () => {
+    fakeServer({
+      ...base,
+      'GET /api/projects/p1/locations?page=0&size=24': () => json(pageOf([diner])),
+      'GET /api/projects/p1/locations/export': () => problem(500, 'Internal error', 'Something went wrong on our side'),
+    })
+    renderApp('/projects/p1?tab=locations')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Export as CSV' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong on our side')
   })
 })

@@ -33,8 +33,29 @@ export interface RequestOptions {
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await send(path, 'application/json, application/problem+json', options)
+  if (response.status === 204) return undefined as T
+  const text = await response.text()
+  return (text ? JSON.parse(text) : undefined) as T
+}
+
+/** A file the server makes on request (an export, say), with the name it suggests for it. */
+export interface DownloadedFile {
+  blob: Blob
+  /** From the Content-Disposition header; null when the server names none. */
+  filename: string | null
+}
+
+/** Fetches a file as `request` fetches JSON: with the session, and failures as ApiError. */
+export async function download(path: string, accept: string): Promise<DownloadedFile> {
+  const response = await send(path, `${accept}, application/problem+json`)
+  const named = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')
+  return { blob: await response.blob(), filename: named ? named[1] : null }
+}
+
+async function send(path: string, accept: string, options: RequestOptions = {}): Promise<Response> {
   const headers: Record<string, string> = {
-    Accept: 'application/json, application/problem+json',
+    Accept: accept,
     // The session cookie only counts together with this header (the server's CSRF defence), and it tells the
     // server not to send WWW-Authenticate on a 401, which would open the browser's own login dialog.
     'X-Requested-With': 'XMLHttpRequest',
@@ -57,9 +78,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   if (!response.ok) throw await toApiError(response)
-  if (response.status === 204) return undefined as T
-  const text = await response.text()
-  return (text ? JSON.parse(text) : undefined) as T
+  return response
 }
 
 async function toApiError(response: Response): Promise<ApiError> {

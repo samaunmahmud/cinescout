@@ -214,7 +214,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Accounts | `POST /auth/register` (public), `GET /auth/me` |
 | Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress` |
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
-| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]` |
+| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
 | Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
@@ -231,7 +231,8 @@ The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is
 `GET /projects/{id}/locations` is the project-wide view of the candidates: every scene's locations in one list,
 scene by scene in script order, each row naming its scene; `?status=SHORTLISTED` (or any other status) narrows
 it. `GET /projects/{id}/progress` counts the scenes, the ones with candidates and with a confirmed location,
-and the locations by status.
+and the locations by status. `GET /projects/{id}/locations/export` is the same list, all of it, as a CSV file
+(UTF-8, one venue a row) for people who do not use the app; cells a spreadsheet would run as a formula are defused.
 
 `POST /projects/{id}/scenes/import` takes a whole screenplay as plain text (`{ "script": "..." }`, up to 500,000
 characters) and adds one scene per scene heading, the lines starting with `INT.` or `EXT.` (Fountain's forced
