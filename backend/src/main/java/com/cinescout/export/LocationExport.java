@@ -19,7 +19,7 @@ public record LocationExport(String filename, String csv) {
 
     static final List<String> HEADER = List.of("Scene number", "Scene", "Venue", "Status", "Fit score", "Booking",
             "Address", "Latitude", "Longitude", "Web page", "Why it fits", "Booking note", "Warnings", "Notes",
-            "Contact", "Contact email", "Contact phone");
+            "Contact", "Contact email", "Contact phone", "Quote");
 
     private static final int MAX_NAME_LENGTH = 60;
 
@@ -48,7 +48,8 @@ public record LocationExport(String filename, String csv) {
                 location.getNotes(),
                 location.getContactName(),
                 location.getContactEmail(),
-                location.getContactPhone());
+                location.getContactPhone(),
+                location.getQuote());
     }
 
     private static String text(Object value) {

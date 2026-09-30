@@ -127,6 +127,7 @@ public class LocationService {
             location.setContactName(blankToNull(request.name()));
             location.setContactEmail(blankToNull(request.email()));
             location.setContactPhone(blankToNull(request.phone()));
+            location.setQuote(blankToNull(request.quote()));
             return LocationResponse.from(locations.saveAndFlush(location));
         });
     }

@@ -6,7 +6,7 @@ import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, location, logIn, logisticsReport, pageOf, project, scene } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
-const diner = location({ status: 'SHORTLISTED', notes: 'Owner is keen.', logistics: logisticsReport() })
+const diner = location({ status: 'SHORTLISTED', notes: 'Owner is keen.', quote: '$400 a night', logistics: logisticsReport() })
 const bistro = location({ id: 'l2', name: 'Corner Bistro', fitScore: 61, status: 'CONTACTED', footprintWarnings: [], frictionNote: null })
 const pizza = location({ id: 'l3', name: 'Sal’s Pizza', fitScore: 40 })
 const byHand = location({ id: 'l4', name: 'Aunt May’s Kitchen', fitScore: null, fitReason: null, bookingFriction: null, frictionNote: null, footprintWarnings: [], address: null })
@@ -48,6 +48,8 @@ describe('comparing the venues of a scene', () => {
     expect(row('Noise risk')[1]).toHaveTextContent('Work out the venue’s logistics to see this')
     expect(row('First shoot day')[0]).toHaveTextContent(/2026: sun 06:49–18:43Rain, 14–16 °CRain likely/)
     expect(row('Your notes')[0]).toHaveTextContent('Owner is keen.')
+    expect(row('Quote')[0]).toHaveTextContent('$400 a night')
+    expect(row('Quote')[1]).toHaveTextContent('None yet')
     expect(screen.getByRole('link', { name: 'Scene 12: INT. DINER - NIGHT' })).toHaveAttribute('href', '/scenes/s1')
   })
 

@@ -8,6 +8,7 @@ import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
 import {
+  Banknote,
   ChevronLeft,
   Clapperboard,
   Contact as Contact2,
@@ -275,11 +276,16 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
 function Contact({ location }: { location: Location }) {
   const { api } = useSession()
   const store = useStoreLocation()
-  const known = location.contactName != null || location.contactEmail != null || location.contactPhone != null
+  const known = location.contactName != null || location.contactEmail != null || location.contactPhone != null || location.quote != null
   const [editing, setEditing] = useState(false)
-  const [values, setValues] = useState({ name: '', email: '', phone: '' })
+  const [values, setValues] = useState({ name: '', email: '', phone: '', quote: '' })
   const save = useMutation({
-    mutationFn: () => api.locations.updateContact(location.id, { name: blankToNull(values.name), email: blankToNull(values.email), phone: blankToNull(values.phone) }),
+    mutationFn: () => api.locations.updateContact(location.id, {
+        name: blankToNull(values.name),
+        email: blankToNull(values.email),
+        phone: blankToNull(values.phone),
+        quote: blankToNull(values.quote),
+      }),
     onSuccess: (updated) => {
       store(updated)
       setEditing(false)
@@ -292,7 +298,7 @@ function Contact({ location }: { location: Location }) {
   const errors = fieldErrors(save.error)
 
   function edit() {
-    setValues({ name: location.contactName ?? '', email: location.contactEmail ?? '', phone: location.contactPhone ?? '' })
+    setValues({ name: location.contactName ?? '', email: location.contactEmail ?? '', phone: location.contactPhone ?? '', quote: location.quote ?? '' })
     save.reset()
     setEditing(true)
   }
@@ -306,7 +312,7 @@ function Contact({ location }: { location: Location }) {
     <Section
       titleId="contact-heading"
       title="Contact"
-      eyebrow="Who to talk to"
+      eyebrow="Who to talk to, and what they ask"
       icon={Contact2}
       actions={
         !editing && (
@@ -340,6 +346,15 @@ function Contact({ location }: { location: Location }) {
               error={phoneValid ? errors.phone : 'Digits, spaces and + ( ) - . only.'}
             />
           </div>
+          <TextField
+            label="Their quote"
+            maxLength={300}
+            autoComplete="off"
+            value={values.quote}
+            onChange={set('quote')}
+            error={errors.quote}
+            hint="What they ask for the shoot, as they put it: “$425 an hour, four hour minimum”."
+          />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" disabled={save.isPending} onClick={() => setEditing(false)}>
               Cancel
@@ -372,6 +387,13 @@ function Contact({ location }: { location: Location }) {
               '—'
             )}
           </Fact>
+          {location.quote && (
+            <div className="sm:col-span-3 lg:col-span-1 xl:col-span-3">
+              <Fact icon={Banknote} label="Their quote">
+                {location.quote}
+              </Fact>
+            </div>
+          )}
         </dl>
       ) : (
         <p className="text-sm text-stone-400">Nobody yet. Add who to talk to here, and emails to this venue start out addressed to them.</p>

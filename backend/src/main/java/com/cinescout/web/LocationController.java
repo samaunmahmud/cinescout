@@ -122,7 +122,8 @@ class LocationController {
 
     /** Records who to talk to at the venue, so every email to it can start from there. */
     @Operation(summary = "Set a location's contact",
-            description = "Who to talk to at the venue: a name, an email address and a phone number, each optional. A full replacement: an omitted field is cleared.")
+            description = "Who to talk to at the venue (a name, an email address, a phone number) and what they quote for the shoot, each optional. "
+                    + "A full replacement: an omitted field is cleared.")
     @PutMapping("/locations/{locationId}/contact")
     Mono<LocationResponse> updateContact(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                          @Valid @RequestBody UpdateContactRequest request) {

@@ -74,6 +74,7 @@ export function location(overrides: Partial<Location> = {}): Location {
     contactName: null,
     contactEmail: null,
     contactPhone: null,
+    quote: null,
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
     ...overrides,

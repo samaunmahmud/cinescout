@@ -197,6 +197,8 @@ export interface Location {
   contactName: string | null
   contactEmail: string | null
   contactPhone: string | null
+  /** What the venue asks for the shoot, in the user's words. */
+  quote: string | null
   createdAt: string
   updatedAt: string
 }
@@ -206,6 +208,7 @@ export interface UpdateContactRequest {
   name: string | null
   email: string | null
   phone: string | null
+  quote: string | null
 }
 
 /** The user's own workflow fields (PUT, full replacement): a null note clears it. */

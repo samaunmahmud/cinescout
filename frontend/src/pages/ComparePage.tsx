@@ -106,6 +106,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
           <Muted>None found</Muted>
         ),
     },
+    { label: 'Quote', cell: (venue) => venue.quote ?? <Muted>None yet</Muted> },
     { label: 'Address', cell: (venue) => venue.address ?? <Muted>Not known</Muted> },
     { label: 'Noise risk', cell: (venue) => <Noise venue={venue} /> },
     { label: 'First shoot day', cell: (venue) => <FirstDay venue={venue} /> },

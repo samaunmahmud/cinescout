@@ -98,6 +98,9 @@ public class Location extends BaseEntity {
     @Column(name = "contact_phone")
     private String contactPhone;
 
+    /** What the venue asks for the shoot, as the user noted it. */
+    private String quote;
+
     protected Location() {
     }
 
@@ -148,6 +151,7 @@ public class Location extends BaseEntity {
     public String getContactName() { return contactName; }
     public String getContactEmail() { return contactEmail; }
     public String getContactPhone() { return contactPhone; }
+    public String getQuote() { return quote; }
 
     public void setName(String name) { this.name = name; }
     public void setAddress(String address) { this.address = address; }
@@ -166,4 +170,5 @@ public class Location extends BaseEntity {
     public void setContactName(String contactName) { this.contactName = contactName; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
     public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+    public void setQuote(String quote) { this.quote = quote; }
 }

@@ -479,7 +479,8 @@ class ResourceApiTest extends ApiTest {
         ada.client().put().uri("/api/locations/" + diner).bodyValue(Map.of("status", "SHORTLISTED", "notes", "Call Tom\nafter 5")).exchange().expectStatus().isOk();
 
         ada.client().put().uri("/api/locations/" + diner + "/contact")
-                .bodyValue(Map.of("name", "Tom Miller", "email", "tom@diner.example", "phone", "+1 718 555 0100")).exchange().expectStatus().isOk();
+                .bodyValue(Map.of("name", "Tom Miller", "email", "tom@diner.example", "phone", "+1 718 555 0100", "quote", "$400 a night, cash"))
+                .exchange().expectStatus().isOk();
 
         String csv = ada.client().get().uri("/api/projects/" + project + "/locations/export").exchange()
                 .expectStatus().isOk()
@@ -489,10 +490,10 @@ class ResourceApiTest extends ApiTest {
 
         assertThat(csv.split("\r\n")).containsExactly(
                 "\uFEFFScene number,Scene,Venue,Status,Fit score,Booking,Address,Latitude,Longitude,Web page,Why it fits,Booking note,Warnings,Notes,"
-                        + "Contact,Contact email,Contact phone",
+                        + "Contact,Contact email,Contact phone,Quote",
                 "7,Scene 7,\"Tom's \"\"Famous\"\" Diner, Brooklyn\",Shortlisted,82,Commercial,782 Washington Ave,40.674470,-73.963316,"
-                        + "https://diner.example/,Neon and booths,Ask the owner,No parking; Subway noise,\"Call Tom\nafter 5\",Tom Miller,tom@diner.example,'+1 718 555 0100",
-                "7,Scene 7,\"'=HYPERLINK(\"\"http://evil.example\"\")\",Suggested,,,,,,,,,,,,,");
+                        + "https://diner.example/,Neon and booths,Ask the owner,No parking; Subway noise,\"Call Tom\nafter 5\",Tom Miller,tom@diner.example,'+1 718 555 0100,\"$400 a night, cash\"",
+                "7,Scene 7,\"'=HYPERLINK(\"\"http://evil.example\"\")\",Suggested,,,,,,,,,,,,,,");
 
         String shortlisted = ada.client().get().uri("/api/projects/" + project + "/locations/export?status=SHORTLISTED").exchange()
                 .expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody();
@@ -798,12 +799,13 @@ class ResourceApiTest extends ApiTest {
         String location = location(ada, scene(ada, project(ada, "Neon Nights"), 1, "text"), "Tom's Diner", null);
 
         ada.client().put().uri("/api/locations/" + location + "/contact")
-                .bodyValue(Map.of("name", " Tom Miller ", "email", "tom@diner.example", "phone", "+1 (718) 555-0100 x2"))
+                .bodyValue(Map.of("name", " Tom Miller ", "email", "tom@diner.example", "phone", "+1 (718) 555-0100 x2", "quote", " $425 an hour "))
                 .exchange().expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.contactName").isEqualTo("Tom Miller")
                 .jsonPath("$.contactEmail").isEqualTo("tom@diner.example")
-                .jsonPath("$.contactPhone").isEqualTo("+1 (718) 555-0100 x2");
+                .jsonPath("$.contactPhone").isEqualTo("+1 (718) 555-0100 x2")
+                .jsonPath("$.quote").isEqualTo("$425 an hour");
         setStatus(ada, location, "CONTACTED");
         ada.client().get().uri("/api/locations/" + location).exchange()
                 .expectBody().jsonPath("$.contactName").isEqualTo("Tom Miller").jsonPath("$.status").isEqualTo("CONTACTED");
@@ -811,7 +813,8 @@ class ResourceApiTest extends ApiTest {
         // A full replacement: what is left out is cleared.
         ada.client().put().uri("/api/locations/" + location + "/contact").bodyValue(Map.of("phone", "020 7946 0000"))
                 .exchange().expectStatus().isOk()
-                .expectBody().jsonPath("$.contactName").isEmpty().jsonPath("$.contactEmail").isEmpty().jsonPath("$.contactPhone").isEqualTo("020 7946 0000");
+                .expectBody().jsonPath("$.contactName").isEmpty().jsonPath("$.contactEmail").isEmpty().jsonPath("$.quote").isEmpty()
+                .jsonPath("$.contactPhone").isEqualTo("020 7946 0000");
 
         JsonNode problem = json(ada.client().put().uri("/api/locations/" + location + "/contact")
                 .bodyValue(Map.of("email", "not-an-email", "phone", "call me maybe")).exchange().expectStatus().isBadRequest());

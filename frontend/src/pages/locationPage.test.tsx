@@ -68,8 +68,8 @@ describe('a location', () => {
   it('keeps who to talk to at the venue, saved as a whole with blanks as null', async () => {
     const { requests } = serverFor(location(), {
       'PUT /api/locations/l1/contact': (req) => {
-        const body = req.body as { name: string | null; email: string | null; phone: string | null }
-        return json(location({ contactName: body.name, contactEmail: body.email, contactPhone: body.phone }))
+        const body = req.body as { name: string | null; email: string | null; phone: string | null; quote: string | null }
+        return json(location({ contactName: body.name, contactEmail: body.email, contactPhone: body.phone, quote: body.quote }))
       },
     })
     renderApp('/locations/l1')
@@ -86,12 +86,14 @@ describe('a location', () => {
     expect(contact.getByRole('button', { name: 'Save contact' })).toBeDisabled()
     await user.type(contact.getByLabelText('Contact email'), 'toms-diner.example')
     await user.clear(contact.getByLabelText('Contact phone'))
+    await user.type(contact.getByLabelText('Their quote'), '$425 an hour')
     await user.click(contact.getByRole('button', { name: 'Save contact' }))
 
     expect(await contact.findByRole('link', { name: 'tom@toms-diner.example' })).toHaveAttribute('href', 'mailto:tom@toms-diner.example')
     expect(contact.getByText('Tom Miller')).toBeInTheDocument()
+    expect(contact.getByText('$425 an hour')).toBeInTheDocument()
     expect(contact.getByRole('button', { name: 'Edit contact' })).toBeInTheDocument()
-    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ name: 'Tom Miller', email: 'tom@toms-diner.example', phone: null })
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ name: 'Tom Miller', email: 'tom@toms-diner.example', phone: null, quote: '$425 an hour' })
   })
 
   it('shows a contact with links to write and to call, and starts an email addressed to them', async () => {
