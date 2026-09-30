@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerMapping;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +21,13 @@ class OpenApiTest extends ApiTest {
     @Qualifier("requestMappingHandlerMapping")
     RequestMappingHandlerMapping routes;
 
+    /**
+     * The first request builds the whole description, which takes seconds now that the API has grown, and longer
+     * on a busy machine: more than the client's default five.
+     */
     private JsonNode docs() {
-        return web.get().uri("/v3/api-docs").exchange().expectStatus().isOk()
+        return web.mutate().responseTimeout(Duration.ofSeconds(30)).build()
+                .get().uri("/v3/api-docs").exchange().expectStatus().isOk()
                 .expectBody(JsonNode.class).returnResult().getResponseBody();
     }
 

@@ -49,10 +49,13 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
         }
     }
 
-    public record Venue(UUID id, String name, String address, BigDecimal latitude, BigDecimal longitude) {
+    /** A confirmed location, with who to call there on the day when the user has recorded it. */
+    public record Venue(UUID id, String name, String address, BigDecimal latitude, BigDecimal longitude,
+                        String contactName, String contactPhone) {
 
         static Venue from(Location location) {
-            return new Venue(location.getId(), location.getName(), location.getAddress(), location.getLatitude(), location.getLongitude());
+            return new Venue(location.getId(), location.getName(), location.getAddress(), location.getLatitude(), location.getLongitude(),
+                    location.getContactName(), location.getContactPhone());
         }
     }
 }

@@ -1,35 +1,9 @@
 import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { Schedule, ScheduledScene } from '../api/types'
+import type { Schedule } from '../api/types'
 import { fakeServer, json } from '../test/fakeServer'
-import { ada, logIn, pageOf, project } from '../test/fixtures'
+import { ada, logIn, pageOf, project, schedule, scheduled } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
-
-function scheduled(overrides: Partial<ScheduledScene> = {}): ScheduledScene {
-  return {
-    id: 's1',
-    sceneNumber: 12,
-    title: 'INT. DINER - NIGHT',
-    shootDateStart: '2026-10-12',
-    shootDateEnd: '2026-10-12',
-    settingType: 'Late-night diner',
-    timeOfDay: 'Night',
-    venues: [{ id: 'l1', name: 'Tom’s Diner', address: '782 Washington Ave, Brooklyn, NY', latitude: null, longitude: null }],
-    candidates: 3,
-    ...overrides,
-  }
-}
-
-const schedule: Schedule = {
-  days: [
-    {
-      date: '2026-10-12',
-      scenes: [scheduled(), scheduled({ id: 's2', sceneNumber: 13, title: 'EXT. ROOFTOP - DAWN', shootDateEnd: '2026-10-14', settingType: null, timeOfDay: null, venues: [], candidates: 2 })],
-    },
-    { date: '2026-10-20', scenes: [scheduled({ id: 's3', sceneNumber: null, title: 'Montage', shootDateStart: '2026-10-20', shootDateEnd: null, venues: [], candidates: 0 })] },
-  ],
-  unscheduled: [scheduled({ id: 's4', sceneNumber: 40, title: 'INT. CAR - DAY', shootDateStart: null, shootDateEnd: null, venues: [], candidates: 1 })],
-}
 
 const base = {
   'GET /api/auth/me': () => json(ada),

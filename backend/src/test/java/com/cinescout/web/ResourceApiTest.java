@@ -486,6 +486,8 @@ class ResourceApiTest extends ApiTest {
         location(ada, second, "Runner-up", null);
         setStatus(ada, venue, "CONFIRMED");
         jdbc.update("UPDATE locations SET address = '80 Wythe Ave', latitude = 40.722, longitude = -73.958 WHERE id = ?::uuid", venue);
+        ada.client().put().uri("/api/locations/" + venue + "/contact").bodyValue(Map.of("name", "Dana Reyes", "phone", "718 555 0100"))
+                .exchange().expectStatus().isOk();
         jdbc.update("UPDATE scenes SET parse_status = 'PARSED', setting_type = 'rooftop bar', time_of_day = 'night' WHERE id = ?::uuid", second);
 
         JsonNode schedule = json(ada.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isOk());
@@ -501,6 +503,8 @@ class ResourceApiTest extends ApiTest {
         assertThat(day.get(0).path("venues").get(0).path("id").asText()).isEqualTo(venue);
         assertThat(day.get(0).path("venues").get(0).path("name").asText()).isEqualTo("Wythe Hotel");
         assertThat(day.get(0).path("venues").get(0).path("address").asText()).isEqualTo("80 Wythe Ave");
+        assertThat(day.get(0).path("venues").get(0).path("contactName").asText()).isEqualTo("Dana Reyes");
+        assertThat(day.get(0).path("venues").get(0).path("contactPhone").asText()).isEqualTo("718 555 0100");
         assertThat(day.get(1).path("venues")).isEmpty();
         assertThat(day.get(1).path("candidates").asInt()).isZero();
         assertThat(day.get(1).path("settingType").isNull()).isTrue();

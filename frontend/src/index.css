@@ -125,10 +125,29 @@ body::after {
   }
 }
 
-/* Printing a schedule or a comparison: ink on paper, without the theatre. */
+/*
+ * Printing: only what is marked as a sheet goes to paper, as ink on white, without the theatre around it.
+ * Everything else is hidden rather than removed, so the sheet keeps its own layout.
+ */
 @media print {
-  body { background: #fff; color: #000; }
+  :root { color-scheme: light; }
+  html, body { background: #fff; }
   body::before, body::after { display: none; }
+  body * { visibility: hidden; }
+  .print-sheet, .print-sheet * { visibility: visible; }
+  .print-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .no-print { display: none !important; }
+  .print-sheet tr, .print-sheet section { break-inside: avoid; }
+  @page { margin: 14mm; }
 }
 
 .font-display {

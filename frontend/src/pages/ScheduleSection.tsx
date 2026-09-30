@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, CalendarOff, MapPin as PinIcon, TriangleAlert } from 'lucide-react'
+import { CalendarDays, CalendarOff, MapPin as PinIcon, Printer, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { ScheduledScene } from '../api/types'
 import { useSession } from '../auth/context'
+import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { ErrorAlert, Spinner } from '../components/ui'
 import { formatDate, formatDay, scheduleSummary } from '../lib/format'
@@ -28,6 +29,15 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
       eyebrow="The shoot, day by day"
       icon={CalendarDays}
       description={schedule.data && scheduleSummary(schedule.data)}
+      actions={
+        schedule.data &&
+        schedule.data.days.length > 0 && (
+          <Link to={`/projects/${projectId}/call-sheet`} className={linkButton('secondary')}>
+            <Printer aria-hidden className="size-4" />
+            Call sheet
+          </Link>
+        )
+      }
     >
       {schedule.isPending ? (
         <Spinner label="Loading schedule" />

@@ -3,6 +3,7 @@ import { RequireAuth } from './auth/RequireAuth'
 import { Layout } from './components/Layout'
 import { AccountPage } from './pages/AccountPage'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
+import { CallSheetPage } from './pages/CallSheetPage'
 import { ComparePage } from './pages/ComparePage'
 import { ImportScriptPage } from './pages/ImportScriptPage'
 import { LocationPage } from './pages/LocationPage'
@@ -27,6 +28,7 @@ export const routes: RouteObject[] = [
       { path: '/projects', element: <ProjectsPage /> },
       { path: '/account', element: <AccountPage /> },
       { path: '/projects/:projectId', element: <ProjectPage /> },
+      { path: '/projects/:projectId/call-sheet', element: <CallSheetPage /> },
       { path: '/projects/:projectId/scenes/new', element: <NewScenePage /> },
       { path: '/projects/:projectId/scenes/import', element: <ImportScriptPage /> },
       { path: '/scenes/:sceneId', element: <ScenePage /> },

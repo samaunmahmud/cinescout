@@ -84,6 +84,17 @@ export interface Schedule {
   unscheduled: ScheduledScene[]
 }
 
+export interface ScheduledVenue {
+  id: string
+  name: string
+  address: string | null
+  latitude: number | null
+  longitude: number | null
+  /** Who to call there on the day, when the user has recorded it. */
+  contactName: string | null
+  contactPhone: string | null
+}
+
 export interface ScheduledScene {
   id: string
   sceneNumber: number | null
@@ -94,7 +105,7 @@ export interface ScheduledScene {
   settingType: string | null
   timeOfDay: string | null
   /** The scene's confirmed locations; empty while none is confirmed. */
-  venues: { id: string; name: string; address: string | null; latitude: number | null; longitude: number | null }[]
+  venues: ScheduledVenue[]
   /** How many candidate locations the scene has in all. */
   candidates: number
 }

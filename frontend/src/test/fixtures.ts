@@ -10,6 +10,8 @@ import type {
   ProjectLocation,
   ProjectProgress,
   Scene,
+  Schedule,
+  ScheduledScene,
   User,
 } from '../api/types'
 
@@ -201,6 +203,34 @@ export function draft(overrides: Partial<OutreachDraft> = {}): OutreachDraft {
     updatedAt: '2026-09-20T10:00:00Z',
     ...overrides,
   }
+}
+
+/** One entry of a schedule: the diner scene on 12 October, confirmed at Tom’s Diner. */
+export function scheduled(overrides: Partial<ScheduledScene> = {}): ScheduledScene {
+  return {
+    id: 's1',
+    sceneNumber: 12,
+    title: 'INT. DINER - NIGHT',
+    shootDateStart: '2026-10-12',
+    shootDateEnd: '2026-10-12',
+    settingType: 'Late-night diner',
+    timeOfDay: 'Night',
+    venues: [{ id: 'l1', name: 'Tom’s Diner', address: '782 Washington Ave, Brooklyn, NY', latitude: null, longitude: null, contactName: 'Tom Miller', contactPhone: '+1 718 555 0100' }],
+    candidates: 3,
+    ...overrides,
+  }
+}
+
+/** Two shoot days and one scene still to be dated. */
+export const schedule: Schedule = {
+  days: [
+    {
+      date: '2026-10-12',
+      scenes: [scheduled(), scheduled({ id: 's2', sceneNumber: 13, title: 'EXT. ROOFTOP - DAWN', shootDateEnd: '2026-10-14', settingType: null, timeOfDay: null, venues: [], candidates: 2 })],
+    },
+    { date: '2026-10-20', scenes: [scheduled({ id: 's3', sceneNumber: null, title: 'Montage', shootDateStart: '2026-10-20', shootDateEnd: null, venues: [], candidates: 0 })] },
+  ],
+  unscheduled: [scheduled({ id: 's4', sceneNumber: 40, title: 'INT. CAR - DAY', shootDateStart: null, shootDateEnd: null, venues: [], candidates: 1 })],
 }
 
 /** Fills in and submits the login form that a logged-out visit lands on. */
