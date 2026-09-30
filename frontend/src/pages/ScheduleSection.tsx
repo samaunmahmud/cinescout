@@ -215,6 +215,12 @@ function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
               </Link>
               {venue.address && <span className="block truncate text-stone-400">{venue.address}</span>}
               {dayConditions(venue.day) && <span className="block text-xs text-amber-200/70">{dayConditions(venue.day)}</span>}
+              {venue.day?.warnings.map((warning) => (
+                <span key={warning} className="flex items-start gap-1 text-xs text-amber-300">
+                  <TriangleAlert aria-hidden className="mt-0.5 size-3 shrink-0" />
+                  {warning}
+                </span>
+              ))}
             </span>
           </li>
         ))}

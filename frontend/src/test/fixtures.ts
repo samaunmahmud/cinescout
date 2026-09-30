@@ -223,7 +223,7 @@ export function scheduled(overrides: Partial<ScheduledScene> = {}): ScheduledSce
     shootDateEnd: '2026-10-12',
     settingType: 'Late-night diner',
     timeOfDay: 'Night',
-    venues: [{ id: 'l1', name: 'Tom’s Diner', address: '782 Washington Ave, Brooklyn, NY', latitude: null, longitude: null, contactName: 'Tom Miller', contactPhone: '+1 718 555 0100', day: { sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1 } }],
+    venues: [{ id: 'l1', name: 'Tom’s Diner', address: '782 Washington Ave, Brooklyn, NY', latitude: null, longitude: null, contactName: 'Tom Miller', contactPhone: '+1 718 555 0100', day: { sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1, warnings: ['Strong wind: secure lights and flags'] } }],
     candidates: 3,
     ...overrides,
   }

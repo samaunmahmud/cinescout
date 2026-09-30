@@ -25,7 +25,7 @@ describe('the call sheet', () => {
     expect(sheet.getByText(/Brooklyn, New York · Prepared by Ada/)).toBeInTheDocument()
     const first = within(sheet.getByRole('region', { name: /Monday.*Day 1 of 2/ }))
     const [diner, rooftop] = first.getAllByRole('row').slice(1)
-    expect(diner).toHaveTextContent('12INT. DINER - NIGHTNightTom’s Diner782 Washington Ave, Brooklyn, NYSun 07:04–18:20 · Clear sky, 12–23 °CTom Miller+1 718 555 0100')
+    expect(diner).toHaveTextContent('12INT. DINER - NIGHTNightTom’s Diner782 Washington Ave, Brooklyn, NYSun 07:04–18:20 · Clear sky, 12–23 °C! Strong wind: secure lights and flagsTom Miller+1 718 555 0100')
     expect(rooftop).toHaveTextContent(/13EXT\. ROOFTOP - DAWNuntil .*14.*2026—TBC/)
     expect(within(sheet.getByRole('region', { name: 'To be scheduled' })).getByText('INT. CAR - DAY')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Night Shift' })).toHaveAttribute('href', '/projects/p1?tab=schedule')

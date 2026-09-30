@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,10 +72,11 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
     }
 
     /**
-     * One day at a venue, as a call sheet gives it. Times are the venue's local clock ("07:04"), taken as they
+     * One day at a venue, as a call sheet gives it, with the weather's warnings for the shoot ("Rain likely: plan cover"). Times are the venue's local clock ("07:04"), taken as they
      * stand in the report, which already speaks the venue's time zone.
      */
-    public record DayConditions(String sunrise, String sunset, String weather, Double temperatureMinC, Double temperatureMaxC) {
+    public record DayConditions(String sunrise, String sunset, String weather, Double temperatureMinC, Double temperatureMaxC,
+                                List<String> warnings) {
 
         /** The conditions on {@code date} in a logistics report; null when there is no report, or it does not cover the date. */
         public static DayConditions of(JsonNode report, LocalDate date) {
@@ -87,8 +89,12 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             if (solar == null && weather == null) {
                 return null;
             }
+            List<String> warnings = new ArrayList<>();
+            if (weather != null) {
+                weather.path("warnings").forEach(warning -> warnings.add(warning.asText()));
+            }
             return new DayConditions(clock(solar, "sunrise"), clock(solar, "sunset"), text(weather, "summary"),
-                    number(weather, "temperatureMinC"), number(weather, "temperatureMaxC"));
+                    number(weather, "temperatureMinC"), number(weather, "temperatureMaxC"), List.copyOf(warnings));
         }
 
         private static JsonNode find(JsonNode days, String date) {

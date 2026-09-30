@@ -109,6 +109,8 @@ export interface DayConditions {
   weather: string | null
   temperatureMinC: number | null
   temperatureMaxC: number | null
+  /** What the weather means for the shoot ("Rain likely: plan cover ..."). */
+  warnings: string[]
 }
 
 export interface ScheduledScene {

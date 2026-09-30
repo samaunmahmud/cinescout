@@ -139,6 +139,11 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                       <span className="font-bold">{venue.name}</span>
                       {venue.address && <span className="block">{venue.address}</span>}
                       {dayConditions(venue.day) && <span className="block text-stone-600">{dayConditions(venue.day)}</span>}
+                      {venue.day?.warnings.map((warning) => (
+                        <span key={warning} className="block font-bold">
+                          ! {warning}
+                        </span>
+                      ))}
                     </span>
                   ))
                 )}
