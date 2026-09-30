@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Location, Scene } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, location, logIn, project, scene, pageOf } from '../test/fixtures'
@@ -16,6 +16,29 @@ function serverFor(locations: Location[], extra: Parameters<typeof fakeServer>[0
 }
 
 describe("a scene's locations", () => {
+  it('fill in the pictures of venues never looked up, one at a time, each once', async () => {
+    const fresh = [
+      location({ id: 'l1', imageCheckedAt: null }),
+      location({ id: 'l2', name: 'Corner Bistro', imageCheckedAt: null }),
+      location({ id: 'l3', name: 'Sal’s Pizza', imageCheckedAt: null }),
+      location({ id: 'l4', name: 'By hand', sourceUrl: null, imageCheckedAt: null }),
+    ]
+    const { requests } = serverFor(fresh, {
+      'POST /api/locations/l1/image': () => json({ ...fresh[0], imageUrl: 'https://cdn.example/diner.jpg', imageCheckedAt: '2026-09-30T10:00:00Z' }),
+      'POST /api/locations/l2/image': () => json({ ...fresh[1], imageCheckedAt: '2026-09-30T10:00:00Z' }),
+      'POST /api/locations/l3/image': () => json({ ...fresh[2], imageCheckedAt: '2026-09-30T10:00:00Z' }),
+    })
+    const { container } = renderApp('/scenes/s1')
+    await logIn()
+
+    await vi.waitFor(() => expect(container.querySelector('img[src="https://cdn.example/diner.jpg"]')).not.toBeNull())
+    await vi.waitFor(() => expect(requests.filter((r) => r.path.endsWith('/image')).map((r) => r.path)).toEqual([
+      '/api/locations/l1/image',
+      '/api/locations/l2/image',
+      '/api/locations/l3/image',
+    ]))
+  })
+
   it('show the assessment of each venue in the order the server gives', async () => {
     serverFor([
       location(),

@@ -6,6 +6,7 @@ import type { Location, Page, Scene } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useUpdateLocation } from '../components/locationHooks'
+import { usePictureLookups } from '../components/usePictureLookups'
 import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
 import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
@@ -34,6 +35,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
     placeholderData: previousPageOf<Page<Location>>(queryKeys.locationList(scene.id)),
   })
   useStayInRange(locations.data, setPage)
+  usePictureLookups(locations.data?.items)
 
   const scout = useMutation({
     mutationFn: () => api.scenes.scout(scene.id),
