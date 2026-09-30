@@ -47,7 +47,7 @@ export function VideosSection({ location }: { location: Location }) {
         <Spinner label="Looking for videos" />
       ) : notConfigured ? (
         <EmptyState icon={CirclePlay}>
-          {(videos.error as ApiError).detail ?? 'Videos are not available right now.'} Use “More on YouTube” to search there.
+          {sentence((videos.error as ApiError).detail ?? 'Videos are not available right now')} Use “More on YouTube” to search there.
         </EmptyState>
       ) : videos.isError ? (
         <ErrorAlert error={videos.error} onRetry={() => videos.refetch()} />
@@ -108,4 +108,10 @@ function VideoGrid({ videos }: { videos: Video[] }) {
       ))}
     </ul>
   )
+}
+
+/** The server's message as a sentence of its own, whether or not it came with a full stop. */
+function sentence(text: string): string {
+  const trimmed = text.trim()
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`
 }

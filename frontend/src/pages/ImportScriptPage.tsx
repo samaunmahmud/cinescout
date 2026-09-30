@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileText, ScissorsLineDashed } from 'lucide-react'
+import { ChevronLeft, FileText, ScissorsLineDashed } from 'lucide-react'
 import { useId, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { fieldErrors, isNotFound } from '../api/errors'
@@ -76,9 +76,10 @@ export function ImportScriptPage() {
   return (
     <div className="space-y-6">
       <Link to={`/projects/${projectId}`} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
-        ← {project.data.title}
+        <ChevronLeft aria-hidden className="size-4" />
+        {project.data.title}
       </Link>
-      <section aria-labelledby="import-script" className="mx-auto max-w-3xl space-y-6 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
+      <section aria-labelledby="import-script" className="gilt mx-auto max-w-3xl space-y-6 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
         <div className="space-y-2">
           <h1 id="import-script" className="gold-leaf font-display text-5xl leading-none">
             Import script
