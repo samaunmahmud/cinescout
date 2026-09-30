@@ -63,6 +63,22 @@ class RateLimitApiTest extends ApiTest {
     }
 
     @Test
+    void wrongPasswordsOnTheAccountEndpointsCountAsFailedLoginsButRightOnesDoNot() {
+        Account ada = registerFrom("203.0.113.20", "Ada");
+        WebTestClient client = ada.client().mutate().defaultHeader(XFF, "203.0.113.21").build();
+
+        for (int i = 0; i < 4; i++) {
+            client.put().uri("/api/account").bodyValue(Map.of("displayName", "Ada " + i)).exchange().expectStatus().isOk();
+        }
+        for (int i = 0; i < 3; i++) {
+            client.post().uri("/api/account/delete").bodyValue(Map.of("password", "wrong-password-" + i)).exchange().expectStatus().isBadRequest();
+        }
+        // Even the right password is refused now: the address has used up its guesses.
+        client.put().uri("/api/account/password").bodyValue(Map.of("currentPassword", PASSWORD, "newPassword", "another-password"))
+                .exchange().expectStatus().isEqualTo(429).expectHeader().exists(HttpHeaders.RETRY_AFTER);
+    }
+
+    @Test
     void aProjectParseSpendsOneAiCallPerSceneAndStopsWhenTheyRunOut() {
         when(llm.generate(any(), any(), eq(SceneRequirements.class)))
                 .thenReturn(Mono.just(new SceneRequirements("rooftop bar", "neon", null, "night", AcousticSensitivity.LOW, 5)));

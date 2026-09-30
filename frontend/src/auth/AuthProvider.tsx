@@ -61,6 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     forget()
   }, [forget])
 
-  const value = useMemo<AuthState>(() => ({ session, checking, logIn, register, logOut }), [session, checking, logIn, register, logOut])
+  // Only the name changes: the cached data is still this user's, so it stays.
+  const updateUser = useCallback((user: User) => setSession((current) => current && { ...current, user }), [])
+
+  const value = useMemo<AuthState>(
+    () => ({ session, checking, logIn, register, logOut, updateUser, forget }),
+    [session, checking, logIn, register, logOut, updateUser, forget],
+  )
   return <AuthContext value={value}>{children}</AuthContext>
 }

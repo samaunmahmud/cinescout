@@ -23,4 +23,9 @@ public interface AuthSessionRepository extends JpaRepository<AuthSession, UUID> 
     @Modifying
     @Query("delete from AuthSession s where s.expiresAt <= :now")
     int deleteExpired(@Param("now") Instant now);
+
+    /** Ends every session of the account but the one with {@code keepHash} (pass a hash no session has to end all). */
+    @Modifying
+    @Query("delete from AuthSession s where s.user.id = :userId and s.tokenHash <> :keepHash")
+    int deleteByUserIdExcept(@Param("userId") UUID userId, @Param("keepHash") String keepHash);
 }

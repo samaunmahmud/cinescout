@@ -14,6 +14,10 @@ export interface AuthState {
   logIn: (email: string, password: string) => Promise<void>
   register: (request: RegisterRequest) => Promise<void>
   logOut: () => Promise<void>
+  /** Puts a changed account (a new display name, say) into the session. */
+  updateUser: (user: User) => void
+  /** Forgets the login here without asking the server: for when the account or session is already gone. */
+  forget: () => void
 }
 
 export const AuthContext = createContext<AuthState | null>(null)

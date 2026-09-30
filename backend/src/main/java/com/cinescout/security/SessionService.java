@@ -80,6 +80,15 @@ public class SessionService {
         return db.run(() -> sessions.deleteByTokenHash(hash(token)));
     }
 
+    /**
+     * Ends the account's sessions except the one {@code keepToken} belongs to (all of them when it is null), e.g.
+     * after a password change: whoever else was logged in with the old password no longer is.
+     */
+    public Mono<Void> closeOthers(UUID userId, String keepToken) {
+        String keep = keepToken == null || keepToken.isBlank() ? "" : hash(keepToken);
+        return db.run(() -> sessions.deleteByUserIdExcept(userId, keep));
+    }
+
     static String hash(String token) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.US_ASCII));

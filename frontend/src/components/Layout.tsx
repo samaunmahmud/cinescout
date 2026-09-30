@@ -41,12 +41,16 @@ export function Layout() {
             </nav>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="hidden items-center gap-2 text-stone-400 sm:flex">
+            <Link
+              to="/account"
+              aria-label={`Account: ${user.displayName}`}
+              className="flex items-center gap-2 rounded-md px-2 py-1 text-stone-400 transition hover:bg-white/5 hover:text-stone-200 focus-visible:outline-2 focus-visible:outline-amber-400"
+            >
               <span aria-hidden className="flex size-7 items-center justify-center rounded-full bg-amber-500/15 text-xs font-bold text-amber-300 ring-1 ring-amber-400/30">
                 {user.displayName.slice(0, 1).toUpperCase()}
               </span>
-              {user.displayName}
-            </span>
+              <span className="hidden sm:inline">{user.displayName}</span>
+            </Link>
             <Button variant="ghost" onClick={logOut}>
               <LogOut aria-hidden className="size-4" />
               Log out

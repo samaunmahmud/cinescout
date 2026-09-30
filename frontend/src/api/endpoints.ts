@@ -1,6 +1,7 @@
 import { ApiError, download, request } from './client'
 import type {
   BatchParseResult,
+  ChangePasswordRequest,
   CreateLocationRequest,
   CreateProjectRequest,
   GenerateOutreachRequest,
@@ -57,6 +58,14 @@ export function createApi(onUnauthorized: () => void = () => {}) {
   const call = <T>(path: string, options: Parameters<typeof request>[1] = {}) => guarded(() => request<T>(path, options))
 
   return {
+    account: {
+      /** The name outreach emails are signed with. */
+      update: (displayName: string) => call<User>('/api/account', { method: 'PUT', body: { displayName } }),
+      /** 400 on `currentPassword` when it is wrong. The account's other sessions are ended; this one stays. */
+      changePassword: (body: ChangePasswordRequest) => call<void>('/api/account/password', { method: 'PUT', body }),
+      /** Deletes the account and everything it owns; 400 on `password` when it is wrong. */
+      remove: (password: string) => call<void>('/api/account/delete', { method: 'POST', body: { password } }),
+    },
     projects: {
       /** Newest first. */
       list: (status: ProjectStatus, page = 0) => call<Page<Project>>(`/api/projects?status=${status}&${pageQuery(page)}`),

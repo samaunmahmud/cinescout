@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { Layout } from './components/Layout'
+import { AccountPage } from './pages/AccountPage'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
 import { ImportScriptPage } from './pages/ImportScriptPage'
 import { LocationPage } from './pages/LocationPage'
@@ -23,6 +24,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/', element: <Navigate to="/projects" replace /> },
       { path: '/projects', element: <ProjectsPage /> },
+      { path: '/account', element: <AccountPage /> },
       { path: '/projects/:projectId', element: <ProjectPage /> },
       { path: '/projects/:projectId/scenes/new', element: <NewScenePage /> },
       { path: '/projects/:projectId/scenes/import', element: <ImportScriptPage /> },

@@ -31,6 +31,11 @@ export interface LoginRequest {
   password: string
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
 export type ProjectStatus = 'ACTIVE' | 'ARCHIVED'
 
 export interface Project {

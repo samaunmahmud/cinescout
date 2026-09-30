@@ -211,7 +211,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 
 | Area | Routes |
 |---|---|
-| Accounts | `POST /auth/register` (public), `GET /auth/me` |
+| Accounts | `POST /auth/register` (public), `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `PUT /account`, `PUT /account/password`, `POST /account/delete` |
 | Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress` |
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
@@ -233,6 +233,11 @@ scene by scene in script order, each row naming its scene; `?status=SHORTLISTED`
 it. `GET /projects/{id}/progress` counts the scenes, the ones with candidates and with a confirmed location,
 and the locations by status. `GET /projects/{id}/locations/export` is the same list, all of it, as a CSV file
 (UTF-8, one venue a row) for people who do not use the app; cells a spreadsheet would run as a formula are defused.
+
+`PUT /account` changes the display name. `PUT /account/password` (`currentPassword`, `newPassword`) changes the
+password and ends the account's other sessions; `POST /account/delete` (`password`) deletes the account with
+everything it owns. Both answer `400` naming the field when the password given is wrong, and wrong passwords
+count against the same per-address limit as failed logins.
 
 `POST /projects/{id}/scenes/import` takes a whole screenplay as plain text (`{ "script": "..." }`, up to 500,000
 characters) and adds one scene per scene heading, the lines starting with `INT.` or `EXT.` (Fountain's forced
@@ -265,3 +270,4 @@ comes back with that section marked `UNAVAILABLE`.
 9. Session logins for the web app, Docker Compose deployment - done
 10. Script import: a pasted screenplay is cut into scenes at its headings - done
 11. Project-wide locations: every scene's candidates in one list and map, by status, with progress counts - done
+12. Account page: display name, password change, account deletion - done
