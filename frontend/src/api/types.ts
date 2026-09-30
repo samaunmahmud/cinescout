@@ -124,6 +124,15 @@ export interface ScheduledScene {
   candidates: number
 }
 
+/** What one run over a project's confirmed venues without logistics did. */
+export interface BatchLogisticsResult {
+  updated: number
+  /** Venues that could not be worked out, e.g. not found on the map. */
+  failed: number
+  /** Confirmed venues still without logistics, the failed ones included. */
+  remaining: number
+}
+
 /** What one run over a project's unanalysed scenes did. */
 export interface BatchParseResult {
   parsed: number

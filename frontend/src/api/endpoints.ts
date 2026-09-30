@@ -1,5 +1,6 @@
 import { ApiError, download, request } from './client'
 import type {
+  BatchLogisticsResult,
   BatchParseResult,
   ChangePasswordRequest,
   CreateLocationRequest,
@@ -80,6 +81,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       remove: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Counts of the project's scenes and candidate locations, by how far each has come. */
       progress: (id: string) => call<ProjectProgress>(`/api/projects/${encodeURIComponent(id)}/progress`),
+      /** Works out the logistics of the confirmed venues that have none, up to ten a call; the answer says how many are left. */
+      refreshLogistics: (id: string) => call<BatchLogisticsResult>(`/api/projects/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
       /** The scenes by the day their shoot starts, each with its confirmed locations. */
       schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
     },

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { CalendarClock, CalendarDays, CalendarOff, MapPin as PinIcon, Printer, TriangleAlert } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarOff, MapPin as PinIcon, Printer, SunMedium, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { ScheduledScene } from '../api/types'
@@ -8,7 +8,7 @@ import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner, TextField } from '../components/ui'
-import { dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
+import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
 
 /**
  * The shoot laid out by day: which scenes start when, and where each is shot. What is missing stands out: a
@@ -22,6 +22,14 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
     queryFn: () => api.projects.schedule(projectId),
     refetchOnMount: 'always',
   })
+  const queryClient = useQueryClient()
+  const conditions = useMutation({
+    mutationFn: () => api.projects.refreshLogistics(projectId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectSchedule(projectId) }),
+  })
+  // Worth offering while a dated scene's confirmed venue has nothing to say about its day yet.
+  const missingConditions =
+    schedule.data?.days.some((day) => day.scenes.some((scene) => scene.venues.some((venue) => venue.day === null))) ?? false
 
   return (
     <Section
@@ -33,13 +41,32 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
       actions={
         schedule.data &&
         schedule.data.days.length > 0 && (
-          <Link to={`/projects/${projectId}/call-sheet`} className={linkButton('secondary')}>
-            <Printer aria-hidden className="size-4" />
-            Call sheet
-          </Link>
+          <>
+            {missingConditions && (
+              <Button variant="ghost" busy={conditions.isPending} onClick={() => conditions.mutate()}>
+                {!conditions.isPending && <SunMedium aria-hidden className="size-4" />}
+                Get light and weather
+              </Button>
+            )}
+            <Link to={`/projects/${projectId}/call-sheet`} className={linkButton('secondary')}>
+              <Printer aria-hidden className="size-4" />
+              Call sheet
+            </Link>
+          </>
         )
       }
     >
+      {conditions.isPending ? (
+        <Spinner label="Working out the light and weather at each confirmed venue. This takes a few seconds a venue." />
+      ) : conditions.isError ? (
+        <ErrorAlert error={conditions.error} />
+      ) : (
+        conditions.data && (
+          <p role="status" className="rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+            {batchLogisticsSummary(conditions.data)}
+          </p>
+        )
+      )}
       {schedule.isPending ? (
         <Spinner label="Loading schedule" />
       ) : schedule.isError ? (

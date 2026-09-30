@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayConditions, formatDate, formatShootWindow, sceneLabel, scoutingSummary } from './format'
+import { batchLogisticsSummary, dayConditions, formatDate, formatShootWindow, sceneLabel, scoutingSummary } from './format'
 import { location } from '../test/fixtures'
 
 describe('formatDate', () => {
@@ -55,5 +55,14 @@ describe('dayConditions', () => {
     expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: null, temperatureMinC: null, temperatureMaxC: null })).toBe('Sun 07:04–18:20')
     expect(dayConditions({ sunrise: null, sunset: null, weather: null, temperatureMinC: null, temperatureMaxC: null })).toBeNull()
     expect(dayConditions(null)).toBeNull()
+  })
+})
+
+describe('batchLogisticsSummary', () => {
+  it('says what was done, what failed and what is still waiting', () => {
+    expect(batchLogisticsSummary({ updated: 2, failed: 1, remaining: 4 })).toBe(
+      'Worked out 2 venues. 1 venue could not be done; open it to set a pin or try again. 3 venues are still waiting: run it again to go on.',
+    )
+    expect(batchLogisticsSummary({ updated: 0, failed: 0, remaining: 0 })).toBe('Every confirmed venue has its light and weather already.')
   })
 })

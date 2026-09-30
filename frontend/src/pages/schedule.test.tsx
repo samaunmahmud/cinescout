@@ -92,6 +92,28 @@ describe('the schedule of a project', () => {
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
 
+  it('fetches the light and weather for confirmed venues that lack them, and shows them', async () => {
+    const withoutDay = { ...schedule, days: [{ ...schedule.days[0], scenes: [scheduled({ venues: [{ ...schedule.days[0].scenes[0].venues[0], day: null }] })] }] }
+    let current: Schedule = withoutDay
+    const { requests } = fakeServer({
+      ...base,
+      'GET /api/projects/p1/schedule': () => json(current),
+      'POST /api/projects/p1/logistics': () => {
+        current = { ...withoutDay, days: [{ ...withoutDay.days[0], scenes: [scheduled()] }] }
+        return json({ updated: 1, failed: 0, remaining: 0 })
+      },
+    })
+    renderApp('/projects/p1?tab=schedule')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Get light and weather' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Worked out 1 venue.')
+    expect(await screen.findByText('Sun 07:04–18:20 · Clear sky, 12–23 °C')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Get light and weather' })).not.toBeInTheDocument()
+    expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1)
+  })
+
   it('explains itself for a project without scenes', async () => {
     fakeServer({ ...base, 'GET /api/projects/p1/schedule': () => json({ days: [], unscheduled: [] }) })
     renderApp('/projects/p1?tab=schedule')

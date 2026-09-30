@@ -1,4 +1,4 @@
-import type { BatchParseResult, DayConditions, ProjectProgress, Schedule, ScoutingResult } from '../api/types'
+import type { BatchLogisticsResult, BatchParseResult, DayConditions, ProjectProgress, Schedule, ScoutingResult } from '../api/types'
 import { temperatureRange } from './logisticsFormat'
 
 // Shoot dates are plain calendar dates (yyyy-mm-dd) with no time zone, so they are formatted in UTC:
@@ -81,4 +81,14 @@ export function dayConditions(day: DayConditions | null): string | null {
   const sun = day.sunrise && day.sunset ? `Sun ${day.sunrise}–${day.sunset}` : null
   const weather = [day.weather, temperatureRange(day.temperatureMinC, day.temperatureMaxC)].filter(Boolean).join(', ')
   return [sun, weather || null].filter(Boolean).join(' · ') || null
+}
+
+/** One sentence on what working out the confirmed venues' logistics did. */
+export function batchLogisticsSummary({ updated, failed, remaining }: BatchLogisticsResult): string {
+  if (updated + failed === 0 && remaining === 0) return 'Every confirmed venue has its light and weather already.'
+  const parts = [`Worked out ${plural(updated, 'venue', 'venues')}.`]
+  if (failed > 0) parts.push(`${plural(failed, 'venue', 'venues')} could not be done; open ${failed === 1 ? 'it' : 'them'} to set a pin or try again.`)
+  const waiting = remaining - failed
+  if (waiting > 0) parts.push(`${plural(waiting, 'venue is', 'venues are')} still waiting: run it again to go on.`)
+  return parts.join(' ')
 }

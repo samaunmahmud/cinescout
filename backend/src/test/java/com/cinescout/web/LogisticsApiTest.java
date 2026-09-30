@@ -423,4 +423,47 @@ class LogisticsApiTest extends ApiTest {
         web.post().uri("/api/locations/" + UUID.randomUUID() + "/logistics").exchange().expectStatus().isUnauthorized();
         web.get().uri("/api/locations/" + UUID.randomUUID() + "/logistics").exchange().expectStatus().isUnauthorized();
     }
+
+    // --- a project's confirmed venues -------------------------------------------------------------
+
+    private void confirm(Account owner, String locationId) {
+        owner.client().put().uri("/api/locations/" + locationId).bodyValue(Map.of("status", "CONFIRMED")).exchange().expectStatus().isOk();
+    }
+
+    @Test
+    void aProjectsConfirmedVenuesWithoutLogisticsAreWorkedOutAndTheOthersLeftAlone() {
+        Account ada = register("Ada");
+        String project = project(ada);
+        String scene = scene(ada, project, 1, 2);
+        Map<String, Object> located = Map.of("latitude", new BigDecimal("40.712800"), "longitude", new BigDecimal("-74.006000"));
+        String confirmed = location(ada, scene, located);
+        String alreadyDone = location(ada, scene, Map.of("name", "Done", "latitude", new BigDecimal("40.7"), "longitude", new BigDecimal("-74.0")));
+        String lost = location(ada, scene, Map.of("name", "Nowhere"));
+        String suggested = location(ada, scene, Map.of("name", "Maybe", "latitude", new BigDecimal("40.7"), "longitude", new BigDecimal("-74.0")));
+        confirm(ada, confirmed);
+        confirm(ada, alreadyDone);
+        confirm(ada, lost);
+        jdbc.update("UPDATE locations SET logistics_json = '{\"version\":1}'::jsonb WHERE id = ?::uuid", alreadyDone);
+        when(geocoder.locate(any())).thenReturn(Mono.empty());
+
+        JsonNode result = json(ada.client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isOk());
+
+        assertThat(result.path("updated").asInt()).isEqualTo(1);
+        assertThat(result.path("failed").asInt()).isEqualTo(1);
+        assertThat(result.path("remaining").asInt()).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT logistics_json IS NOT NULL FROM locations WHERE id = ?::uuid", Boolean.class, confirmed)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT logistics_json::text FROM locations WHERE id = ?::uuid", String.class, alreadyDone)).isEqualTo("{\"version\": 1}");
+        assertThat(jdbc.queryForObject("SELECT logistics_json IS NULL FROM locations WHERE id = ?::uuid", Boolean.class, suggested)).isTrue();
+        assertThat(lost).isNotBlank();
+    }
+
+    @Test
+    void aProjectWithNothingToDoSaysSoAndAnotherUsersIsA404() {
+        Account ada = register("Ada");
+        String project = project(ada);
+
+        ada.client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isOk()
+                .expectBody().json("{\"updated\":0,\"failed\":0,\"remaining\":0}");
+        register("Grace").client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isNotFound();
+    }
 }
