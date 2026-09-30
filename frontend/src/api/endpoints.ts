@@ -87,7 +87,7 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       remove: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Counts of the project's scenes and candidate locations, by how far each has come. */
       progress: (id: string) => call<ProjectProgress>(`/api/projects/${encodeURIComponent(id)}/progress`),
-      /** Works out the logistics of the confirmed venues that have none, up to ten a call; the answer says how many are left. */
+      /** Works out the logistics of the confirmed venues that have none, up to six a call; the answer says how many are left. */
       refreshLogistics: (id: string) => call<BatchLogisticsResult>(`/api/projects/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
       /** The call sheet's shared link; 404 while it is not shared. */
       callSheetLink: (id: string) => call<{ token: string }>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`),

@@ -32,8 +32,12 @@ public class ProjectLogisticsService {
 
     private static final Logger log = LoggerFactory.getLogger(ProjectLogisticsService.class);
 
-    /** How many venues one run takes: each takes seconds, and the request waits for them all. */
-    public static final int MAX_BATCH = 10;
+    /**
+     * How many venues one run takes. Each usually takes seconds, but up to half a minute when the public map
+     * server is busy, and the request waits for them all: six keeps the worst case within the five minutes the
+     * web server in front waits for an answer (nginx's proxy_read_timeout).
+     */
+    public static final int MAX_BATCH = 6;
 
     private final LogisticsService logistics;
     private final ProjectRepository projects;
