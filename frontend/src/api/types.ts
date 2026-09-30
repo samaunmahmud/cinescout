@@ -179,8 +179,19 @@ export interface Location {
   logisticsFetchedAt: string | null
   status: LocationStatus
   notes: string | null
+  /** Who to talk to at the venue, as the user entered it. */
+  contactName: string | null
+  contactEmail: string | null
+  contactPhone: string | null
   createdAt: string
   updatedAt: string
+}
+
+/** Full replacement: a null field clears it. */
+export interface UpdateContactRequest {
+  name: string | null
+  email: string | null
+  phone: string | null
 }
 
 /** The user's own workflow fields (PUT, full replacement): a null note clears it. */

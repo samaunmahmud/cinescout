@@ -9,6 +9,7 @@ import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectLocationResponse;
+import com.cinescout.dto.UpdateContactRequest;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.export.LocationExport;
@@ -115,6 +116,17 @@ public class LocationService {
         return db.call(() -> {
             Location location = owned(ownerId, locationId);
             location.relocate(request.latitude(), request.longitude());
+            return LocationResponse.from(locations.saveAndFlush(location));
+        });
+    }
+
+    /** Full replacement of who to talk to at the venue; a null or blank field clears it. */
+    public Mono<LocationResponse> updateContact(UUID ownerId, UUID locationId, UpdateContactRequest request) {
+        return db.call(() -> {
+            Location location = owned(ownerId, locationId);
+            location.setContactName(blankToNull(request.name()));
+            location.setContactEmail(blankToNull(request.email()));
+            location.setContactPhone(blankToNull(request.phone()));
             return LocationResponse.from(locations.saveAndFlush(location));
         });
     }

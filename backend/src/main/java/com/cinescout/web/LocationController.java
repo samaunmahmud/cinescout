@@ -6,6 +6,7 @@ import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectLocationResponse;
+import com.cinescout.dto.UpdateContactRequest;
 import com.cinescout.dto.UpdateCoordinatesRequest;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
@@ -117,6 +118,15 @@ class LocationController {
     Mono<LocationResponse> relocate(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                     @Valid @RequestBody UpdateCoordinatesRequest request) {
         return locations.relocate(user.id(), locationId, request);
+    }
+
+    /** Records who to talk to at the venue, so every email to it can start from there. */
+    @Operation(summary = "Set a location's contact",
+            description = "Who to talk to at the venue: a name, an email address and a phone number, each optional. A full replacement: an omitted field is cleared.")
+    @PutMapping("/locations/{locationId}/contact")
+    Mono<LocationResponse> updateContact(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
+                                         @Valid @RequestBody UpdateContactRequest request) {
+        return locations.updateContact(user.id(), locationId, request);
     }
 
     @Operation(summary = "Delete a location")

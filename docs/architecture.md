@@ -20,7 +20,7 @@ erDiagram
 | `users` | Accounts (Spring Security principal) | `email` (unique, case-insensitive), `password_hash`, `role` |
 | `projects` | A film / production | `owner_id`, `title`, `location_area`, `status` |
 | `scenes` | Scene text + LLM-extracted requirements | `source_text`, `setting_type`, `visual_mood`, `lighting_needs`, `time_of_day`, `acoustic_sensitivity`, `estimated_crew_size`, `shoot_date_start/end`, `requirements_json` |
-| `locations` | A candidate venue for one scene | `latitude/longitude`, `source_url`, `booking_friction`, `fit_score`, `footprint_warnings`, `logistics_json`, `status` |
+| `locations` | A candidate venue for one scene | `latitude/longitude`, `source_url`, `booking_friction`, `fit_score`, `footprint_warnings`, `logistics_json`, `status`, `contact_name/email/phone` |
 | `outreach_drafts` | Emails to venue owners | `location_id`, `created_by`, `subject`, `body`, `tone`, `status` |
 
 ## Design decisions

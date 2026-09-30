@@ -65,6 +65,51 @@ describe('a location', () => {
     await expect.poll(() => screen.getByRole('button', { name: 'Save notes' })).toBeDisabled()
   })
 
+  it('keeps who to talk to at the venue, saved as a whole with blanks as null', async () => {
+    const { requests } = serverFor(location(), {
+      'PUT /api/locations/l1/contact': (req) => {
+        const body = req.body as { name: string | null; email: string | null; phone: string | null }
+        return json(location({ contactName: body.name, contactEmail: body.email, contactPhone: body.phone }))
+      },
+    })
+    renderApp('/locations/l1')
+    const user = await logIn()
+    const contact = within(await screen.findByRole('region', { name: 'Contact' }))
+
+    expect(contact.getByText(/Nobody yet/)).toBeInTheDocument()
+    await user.click(contact.getByRole('button', { name: 'Add a contact' }))
+    await user.type(contact.getByLabelText('Contact name'), ' Tom Miller ')
+    await user.type(contact.getByLabelText('Contact email'), 'tom@')
+    await user.type(contact.getByLabelText('Contact phone'), 'ring me')
+    expect(contact.getByText('Enter an email address like owner@example.com.')).toBeInTheDocument()
+    expect(contact.getByText('Digits, spaces and + ( ) - . only.')).toBeInTheDocument()
+    expect(contact.getByRole('button', { name: 'Save contact' })).toBeDisabled()
+    await user.type(contact.getByLabelText('Contact email'), 'toms-diner.example')
+    await user.clear(contact.getByLabelText('Contact phone'))
+    await user.click(contact.getByRole('button', { name: 'Save contact' }))
+
+    expect(await contact.findByRole('link', { name: 'tom@toms-diner.example' })).toHaveAttribute('href', 'mailto:tom@toms-diner.example')
+    expect(contact.getByText('Tom Miller')).toBeInTheDocument()
+    expect(contact.getByRole('button', { name: 'Edit contact' })).toBeInTheDocument()
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ name: 'Tom Miller', email: 'tom@toms-diner.example', phone: null })
+  })
+
+  it('shows a contact with links to write and to call, and starts an email addressed to them', async () => {
+    serverFor(location({ contactName: 'Tom Miller', contactEmail: 'tom@toms-diner.example', contactPhone: '+1 (718) 555-0100' }))
+    renderApp('/locations/l1')
+    const user = await logIn()
+
+    const contact = within(await screen.findByRole('region', { name: 'Contact' }))
+    expect(contact.getByRole('link', { name: '+1 (718) 555-0100' })).toHaveAttribute('href', 'tel:+17185550100')
+    await user.click(contact.getByRole('button', { name: 'Edit contact' }))
+    expect(contact.getByLabelText('Contact phone')).toHaveValue('+1 (718) 555-0100')
+
+    await user.click(screen.getByRole('tab', { name: 'Outreach' }))
+    await user.click(await screen.findByRole('button', { name: 'Write an email' }))
+    expect(screen.getByLabelText('Recipient name')).toHaveValue('Tom Miller')
+    expect(screen.getByLabelText(/Recipient email/)).toHaveValue('tom@toms-diner.example')
+  })
+
   it('can have its pin set from coordinates copied from a map', async () => {
     const { requests } = serverFor(location(), {
       'PUT /api/locations/l1/coordinates': (req) => json(location({ ...(req.body as object) })),

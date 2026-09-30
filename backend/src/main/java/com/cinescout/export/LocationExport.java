@@ -18,7 +18,8 @@ import java.util.Locale;
 public record LocationExport(String filename, String csv) {
 
     static final List<String> HEADER = List.of("Scene number", "Scene", "Venue", "Status", "Fit score", "Booking",
-            "Address", "Latitude", "Longitude", "Web page", "Why it fits", "Booking note", "Warnings", "Notes");
+            "Address", "Latitude", "Longitude", "Web page", "Why it fits", "Booking note", "Warnings", "Notes",
+            "Contact", "Contact email", "Contact phone");
 
     private static final int MAX_NAME_LENGTH = 60;
 
@@ -44,7 +45,10 @@ public record LocationExport(String filename, String csv) {
                 location.getFitReason(),
                 location.getFrictionNote(),
                 warnings == null ? null : String.join("; ", warnings),
-                location.getNotes());
+                location.getNotes(),
+                location.getContactName(),
+                location.getContactEmail(),
+                location.getContactPhone());
     }
 
     private static String text(Object value) {

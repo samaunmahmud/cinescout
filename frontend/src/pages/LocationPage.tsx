@@ -10,6 +10,7 @@ import { useStoreLocation, useUpdateLocation } from '../components/locationHooks
 import {
   ChevronLeft,
   Clapperboard,
+  Contact as Contact2,
   Crosshair,
   ExternalLink,
   Gauge,
@@ -19,10 +20,12 @@ import {
   MapPin as PinIcon,
   MapPinned,
   NotebookPen,
+  Phone,
   Quote,
   Sparkles,
   Sun,
   TriangleAlert,
+  UserRound,
 } from 'lucide-react'
 import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
 import { frictionLabel } from '../lib/fit'
@@ -32,6 +35,7 @@ import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
 import { Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { sceneLabel } from '../lib/format'
+import { looksLikeEmail } from '../lib/email'
 import { formatCoordinates, osmLink, parseCoordinates, roundCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
@@ -155,6 +159,7 @@ function LocationDetails({ location }: { location: Location }) {
           <div className="grid items-start gap-8 lg:grid-cols-2">
             <div className="space-y-8">
               <Assessment location={location} />
+              <Contact location={location} />
               <Notes location={location} update={update} />
             </div>
             <Position location={location} />
@@ -260,6 +265,115 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
           </Button>
         </div>
       </form>
+    </Section>
+  )
+}
+
+/** Who to talk to at the venue. Shown as links to write or call; edited as a whole. */
+function Contact({ location }: { location: Location }) {
+  const { api } = useSession()
+  const store = useStoreLocation()
+  const known = location.contactName != null || location.contactEmail != null || location.contactPhone != null
+  const [editing, setEditing] = useState(false)
+  const [values, setValues] = useState({ name: '', email: '', phone: '' })
+  const save = useMutation({
+    mutationFn: () => api.locations.updateContact(location.id, { name: blankToNull(values.name), email: blankToNull(values.email), phone: blankToNull(values.phone) }),
+    onSuccess: (updated) => {
+      store(updated)
+      setEditing(false)
+    },
+  })
+  const set = (field: keyof typeof values) => (e: { target: { value: string } }) => setValues({ ...values, [field]: e.target.value })
+  const email = values.email.trim()
+  const emailValid = email === '' || looksLikeEmail(email)
+  const phoneValid = /^[0-9+()./ xX-]*$/.test(values.phone)
+  const errors = fieldErrors(save.error)
+
+  function edit() {
+    setValues({ name: location.contactName ?? '', email: location.contactEmail ?? '', phone: location.contactPhone ?? '' })
+    save.reset()
+    setEditing(true)
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    if (emailValid && phoneValid) save.mutate()
+  }
+
+  return (
+    <Section
+      titleId="contact-heading"
+      title="Contact"
+      eyebrow="Who to talk to"
+      icon={Contact2}
+      actions={
+        !editing && (
+          <Button variant="secondary" onClick={edit}>
+            {known ? 'Edit contact' : 'Add a contact'}
+          </Button>
+        )
+      }
+    >
+      {editing ? (
+        <form onSubmit={submit} className="space-y-3" noValidate>
+          <ErrorAlert error={save.error} />
+          <TextField label="Contact name" maxLength={200} autoComplete="off" value={values.name} onChange={set('name')} error={errors.name} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="Contact email"
+              type="email"
+              maxLength={254}
+              autoComplete="off"
+              value={values.email}
+              onChange={set('email')}
+              error={emailValid ? errors.email : 'Enter an email address like owner@example.com.'}
+            />
+            <TextField
+              label="Contact phone"
+              type="tel"
+              maxLength={40}
+              autoComplete="off"
+              value={values.phone}
+              onChange={set('phone')}
+              error={phoneValid ? errors.phone : 'Digits, spaces and + ( ) - . only.'}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" disabled={save.isPending} onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" busy={save.isPending} disabled={!emailValid || !phoneValid}>
+              Save contact
+            </Button>
+          </div>
+        </form>
+      ) : known ? (
+        <dl className="grid gap-3 sm:grid-cols-3">
+          <Fact icon={UserRound} label="Name">
+            {location.contactName ?? '—'}
+          </Fact>
+          <Fact icon={Mail} label="Email">
+            {location.contactEmail ? (
+              <a href={`mailto:${location.contactEmail}`} className="break-all text-amber-300 underline hover:text-amber-200">
+                {location.contactEmail}
+              </a>
+            ) : (
+              '—'
+            )}
+          </Fact>
+          <Fact icon={Phone} label="Phone">
+            {location.contactPhone ? (
+              <a href={`tel:${location.contactPhone.replace(/[^0-9+]/g, '')}`} className="text-amber-300 underline hover:text-amber-200">
+                {location.contactPhone}
+              </a>
+            ) : (
+              '—'
+            )}
+          </Fact>
+        </dl>
+      ) : (
+        <p className="text-sm text-stone-400">Nobody yet. Add who to talk to here, and emails to this venue start out addressed to them.</p>
+      )}
     </Section>
   )
 }

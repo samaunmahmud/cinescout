@@ -24,6 +24,7 @@ import type {
   SceneRequest,
   ScoutingResult,
   ScriptImport,
+  UpdateContactRequest,
   UpdateCoordinatesRequest,
   UpdateLocationRequest,
   UpdateOutreachRequest,
@@ -136,6 +137,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       remove: (id: string) => call<void>(`/api/locations/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Videos of the venue, searched on first request and cached by the server; 503 when not configured. */
       videos: (id: string) => call<LocationVideos>(`/api/locations/${encodeURIComponent(id)}/videos`),
+      /** Who to talk to at the venue: a full replacement of name, email and phone. */
+      updateContact: (id: string, body: UpdateContactRequest) =>
+        call<Location>(`/api/locations/${encodeURIComponent(id)}/contact`, { method: 'PUT', body }),
       /** Moves the pin; the server drops the cached logistics, which were for the old spot. */
       updateCoordinates: (id: string, body: UpdateCoordinatesRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/coordinates`, { method: 'PUT', body }),

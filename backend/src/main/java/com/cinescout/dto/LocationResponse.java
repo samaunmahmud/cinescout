@@ -13,6 +13,7 @@ import java.util.UUID;
 /**
  * {@code logistics} is the cached Module B output, a {@code LogisticsReport} passed through exactly as it
  * was stored (so its local times keep their offsets). It is null until logistics have been worked out.
+ * The {@code contact...} fields are who to talk to at the venue, as the user entered them.
  */
 public record LocationResponse(
         UUID id,
@@ -33,6 +34,9 @@ public record LocationResponse(
         Instant logisticsFetchedAt,
         LocationStatus status,
         String notes,
+        String contactName,
+        String contactEmail,
+        String contactPhone,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -46,6 +50,7 @@ public record LocationResponse(
                 location.getFrictionNote(), warnings == null ? List.of() : List.copyOf(warnings),
                 location.getLogisticsJson(), location.getLogisticsFetchedAt(),
                 location.getStatus(), location.getNotes(),
+                location.getContactName(), location.getContactEmail(), location.getContactPhone(),
                 location.getCreatedAt(), location.getUpdatedAt());
     }
 }

@@ -88,6 +88,16 @@ public class Location extends BaseEntity {
 
     private String notes;
 
+    /** Who to talk to at the venue, as the user entered it. */
+    @Column(name = "contact_name")
+    private String contactName;
+
+    @Column(name = "contact_email")
+    private String contactEmail;
+
+    @Column(name = "contact_phone")
+    private String contactPhone;
+
     protected Location() {
     }
 
@@ -135,6 +145,9 @@ public class Location extends BaseEntity {
     public Instant getVideosFetchedAt() { return videosFetchedAt; }
     public LocationStatus getStatus() { return status; }
     public String getNotes() { return notes; }
+    public String getContactName() { return contactName; }
+    public String getContactEmail() { return contactEmail; }
+    public String getContactPhone() { return contactPhone; }
 
     public void setName(String name) { this.name = name; }
     public void setAddress(String address) { this.address = address; }
@@ -150,4 +163,7 @@ public class Location extends BaseEntity {
     public void setFootprintWarnings(List<String> footprintWarnings) { this.footprintWarnings = footprintWarnings; }
     public void setStatus(LocationStatus status) { this.status = status; }
     public void setNotes(String notes) { this.notes = notes; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
 }

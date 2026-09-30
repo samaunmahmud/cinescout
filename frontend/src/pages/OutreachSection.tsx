@@ -55,7 +55,7 @@ export function OutreachSection({ location }: { location: Location }) {
     },
   })
 
-  // Whoever the last email went to is the likeliest recipient of the next one.
+  // Whoever the last email went to is the likeliest recipient of the next one; before any, the venue's contact.
   const latest = drafts.data?.items[0]
 
   return (
@@ -82,7 +82,10 @@ export function OutreachSection({ location }: { location: Location }) {
 
       {composing && (
         <GenerateForm
-          initial={{ recipientName: latest?.recipientName ?? '', recipientEmail: latest?.recipientEmail ?? '' }}
+          initial={{
+            recipientName: latest?.recipientName ?? location.contactName ?? '',
+            recipientEmail: latest?.recipientEmail ?? location.contactEmail ?? '',
+          }}
           busy={generate.isPending}
           error={generate.error}
           onSubmit={(body) => generate.mutate(body)}
