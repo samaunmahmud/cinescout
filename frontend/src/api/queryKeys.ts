@@ -18,6 +18,7 @@ export const queryKeys = {
   projectLocationPage: (projectId: string, status: LocationStatus | null, page: number) =>
     ['locations', 'project', projectId, status, page] as const,
   projectProgress: (projectId: string) => ['projects', 'progress', projectId] as const,
+  projectSchedule: (projectId: string) => ['projects', 'schedule', projectId] as const,
   outreachList: (locationId: string) => ['outreach', 'list', locationId] as const,
   outreachPage: (locationId: string, page: number) => ['outreach', 'list', locationId, page] as const,
   videos: (locationId: string) => ['videos', locationId] as const,

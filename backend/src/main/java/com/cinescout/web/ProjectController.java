@@ -6,9 +6,11 @@ import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectProgressResponse;
 import com.cinescout.dto.ProjectResponse;
+import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.ProjectService;
+import com.cinescout.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,9 +40,11 @@ import java.util.UUID;
 class ProjectController {
 
     private final ProjectService projects;
+    private final ScheduleService schedules;
 
-    ProjectController(ProjectService projects) {
+    ProjectController(ProjectService projects, ScheduleService schedules) {
         this.projects = projects;
+        this.schedules = schedules;
     }
 
     @Operation(summary = "Create a project")
@@ -80,6 +84,15 @@ class ProjectController {
     @GetMapping("/{projectId}/progress")
     Mono<ProjectProgressResponse> progress(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
         return projects.progress(user.id(), projectId);
+    }
+
+    /** The project's scenes by shoot day, each with its confirmed venue. */
+    @Operation(summary = "Get a project's shoot schedule",
+            description = "The scenes grouped by the day their shoot starts, earliest first, each with its confirmed locations and how many "
+                    + "candidates it has; scenes without shoot dates are listed separately. Shows what still needs a date or a venue.")
+    @GetMapping("/{projectId}/schedule")
+    Mono<ScheduleResponse> schedule(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
+        return schedules.schedule(user.id(), projectId);
     }
 
     /** Deletes the project with all its scenes, locations and drafts. */

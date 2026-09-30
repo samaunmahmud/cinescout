@@ -69,6 +69,16 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     @Query("select count(distinct l.scene.id) from Location l where l.scene.project.id = :projectId")
     long countScenesWithLocations(@Param("projectId") UUID projectId);
 
+    /** How many candidate locations each scene of a project has; scenes without any are left out. */
+    @Query("select l.scene.id as sceneId, count(l) as locations from Location l where l.scene.project.id = :projectId group by l.scene.id")
+    List<SceneCount> countByScene(@Param("projectId") UUID projectId);
+
+    interface SceneCount {
+        UUID getSceneId();
+
+        long getLocations();
+    }
+
     interface StatusCount {
         LocationStatus getStatus();
 

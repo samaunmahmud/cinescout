@@ -1,4 +1,4 @@
-import type { BatchParseResult, ProjectProgress, ScoutingResult } from '../api/types'
+import type { BatchParseResult, ProjectProgress, Schedule, ScoutingResult } from '../api/types'
 
 // Shoot dates are plain calendar dates (yyyy-mm-dd) with no time zone, so they are formatted in UTC:
 // formatting them in the viewer's zone could show the day before.
@@ -6,6 +6,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: '
 
 export function formatDate(isoDate: string): string {
   return dateFormat.format(new Date(`${isoDate}T00:00:00Z`))
+}
+
+const dayFormat = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+/** "Monday 12 October 2026", for the heading of a shoot day. */
+export function formatDay(isoDate: string): string {
+  return dayFormat.format(new Date(`${isoDate}T00:00:00Z`))
 }
 
 /** "12 Oct 2026", "12 Oct 2026 – 14 Oct 2026", "From 12 Oct 2026", "Until ...", or null when unscheduled. */
@@ -52,5 +59,17 @@ export function batchParseSummary({ parsed, failed, remaining }: BatchParseResul
   const parts = [`Analysed ${plural(parsed, 'scene', 'scenes')}.`]
   if (failed > 0) parts.push(`${plural(failed, 'scene', 'scenes')} could not be analysed; open ${failed === 1 ? 'it' : 'them'} to try again.`)
   if (remaining > 0) parts.push(`${plural(remaining, 'scene is', 'scenes are')} still waiting: analyse again to go on.`)
+  return parts.join(' ')
+}
+
+/** "3 shoot days. 2 scenes still need a confirmed location. 4 scenes have no shoot date." */
+export function scheduleSummary({ days, unscheduled }: Schedule): string {
+  const scheduled = days.flatMap((day) => day.scenes)
+  if (scheduled.length + unscheduled.length === 0) return 'This project has no scenes yet.'
+  const homeless = scheduled.filter((scene) => scene.venues.length === 0).length
+  const parts = [days.length === 0 ? 'No scene has a shoot date yet.' : `${plural(days.length, 'shoot day', 'shoot days')}.`]
+  if (homeless > 0) parts.push(`${plural(homeless, 'dated scene still needs', 'dated scenes still need')} a confirmed location.`)
+  else if (scheduled.length > 0) parts.push('Every dated scene has a confirmed location.')
+  if (unscheduled.length > 0 && days.length > 0) parts.push(`${plural(unscheduled.length, 'scene has', 'scenes have')} no shoot date.`)
   return parts.join(' ')
 }

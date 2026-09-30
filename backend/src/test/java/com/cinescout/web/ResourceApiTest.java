@@ -429,6 +429,70 @@ class ResourceApiTest extends ApiTest {
         web.get().uri("/api/projects/" + project + "/locations/export").exchange().expectStatus().isUnauthorized();
     }
 
+    // --- schedule --------------------------------------------------------------------------------
+
+    private String datedScene(Account owner, String projectId, int number, String start, String end) {
+        Map<String, Object> body = new java.util.HashMap<>(Map.of("sceneNumber", number, "title", "Scene " + number, "sourceText", "text"));
+        if (start != null) {
+            body.put("shootDateStart", start);
+        }
+        if (end != null) {
+            body.put("shootDateEnd", end);
+        }
+        return json(owner.client().post().uri("/api/projects/" + projectId + "/scenes").bodyValue(body)
+                .exchange().expectStatus().isCreated()).path("id").asText();
+    }
+
+    @Test
+    void theScheduleGroupsScenesByTheDayTheirShootStartsWithTheirConfirmedVenues() {
+        Account ada = register("Ada");
+        String project = project(ada, "Neon Nights");
+        String later = datedScene(ada, project, 1, "2026-10-14", "2026-10-15");
+        String second = datedScene(ada, project, 2, "2026-10-12", null);
+        String first = datedScene(ada, project, 3, "2026-10-12", "2026-10-12");
+        String onlyEnd = datedScene(ada, project, 4, null, "2026-10-13");
+        String undated = datedScene(ada, project, 5, null, null);
+        String venue = location(ada, second, "Wythe Hotel", null);
+        location(ada, second, "Runner-up", null);
+        setStatus(ada, venue, "CONFIRMED");
+        jdbc.update("UPDATE locations SET address = '80 Wythe Ave', latitude = 40.722, longitude = -73.958 WHERE id = ?::uuid", venue);
+        jdbc.update("UPDATE scenes SET parse_status = 'PARSED', setting_type = 'rooftop bar', time_of_day = 'night' WHERE id = ?::uuid", second);
+
+        JsonNode schedule = json(ada.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isOk());
+
+        assertThat(schedule.path("days").findValuesAsText("date")).containsExactly("2026-10-12", "2026-10-13", "2026-10-14");
+        JsonNode day = schedule.path("days").get(0).path("scenes");
+        assertThat(day.get(0).path("id").asText()).isEqualTo(second);
+        assertThat(day.get(1).path("id").asText()).isEqualTo(first);
+        assertThat(day.get(0).path("settingType").asText()).isEqualTo("rooftop bar");
+        assertThat(day.get(0).path("timeOfDay").asText()).isEqualTo("night");
+        assertThat(day.get(0).path("candidates").asInt()).isEqualTo(2);
+        assertThat(day.get(0).path("venues")).hasSize(1);
+        assertThat(day.get(0).path("venues").get(0).path("id").asText()).isEqualTo(venue);
+        assertThat(day.get(0).path("venues").get(0).path("name").asText()).isEqualTo("Wythe Hotel");
+        assertThat(day.get(0).path("venues").get(0).path("address").asText()).isEqualTo("80 Wythe Ave");
+        assertThat(day.get(1).path("venues")).isEmpty();
+        assertThat(day.get(1).path("candidates").asInt()).isZero();
+        assertThat(day.get(1).path("settingType").isNull()).isTrue();
+        assertThat(schedule.path("days").get(1).path("scenes").get(0).path("id").asText()).isEqualTo(onlyEnd);
+        JsonNode last = schedule.path("days").get(2).path("scenes").get(0);
+        assertThat(last.path("id").asText()).isEqualTo(later);
+        assertThat(last.path("shootDateEnd").asText()).isEqualTo("2026-10-15");
+        assertThat(schedule.path("unscheduled").findValuesAsText("id")).containsExactly(undated);
+    }
+
+    @Test
+    void anEmptyProjectHasAnEmptyScheduleAndAnotherUsersIsA404() {
+        Account ada = register("Ada");
+        Account grace = register("Grace");
+        String project = project(ada, "Neon Nights");
+
+        JsonNode schedule = json(ada.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isOk());
+        assertThat(schedule.path("days")).isEmpty();
+        assertThat(schedule.path("unscheduled")).isEmpty();
+        grace.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isNotFound();
+    }
+
     // --- script import ---------------------------------------------------------------------------
 
     private static final String SCRIPT = """

@@ -18,6 +18,7 @@ import type {
   ProjectStatus,
   RegisterRequest,
   Scene,
+  Schedule,
   SceneRequest,
   ScoutingResult,
   ScriptImport,
@@ -76,6 +77,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       remove: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Counts of the project's scenes and candidate locations, by how far each has come. */
       progress: (id: string) => call<ProjectProgress>(`/api/projects/${encodeURIComponent(id)}/progress`),
+      /** The scenes by the day their shoot starts, each with its confirmed locations. */
+      schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
     },
     scenes: {
       /** In script order. */

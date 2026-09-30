@@ -212,7 +212,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Area | Routes |
 |---|---|
 | Accounts | `POST /auth/register` (public), `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `PUT /account`, `PUT /account/password`, `POST /account/delete` |
-| Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress` |
+| Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress`, `GET /projects/{id}/schedule` |
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
@@ -231,7 +231,8 @@ The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is
 `GET /projects/{id}/locations` is the project-wide view of the candidates: every scene's locations in one list,
 scene by scene in script order, each row naming its scene; `?status=SHORTLISTED` (or any other status) narrows
 it. `GET /projects/{id}/progress` counts the scenes, the ones with candidates and with a confirmed location,
-and the locations by status. `GET /projects/{id}/locations/export` is the same list, all of it, as a CSV file
+and the locations by status. `GET /projects/{id}/schedule` lays the scenes out by the day their
+shoot starts, each with its confirmed locations, and lists the undated ones separately. `GET /projects/{id}/locations/export` is the same list, all of it, as a CSV file
 (UTF-8, one venue a row) for people who do not use the app; cells a spreadsheet would run as a formula are defused.
 
 `PUT /account` changes the display name. `PUT /account/password` (`currentPassword`, `newPassword`) changes the
@@ -271,3 +272,4 @@ comes back with that section marked `UNAVAILABLE`.
 10. Script import: a pasted screenplay is cut into scenes at its headings - done
 11. Project-wide locations: every scene's candidates in one list and map, by status, with progress counts - done
 12. Account page: display name, password change, account deletion - done
+13. Shoot schedule: scenes by shoot day with their confirmed venues, and what still lacks a date or a venue - done

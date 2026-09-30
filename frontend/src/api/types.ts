@@ -76,6 +76,29 @@ export interface SceneRequirements {
   estimatedCastAndCrewSize: number | null
 }
 
+/** A project's shoot as a calendar: the scenes by the day their shoot starts, and where each will be shot. */
+export interface Schedule {
+  /** Earliest first; each day's scenes in script order. */
+  days: { date: string; scenes: ScheduledScene[] }[]
+  /** Scenes without shoot dates, in script order. */
+  unscheduled: ScheduledScene[]
+}
+
+export interface ScheduledScene {
+  id: string
+  sceneNumber: number | null
+  title: string
+  shootDateStart: string | null
+  shootDateEnd: string | null
+  /** Null until the scene has been analysed. */
+  settingType: string | null
+  timeOfDay: string | null
+  /** The scene's confirmed locations; empty while none is confirmed. */
+  venues: { id: string; name: string; address: string | null; latitude: number | null; longitude: number | null }[]
+  /** How many candidate locations the scene has in all. */
+  candidates: number
+}
+
 /** What one run over a project's unanalysed scenes did. */
 export interface BatchParseResult {
   parsed: number
