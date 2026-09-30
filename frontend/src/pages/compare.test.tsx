@@ -35,7 +35,7 @@ describe('comparing the venues of a scene', () => {
 
     await user.click(await screen.findByRole('link', { name: 'Compare' }))
 
-    expect(router.state.location.pathname).toBe('/scenes/s1/compare')
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/scenes/s1/compare'))
     const table = await screen.findByRole('table', { name: 'Venues compared' })
     expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tom’s Diner', 'Corner Bistro'])
     expect(within(table).getByRole('link', { name: 'Corner Bistro' })).toHaveAttribute('href', '/locations/l2')

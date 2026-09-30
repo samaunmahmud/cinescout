@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, logIn, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
@@ -17,8 +17,8 @@ describe('the account page', () => {
     const user = await logIn()
 
     await user.click(await screen.findByRole('link', { name: 'Account: Ada' }))
-    expect(router.state.location.pathname).toBe('/account')
-    expect(screen.getByText('ada@example.com')).toBeInTheDocument()
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/account'))
+    expect(await screen.findByText('ada@example.com')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save name' })).toBeDisabled()
 
     const name = screen.getByLabelText('Display name')

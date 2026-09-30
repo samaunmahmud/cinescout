@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { ScriptImport } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, logIn, pageOf, project, scene } from '../test/fixtures'
@@ -38,8 +38,8 @@ describe('importing a script', () => {
     const user = await logIn()
 
     await user.click(await screen.findByRole('link', { name: 'Import script' }))
-    expect(router.state.location.pathname).toBe('/projects/p1/scenes/import')
-    expect(screen.getByRole('button', { name: 'Find scenes' })).toBeDisabled()
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/projects/p1/scenes/import'))
+    expect(await screen.findByRole('button', { name: 'Find scenes' })).toBeDisabled()
     await user.click(await screen.findByLabelText('Script'))
     await user.paste(SCRIPT)
     await user.click(screen.getByRole('button', { name: 'Find scenes' }))

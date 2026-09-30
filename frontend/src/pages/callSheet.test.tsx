@@ -19,7 +19,7 @@ describe('the call sheet', () => {
 
     await user.click(await screen.findByRole('link', { name: 'Call sheet' }))
 
-    expect(router.state.location.pathname).toBe('/projects/p1/call-sheet')
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/projects/p1/call-sheet'))
     const sheet = within(await screen.findByRole('article', { name: 'Call sheet' }))
     expect(sheet.getByRole('heading', { level: 2, name: 'Night Shift' })).toBeInTheDocument()
     expect(sheet.getByText(/Brooklyn, New York · Prepared by Ada/)).toBeInTheDocument()
