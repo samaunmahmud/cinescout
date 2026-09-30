@@ -348,13 +348,13 @@ function Contact({ location }: { location: Location }) {
           </div>
         </form>
       ) : known ? (
-        <dl className="grid gap-3 sm:grid-cols-3">
+        <dl className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-[1fr_1.4fr_1fr]">
           <Fact icon={UserRound} label="Name">
             {location.contactName ?? '—'}
           </Fact>
           <Fact icon={Mail} label="Email">
             {location.contactEmail ? (
-              <a href={`mailto:${location.contactEmail}`} className="break-all text-amber-300 underline hover:text-amber-200">
+              <a href={`mailto:${location.contactEmail}`} className="break-words text-amber-300 underline hover:text-amber-200">
                 {location.contactEmail}
               </a>
             ) : (
