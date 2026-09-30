@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,6 +30,9 @@ import java.util.Map;
  */
 public class OverpassPlacesClient implements PlacesClient {
 
+    /** A failure this soon after asking is the server turning the query away, not failing to answer it. */
+    private static final Duration TURNED_AWAY_WITHIN = Duration.ofSeconds(3);
+
     private static final String SERVICE = "Overpass";
 
     private final WebClient overpass;
@@ -40,8 +44,24 @@ public class OverpassPlacesClient implements PlacesClient {
         this.props = props;
     }
 
+    /**
+     * A busy public server fails in two ways. It may take the query and time out after half a minute: trying
+     * again would hold the request for another half minute and add to the load, so that is final. Or it turns
+     * the query away at once (a 504 or 429 within a second or two), and a moment later often takes it: that is
+     * worth one more try after a short pause.
+     */
     @Override
     public Mono<List<Place>> around(GeoPoint point) {
+        return Mono.defer(() -> {
+            long started = System.nanoTime();
+            return query(point).onErrorResume(LogisticsException.class, error -> {
+                boolean turnedAway = error.isRetryable() && Duration.ofNanos(System.nanoTime() - started).compareTo(TURNED_AWAY_WITHIN) < 0;
+                return turnedAway ? Mono.delay(props.retryPause()).then(query(point)) : Mono.error(error);
+            });
+        });
+    }
+
+    private Mono<List<Place>> query(GeoPoint point) {
         Mono<List<Place>> call = Mono.defer(() -> overpass.post()
                         .uri("/api/interpreter")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)

@@ -88,7 +88,8 @@ public class LogisticsService {
         this.weatherGuard = guard(guards, "weather", true);
         // The public Overpass server answers a busy spell with 504s and timeouts that take half a minute each;
         // retrying would hold the request for minutes and add to its load. One try, then the section is marked
-        // unavailable and the user can refresh later.
+        // unavailable and the user can refresh later. (A query the server turns away at once is tried a second
+        // time by the client itself, which costs seconds, not minutes.)
         this.placesGuard = guard(guards, "places", false);
         this.geocodingGuard = guard(guards, "geocoding", true);
         this.locations = locations;

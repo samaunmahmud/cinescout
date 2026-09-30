@@ -19,12 +19,15 @@ import java.time.Duration;
  * @param baseUrl              Overpass host
  * @param serverTimeoutSeconds how long Overpass may run the query
  * @param timeout              whole-call budget; a little longer than the server's, so its own answer arrives
+ * @param retryPause           how long to wait before the one second try after the server turned a query away at
+ *                             once; see {@code OverpassPlacesClient}
  */
 @Validated
 @ConfigurationProperties("cinescout.logistics.overpass")
 public record OverpassProperties(
         @DefaultValue("https://overpass-api.de") @NotBlank String baseUrl,
         @DefaultValue("25") @Min(5) @Max(180) int serverTimeoutSeconds,
-        @DefaultValue("30s") @NotNull Duration timeout
+        @DefaultValue("30s") @NotNull Duration timeout,
+        @DefaultValue("2s") @NotNull Duration retryPause
 ) {
 }

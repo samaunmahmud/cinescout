@@ -7,6 +7,7 @@ import com.cinescout.logistics.ProviderHttp;
 import com.cinescout.logistics.places.Place;
 import com.cinescout.logistics.places.PlaceKind;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -37,7 +38,7 @@ class OverpassPlacesClientTest {
     private OverpassPlacesClient client() {
         Duration timeout = Duration.ofSeconds(5);
         return new OverpassPlacesClient(ProviderHttp.webClient(WebClient.builder(), api.baseUrl(), timeout, "CineScout-test"),
-                new OverpassProperties(api.baseUrl(), 25, timeout));
+                new OverpassProperties(api.baseUrl(), 25, timeout, Duration.ofMillis(10)));
     }
 
     private void stub(int status, String body) {
@@ -169,5 +170,29 @@ class OverpassPlacesClientTest {
 
         stub(400, "<html>parse error</html>");
         assertThat(((LogisticsException) catchThrowable(() -> client().around(ORIGIN).block())).kind()).isEqualTo(Kind.INVALID_REQUEST);
+    }
+
+    @Test
+    void aQueryTurnedAwayAtOnceIsTriedOnceMoreAndNoFurther() {
+        api.stubFor(post(urlEqualTo(INTERPRETER)).inScenario("busy").whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse().withStatus(504)).willSetStateTo("free"));
+        api.stubFor(post(urlEqualTo(INTERPRETER)).inScenario("busy").whenScenarioStateIs("free")
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(elements())));
+
+        assertThat(client().around(ORIGIN).block()).isEmpty();
+        api.verify(2, postRequestedFor(urlEqualTo(INTERPRETER)));
+
+        api.resetAll();
+        stub(504, "<html>Gateway Timeout</html>");
+        assertThat(catchThrowable(() -> client().around(ORIGIN).block())).isInstanceOf(LogisticsException.class);
+        api.verify(2, postRequestedFor(urlEqualTo(INTERPRETER)));
+    }
+
+    @Test
+    void aRequestTheServerRejectsAsWrongIsNotTriedAgain() {
+        stub(400, "<html>parse error</html>");
+
+        assertThat(catchThrowable(() -> client().around(ORIGIN).block())).isInstanceOf(LogisticsException.class);
+        api.verify(1, postRequestedFor(urlEqualTo(INTERPRETER)));
     }
 }
