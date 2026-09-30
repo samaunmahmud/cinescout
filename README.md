@@ -216,14 +216,14 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
-| Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
+| Scouting | `POST /scenes/{id}/parse`, `POST /projects/{id}/scenes/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
 | Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
 The lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,
 default `0`) and `?size=` (default `50`, at most `100`). The answer is
 `{ "items": [...], "page", "size", "totalItems", "totalPages" }`, each list in its own fixed order.
 
-`PUT` is a full replacement. Someone else's resource is always a `404`. The two scouting routes and
+`PUT` is a full replacement. Someone else's resource is always a `404`. The scouting routes and
 `generate` call paid services and can take many seconds; they answer `503` when the server has no
 AI keys (`generate` needs only the watsonx.ai key), and `429` past the user's [rate limit](#rate-limits). Listing, editing and deleting drafts always works.
 The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
@@ -239,7 +239,9 @@ characters) and adds one scene per scene heading, the lines starting with `INT.`
 headings and `#12#` scene numbers are understood too). The script's own scene numbers are kept when every
 scene has one and none is taken; otherwise the scenes are numbered on from the project's last one.
 `.../import/preview` returns the same cut without saving anything. No AI is involved: the scenes start
-unanalysed, like ones typed in.
+unanalysed, like ones typed in. `POST /projects/{id}/scenes/parse` then analyses the scenes still waiting, up to
+20 a call in script order, and answers `{ "parsed", "failed", "remaining" }`: call it again while scenes remain.
+Each scene counts as one AI call against the user's rate limit.
 
 `POST /locations/{id}/logistics` works out a location's shoot logistics and caches them on it (`GET` returns
 the cached report, `404` before the first run). For each shoot day it gives sunrise, sunset, golden and blue

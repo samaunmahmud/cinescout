@@ -12,10 +12,10 @@ class ScoutingUnconfiguredApiTest extends ApiTest {
     @Test
     void scoutingAndParsingAre503WithAnExplanationWhenNoKeysAreConfigured() {
         Account ada = register("Ada");
-        String path = "/api/scenes/" + UUID.randomUUID();
+        String scene = "/api/scenes/" + UUID.randomUUID();
 
-        for (String action : new String[] {"/scout", "/parse"}) {
-            ada.client().post().uri(path + action).exchange()
+        for (String path : new String[] {scene + "/scout", scene + "/parse", "/api/projects/" + UUID.randomUUID() + "/scenes/parse"}) {
+            ada.client().post().uri(path).exchange()
                     .expectStatus().isEqualTo(503)
                     .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                     .expectBody().jsonPath("$.detail").isEqualTo("Scouting is not configured on this server");

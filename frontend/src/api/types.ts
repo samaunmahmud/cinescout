@@ -71,6 +71,15 @@ export interface SceneRequirements {
   estimatedCastAndCrewSize: number | null
 }
 
+/** What one run over a project's unanalysed scenes did. */
+export interface BatchParseResult {
+  parsed: number
+  /** Scenes the AI could not make sense of; they are marked FAILED. */
+  failed: number
+  /** Scenes still waiting: a run takes a limited number. Run again to go on. */
+  remaining: number
+}
+
 /** The scenes found in a pasted script: what an import would add (a preview) or has added. */
 export interface ScriptImport {
   /** In script order. */

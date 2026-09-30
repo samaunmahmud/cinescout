@@ -63,6 +63,26 @@ class RateLimitApiTest extends ApiTest {
     }
 
     @Test
+    void aProjectParseSpendsOneAiCallPerSceneAndStopsWhenTheyRunOut() {
+        when(llm.generate(any(), any(), eq(SceneRequirements.class)))
+                .thenReturn(Mono.just(new SceneRequirements("rooftop bar", "neon", null, "night", AcousticSensitivity.LOW, 5)));
+        Account ada = registerFrom("203.0.113.9", "Ada");
+        String project = ada.client().post().uri("/api/projects").bodyValue(Map.of("title", "Neon", "locationArea", "Brooklyn"))
+                .exchange().expectStatus().isCreated().expectBody(JsonNode.class).returnResult().getResponseBody().path("id").asText();
+        for (int number = 1; number <= 3; number++) {
+            ada.client().post().uri("/api/projects/" + project + "/scenes")
+                    .bodyValue(Map.of("sceneNumber", number, "title", "Scene", "sourceText", "INT. ROOM - DAY.")).exchange().expectStatus().isCreated();
+        }
+
+        ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange()
+                .expectStatus().isOk()
+                .expectBody().jsonPath("$.parsed").isEqualTo(2).jsonPath("$.failed").isEqualTo(0).jsonPath("$.remaining").isEqualTo(1);
+        ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange()
+                .expectStatus().isEqualTo(429)
+                .expectHeader().exists(HttpHeaders.RETRY_AFTER);
+    }
+
+    @Test
     void aiCallsAreLimitedPerUserWithA429ThatSaysWhenToComeBack() {
         when(llm.generate(any(), any(), eq(SceneRequirements.class)))
                 .thenReturn(Mono.just(new SceneRequirements("rooftop bar", "neon", null, "night", AcousticSensitivity.LOW, 5)));

@@ -1,5 +1,6 @@
 package com.cinescout.repository;
 
+import com.cinescout.domain.ParseStatus;
 import com.cinescout.domain.Scene;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -33,4 +35,12 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
     Set<Integer> findSceneNumbersByProjectId(@Param("projectId") UUID projectId);
 
     long countByProjectId(UUID projectId);
+
+    long countByProjectIdAndParseStatus(UUID projectId, ParseStatus parseStatus);
+
+    /** The first scenes of a project in the given parse state, in script order. */
+    @Query("""
+            select s.id from Scene s where s.project.id = :projectId and s.parseStatus = :status
+            order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""")
+    List<UUID> findIdsByProjectAndParseStatus(@Param("projectId") UUID projectId, @Param("status") ParseStatus status, Pageable pageable);
 }

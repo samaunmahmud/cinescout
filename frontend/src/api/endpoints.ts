@@ -1,5 +1,6 @@
 import { ApiError, download, request } from './client'
 import type {
+  BatchParseResult,
   CreateLocationRequest,
   CreateProjectRequest,
   GenerateOutreachRequest,
@@ -84,6 +85,12 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       remove: (id: string) => call<void>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Extracts the filming requirements with the AI. Takes seconds; answers 503 when scouting is not configured. */
       parse: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}/parse`, { method: 'POST' }),
+      /**
+       * Analyses the project's scenes that are still waiting for it, a limited number a run; the answer says how
+       * many are left. Takes up to a minute; 429 or 503 only when no scene could be analysed at all.
+       */
+      parseAll: (projectId: string) =>
+        call<BatchParseResult>(`/api/projects/${encodeURIComponent(projectId)}/scenes/parse`, { method: 'POST' }),
       /**
        * Finds and assesses venues in the project's location area and saves the new ones; parses the scene first
        * if needed. Takes up to minutes; 409 when the project has no location area, 503 when not configured.

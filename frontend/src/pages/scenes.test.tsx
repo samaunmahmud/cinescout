@@ -108,6 +108,54 @@ describe('the scenes of a project', () => {
   })
 })
 
+describe('analysing every scene of a project', () => {
+  it('is offered while a scene is waiting, reports the run and shows what the AI found', async () => {
+    let analysed = false
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'GET /api/projects/p1/scenes?page=0&size=24': () =>
+        json(pageOf(analysed ? [scene({ parseStatus: 'PARSED', requirements }), scene({ id: 's2', sceneNumber: 13, parseStatus: 'FAILED' })] : [scene(), scene({ id: 's2', sceneNumber: 13 })])),
+      'POST /api/projects/p1/scenes/parse': () => {
+        analysed = true
+        return json({ parsed: 1, failed: 1, remaining: 4 })
+      },
+    })
+    renderApp('/projects/p1')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Analyse scenes' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Analysed 1 scene. 1 scene could not be analysed; open it to try again. 4 scenes are still waiting: analyse again to go on.',
+    )
+    expect(await screen.findByText('Late-night diner')).toBeInTheDocument()
+    // More are waiting on other pages, so the button stays although none on this page is.
+    expect(screen.getByRole('button', { name: 'Analyse scenes' })).toBeInTheDocument()
+    expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1)
+  })
+
+  it('is not offered once every scene in view has been analysed, and explains a failure', async () => {
+    let scenes = [scene({ parseStatus: 'PARSED', requirements })]
+    fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects/p1': () => json(project()),
+      'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf(scenes)),
+      'POST /api/projects/p1/scenes/parse': () => problem(503, 'Not available', 'Scouting is not configured on this server'),
+    })
+    const { unmount } = renderApp('/projects/p1')
+    const user = await logIn()
+    expect(await screen.findByText('Late-night diner')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Analyse scenes' })).not.toBeInTheDocument()
+    unmount()
+
+    scenes = [scene()]
+    renderApp('/projects/p1')
+    await user.click(await screen.findByRole('button', { name: 'Analyse scenes' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Scouting is not configured on this server')
+  })
+})
+
 describe('a scene', () => {
   function serverFor(current: Scene, extra: Parameters<typeof fakeServer>[0] = {}) {
     return fakeServer({

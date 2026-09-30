@@ -20,6 +20,7 @@ import com.cinescout.logistics.LogisticsException;
 import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
@@ -97,6 +98,7 @@ class SceneScoutingServiceTest {
 
     @Autowired EntityManager em;
     @Autowired SceneRepository scenes;
+    @Autowired ProjectRepository projects;
     @Autowired LocationRepository locations;
     @Autowired PlatformTransactionManager transactionManager;
 
@@ -113,7 +115,7 @@ class SceneScoutingServiceTest {
     void setUp() {
         setup = new TransactionTemplate(transactionManager);
         serviceTx = new RecordingTransactions(transactionManager);
-        service = new SceneScoutingService(pipeline, new VenuePlacer(geocoder, Duration.ofSeconds(5)), scenes, locations,
+        service = new SceneScoutingService(pipeline, new VenuePlacer(geocoder, Duration.ofSeconds(5)), scenes, projects, locations,
                 new BlockingTransactions(serviceTx),
                 Jackson2ObjectMapperBuilder.json().build());
     }
@@ -353,7 +355,7 @@ class SceneScoutingServiceTest {
             public Mono<GeoPoint> locate(String query) {
                 return Mono.error(new LogisticsException(LogisticsException.Kind.UNAVAILABLE, "down"));
             }
-        }, Duration.ofSeconds(5)), scenes, locations, new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
+        }, Duration.ofSeconds(5)), scenes, projects, locations, new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
         pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, "Alpha", "1 First St")), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();

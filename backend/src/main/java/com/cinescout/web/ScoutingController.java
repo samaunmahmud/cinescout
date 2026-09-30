@@ -3,6 +3,7 @@ package com.cinescout.web;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.ratelimit.RateLimit;
 import com.cinescout.ratelimit.RateLimiter;
+import com.cinescout.scouting.BatchParseResult;
 import com.cinescout.scouting.SceneScoutingService;
 import com.cinescout.scouting.ScoutingResult;
 import com.cinescout.search.LocationSearchRequest;
@@ -30,7 +31,7 @@ import java.util.UUID;
  * limited number of calls an hour (429 beyond it).
  */
 @RestController
-@RequestMapping("/api/scenes/{sceneId}")
+@RequestMapping("/api")
 @Tag(name = "Scouting", description = "AI-backed endpoints. They call paid external services and can take many seconds.")
 class ScoutingController {
 
@@ -47,9 +48,31 @@ class ScoutingController {
     @ApiResponse(responseCode = "429", description = "The user's hourly allowance of AI calls is used up; see Retry-After")
     @ApiResponse(responseCode = "502", description = "The model returned an unusable answer (the scene is marked FAILED) or a provider key is misconfigured")
     @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
-    @PostMapping("/parse")
+    @PostMapping("/scenes/{sceneId}/parse")
     Mono<SceneResponse> parse(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId) {
         return service(RateLimit.AI, user).flatMap(s -> s.parseScene(user.id(), sceneId));
+    }
+
+    /**
+     * Analyses the project's scenes that are still waiting for it, e.g. after a script import. Each scene counts
+     * against the user's hourly allowance of AI calls, as it would parsed on its own.
+     */
+    @Operation(summary = "Extract the requirements of a project's unanalysed scenes",
+            description = "Analyses up to " + SceneScoutingService.MAX_BATCH + " scenes that have not been analysed yet, in script order, and says how many "
+                    + "are left: run it again to go on. A scene the model cannot make sense of is marked FAILED and the run continues. "
+                    + "Each scene counts as one AI call against the user's allowance; when that or the AI service gives out part-way, "
+                    + "the answer reports what was done and the rest stays pending.")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of AI calls is used up and no scene was analysed; see Retry-After")
+    @ApiResponse(responseCode = "502", description = "A provider key is misconfigured")
+    @ApiResponse(responseCode = "503", description = "The AI service is unavailable and no scene was analysed, or scouting is not configured on this server; see Retry-After")
+    @PostMapping("/projects/{projectId}/scenes/parse")
+    Mono<BatchParseResult> parseProject(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
+        return Mono.defer(() -> {
+            SceneScoutingService service = scouting.getIfAvailable();
+            return service == null
+                    ? Mono.error(new FeatureUnavailableException("Scouting is not configured on this server"))
+                    : service.parseProject(user.id(), projectId, () -> limits.acquire(RateLimit.AI, user.id()));
+        });
     }
 
     /**
@@ -65,7 +88,7 @@ class ScoutingController {
     @ApiResponse(responseCode = "429", description = "The user's hourly allowance of scouting runs is used up; see Retry-After")
     @ApiResponse(responseCode = "502", description = "The model returned an unusable answer or a provider key is misconfigured")
     @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
-    @PostMapping("/scout")
+    @PostMapping("/scenes/{sceneId}/scout")
     Mono<ScoutingResult> scout(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                @RequestParam(defaultValue = "" + LocationSearchRequest.DEFAULT_MAX_RESULTS)
                                @Min(1) @Max(LocationSearchRequest.MAX_RESULTS) int maxResults) {

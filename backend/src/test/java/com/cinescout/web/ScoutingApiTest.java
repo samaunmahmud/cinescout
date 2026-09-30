@@ -121,6 +121,88 @@ class ScoutingApiTest extends ApiTest {
                 .expectBody().jsonPath("$.parseStatus").isEqualTo("FAILED");
     }
 
+    // --- parse a whole project ------------------------------------------------------------------
+
+    private String sceneNumbered(Account owner, String projectId, int number, String text) {
+        return json(owner.client().post().uri("/api/projects/" + projectId + "/scenes")
+                .bodyValue(Map.of("sceneNumber", number, "title", "Scene " + number, "sourceText", text))
+                .exchange().expectStatus().isCreated()).path("id").asText();
+    }
+
+    private String parseStatus(Account owner, String sceneId) {
+        return json(owner.client().get().uri("/api/scenes/" + sceneId).exchange().expectStatus().isOk()).path("parseStatus").asText();
+    }
+
+    @Test
+    void parsingAProjectAnalysesItsPendingScenesAndMarksTheOnesTheModelCannotRead() {
+        when(llm.generate(any(), any(), eq(SceneRequirements.class))).thenAnswer(call -> ((String) call.getArgument(1)).contains("GIBBERISH")
+                ? Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable"))
+                : Mono.just(REQUIREMENTS));
+        Account ada = register("Ada");
+        String project = project(ada, "Brooklyn, New York");
+        String one = sceneNumbered(ada, project, 1, "INT. ROOFTOP BAR - NIGHT.");
+        String two = sceneNumbered(ada, project, 2, "GIBBERISH");
+        String three = sceneNumbered(ada, project, 3, "EXT. PIER - DAWN.");
+        ada.client().post().uri("/api/scenes/" + three + "/parse").exchange().expectStatus().isOk();
+        org.mockito.Mockito.clearInvocations(llm);
+
+        JsonNode result = json(ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange().expectStatus().isOk());
+
+        assertThat(result.path("parsed").asInt()).isEqualTo(1);
+        assertThat(result.path("failed").asInt()).isEqualTo(1);
+        assertThat(result.path("remaining").asInt()).isZero();
+        assertThat(parseStatus(ada, one)).isEqualTo("PARSED");
+        assertThat(parseStatus(ada, two)).isEqualTo("FAILED");
+        // The scene already analysed is not analysed again, and a failed one is not retried by the next run.
+        JsonNode again = json(ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange().expectStatus().isOk());
+        assertThat(again.toString()).isEqualTo("{\"parsed\":0,\"failed\":0,\"remaining\":0}");
+    }
+
+    @Test
+    void aProjectParseTakesALimitedNumberOfScenesAndSaysHowManyAreLeft() {
+        Account ada = register("Ada");
+        String project = project(ada, "Brooklyn, New York");
+        for (int number = 1; number <= 22; number++) {
+            sceneNumbered(ada, project, number, "INT. ROOM " + number + " - DAY.");
+        }
+
+        JsonNode first = json(ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange().expectStatus().isOk());
+        assertThat(first.path("parsed").asInt()).isEqualTo(20);
+        assertThat(first.path("remaining").asInt()).isEqualTo(2);
+
+        JsonNode second = json(ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange().expectStatus().isOk());
+        assertThat(second.path("parsed").asInt()).isEqualTo(2);
+        assertThat(second.path("remaining").asInt()).isZero();
+    }
+
+    @Test
+    void aProjectParseThatGetsNowhereReportsWhy() {
+        when(llm.generate(any(), any(), eq(SceneRequirements.class)))
+                .thenReturn(Mono.error(new LlmException(Kind.UNAVAILABLE, "SECRET upstream detail")));
+        Account ada = register("Ada");
+        String project = project(ada, "Brooklyn, New York");
+        String scene = sceneNumbered(ada, project, 1, "INT. ROOFTOP BAR - NIGHT.");
+
+        ada.client().post().uri("/api/projects/" + project + "/scenes/parse").exchange()
+                .expectStatus().isEqualTo(503)
+                .expectHeader().contentType(PROBLEM)
+                .expectBody().jsonPath("$.detail").value(d -> assertThat(d.toString()).doesNotContain("SECRET"));
+        assertThat(parseStatus(ada, scene)).isEqualTo("PENDING");
+    }
+
+    @Test
+    void anotherUsersProjectCannotBeParsed() {
+        Account ada = register("Ada");
+        Account grace = register("Grace");
+        String graceProject = project(grace, "Brooklyn, New York");
+        String graceScene = sceneNumbered(grace, graceProject, 1, "INT. ROOFTOP BAR - NIGHT.");
+
+        ada.client().post().uri("/api/projects/" + graceProject + "/scenes/parse").exchange().expectStatus().isNotFound();
+
+        assertThat(parseStatus(grace, graceScene)).isEqualTo("PENDING");
+        verifyNoInteractions(llm);
+    }
+
     // --- scout ----------------------------------------------------------------------------------
 
     @Test

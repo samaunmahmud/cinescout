@@ -4,6 +4,7 @@ import com.cinescout.llm.RateLimitedLlmClient;
 import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.search.parallel.ParallelSearchClient;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ class ScoutingConfigTest {
                     configClass("com.cinescout.search.parallel.ParallelConfig"))
             // The persistence beans come from JPA, which this slice does not load.
             .withBean(SceneRepository.class, () -> mock(SceneRepository.class))
+            .withBean(ProjectRepository.class, () -> mock(ProjectRepository.class))
             .withBean(LocationRepository.class, () -> mock(LocationRepository.class))
             .withBean(BlockingTransactions.class, () -> mock(BlockingTransactions.class))
             // Logistics owns the geocoder (it always exists); scouting only borrows it.

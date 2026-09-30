@@ -1,4 +1,4 @@
-import type { ProjectProgress, ScoutingResult } from '../api/types'
+import type { BatchParseResult, ProjectProgress, ScoutingResult } from '../api/types'
 
 // Shoot dates are plain calendar dates (yyyy-mm-dd) with no time zone, so they are formatted in UTC:
 // formatting them in the viewer's zone could show the day before.
@@ -44,4 +44,13 @@ export function progressSummary({ scenes, scenesConfirmed, scenesWithLocations }
   if (scenes === 0) return 'This project has no scenes yet.'
   const confirmed = `${scenesConfirmed} of ${plural(scenes, 'scene', 'scenes')} ${scenesConfirmed === 1 ? 'has' : 'have'} a confirmed location.`
   return `${confirmed} ${scenesWithLocations} ${scenesWithLocations === 1 ? 'has' : 'have'} candidates.`
+}
+
+/** One sentence on what analysing a project's scenes did, for the banner after it. */
+export function batchParseSummary({ parsed, failed, remaining }: BatchParseResult): string {
+  if (parsed + failed === 0 && remaining === 0) return 'Every scene has been analysed already.'
+  const parts = [`Analysed ${plural(parsed, 'scene', 'scenes')}.`]
+  if (failed > 0) parts.push(`${plural(failed, 'scene', 'scenes')} could not be analysed; open ${failed === 1 ? 'it' : 'them'} to try again.`)
+  if (remaining > 0) parts.push(`${plural(remaining, 'scene is', 'scenes are')} still waiting: analyse again to go on.`)
+  return parts.join(' ')
 }

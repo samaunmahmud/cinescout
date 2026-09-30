@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, ChevronRight, FileText, Film, Plus } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CalendarDays, ChevronRight, FileText, Film, Plus, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import { useSession } from '../auth/context'
@@ -9,8 +9,8 @@ import { previousPageOf, usePageParam, useStayInRange } from '../components/pagi
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
 import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
-import { ErrorAlert, Spinner } from '../components/ui'
-import { formatShootWindow, sceneLabel } from '../lib/format'
+import { Button, ErrorAlert, Spinner } from '../components/ui'
+import { batchParseSummary, formatShootWindow, sceneLabel } from '../lib/format'
 
 /** A project's scenes in script order, each as a slate. */
 export function ScenesSection({ projectId }: { projectId: string }) {
@@ -23,6 +23,18 @@ export function ScenesSection({ projectId }: { projectId: string }) {
   })
   useStayInRange(scenes.data, setPage)
 
+  const queryClient = useQueryClient()
+  const analyse = useMutation({
+    mutationFn: () => api.scenes.parseAll(projectId),
+    // Also after a failure: some scenes may have been analysed (or marked failed) before it.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sceneList(projectId) })
+      queryClient.invalidateQueries({ queryKey: ['scenes', 'detail'] })
+    },
+  })
+  // Offered while a scene in view is waiting, or the last run said more are (they may be on another page).
+  const waiting = (scenes.data?.items.some((scene) => scene.parseStatus === 'PENDING') ?? false) || (analyse.data?.remaining ?? 0) > 0
+
   return (
     <Section
       titleId="scenes-heading"
@@ -31,6 +43,12 @@ export function ScenesSection({ projectId }: { projectId: string }) {
       icon={Film}
       actions={
         <>
+          {waiting && (
+            <Button variant="secondary" busy={analyse.isPending} onClick={() => analyse.mutate()}>
+              {!analyse.isPending && <Sparkles aria-hidden className="size-4" />}
+              Analyse scenes
+            </Button>
+          )}
           <Link to={`/projects/${projectId}/scenes/import`} className={linkButton('ghost')}>
             <FileText aria-hidden className="size-4" />
             Import script
@@ -42,6 +60,18 @@ export function ScenesSection({ projectId }: { projectId: string }) {
         </>
       }
     >
+      {analyse.isPending ? (
+        <Spinner label="Reading the scenes that have not been analysed yet. This can take a minute." />
+      ) : analyse.isError ? (
+        <ErrorAlert error={analyse.error} />
+      ) : (
+        analyse.data && (
+          <p role="status" className="rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+            {batchParseSummary(analyse.data)}
+          </p>
+        )
+      )}
+
       {scenes.isPending ? (
         <Spinner label="Loading scenes" />
       ) : scenes.isError ? (

@@ -3,6 +3,7 @@ package com.cinescout.scouting;
 import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.Location;
+import com.cinescout.domain.ParseStatus;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.domain.VenueNames;
@@ -12,13 +13,17 @@ import com.cinescout.llm.LlmException;
 import com.cinescout.logistics.GeoPoint;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.scouting.ScoutingException.Kind;
 import com.cinescout.service.Conflicts;
+import com.cinescout.service.NotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -27,8 +32,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Scouting for a persisted scene: runs the {@link ScoutingPipeline} and stores what it finds.
@@ -54,18 +61,24 @@ public class SceneScoutingService {
     private static final int MAX_NAME = 200;
     private static final int MAX_ADDRESS = 500;
 
+    /** How many scenes one batch analyses: each is a model call of a few seconds, and the request waits for them all. */
+    public static final int MAX_BATCH = 20;
+    private static final int BATCH_CONCURRENCY = 4;
+
     private final ScoutingPipeline pipeline;
     private final VenuePlacer placer;
     private final SceneRepository scenes;
+    private final ProjectRepository projects;
     private final LocationRepository locations;
     private final BlockingTransactions db;
     private final ObjectMapper mapper;
 
-    public SceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes,
+    public SceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes, ProjectRepository projects,
                                 LocationRepository locations, BlockingTransactions db, ObjectMapper mapper) {
         this.pipeline = pipeline;
         this.placer = placer;
         this.scenes = scenes;
+        this.projects = projects;
         this.locations = locations;
         this.db = db;
         this.mapper = mapper;
@@ -79,6 +92,36 @@ public class SceneScoutingService {
     public Mono<SceneResponse> parseScene(UUID ownerId, UUID sceneId) {
         return db.call(() -> load(ownerId, sceneId).getSourceText())
                 .flatMap(sourceText -> extractAndStore(ownerId, sceneId, sourceText));
+    }
+
+    /**
+     * Analyses the project's scenes that have not been analysed yet, in script order, at most
+     * {@value #MAX_BATCH} a run (the rest are reported as remaining, for the next run). Scenes whose analysis
+     * failed before are left alone: they are retried one at a time, by choice.
+     *
+     * <p>Each scene is one model call, so each needs a {@code permit} (the caller's rate limit). A scene the
+     * model cannot make sense of is marked {@code FAILED} and the run goes on. When the permits or the AI
+     * service give out, the scenes not reached simply stay as they were; only if that leaves the run with
+     * nothing at all to show is the cause emitted as the error.
+     *
+     * @param permit subscribed to once per scene, before its model call; an error skips the scene
+     * @throws NotFoundException (as an error signal) if the project is not the owner's
+     */
+    public Mono<BatchParseResult> parseProject(UUID ownerId, UUID projectId, Supplier<Mono<Void>> permit) {
+        return db.call(() -> pendingScenes(ownerId, projectId))
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(sceneId -> parseOne(ownerId, sceneId, permit), BATCH_CONCURRENCY)
+                .collectList()
+                .flatMap(attempts -> {
+                    int parsed = (int) attempts.stream().filter(attempt -> attempt.outcome() == Attempt.Outcome.PARSED).count();
+                    int failed = (int) attempts.stream().filter(attempt -> attempt.outcome() == Attempt.Outcome.FAILED).count();
+                    Throwable blocker = attempts.stream().map(Attempt::blocker).filter(Objects::nonNull).findFirst().orElse(null);
+                    if (parsed + failed == 0 && blocker != null) {
+                        return Mono.error(blocker);
+                    }
+                    return db.call(() -> new BatchParseResult(parsed, failed,
+                            (int) scenes.countByProjectIdAndParseStatus(projectId, ParseStatus.PENDING)));
+                });
     }
 
     /**
@@ -100,6 +143,32 @@ public class SceneScoutingService {
     }
 
     // --- steps ----------------------------------------------------------------------------------
+
+    private List<UUID> pendingScenes(UUID ownerId, UUID projectId) {
+        projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+        return scenes.findIdsByProjectAndParseStatus(projectId, ParseStatus.PENDING, PageRequest.of(0, MAX_BATCH));
+    }
+
+    /** How one scene of a batch went; {@code blocker} is why it was not attempted or could not be answered. */
+    private record Attempt(Outcome outcome, Throwable blocker) {
+        enum Outcome { PARSED, FAILED, NOT_DONE }
+
+        static final Attempt PARSED = new Attempt(Outcome.PARSED, null);
+        static final Attempt FAILED = new Attempt(Outcome.FAILED, null);
+    }
+
+    private Mono<Attempt> parseOne(UUID ownerId, UUID sceneId, Supplier<Mono<Void>> permit) {
+        return permit.get()
+                .then(Mono.defer(() -> parseScene(ownerId, sceneId)))
+                .thenReturn(Attempt.PARSED)
+                .onErrorResume(error -> {
+                    if (error instanceof LlmException llm && llm.kind() == LlmException.Kind.INVALID_OUTPUT) {
+                        return Mono.just(Attempt.FAILED);
+                    }
+                    log.info("Scene {} left unanalysed in a batch: {}", sceneId, error.toString());
+                    return Mono.just(new Attempt(Attempt.Outcome.NOT_DONE, error));
+                });
+    }
 
     private record Target(String sourceText, SceneRequirements requirements, String area) {
     }
