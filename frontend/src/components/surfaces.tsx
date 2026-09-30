@@ -129,7 +129,7 @@ export function Tabs<K extends string>({
         role="tablist"
         aria-label={label}
         onKeyDown={onKeyDown}
-        className="sticky top-[68px] z-20 -mx-4 flex gap-1 overflow-x-auto border-b border-amber-300/15 bg-ink/90 px-4 backdrop-blur"
+        className="sticky top-[68px] z-20 -mx-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-amber-300/15 bg-ink/90 px-4 backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {items.map(({ key, label: text, icon: Icon }) => {
           const active = key === selected
