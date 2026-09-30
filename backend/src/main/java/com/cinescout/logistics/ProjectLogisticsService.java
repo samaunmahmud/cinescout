@@ -2,6 +2,8 @@ package com.cinescout.logistics;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
+import com.cinescout.domain.Scene;
+import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
@@ -13,13 +15,15 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Works out the logistics of a project's confirmed venues that do not have them yet, so the schedule and the call
+ * Works out the logistics of a project's confirmed venues that do not have them yet (or whose report predates the
+ * scene's current dates), so the schedule and the call
  * sheet can show the light and the weather on each shoot day. One venue at a time: each is several calls to free
  * public services, whose fair-use rules the per-user lookup allowance keeps.
  */
@@ -71,7 +75,20 @@ public class ProjectLogisticsService {
     private List<Location> missing(UUID ownerId, UUID projectId) {
         projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
         return locations.findOwnedByProjectAndStatus(projectId, ownerId, LocationStatus.CONFIRMED, Pageable.unpaged())
-                .stream().filter(location -> location.getLogisticsJson() == null).toList();
+                .stream().filter(ProjectLogisticsService::needsLogistics).toList();
+    }
+
+    /**
+     * No report yet, or one worked out before the scene was given (other) dates: its days do not include the one
+     * the scene is now shot on, so a call sheet would have nothing to say about it.
+     */
+    private static boolean needsLogistics(Location location) {
+        if (location.getLogisticsJson() == null) {
+            return true;
+        }
+        Scene scene = location.getScene();
+        LocalDate day = scene.getShootDateStart() != null ? scene.getShootDateStart() : scene.getShootDateEnd();
+        return day != null && ScheduleResponse.DayConditions.of(location.getLogisticsJson(), day) == null;
     }
 
     private record Attempt(Throwable error) {

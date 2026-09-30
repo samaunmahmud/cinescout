@@ -76,7 +76,8 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
      */
     public record DayConditions(String sunrise, String sunset, String weather, Double temperatureMinC, Double temperatureMaxC) {
 
-        static DayConditions of(JsonNode report, LocalDate date) {
+        /** The conditions on {@code date} in a logistics report; null when there is no report, or it does not cover the date. */
+        public static DayConditions of(JsonNode report, LocalDate date) {
             if (report == null || date == null) {
                 return null;
             }

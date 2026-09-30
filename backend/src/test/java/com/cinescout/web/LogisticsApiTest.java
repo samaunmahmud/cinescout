@@ -443,7 +443,8 @@ class LogisticsApiTest extends ApiTest {
         confirm(ada, confirmed);
         confirm(ada, alreadyDone);
         confirm(ada, lost);
-        jdbc.update("UPDATE locations SET logistics_json = '{\"version\":1}'::jsonb WHERE id = ?::uuid", alreadyDone);
+        String covering = "{\"solar\":{\"days\":[{\"date\":\"" + today.plusDays(1) + "\"}]}}";
+        jdbc.update("UPDATE locations SET logistics_json = ?::jsonb WHERE id = ?::uuid", covering, alreadyDone);
         when(geocoder.locate(any())).thenReturn(Mono.empty());
 
         JsonNode result = json(ada.client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isOk());
@@ -452,7 +453,8 @@ class LogisticsApiTest extends ApiTest {
         assertThat(result.path("failed").asInt()).isEqualTo(1);
         assertThat(result.path("remaining").asInt()).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT logistics_json IS NOT NULL FROM locations WHERE id = ?::uuid", Boolean.class, confirmed)).isTrue();
-        assertThat(jdbc.queryForObject("SELECT logistics_json::text FROM locations WHERE id = ?::uuid", String.class, alreadyDone)).isEqualTo("{\"version\": 1}");
+        assertThat(jdbc.queryForObject("SELECT logistics_json->'solar'->'days'->0->>'date' FROM locations WHERE id = ?::uuid", String.class, alreadyDone))
+                .isEqualTo(today.plusDays(1).toString());
         assertThat(jdbc.queryForObject("SELECT logistics_json IS NULL FROM locations WHERE id = ?::uuid", Boolean.class, suggested)).isTrue();
         assertThat(lost).isNotBlank();
     }
@@ -465,5 +467,20 @@ class LogisticsApiTest extends ApiTest {
         ada.client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isOk()
                 .expectBody().json("{\"updated\":0,\"failed\":0,\"remaining\":0}");
         register("Grace").client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isNotFound();
+    }
+
+    @Test
+    void aReportFromBeforeTheSceneWasMovedIsWorkedOutAgain() {
+        Account ada = register("Ada");
+        String project = project(ada);
+        String venue = location(ada, scene(ada, project, 5), Map.of("latitude", new BigDecimal("40.712800"), "longitude", new BigDecimal("-74.006000")));
+        confirm(ada, venue);
+        String stale = "{\"solar\":{\"days\":[{\"date\":\"" + today.plusDays(1) + "\"}]}}";
+        jdbc.update("UPDATE locations SET logistics_json = ?::jsonb WHERE id = ?::uuid", stale, venue);
+
+        ada.client().post().uri("/api/projects/" + project + "/logistics").exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.updated").isEqualTo(1).jsonPath("$.remaining").isEqualTo(0);
+        assertThat(jdbc.queryForObject("SELECT logistics_json->'solar'->'days'->0->>'date' FROM locations WHERE id = ?::uuid", String.class, venue))
+                .isEqualTo(today.plusDays(5).toString());
     }
 }
