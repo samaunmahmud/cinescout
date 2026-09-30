@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, ChevronRight, Film, Plus } from 'lucide-react'
+import { CalendarDays, ChevronRight, FileText, Film, Plus } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import { useSession } from '../auth/context'
@@ -30,10 +30,16 @@ export function ScenesSection({ projectId }: { projectId: string }) {
       eyebrow="The shooting script"
       icon={Film}
       actions={
-        <Link to={`/projects/${projectId}/scenes/new`} className={linkButton()}>
-          <Plus aria-hidden className="size-4" />
-          Add scene
-        </Link>
+        <>
+          <Link to={`/projects/${projectId}/scenes/import`} className={linkButton('ghost')}>
+            <FileText aria-hidden className="size-4" />
+            Import script
+          </Link>
+          <Link to={`/projects/${projectId}/scenes/new`} className={linkButton()}>
+            <Plus aria-hidden className="size-4" />
+            Add scene
+          </Link>
+        </>
       }
     >
       {scenes.isPending ? (
@@ -41,7 +47,7 @@ export function ScenesSection({ projectId }: { projectId: string }) {
       ) : scenes.isError ? (
         <ErrorAlert error={scenes.error} onRetry={() => scenes.refetch()} />
       ) : scenes.data.items.length === 0 ? (
-        <EmptyState icon={Film}>No scenes yet. Add one with its script, and CineScout works out what kind of location it needs.</EmptyState>
+        <EmptyState icon={Film}>No scenes yet. Add one with its script, or import a whole screenplay, and CineScout works out what kind of location each scene needs.</EmptyState>
       ) : (
         <>
           <ul className="space-y-3">

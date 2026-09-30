@@ -11,6 +11,8 @@ spring:
       ddl-auto: validate       # Flyway owns the schema; Hibernate only checks the mapping
   flyway:
     enabled: true
+  codec:
+    max-in-memory-size: 1MB    # a whole screenplay can be pasted in for import (the default is 256KB)
 
 cinescout:
   llm:

@@ -1,11 +1,14 @@
 package com.cinescout.web;
 
+import com.cinescout.dto.ImportScriptRequest;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.SceneRequest;
 import com.cinescout.dto.SceneResponse;
+import com.cinescout.dto.ScriptImportResponse;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.SceneService;
+import com.cinescout.service.ScriptImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,9 +37,11 @@ import java.util.UUID;
 class SceneController {
 
     private final SceneService scenes;
+    private final ScriptImportService scripts;
 
-    SceneController(SceneService scenes) {
+    SceneController(SceneService scenes, ScriptImportService scripts) {
         this.scenes = scenes;
+        this.scripts = scripts;
     }
 
     @Operation(summary = "Add a scene to a project", description = "A scene number, when given, must be unique within the project (409 otherwise).")
@@ -46,6 +51,28 @@ class SceneController {
                                                @Valid @RequestBody SceneRequest request) {
         return scenes.create(user.id(), projectId, request)
                 .map(scene -> ResponseEntity.created(URI.create("/api/scenes/" + scene.id())).body(scene));
+    }
+
+    /** Shows what {@link #importScript} would add, so the user can check the cut before committing to it. */
+    @Operation(summary = "Preview the scenes a script would be cut into",
+            description = "Finds the scene headings (INT./EXT. lines) in a pasted screenplay and returns the scenes an import would add. Nothing is saved.")
+    @PostMapping("/projects/{projectId}/scenes/import/preview")
+    Mono<ScriptImportResponse> previewImport(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                             @Valid @RequestBody ImportScriptRequest request) {
+        return scripts.preview(user.id(), projectId, request.script());
+    }
+
+    @Operation(summary = "Add a whole script as scenes",
+            description = """
+                    Cuts a pasted screenplay at its scene headings (INT./EXT. lines) and adds one scene per heading, all or none. \
+                    The script's own scene numbers are kept when every scene has one and none is taken; otherwise the scenes \
+                    are numbered on from the project's last scene. 400 when the script has no scene headings.""")
+    @ApiResponse(responseCode = "201", description = "The scenes added, in script order")
+    @PostMapping("/projects/{projectId}/scenes/import")
+    @ResponseStatus(HttpStatus.CREATED)
+    Mono<ScriptImportResponse> importScript(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                            @Valid @RequestBody ImportScriptRequest request) {
+        return scripts.importScript(user.id(), projectId, request.script());
     }
 
     /** The project's scenes in script order: numbered ones by number, then unnumbered ones. */

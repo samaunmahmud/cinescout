@@ -71,6 +71,24 @@ export interface SceneRequirements {
   estimatedCastAndCrewSize: number | null
 }
 
+/** The scenes found in a pasted script: what an import would add (a preview) or has added. */
+export interface ScriptImport {
+  /** In script order. */
+  scenes: ImportedScene[]
+  /** False when the scenes were numbered on from the project's last scene instead of as the script numbers them. */
+  scriptNumbersKept: boolean
+}
+
+export interface ImportedScene {
+  /** Null in a preview. */
+  id: string | null
+  sceneNumber: number | null
+  title: string
+  characters: number
+  /** The scene was longer than a scene may be and its end was cut off. */
+  truncated: boolean
+}
+
 export interface Scene {
   id: string
   projectId: string

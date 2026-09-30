@@ -303,6 +303,129 @@ class ResourceApiTest extends ApiTest {
         grace.client().get().uri("/api/scenes/" + graceScene).exchange().expectStatus().isOk();
     }
 
+    // --- script import ---------------------------------------------------------------------------
+
+    private static final String SCRIPT = """
+            NIGHT SHIFT
+
+            INT. DINER - NIGHT
+
+            Rain on the windows.
+
+            EXT. ROOFTOP - DAWN
+
+            The city wakes up below.
+            """;
+
+    private static List<Integer> numbers(JsonNode scenes) {
+        List<Integer> numbers = new ArrayList<>();
+        scenes.forEach(n -> numbers.add(n.path("sceneNumber").isNull() ? null : n.path("sceneNumber").asInt()));
+        return numbers;
+    }
+
+    @Test
+    void importingAScriptAddsASceneForEachHeadingNumberedOnFromTheLastScene() {
+        Account ada = register("Ada");
+        String project = project(ada, "Night Shift");
+        scene(ada, project, 4, "An earlier scene");
+
+        JsonNode imported = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import")
+                .bodyValue(Map.of("script", SCRIPT)).exchange().expectStatus().isCreated());
+
+        assertThat(imported.path("scriptNumbersKept").asBoolean()).isFalse();
+        assertThat(numbers(imported.path("scenes"))).containsExactly(5, 6);
+        assertThat(imported.path("scenes").get(0).path("truncated").asBoolean()).isFalse();
+        JsonNode listed = json(ada.client().get().uri("/api/projects/" + project + "/scenes").exchange().expectStatus().isOk());
+        assertThat(ids(listed)).hasSize(3).endsWith(imported.path("scenes").get(0).path("id").asText(), imported.path("scenes").get(1).path("id").asText());
+        JsonNode diner = listed.path("items").get(1);
+        assertThat(diner.path("title").asText()).isEqualTo("INT. DINER - NIGHT");
+        assertThat(diner.path("sourceText").asText()).isEqualTo("INT. DINER - NIGHT\n\nRain on the windows.");
+        assertThat(diner.path("parseStatus").asText()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void anImportKeepsTheScriptsOwnNumbersUnlessOneIsTaken() {
+        Account ada = register("Ada");
+        String project = project(ada, "Night Shift");
+        String numbered = "12 INT. DINER - NIGHT 12\nTalk.\n\n14 EXT. ROOFTOP - DAWN 14\nLight.";
+
+        JsonNode first = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import")
+                .bodyValue(Map.of("script", numbered)).exchange().expectStatus().isCreated());
+        assertThat(first.path("scriptNumbersKept").asBoolean()).isTrue();
+        assertThat(numbers(first.path("scenes"))).containsExactly(12, 14);
+
+        JsonNode again = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import")
+                .bodyValue(Map.of("script", numbered)).exchange().expectStatus().isCreated());
+        assertThat(again.path("scriptNumbersKept").asBoolean()).isFalse();
+        assertThat(numbers(again.path("scenes"))).containsExactly(15, 16);
+    }
+
+    @Test
+    void aPreviewShowsTheScenesWithoutSavingThem() {
+        Account ada = register("Ada");
+        String project = project(ada, "Night Shift");
+
+        JsonNode preview = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import/preview")
+                .bodyValue(Map.of("script", SCRIPT)).exchange().expectStatus().isOk());
+
+        assertThat(numbers(preview.path("scenes"))).containsExactly(1, 2);
+        assertThat(preview.path("scenes").get(1).path("title").asText()).isEqualTo("EXT. ROOFTOP - DAWN");
+        assertThat(preview.path("scenes").get(1).path("id").isNull()).isTrue();
+        assertThat(preview.path("scenes").get(1).path("characters").asInt()).isEqualTo("EXT. ROOFTOP - DAWN\n\nThe city wakes up below.".length());
+        assertThat(ids(json(ada.client().get().uri("/api/projects/" + project + "/scenes").exchange().expectStatus().isOk()))).isEmpty();
+    }
+
+    @Test
+    void aScriptWithoutHeadingsPreviewsAsEmptyAndCannotBeImported() {
+        Account ada = register("Ada");
+        String project = project(ada, "Night Shift");
+        Map<String, String> prose = Map.of("script", "Just some notes about the film.");
+
+        JsonNode preview = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import/preview")
+                .bodyValue(prose).exchange().expectStatus().isOk());
+        assertThat(preview.path("scenes")).isEmpty();
+
+        JsonNode problem = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import")
+                .bodyValue(prose).exchange().expectStatus().isBadRequest().expectHeader().contentType(PROBLEM));
+        assertThat(errorFields(problem)).containsExactly("script");
+        assertThat(problem.path("errors").get(0).path("message").asText()).contains("No scene headings");
+
+        JsonNode blank = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import")
+                .bodyValue(Map.of("script", " ")).exchange().expectStatus().isBadRequest());
+        assertThat(errorFields(blank)).containsExactly("script");
+    }
+
+    @Test
+    void aVeryLongSceneIsCutToTheLengthASceneMayHaveAndAWholeScreenplayFits() {
+        Account ada = register("Ada");
+        String project = project(ada, "Night Shift");
+        String script = "INT. HALL - DAY\n" + "He walks on and on. ".repeat(1_100) + "\n\nEXT. YARD - DAY\n" + "Wind. ".repeat(60_000);
+        assertThat(script.length()).isGreaterThan(300_000);
+
+        JsonNode imported = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import")
+                .bodyValue(Map.of("script", script)).exchange().expectStatus().isCreated());
+
+        assertThat(imported.path("scenes").get(0).path("truncated").asBoolean()).isTrue();
+        assertThat(imported.path("scenes").get(0).path("characters").asInt()).isLessThanOrEqualTo(20_000).isGreaterThan(19_900);
+        ada.client().get().uri("/api/scenes/" + imported.path("scenes").get(0).path("id").asText()).exchange()
+                .expectStatus().isOk().expectBody().jsonPath("$.sourceText").value(text -> assertThat(text.toString()).hasSizeLessThanOrEqualTo(20_000));
+
+        JsonNode tooLong = json(ada.client().post().uri("/api/projects/" + project + "/scenes/import/preview")
+                .bodyValue(Map.of("script", "x".repeat(500_001))).exchange().expectStatus().isBadRequest());
+        assertThat(errorFields(tooLong)).containsExactly("script");
+    }
+
+    @Test
+    void aScriptCannotBeImportedIntoAnotherUsersProject() {
+        Account ada = register("Ada");
+        Account grace = register("Grace");
+        String graceProject = project(grace, "Grace's");
+
+        ada.client().post().uri("/api/projects/" + graceProject + "/scenes/import").bodyValue(Map.of("script", SCRIPT)).exchange().expectStatus().isNotFound();
+        ada.client().post().uri("/api/projects/" + graceProject + "/scenes/import/preview").bodyValue(Map.of("script", SCRIPT)).exchange().expectStatus().isNotFound();
+        assertThat(ids(json(grace.client().get().uri("/api/projects/" + graceProject + "/scenes").exchange().expectStatus().isOk()))).isEmpty();
+    }
+
     // --- locations ------------------------------------------------------------------------------
 
     @Test

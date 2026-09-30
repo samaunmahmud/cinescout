@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface SceneRepository extends JpaRepository<Scene, UUID> {
@@ -26,4 +27,8 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
             order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""",
             countQuery = "select count(s) from Scene s where s.project.id = :projectId and s.project.owner.id = :ownerId")
     Page<Scene> findOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId, Pageable pageable);
+
+    /** The scene numbers in use in a project; each can be used once (uq_scenes_project_number). */
+    @Query("select s.sceneNumber from Scene s where s.project.id = :projectId and s.sceneNumber is not null")
+    Set<Integer> findSceneNumbersByProjectId(@Param("projectId") UUID projectId);
 }

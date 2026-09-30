@@ -6,6 +6,7 @@ import com.cinescout.ratelimit.RateLimitExceededException;
 import com.cinescout.scouting.ScoutingException;
 import com.cinescout.search.SearchException;
 import com.cinescout.service.ConflictException;
+import com.cinescout.service.InvalidRequestException;
 import com.cinescout.service.NotFoundException;
 import com.cinescout.video.VideoException;
 import org.slf4j.Logger;
@@ -71,6 +72,15 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     ResponseEntity<ProblemDetail> notFound(NotFoundException e) {
         return problem(HttpStatus.NOT_FOUND, "Not found", e.getMessage());
+    }
+
+    /** Shaped like a validation failure, so clients show it on the field it names. */
+    @ExceptionHandler(InvalidRequestException.class)
+    ResponseEntity<ProblemDetail> invalid(InvalidRequestException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request is invalid");
+        problem.setTitle("Validation failed");
+        problem.setProperty("errors", List.of(Map.of("field", e.field(), "message", e.getMessage())));
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
     }
 
     @ExceptionHandler(ConflictException.class)

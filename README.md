@@ -213,7 +213,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 |---|---|
 | Accounts | `POST /auth/register` (public), `GET /auth/me` |
 | Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}` |
-| Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}` |
+| Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `POST /projects/{id}/scenes/import[/preview]` |
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
@@ -227,6 +227,13 @@ default `0`) and `?size=` (default `50`, at most `100`). The answer is
 `generate` call paid services and can take many seconds; they answer `503` when the server has no
 AI keys (`generate` needs only the watsonx.ai key), and `429` past the user's [rate limit](#rate-limits). Listing, editing and deleting drafts always works.
 The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
+
+`POST /projects/{id}/scenes/import` takes a whole screenplay as plain text (`{ "script": "..." }`, up to 500,000
+characters) and adds one scene per scene heading, the lines starting with `INT.` or `EXT.` (Fountain's forced
+headings and `#12#` scene numbers are understood too). The script's own scene numbers are kept when every
+scene has one and none is taken; otherwise the scenes are numbered on from the project's last one.
+`.../import/preview` returns the same cut without saving anything. No AI is involved: the scenes start
+unanalysed, like ones typed in.
 
 `POST /locations/{id}/logistics` works out a location's shoot logistics and caches them on it (`GET` returns
 the cached report, `404` before the first run). For each shoot day it gives sunrise, sunset, golden and blue
@@ -248,3 +255,4 @@ comes back with that section marked `UNAVAILABLE`.
 7. Shoot logistics: solar windows, weather, noise risk and nearby services (module B) - done
 8. Web app: accounts, projects, scenes, scouting, locations with logistics and maps, outreach - done
 9. Session logins for the web app, Docker Compose deployment - done
+10. Script import: a pasted screenplay is cut into scenes at its headings - done

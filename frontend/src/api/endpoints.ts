@@ -15,6 +15,7 @@ import type {
   Scene,
   SceneRequest,
   ScoutingResult,
+  ScriptImport,
   UpdateCoordinatesRequest,
   UpdateLocationRequest,
   UpdateOutreachRequest,
@@ -67,6 +68,12 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       get: (id: string) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`),
       create: (projectId: string, body: SceneRequest) =>
         call<Scene>(`/api/projects/${encodeURIComponent(projectId)}/scenes`, { method: 'POST', body }),
+      /** The scenes a pasted script would be cut into, at its INT./EXT. headings; nothing is saved. */
+      previewImport: (projectId: string, script: string) =>
+        call<ScriptImport>(`/api/projects/${encodeURIComponent(projectId)}/scenes/import/preview`, { method: 'POST', body: { script } }),
+      /** Adds one scene per heading, all or none; 400 (on `script`) when the script has no scene headings. */
+      importScript: (projectId: string, script: string) =>
+        call<ScriptImport>(`/api/projects/${encodeURIComponent(projectId)}/scenes/import`, { method: 'POST', body: { script } }),
       update: (id: string, body: SceneRequest) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Extracts the filming requirements with the AI. Takes seconds; answers 503 when scouting is not configured. */
