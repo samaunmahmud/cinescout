@@ -1,9 +1,11 @@
 package com.cinescout.web;
 
+import com.cinescout.domain.OutreachStatus;
 import com.cinescout.dto.GenerateOutreachRequest;
 import com.cinescout.dto.OutreachDraftResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
+import com.cinescout.dto.ProjectOutreachResponse;
 import com.cinescout.dto.UpdateOutreachRequest;
 import com.cinescout.outreach.OutreachGenerationService;
 import com.cinescout.ratelimit.RateLimit;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -50,6 +53,16 @@ class OutreachController {
         this.outreach = outreach;
         this.generation = generation;
         this.limits = limits;
+    }
+
+    /** Who has been written to across the project, and how far each email got. */
+    @Operation(summary = "List a project's outreach drafts across all its locations, newest first",
+            description = "Each row names its venue and scene; `status` narrows the list (DRAFT, SENT or REPLIED). The email text is on the draft itself.")
+    @GetMapping("/projects/{projectId}/outreach-drafts")
+    Mono<PageResponse<ProjectOutreachResponse>> listForProject(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
+                                                               @RequestParam(required = false) OutreachStatus status,
+                                                               @Valid @ParameterObject PageQuery page) {
+        return outreach.listForProject(user.id(), projectId, status, page);
     }
 
     /** A location's drafts, newest first. */

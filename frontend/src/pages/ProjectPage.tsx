@@ -6,7 +6,7 @@ import { queryKeys } from '../api/queryKeys'
 import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
-import { CalendarDays, ChevronLeft, Clapperboard, Film, MapPin, MapPinned } from 'lucide-react'
+import { CalendarDays, ChevronLeft, Clapperboard, Film, Mail, MapPin, MapPinned } from 'lucide-react'
 import { Eyebrow, Tabs, type TabItem } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterGradient } from '../lib/poster'
@@ -14,6 +14,7 @@ import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { NotFoundPage } from './NotFoundPage'
 import { ProjectLocationsSection } from './ProjectLocationsSection'
+import { ProjectOutreachSection } from './ProjectOutreachSection'
 import { ScenesSection } from './ScenesSection'
 import { ScheduleSection } from './ScheduleSection'
 
@@ -30,11 +31,12 @@ export function ProjectPage() {
   return <ProjectDetails project={project.data} />
 }
 
-type TabKey = 'scenes' | 'locations' | 'schedule'
+type TabKey = 'scenes' | 'locations' | 'outreach' | 'schedule'
 
 const tabs: TabItem<TabKey>[] = [
   { key: 'scenes', label: 'Scenes', icon: Film },
   { key: 'locations', label: 'Locations', icon: MapPinned },
+  { key: 'outreach', label: 'Outreach', icon: Mail },
   { key: 'schedule', label: 'Schedule', icon: CalendarDays },
 ]
 
@@ -158,6 +160,7 @@ function ProjectDetails({ project }: { project: Project }) {
         <Tabs label="Project sections" items={tabs} selected={tab} onSelect={selectTab}>
           {tab === 'scenes' && <ScenesSection projectId={project.id} />}
           {tab === 'locations' && <ProjectLocationsSection projectId={project.id} />}
+          {tab === 'outreach' && <ProjectOutreachSection projectId={project.id} />}
           {tab === 'schedule' && <ScheduleSection projectId={project.id} />}
         </Tabs>
       )}

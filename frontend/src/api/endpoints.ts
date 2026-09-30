@@ -11,9 +11,11 @@ import type {
   LocationVideos,
   LogisticsReport,
   OutreachDraft,
+  OutreachStatus,
   Page,
   Project,
   ProjectLocation,
+  ProjectOutreach,
   ProjectProgress,
   ProjectStatus,
   RegisterRequest,
@@ -141,6 +143,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<LogisticsReport>(`/api/locations/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
     },
     outreach: {
+      /** Every draft of the project, newest first, each with its venue and scene; `status` null means all. */
+      listForProject: (projectId: string, status: OutreachStatus | null, page = 0) =>
+        call<Page<ProjectOutreach>>(
+          `/api/projects/${encodeURIComponent(projectId)}/outreach-drafts?${status ? `status=${status}&` : ''}${pageQuery(page)}`,
+        ),
       /** Newest first. */
       list: (locationId: string, page = 0) =>
         call<Page<OutreachDraft>>(`/api/locations/${encodeURIComponent(locationId)}/outreach-drafts?${pageQuery(page)}`),

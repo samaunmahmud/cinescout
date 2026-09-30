@@ -1,13 +1,16 @@
 package com.cinescout.service;
 
 import com.cinescout.domain.OutreachDraft;
+import com.cinescout.domain.OutreachStatus;
 import com.cinescout.dto.OutreachDraftResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
+import com.cinescout.dto.ProjectOutreachResponse;
 import com.cinescout.dto.UpdateOutreachRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.OutreachDraftRepository;
+import com.cinescout.repository.ProjectRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -23,12 +26,25 @@ public class OutreachService {
 
     private final OutreachDraftRepository drafts;
     private final LocationRepository locations;
+    private final ProjectRepository projects;
     private final BlockingTransactions db;
 
-    public OutreachService(OutreachDraftRepository drafts, LocationRepository locations, BlockingTransactions db) {
+    public OutreachService(OutreachDraftRepository drafts, LocationRepository locations, ProjectRepository projects, BlockingTransactions db) {
         this.drafts = drafts;
         this.locations = locations;
+        this.projects = projects;
         this.db = db;
+    }
+
+    /** Every draft of a project, newest first, each with its venue and scene; {@code status} null means all. */
+    public Mono<PageResponse<ProjectOutreachResponse>> listForProject(UUID ownerId, UUID projectId, OutreachStatus status, PageQuery page) {
+        return db.call(() -> {
+            projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            return PageResponse.from(status == null
+                    ? drafts.findOwnedByProject(projectId, ownerId, page.pageable())
+                    : drafts.findOwnedByProjectAndStatus(projectId, ownerId, status, page.pageable()),
+                    ProjectOutreachResponse::from);
+        });
     }
 
     /** Newest first. */

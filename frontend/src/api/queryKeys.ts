@@ -1,4 +1,4 @@
-import type { LocationStatus, ProjectStatus } from './types'
+import type { LocationStatus, OutreachStatus, ProjectStatus } from './types'
 
 /**
  * React Query cache keys, one place so invalidation matches what was cached. A `...List` key covers every cached
@@ -21,5 +21,8 @@ export const queryKeys = {
   projectSchedule: (projectId: string) => ['projects', 'schedule', projectId] as const,
   outreachList: (locationId: string) => ['outreach', 'list', locationId] as const,
   outreachPage: (locationId: string, page: number) => ['outreach', 'list', locationId, page] as const,
+  projectOutreachList: (projectId: string) => ['outreach', 'project', projectId] as const,
+  projectOutreachPage: (projectId: string, status: OutreachStatus | null, page: number) =>
+    ['outreach', 'project', projectId, status, page] as const,
   videos: (locationId: string) => ['videos', locationId] as const,
 }

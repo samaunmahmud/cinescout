@@ -217,7 +217,7 @@ Once running, the interactive documentation is at `/swagger-ui.html` and the Ope
 | Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
 | Logistics | `POST`/`GET /locations/{id}/logistics` |
 | Scouting | `POST /scenes/{id}/parse`, `POST /projects/{id}/scenes/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
-| Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
+| Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET /projects/{id}/outreach-drafts[?status=]`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
 
 The lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,
 default `0`) and `?size=` (default `50`, at most `100`). The answer is
@@ -273,3 +273,4 @@ comes back with that section marked `UNAVAILABLE`.
 11. Project-wide locations: every scene's candidates in one list and map, by status, with progress counts - done
 12. Account page: display name, password change, account deletion - done
 13. Shoot schedule: scenes by shoot day with their confirmed venues, and what still lacks a date or a venue - done
+14. Project-wide outreach: every email with its venue and scene, by status - done

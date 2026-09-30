@@ -242,6 +242,24 @@ export type OutreachTone = 'PROFESSIONAL' | 'FRIENDLY' | 'CONCISE'
 export type OutreachStatus = 'DRAFT' | 'SENT' | 'REPLIED'
 
 /** An email to a venue's owner, written by the AI for the user to edit and send themselves. */
+/** An outreach email as a row of a project-wide list: who was written to about which venue, and how far it got. */
+export interface ProjectOutreach {
+  id: string
+  locationId: string
+  locationName: string
+  sceneId: string
+  sceneNumber: number | null
+  sceneTitle: string
+  recipientName: string | null
+  recipientEmail: string | null
+  subject: string
+  tone: OutreachTone
+  status: OutreachStatus
+  sentAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface OutreachDraft {
   id: string
   locationId: string

@@ -106,6 +106,45 @@ class OutreachApiTest extends ApiTest {
         return jdbc.queryForObject("SELECT count(*) FROM outreach_drafts WHERE location_id = ?::uuid", Integer.class, locationId);
     }
 
+    // --- a project's drafts ------------------------------------------------------------------------
+
+    @Test
+    void aProjectsDraftsAreListedNewestFirstWithTheirVenueAndSceneAndCanBeNarrowedByStatus() {
+        Account ada = register("Ada");
+        String project = project(ada);
+        String scene = scene(ada, project);
+        String location = location(ada, scene);
+        String first = generate(ada, location, Map.of("recipientName", "Tom", "recipientEmail", "tom@skybar.example")).path("id").asText();
+        String second = generate(ada, location, Map.of()).path("id").asText();
+        ada.client().put().uri("/api/outreach-drafts/" + first)
+                .bodyValue(Map.of("subject", "Filming at the Sky Bar", "body", "Hello", "tone", "FRIENDLY", "status", "SENT",
+                        "recipientName", "Tom", "recipientEmail", "tom@skybar.example"))
+                .exchange().expectStatus().isOk();
+        generate(ada, locationOf(ada), Map.of());
+
+        JsonNode all = json(ada.client().get().uri("/api/projects/" + project + "/outreach-drafts").exchange().expectStatus().isOk());
+        assertThat(all.path("items").findValuesAsText("id")).containsExactly(second, first);
+        JsonNode sent = all.path("items").get(1);
+        assertThat(sent.path("locationId").asText()).isEqualTo(location);
+        assertThat(sent.path("locationName").asText()).isEqualTo("The Sky Bar");
+        assertThat(sent.path("sceneId").asText()).isEqualTo(scene);
+        assertThat(sent.path("sceneNumber").asInt()).isEqualTo(1);
+        assertThat(sent.path("sceneTitle").asText()).isEqualTo("Rooftop");
+        assertThat(sent.path("subject").asText()).isEqualTo("Filming at the Sky Bar");
+        assertThat(sent.path("recipientEmail").asText()).isEqualTo("tom@skybar.example");
+        assertThat(sent.path("status").asText()).isEqualTo("SENT");
+        assertThat(sent.path("sentAt").asText()).isNotBlank();
+        assertThat(sent.has("body")).isFalse();
+
+        JsonNode onlySent = json(ada.client().get().uri("/api/projects/" + project + "/outreach-drafts?status=SENT").exchange().expectStatus().isOk());
+        assertThat(onlySent.path("items").findValuesAsText("id")).containsExactly(first);
+        assertThat(onlySent.path("totalItems").asInt()).isEqualTo(1);
+        JsonNode paged = json(ada.client().get().uri("/api/projects/" + project + "/outreach-drafts?size=1&page=1").exchange().expectStatus().isOk());
+        assertThat(paged.path("items").findValuesAsText("id")).containsExactly(first);
+        ada.client().get().uri("/api/projects/" + project + "/outreach-drafts?status=NOPE").exchange().expectStatus().isBadRequest();
+        register("Grace").client().get().uri("/api/projects/" + project + "/outreach-drafts").exchange().expectStatus().isNotFound();
+    }
+
     // --- generate -----------------------------------------------------------------------------------
 
     @Test

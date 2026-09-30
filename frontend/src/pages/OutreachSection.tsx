@@ -13,6 +13,7 @@ import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { emailText, looksLikeEmail, mailtoLink } from '../lib/email'
 import { blankToNull } from '../lib/text'
+import { outreachStatusLabels } from '../lib/status'
 
 const tones: Record<OutreachTone, { label: string; hint: string }> = {
   PROFESSIONAL: { label: 'Professional', hint: 'Polite and complete' },
@@ -20,11 +21,7 @@ const tones: Record<OutreachTone, { label: string; hint: string }> = {
   CONCISE: { label: 'Concise', hint: 'Short and to the point' },
 }
 
-const statuses: Record<OutreachStatus, { label: string; tone: 'neutral' | 'amber' | 'green' }> = {
-  DRAFT: { label: 'Draft', tone: 'neutral' },
-  SENT: { label: 'Sent', tone: 'amber' },
-  REPLIED: { label: 'Replied', tone: 'green' },
-}
+const statuses = outreachStatusLabels
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
