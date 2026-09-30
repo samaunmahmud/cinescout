@@ -109,11 +109,11 @@ export function ScenesSection({ projectId }: { projectId: string }) {
                 <li key={scene.id}>
                   <Link
                     to={`/scenes/${scene.id}`}
-                    className="group flex items-center gap-4 rounded-xl border border-white/[0.07] bg-reel/80 p-3 pr-5 transition hover:border-amber-400/40 hover:bg-frame focus-visible:outline-2 focus-visible:outline-amber-400"
+                    className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 rounded-xl border border-white/[0.07] bg-reel/80 p-3 transition hover:border-amber-400/40 hover:bg-frame focus-visible:outline-2 focus-visible:outline-amber-400 sm:flex sm:pr-5"
                   >
                     <Slate number={scene.sceneNumber} />
                     <span className="min-w-0 flex-1 space-y-1">
-                      <span className="block truncate text-lg font-semibold text-stone-100 group-hover:text-amber-200">{sceneLabel(scene)}</span>
+                      <span className="line-clamp-2 text-lg leading-snug font-semibold text-stone-100 group-hover:text-amber-200 sm:line-clamp-1">{sceneLabel(scene)}</span>
                       <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-400">
                         {scene.requirements?.settingType && <span className="text-stone-300">{scene.requirements.settingType}</span>}
                         <span className="inline-flex items-center gap-1">
@@ -122,8 +122,11 @@ export function ScenesSection({ projectId }: { projectId: string }) {
                         </span>
                       </span>
                     </span>
-                    <ParseStatusBadge status={scene.parseStatus} />
-                    <ChevronRight aria-hidden className="size-5 text-stone-600 transition group-hover:translate-x-0.5 group-hover:text-amber-400" />
+                    {/* On a phone the badge sits under the title instead of squeezing it. */}
+                    <span className="col-start-2 sm:col-auto">
+                      <ParseStatusBadge status={scene.parseStatus} />
+                    </span>
+                    <ChevronRight aria-hidden className="hidden size-5 text-stone-600 transition group-hover:translate-x-0.5 group-hover:text-amber-400 sm:block" />
                   </Link>
                 </li>
               )

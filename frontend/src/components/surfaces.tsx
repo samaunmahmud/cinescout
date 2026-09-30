@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 
 /** A panel: a slightly lifted surface whose top edge catches the light. */
 export function Card({ className = '', children }: { className?: string; children: ReactNode }) {
@@ -103,6 +103,11 @@ export function Tabs<K extends string>({
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
   const tabId = (key: K) => `${base}-tab-${key}`
   const panelId = `${base}-panel`
+
+  // On a narrow screen the tabs scroll sideways: keep the selected one in view (opening a link to the last tab, say).
+  useEffect(() => {
+    refs.current[selected]?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  }, [selected])
 
   function onKeyDown(event: KeyboardEvent) {
     const index = items.findIndex((item) => item.key === selected)

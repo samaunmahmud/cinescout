@@ -201,9 +201,9 @@ function LocationRow({ location, onSaved }: { location: ProjectLocation; onSaved
       aria-label={location.name}
       className={`space-y-2 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-4 shadow-lg shadow-black/30 transition hover:border-white/15 ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex flex-wrap items-start gap-4">
         {location.fitScore != null && <FitScore score={location.fitScore} />}
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="min-w-0 flex-1 basis-44 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-semibold">
               <Link to={`/locations/${location.id}`} className="text-lg text-stone-50 hover:text-amber-300">
