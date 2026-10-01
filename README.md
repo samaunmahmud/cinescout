@@ -7,6 +7,9 @@ physical location requirements, finds real venues with grounded web search, asse
 friction, computes shoot logistics (light, weather, noise risk, nearby services) and drafts
 outreach to venue owners.
 
+**Try it:** https://cinescout-4zjm.onrender.com (free hosting: the first visit after a quiet spell takes about a
+minute to wake up).
+
 | | |
 |---|---|
 | ![The login page: a lit marquee](docs/screenshots/login.jpg) | ![Projects as film posters](docs/screenshots/projects.jpg) |
@@ -193,7 +196,8 @@ keep the API docs private.
 same page headers nginx would set, sized for a 512 MB instance; `render.yaml` describes it as a Render
 Blueprint. The database is separate (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`), for example a free Neon
 Postgres, since Render keeps one free database per account. On the free plan the service sleeps after 15
-minutes without visitors and takes about a minute to wake.
+minutes without visitors and takes about a minute to wake. Render's edge (Cloudflare) sets `CF-Connecting-IP`
+itself and refuses requests that bring their own, so the per-address limits key on the real visitor.
 
 ## Authentication
 
