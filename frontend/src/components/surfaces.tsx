@@ -104,8 +104,15 @@ export function Tabs<K extends string>({
   const panelId = `${base}-panel`
 
   // On a narrow screen the tabs scroll sideways: keep the selected one in view (opening a link to the last tab, say).
+  // Only the strip moves: scrollIntoView would also scroll the page down to a strip below the fold.
+  const strip = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
-    refs.current[selected]?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+    const tab = refs.current[selected]
+    const box = strip.current
+    if (!tab || !box) return
+    const left = tab.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft
+    if (left < box.scrollLeft) box.scrollLeft = left
+    else if (left + tab.offsetWidth > box.scrollLeft + box.clientWidth) box.scrollLeft = left + tab.offsetWidth - box.clientWidth
   }, [selected])
 
   function onKeyDown(event: KeyboardEvent) {
@@ -125,6 +132,7 @@ export function Tabs<K extends string>({
   return (
     <div className="space-y-6">
       <div
+        ref={strip}
         role="tablist"
         aria-label={label}
         onKeyDown={onKeyDown}

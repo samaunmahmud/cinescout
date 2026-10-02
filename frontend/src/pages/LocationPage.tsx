@@ -139,8 +139,8 @@ function LocationDetails({ location }: { location: Location }) {
               </a>
             )}
           </div>
-          {location.status === 'SHORTLISTED' && <Stamp className="absolute top-16 right-8 text-lg !text-cue !bg-transparent">Shortlisted</Stamp>}
-          {location.status === 'CONFIRMED' && <Stamp className="absolute top-16 right-8 text-lg !text-go !bg-transparent">Locked</Stamp>}
+          {location.status === 'SHORTLISTED' && <Stamp className="absolute top-12 right-6 text-sm !text-cue !bg-transparent sm:top-16 sm:right-8 sm:text-lg">Shortlisted</Stamp>}
+          {location.status === 'CONFIRMED' && <Stamp className="absolute top-12 right-6 text-sm !text-go !bg-transparent sm:top-16 sm:right-8 sm:text-lg">Locked</Stamp>}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -160,7 +160,7 @@ function LocationDetails({ location }: { location: Location }) {
           </div>
         </div>
 
-        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Fact icon={Gauge} label="Fit">
             {location.fitScore != null ? `${location.fitScore} / 100` : 'Not assessed'}
           </Fact>
