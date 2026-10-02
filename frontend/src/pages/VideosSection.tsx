@@ -36,7 +36,7 @@ export function VideosSection({ location }: { location: Location }) {
       description={`From YouTube, for “${query}”.`}
       actions={
         <a href={searchUrl(query)} target="_blank" rel="noopener noreferrer" className={linkButton('secondary')}>
-          <CirclePlay aria-hidden className="size-4 text-red-500" />
+          <CirclePlay aria-hidden className="size-4 text-stop-ink" />
           More on YouTube
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
@@ -66,7 +66,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
   return (
     <ul aria-label="Videos of the venue" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {videos.map((video) => (
-        <li key={video.id} className="overflow-hidden rounded-xl border border-white/[0.07] bg-reel shadow-lg shadow-black/40 transition hover:border-amber-400/30">
+        <li key={video.id} className="overflow-hidden board-card rounded-lg bg-white transition hover:border-ink">
           <div className="relative aspect-video bg-black">
             {playing === video.id ? (
               <iframe
@@ -82,7 +82,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
                 <img src={thumbnailUrl(video.id)} alt="" loading="lazy" className="size-full object-cover transition group-hover:opacity-80" />
                 <span
                   aria-hidden
-                  className="absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white ring-2 ring-white/70 transition group-hover:scale-110 group-hover:bg-red-600"
+                  className="absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-ink/70 text-white ring-2 ring-ink transition group-hover:scale-110 group-hover:bg-stop-ink"
                 >
                   ▶
                 </span>
@@ -94,12 +94,12 @@ function VideoGrid({ videos }: { videos: Video[] }) {
               href={watchUrl(video.id)}
               target="_blank"
               rel="noopener noreferrer"
-              className="line-clamp-2 text-sm font-medium text-stone-100 hover:text-amber-300 hover:underline"
+              className="line-clamp-2 text-sm font-medium text-ink hover:text-cue-deep hover:underline"
             >
               {video.title}
               <span className="sr-only"> (opens YouTube in a new tab)</span>
             </a>
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-muted">
               {video.channel}
               {video.publishedAt && ` · ${yearFormat.format(new Date(video.publishedAt))}`}
             </p>

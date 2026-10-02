@@ -28,7 +28,8 @@ import {
   TriangleAlert,
   UserRound,
 } from 'lucide-react'
-import { FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
+import { FitLabel, FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
+import { Stamp } from '../components/stickers'
 import { frictionLabel } from '../lib/fit'
 import { Eyebrow, Fact, Section, Tabs, type TabItem } from '../components/surfaces'
 import { locationPin } from '../components/map/locationPin'
@@ -94,43 +95,62 @@ function LocationDetails({ location }: { location: Location }) {
   const pin = location.latitude != null && location.longitude != null
   return (
     <div className="space-y-8">
-      <Link to={scenePath} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to={scenePath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {scene.data ? sceneLabel(scene.data) : 'Scene'}
       </Link>
 
-      {location.imageUrl && (
-        // The venue itself, widescreen, fading into the page.
-        <div aria-hidden className="letterbox relative overflow-hidden rounded-xl shadow-2xl shadow-black/70 ring-1 ring-amber-300/20">
-          <VenuePicture src={location.imageUrl} className="h-56 w-full sm:h-72" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-black/30" />
-        </div>
-      )}
-
       <header className="space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex min-w-0 items-start gap-5">
-            {location.fitScore != null && <FitScore score={location.fitScore} size="lg" />}
-            <div className="min-w-0 space-y-2">
-              <Eyebrow icon={MapPinned}>Location</Eyebrow>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="gold-leaf font-display text-5xl leading-none sm:text-6xl">{location.name}</h1>
-                <LocationBadges location={location} />
-              </div>
-              {location.address && (
-                <p className="flex items-center gap-1.5 text-stone-300">
-                  <PinIcon aria-hidden className="size-4 shrink-0 text-amber-400" />
-                  {location.address}
-                </p>
-              )}
-              {sourceUrl && (
-                <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-amber-300 underline hover:text-amber-200">
-                  {displayHost(sourceUrl)}
-                  <ExternalLink aria-hidden className="size-3.5" />
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </a>
-              )}
+        {/* The venue through the camera: its picture in the frame lines, its name over the foot of the shot. */}
+        <div className="relative min-h-72 overflow-hidden rounded-lg border-2 border-ink bg-[#1b222b] text-white sm:min-h-80">
+          {location.imageUrl && (
+            <div aria-hidden className="absolute inset-0">
+              <VenuePicture src={location.imageUrl} className="h-full w-full opacity-60" />
             </div>
+          )}
+          <span aria-hidden className="vf-corner top-4 left-4 border-t-[3px] border-l-[3px]" />
+          <span aria-hidden className="vf-corner top-4 right-4 border-t-[3px] border-r-[3px]" />
+          <span aria-hidden className="vf-corner bottom-4 left-4 border-b-[3px] border-l-[3px]" />
+          <span aria-hidden className="vf-corner right-4 bottom-4 border-r-[3px] border-b-[3px]" />
+          <div aria-hidden className="absolute top-6 right-16 left-16 flex justify-between font-script text-xs font-bold tracking-[0.08em] [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+            <span className="flex items-center gap-2">
+              <span className="size-2.5 rounded-full bg-stop" />
+              REC
+            </span>
+            <span className="hidden sm:inline">24 FPS · 2.39:1</span>
+          </div>
+          <div className="relative flex min-h-72 flex-col justify-end gap-2 bg-gradient-to-t from-ink/85 to-transparent p-8 sm:min-h-80">
+            <Eyebrow onDark icon={MapPinned}>Location</Eyebrow>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-4xl leading-none font-extrabold sm:text-6xl">{location.name}</h1>
+              <LocationBadges location={location} />
+            </div>
+            {location.address && (
+              <p className="flex items-center gap-1.5 font-script text-fog">
+                <PinIcon aria-hidden className="size-4 shrink-0 text-cue" />
+                {location.address}
+              </p>
+            )}
+            {sourceUrl && (
+              <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 self-start text-sm font-semibold text-cue underline hover:text-white">
+                {displayHost(sourceUrl)}
+                <ExternalLink aria-hidden className="size-3.5" />
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            )}
+          </div>
+          {location.status === 'SHORTLISTED' && <Stamp className="absolute top-16 right-8 text-lg !text-cue !bg-transparent">Shortlisted</Stamp>}
+          {location.status === 'CONFIRMED' && <Stamp className="absolute top-16 right-8 text-lg !text-go !bg-transparent">Locked</Stamp>}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            {location.fitScore != null && (
+              <>
+                <FitScore score={location.fitScore} size="lg" />
+                <FitLabel score={location.fitScore} className="text-sm" />
+              </>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusSelect location={location} update={update} />
@@ -210,35 +230,43 @@ function tabOf(value: string | null): TabKey {
 function Assessment({ location }: { location: Location }) {
   if (location.fitScore == null) return null
   return (
-    <section aria-labelledby="assessment-heading" className="space-y-5 rounded-xl border border-amber-400/15 bg-gradient-to-br from-amber-500/[0.07] via-frame/90 to-reel p-6">
-      <div className="space-y-1">
-        <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
-        <h2 id="assessment-heading" className="gold-leaf font-display text-3xl leading-none">
-          Assessment
-        </h2>
+    // A scout's report on ruled paper, the score circled in marker.
+    <section aria-labelledby="assessment-heading" className="lined-paper relative space-y-5 rounded-md border-2 border-ink py-6 pr-6 pl-14">
+      <span aria-hidden className="absolute inset-y-0 left-10 w-0.5 bg-[#f4b4b4]" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
+          <h2 id="assessment-heading" className="font-display text-3xl leading-none font-extrabold">
+            Scout’s report
+          </h2>
+        </div>
+        <span aria-hidden className="relative flex h-16 w-20 shrink-0 items-center justify-center">
+          <span className="absolute inset-0 -rotate-6 rounded-[50%] border-[3px] border-go-mid" />
+          <span className="font-marker text-4xl text-go-ink">{location.fitScore}</span>
+        </span>
       </div>
       {location.fitReason && (
         <div className="space-y-1">
-          <h3 className="text-xs font-semibold tracking-wider text-stone-500 uppercase">Why it fits</h3>
-          <p className="text-stone-100">{location.fitReason}</p>
+          <h3 className="font-script text-xs font-bold tracking-[0.1em] text-muted uppercase">Why it fits</h3>
+          <p className="text-[15px] leading-relaxed text-ink">{location.fitReason}</p>
         </div>
       )}
       {location.frictionNote && (
         <div className="space-y-1">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-500 uppercase">
+          <h3 className="flex items-center gap-1.5 font-script text-xs font-bold tracking-[0.1em] text-muted uppercase">
             <KeyRound aria-hidden className="size-3.5" />
             Booking
           </h3>
-          <p className="text-sm text-stone-300">{location.frictionNote}</p>
+          <p className="text-sm text-graphite">{location.frictionNote}</p>
         </div>
       )}
       {location.footprintWarnings.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold tracking-wider text-stone-500 uppercase">Watch out for</h3>
-          <ul aria-label="Warnings" className="space-y-1.5">
-            {location.footprintWarnings.map((warning) => (
-              <li key={warning} className="flex items-start gap-2 rounded-lg bg-amber-500/[0.06] px-3 py-2 text-sm text-amber-100 ring-1 ring-amber-400/15 ring-inset">
-                <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-400" />
+          <h3 className="font-script text-xs font-bold tracking-[0.1em] text-muted uppercase">Watch out for</h3>
+          <ul aria-label="Warnings" className="flex flex-wrap gap-2">
+            {location.footprintWarnings.map((warning, i) => (
+              <li key={warning} style={{ transform: `rotate(${i % 2 ? 0.8 : -0.8}deg)` }} className="tape flex items-center gap-1.5 !bg-highlight px-3 py-1 text-sm font-semibold">
+                <TriangleAlert aria-hidden className="size-4 shrink-0" />
                 {warning}
               </li>
             ))}
@@ -247,9 +275,9 @@ function Assessment({ location }: { location: Location }) {
       )}
       {location.sourceExcerpt && (
         <figure className="space-y-1">
-          <figcaption className="text-xs font-semibold tracking-wider text-stone-500 uppercase">From the source</figcaption>
-          <blockquote className="flex gap-2 border-l-2 border-amber-400/40 pl-3 text-sm text-stone-300 italic">
-            <Quote aria-hidden className="size-4 shrink-0 text-amber-400/50" />
+          <figcaption className="font-script text-xs font-bold tracking-[0.1em] text-muted uppercase">From the source</figcaption>
+          <blockquote className="flex gap-2 border-l-2 border-cue pl-3 text-sm text-graphite italic">
+            <Quote aria-hidden className="size-4 shrink-0 text-cue-ink" />
             {location.sourceExcerpt}
           </blockquote>
         </figure>
@@ -388,7 +416,7 @@ function Contact({ location }: { location: Location }) {
           </Fact>
           <Fact icon={Mail} label="Email">
             {location.contactEmail ? (
-              <a href={`mailto:${location.contactEmail}`} className="break-words text-amber-300 underline hover:text-amber-200">
+              <a href={`mailto:${location.contactEmail}`} className="break-words text-cue-ink underline hover:text-cue-deep">
                 {location.contactEmail}
               </a>
             ) : (
@@ -397,7 +425,7 @@ function Contact({ location }: { location: Location }) {
           </Fact>
           <Fact icon={Phone} label="Phone">
             {location.contactPhone ? (
-              <a href={`tel:${location.contactPhone.replace(/[^0-9+]/g, '')}`} className="text-amber-300 underline hover:text-amber-200">
+              <a href={`tel:${location.contactPhone.replace(/[^0-9+]/g, '')}`} className="text-cue-ink underline hover:text-cue-deep">
                 {location.contactPhone}
               </a>
             ) : (
@@ -413,7 +441,7 @@ function Contact({ location }: { location: Location }) {
           )}
         </dl>
       ) : (
-        <p className="text-sm text-stone-400">Nobody yet. Add who to talk to here, and emails to this venue start out addressed to them.</p>
+        <p className="text-sm text-muted">Nobody yet. Add who to talk to here, and emails to this venue start out addressed to them.</p>
       )}
     </Section>
   )
@@ -469,7 +497,7 @@ function Position({ location }: { location: Location }) {
     >
 
       {editing ? (
-        <form onSubmit={save} className="space-y-3 rounded-xl border border-white/[0.07] bg-frame/80 p-5" noValidate>
+        <form onSubmit={save} className="space-y-3 board-card rounded-lg bg-white p-5" noValidate>
           <ErrorAlert error={relocate.error} />
           <TextField
             label="Coordinates"
@@ -487,7 +515,7 @@ function Position({ location }: { location: Location }) {
             className="h-72"
           />
           {location.logistics && (
-            <p role="note" className="rounded-md border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+            <p role="note" className="rounded-md border border-cue bg-cue-wash px-4 py-3 text-sm text-cue-ink">
               Moving the pin discards the logistics report, which was worked out for the old spot.
             </p>
           )}
@@ -502,17 +530,17 @@ function Position({ location }: { location: Location }) {
         </form>
       ) : current && pin ? (
         <div className="space-y-2">
-          <VenueMap pins={[pin]} label={`Map of ${location.name}`} className="h-80 shadow-xl shadow-black/40" />
-          <p className="text-sm text-stone-300">
+          <VenueMap pins={[pin]} label={`Map of ${location.name}`} className="h-80" />
+          <p className="text-sm text-graphite">
             {formatCoordinates(current)} ·{' '}
-            <a href={osmLink(current)} target="_blank" rel="noopener noreferrer" className="text-amber-300 underline hover:text-amber-200">
+            <a href={osmLink(current)} target="_blank" rel="noopener noreferrer" className="text-cue-ink underline hover:text-cue-deep">
               View on OpenStreetMap
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>
         </div>
       ) : (
-        <p className="text-sm text-stone-400">
+        <p className="text-sm text-muted">
           Not set. Logistics look the venue up from its {location.address ? 'address' : 'name'}; set the coordinates if that finds the wrong place.
         </p>
       )}

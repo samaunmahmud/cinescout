@@ -102,7 +102,7 @@ export function LogisticsSection({ location }: { location: Location }) {
           </EmptyState>
         )
       ) : report.version !== SUPPORTED_VERSION ? (
-        <p className="text-sm text-stone-400">This report was saved in a format this page does not know. Refresh it to see it.</p>
+        <p className="text-sm text-muted">This report was saved in a format this page does not know. Refresh it to see it.</p>
       ) : (
         <Report report={report} />
       )}
@@ -114,11 +114,11 @@ function Report({ report }: { report: LogisticsReport }) {
   const { shootWindow } = report
   return (
     <div className="space-y-6">
-      <p className="text-sm text-stone-300">
+      <p className="text-sm text-graphite">
         {formatShootWindow(shootWindow.start, shootWindow.end)} · times are local to the venue ({report.timeZone})
       </p>
       {(report.notes.length > 0 || shootWindow.assumed || shootWindow.truncated) && (
-        <ul aria-label="About this report" className="space-y-1 rounded-md border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+        <ul aria-label="About this report" className="space-y-1 rounded-md border border-cue bg-cue-wash px-4 py-3 text-sm text-cue-ink">
           {shootWindow.assumed && <li>The scene has no shoot dates yet, so this covers the coming days.</li>}
           {shootWindow.truncated && <li>The shoot window is longer than one report covers; this shows its start.</li>}
           {report.notes.map((note) => (
@@ -130,7 +130,7 @@ function Report({ report }: { report: LogisticsReport }) {
       <Weather weather={report.weather} />
       <Surroundings environment={report.environment} />
       {report.attribution.length > 0 && (
-        <footer className="text-xs text-stone-500">
+        <footer className="text-xs text-subtle">
           {report.attribution.map((credit) => (
             <p key={credit}>{credit}</p>
           ))}
@@ -145,10 +145,10 @@ const panelIcons: Record<string, LucideIcon> = { Light: Sunset, Weather: CloudSu
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   const Icon = panelIcons[title]
   return (
-    <section aria-label={title} className="space-y-4 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30">
-      <h3 className="flex items-center gap-2 font-display text-2xl leading-none text-stone-50">
+    <section aria-label={title} className="space-y-4 board-card rounded-lg bg-white p-5">
+      <h3 className="flex items-center gap-2 font-display text-2xl leading-none text-ink">
         {Icon && (
-          <span className="flex size-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 ring-1 ring-amber-400/20">
+          <span className="flex size-8 items-center justify-center rounded-full bg-cue-wash text-cue-ink ring-1 ring-cue">
             <Icon aria-hidden className="size-4" />
           </span>
         )}
@@ -163,7 +163,7 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
 function SectionMessage({ status, message }: { status: SectionStatus; message: string | null }) {
   if (status === 'OK') return null
   const fallback = status === 'PARTIAL' ? 'Some days could not be looked up.' : 'Not available right now; refresh later.'
-  return <p className="text-sm text-stone-400">{message ?? fallback}</p>
+  return <p className="text-sm text-muted">{message ?? fallback}</p>
 }
 
 const windows = (list: SolarDay['goldenHours'], day: string) => (list.length === 0 ? '—' : list.map((w) => timeWindow(w, day)).join(', '))
@@ -173,14 +173,14 @@ function Light({ solar }: { solar: LogisticsReport['solar'] }) {
   return (
     <Panel title="Light">
       {solar.timeOfDay && (
-        <p className="text-sm text-stone-400">
+        <p className="text-sm text-muted">
           The scene is set at “{solar.timeOfDay}”
           {sceneLight ? `, read as ${sceneLight.toLowerCase()}.` : ', which names no natural light.'}
         </p>
       )}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="text-xs tracking-wide text-stone-500 uppercase">
+          <thead className="text-xs tracking-wide text-subtle uppercase">
             <tr>
               <th scope="col" className="py-2 pr-4 font-medium">Day</th>
               <th scope="col" className="py-2 pr-4 font-medium">Sunrise</th>
@@ -188,10 +188,10 @@ function Light({ solar }: { solar: LogisticsReport['solar'] }) {
               <th scope="col" className="py-2 pr-4 font-medium">Daylight</th>
               <th scope="col" className="py-2 pr-4 font-medium">Golden hour</th>
               <th scope="col" className="py-2 pr-4 font-medium">Blue hour</th>
-              {sceneLight && <th scope="col" className="py-2 font-medium text-amber-300">{sceneLight} (scene)</th>}
+              {sceneLight && <th scope="col" className="py-2 font-medium text-cue-ink">{sceneLight} (scene)</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.06]">
+          <tbody className="divide-y divide-line-soft">
             {solar.days.map((day) => (
               <tr key={day.date}>
                 <th scope="row" className="py-2 pr-4 font-medium whitespace-nowrap">{formatDate(day.date)}</th>
@@ -200,7 +200,7 @@ function Light({ solar }: { solar: LogisticsReport['solar'] }) {
                 <td className="py-2 pr-4 whitespace-nowrap">{formatDaylight(day.daylightMinutes)}</td>
                 <td className="py-2 pr-4">{windows(day.goldenHours, day.date)}</td>
                 <td className="py-2 pr-4">{windows(day.blueHours, day.date)}</td>
-                {sceneLight && <td className="py-2 text-amber-200">{day.sceneWindows.length === 0 ? 'Does not occur' : windows(day.sceneWindows, day.date)}</td>}
+                {sceneLight && <td className="py-2 text-cue-ink">{day.sceneWindows.length === 0 ? 'Does not occur' : windows(day.sceneWindows, day.date)}</td>}
               </tr>
             ))}
           </tbody>
@@ -224,7 +224,7 @@ function Weather({ weather }: { weather: LogisticsReport['weather'] }) {
     <Panel title="Weather">
       <SectionMessage status={weather.status} message={weather.message} />
       {weather.days.length > 0 && (
-        <ul className="divide-y divide-white/[0.06]">
+        <ul className="divide-y divide-line-soft">
           {weather.days.map((day) => {
             const facts = [
               temperatureRange(day.temperatureMinC, day.temperatureMaxC),
@@ -238,12 +238,12 @@ function Weather({ weather }: { weather: LogisticsReport['weather'] }) {
               <li key={day.date} aria-label={formatDate(day.date)} className="space-y-1 py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-baseline gap-x-3">
                   <span className="font-medium">{formatDate(day.date)}</span>
-                  {day.summary && <span className="text-stone-200">{day.summary}</span>}
-                  <span className="text-xs text-stone-500">{basisLabel(day)}</span>
+                  {day.summary && <span className="text-ink">{day.summary}</span>}
+                  <span className="text-xs text-subtle">{basisLabel(day)}</span>
                 </div>
-                {facts.length > 0 && <p className="text-sm text-stone-400">{facts.join(' · ')}</p>}
+                {facts.length > 0 && <p className="text-sm text-muted">{facts.join(' · ')}</p>}
                 {day.warnings.length > 0 && (
-                  <ul className="list-inside list-disc text-sm text-amber-200">
+                  <ul className="list-inside list-disc text-sm text-cue-ink">
                     {day.warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}
@@ -258,7 +258,7 @@ function Weather({ weather }: { weather: LogisticsReport['weather'] }) {
   )
 }
 
-const subheading = 'pt-2 text-sm font-semibold text-stone-300'
+const subheading = 'pt-2 text-sm font-semibold text-graphite'
 
 function Surroundings({ environment }: { environment: LogisticsReport['environment'] }) {
   // Grouped by kind, in the server's order (nearest first within a kind).
@@ -272,7 +272,7 @@ function Surroundings({ environment }: { environment: LogisticsReport['environme
         <p className="flex flex-wrap items-center gap-2 text-sm">
           Noise risk <Badge tone={noiseTones[environment.noiseRisk]}>{noiseLabels[environment.noiseRisk]}</Badge>
           {environment.acousticSensitivity && (
-            <span className="text-stone-400">for a scene whose sound sensitivity is {environment.acousticSensitivity.toLowerCase()}</span>
+            <span className="text-muted">for a scene whose sound sensitivity is {environment.acousticSensitivity.toLowerCase()}</span>
           )}
         </p>
       )}
@@ -285,25 +285,25 @@ function Surroundings({ environment }: { environment: LogisticsReport['environme
                 {placeLabels[source.kind]}
                 {source.name && `: ${source.name}`}
               </span>{' '}
-              <span className="text-stone-400">· {formatDistance(source.distanceMeters)}</span>{' '}
+              <span className="text-muted">· {formatDistance(source.distanceMeters)}</span>{' '}
               <Badge tone={noiseTones[source.level]}>{noiseLabels[source.level]}</Badge>
-              <p className="text-stone-400">{source.advice}</p>
+              <p className="text-muted">{source.advice}</p>
             </li>
           ))}
         </ul>
       )}
       {environment.status !== 'UNAVAILABLE' && environment.noiseSources.length === 0 && (
-        <p className="text-sm text-stone-400">No known noise sources nearby.</p>
+        <p className="text-sm text-muted">No known noise sources nearby.</p>
       )}
       {services.size > 0 && <h4 className={subheading}>Nearby services</h4>}
       {services.size > 0 && (
         <dl aria-label="Nearby services" className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
           {[...services].map(([kind, places]) => (
             <div key={kind}>
-              <dt className="text-xs font-medium tracking-wide text-stone-500 uppercase">{placeLabels[kind]}</dt>
+              <dt className="text-xs font-medium tracking-wide text-subtle uppercase">{placeLabels[kind]}</dt>
               {places.map((place, i) => (
-                <dd key={i} className="text-stone-200">
-                  {place.name ?? 'Unnamed'} <span className="text-stone-400">· {formatDistance(place.distanceMeters)}</span>
+                <dd key={i} className="text-ink">
+                  {place.name ?? 'Unnamed'} <span className="text-muted">· {formatDistance(place.distanceMeters)}</span>
                 </dd>
               ))}
             </div>

@@ -125,7 +125,7 @@ function ProjectDetails({ project }: { project: Project }) {
           <div className="space-y-5 py-7 pr-6 pl-11 sm:py-9 sm:pr-10 sm:pl-14">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-3">
-                <Eyebrow icon={Clapperboard}>A CineScout production</Eyebrow>
+                <Eyebrow onDark icon={Clapperboard}>A CineScout production</Eyebrow>
                 <div className="flex flex-wrap items-center gap-3">
                   <h1 className="font-display text-5xl leading-[0.95] font-extrabold sm:text-7xl">{project.title}</h1>
                   {archived && <Stamp tone="ink" announce className="!bg-white text-sm">Archived</Stamp>}

@@ -35,8 +35,8 @@ export function PublicCallSheetPage() {
       ) : sheet.isError ? (
         isNotFound(sheet.error) ? (
           <div role="alert" className="space-y-3 py-16 text-center">
-            <h1 className="gold-leaf font-display text-5xl leading-none">Not shared</h1>
-            <p className="font-serif text-lg text-stone-400 italic">This call sheet is not shared, or no longer is. Ask the production for a new link.</p>
+            <h1 className="font-extrabold font-display text-5xl leading-none">Not shared</h1>
+            <p className="text-lg text-muted">This call sheet is not shared, or no longer is. Ask the production for a new link.</p>
           </div>
         ) : (
           <ErrorAlert error={sheet.error} onRetry={() => sheet.refetch()} />

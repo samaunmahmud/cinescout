@@ -66,15 +66,15 @@ export function NewLocationPage() {
   const scenePath = `/scenes/${sceneId}`
   return (
     <div className="space-y-6">
-      <Link to={scenePath} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to={scenePath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {sceneLabel(scene.data)}
       </Link>
-      <section aria-labelledby="new-location" className="gilt mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
-        <h1 id="new-location" className="mb-2 gold-leaf font-display text-5xl leading-none">
+      <section aria-labelledby="new-location" className="mx-auto max-w-3xl board-card rounded-lg bg-white p-6 sm:p-8">
+        <h1 id="new-location" className="mb-2 font-extrabold font-display text-5xl leading-none">
           Add a venue
         </h1>
-        <p className="mb-4 text-sm text-stone-400">A place you found yourself. It is saved without an AI assessment.</p>
+        <p className="mb-4 text-sm text-muted">A place you found yourself. It is saved without an AI assessment.</p>
         <form onSubmit={submit} className="space-y-4" noValidate>
           <ErrorAlert error={create.error} />
           <TextField label="Name" required maxLength={200} value={values.name} onChange={set('name')} error={server.name} />

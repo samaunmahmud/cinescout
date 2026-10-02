@@ -17,8 +17,8 @@ export function AccountPage() {
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="space-y-2">
         <Eyebrow icon={UserRound}>Account</Eyebrow>
-        <h1 className="gold-leaf font-display text-6xl leading-none">{user.displayName}</h1>
-        <p className="text-stone-400">{user.email}</p>
+        <h1 className="font-extrabold font-display text-6xl leading-none">{user.displayName}</h1>
+        <p className="text-muted">{user.email}</p>
       </header>
       <ProfileForm />
       <PasswordForm />
@@ -33,11 +33,11 @@ function Panel({ titleId, title, icon, description, children }: { titleId: strin
     <Card className="p-6">
       <section aria-labelledby={titleId} className="space-y-4">
         <div className="space-y-1">
-          <h2 id={titleId} className="flex items-center gap-2 gold-leaf font-display text-3xl leading-none">
-            <Icon aria-hidden className="size-5 text-amber-400" />
+          <h2 id={titleId} className="flex items-center gap-2 font-extrabold font-display text-3xl leading-none">
+            <Icon aria-hidden className="size-5 text-cue-ink" />
             {title}
           </h2>
-          <p className="text-sm text-stone-400">{description}</p>
+          <p className="text-sm text-muted">{description}</p>
         </div>
         {children}
       </section>
@@ -47,7 +47,7 @@ function Panel({ titleId, title, icon, description, children }: { titleId: strin
 
 function Saved({ children }: { children: ReactNode }) {
   return (
-    <p role="status" className="rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+    <p role="status" className="rounded-lg border border-go-mid bg-go-wash px-4 py-3 text-sm text-go-ink">
       {children}
     </p>
   )

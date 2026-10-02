@@ -11,9 +11,9 @@ export function Card({ className = '', children }: { className?: string; childre
 }
 
 /** The typed line above a title, like the department on a call sheet. */
-export function Eyebrow({ icon: Icon, children }: { icon?: LucideIcon; children: ReactNode }) {
+export function Eyebrow({ icon: Icon, onDark = false, children }: { icon?: LucideIcon; onDark?: boolean; children: ReactNode }) {
   return (
-    <p className="flex items-center gap-1.5 font-script text-[13px] font-bold tracking-[0.1em] text-cue-ink uppercase">
+    <p className={`flex items-center gap-1.5 font-script text-[13px] font-bold tracking-[0.1em] uppercase ${onDark ? 'text-cue' : 'text-cue-ink'}`}>
       {Icon && <Icon aria-hidden className="size-3.5" />}
       {children}
     </p>

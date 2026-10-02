@@ -47,15 +47,15 @@ export function ComparePage() {
   const compared = locations.data ? venuesToCompare(locations.data.items) : null
   return (
     <div className="space-y-8">
-      <Link to={`/scenes/${sceneId}`} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to={`/scenes/${sceneId}`} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {sceneLabel(scene.data)}
       </Link>
       <header className="space-y-2">
         <Eyebrow icon={Columns3}>Side by side</Eyebrow>
-        <h1 className="gold-leaf font-display text-6xl leading-none">Compare venues</h1>
+        <h1 className="font-extrabold font-display text-6xl leading-none">Compare venues</h1>
         {compared && compared.venues.length > 1 && (
-          <p className="max-w-prose text-stone-400">
+          <p className="max-w-prose text-muted">
             {compared.shortlist
               ? 'The venues you have shortlisted, contacted or confirmed for this scene.'
               : 'The best-fitting venues for this scene. Shortlist two or more and this page compares those instead.'}{' '}
@@ -86,7 +86,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
       cell: (venue) =>
         venue.bookingFriction ? (
           <div className="space-y-1">
-            <p className="font-semibold text-stone-100">{frictionLabel(venue.bookingFriction)}</p>
+            <p className="font-semibold text-ink">{frictionLabel(venue.bookingFriction)}</p>
             {venue.frictionNote && <p>{venue.frictionNote}</p>}
           </div>
         ) : (
@@ -97,7 +97,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
       label: 'Warnings',
       cell: (venue) =>
         venue.footprintWarnings.length > 0 ? (
-          <ul className="list-disc space-y-1 pl-4 text-amber-200/90">
+          <ul className="list-disc space-y-1 pl-4 text-cue-deep">
             {venue.footprintWarnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
@@ -115,26 +115,26 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
   ]
   return (
     <>
-    <p className="text-sm text-stone-500 sm:hidden">Swipe sideways to see every venue.</p>
-    <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 shadow-lg shadow-black/30">
-      <table className="w-full min-w-[44rem] table-fixed border-collapse text-left text-sm text-stone-300">
+    <p className="text-sm text-subtle sm:hidden">Swipe sideways to see every venue.</p>
+    <div className="overflow-x-auto board-card rounded-lg bg-white">
+      <table className="w-full min-w-[44rem] table-fixed border-collapse text-left text-sm text-graphite">
         <caption className="sr-only">Venues compared</caption>
         <thead>
-          <tr className="border-b border-white/[0.07]">
-            <td className="sticky left-0 z-10 w-28 bg-frame p-4 sm:w-32" />
+          <tr className="border-b border-line">
+            <td className="sticky left-0 z-10 w-28 bg-white p-4 sm:w-32" />
             {venues.map((venue) => (
               <th key={venue.id} scope="col" className="p-4 align-top">
-                <Link to={`/locations/${venue.id}`} className="text-lg font-semibold text-stone-50 hover:text-amber-300">
+                <Link to={`/locations/${venue.id}`} className="text-lg font-semibold text-ink hover:text-cue-deep">
                   {venue.name}
                 </Link>
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/[0.05]">
+        <tbody className="divide-y divide-line-soft">
           {rows.map((row) => (
             <tr key={row.label}>
-              <th scope="row" className="sticky left-0 z-10 bg-frame p-4 align-top text-[11px] font-semibold tracking-wider text-stone-500 uppercase">
+              <th scope="row" className="sticky left-0 z-10 bg-white p-4 align-top text-[11px] font-semibold tracking-wider text-subtle uppercase">
                 {row.label}
               </th>
               {venues.map((venue) => (
@@ -152,7 +152,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
 }
 
 function Muted({ children }: { children: ReactNode }) {
-  return <span className="text-stone-500">{children}</span>
+  return <span className="text-subtle">{children}</span>
 }
 
 const needsLogistics = <Muted>Work out the venue’s logistics to see this</Muted>
@@ -181,7 +181,7 @@ function FirstDay({ venue }: { venue: Location }) {
     <div className="space-y-1">
       {sun && (
         <p>
-          <span className="text-stone-100">{formatDate(sun.date)}</span>
+          <span className="text-ink">{formatDate(sun.date)}</span>
           {sun.sunrise && sun.sunset && `: sun ${localTime(sun.sunrise, sun.date)}–${localTime(sun.sunset, sun.date)}`}
         </p>
       )}
@@ -194,7 +194,7 @@ function FirstDay({ venue }: { venue: Location }) {
         <Muted>No weather</Muted>
       )}
       {weather?.warnings.map((warning) => (
-        <p key={warning} className="text-amber-200/90">
+        <p key={warning} className="text-cue-deep">
           {warning}
         </p>
       ))}

@@ -69,7 +69,7 @@ export function ScenesSection({ projectId }: { projectId: string }) {
         <ErrorAlert error={analyse.error} />
       ) : (
         analyse.data && (
-          <p role="status" className="rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+          <p role="status" className="rounded-lg border border-go-mid bg-go-wash px-4 py-3 text-sm text-go-ink">
             {batchParseSummary(analyse.data)}
           </p>
         )
@@ -109,13 +109,13 @@ export function ScenesSection({ projectId }: { projectId: string }) {
                 <li key={scene.id}>
                   <Link
                     to={`/scenes/${scene.id}`}
-                    className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 rounded-xl border border-white/[0.07] bg-reel/80 p-3 transition hover:border-amber-400/40 hover:bg-frame focus-visible:outline-2 focus-visible:outline-amber-400 sm:flex sm:pr-5"
+                    className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 board-card rounded-lg bg-white p-3 transition hover:border-ink hover:bg-ground focus-visible:outline-2 focus-visible:outline-ink sm:flex sm:pr-5"
                   >
                     <Slate number={scene.sceneNumber} />
                     <span className="min-w-0 flex-1 space-y-1">
-                      <span className="line-clamp-2 text-lg leading-snug font-semibold text-stone-100 group-hover:text-amber-200 sm:line-clamp-1">{sceneLabel(scene)}</span>
-                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-400">
-                        {scene.requirements?.settingType && <span className="text-stone-300">{scene.requirements.settingType}</span>}
+                      <span className="line-clamp-2 text-lg leading-snug font-semibold text-ink group-hover:text-cue-ink sm:line-clamp-1">{sceneLabel(scene)}</span>
+                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                        {scene.requirements?.settingType && <span className="text-graphite">{scene.requirements.settingType}</span>}
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays aria-hidden className="size-3.5" />
                           {shootWindow ?? 'Not scheduled'}
@@ -126,7 +126,7 @@ export function ScenesSection({ projectId }: { projectId: string }) {
                     <span className="col-start-2 sm:col-auto">
                       <ParseStatusBadge status={scene.parseStatus} />
                     </span>
-                    <ChevronRight aria-hidden className="hidden size-5 text-stone-600 transition group-hover:translate-x-0.5 group-hover:text-amber-400 sm:block" />
+                    <ChevronRight aria-hidden className="hidden size-5 text-subtle transition group-hover:translate-x-0.5 group-hover:text-cue-ink sm:block" />
                   </Link>
                 </li>
               )
@@ -152,14 +152,14 @@ function SceneSearch({ current, onSearch }: { current: string; onSearch: (search
     <form role="search" onSubmit={submit} className="flex flex-wrap items-center gap-2">
       <label className="relative min-w-0 flex-1 sm:max-w-sm">
         <span className="sr-only">Search scenes</span>
-        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-500" />
+        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
         <input
           type="search"
           value={text}
           maxLength={100}
           onChange={(e) => setText(e.target.value)}
           placeholder="Search titles, scripts and settings"
-          className="w-full rounded-lg border border-white/10 bg-ink/70 py-2 pr-3 pl-9 text-sm text-stone-100 shadow-inner shadow-black/40 placeholder:text-stone-500 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/30 focus:outline-none"
+          className="w-full rounded-lg border-2 border-line bg-white py-2 pr-3 pl-9 text-sm text-ink placeholder:text-subtle focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none"
         />
       </label>
       <Button type="submit" variant="secondary">

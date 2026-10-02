@@ -75,7 +75,7 @@ export function FitScore({ score, size = 'md' }: { score: number; size?: 'md' | 
           className={colour.stroke}
         />
       </svg>
-      <span aria-hidden className={`font-display leading-none font-extrabold text-ink ${size === 'lg' ? 'text-4xl' : 'text-xl'}`}>
+      <span aria-hidden className={`relative font-display leading-none font-extrabold text-ink ${size === 'lg' ? 'text-4xl' : 'text-xl'}`}>
         {score}
       </span>
     </span>

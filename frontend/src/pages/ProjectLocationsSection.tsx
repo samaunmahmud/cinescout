@@ -102,8 +102,8 @@ export function ProjectLocationsSection({ projectId }: { projectId: string }) {
           <div className="space-y-6">
             {groupByScene(locations.data.items).map((group) => (
               <section key={group.sceneId} aria-label={sceneLabel({ sceneNumber: group.sceneNumber, title: group.sceneTitle })} className="space-y-2">
-                <h3 className="text-sm font-semibold tracking-wide text-stone-300">
-                  <Link to={`/scenes/${group.sceneId}`} className="hover:text-amber-300">
+                <h3 className="text-sm font-semibold tracking-wide text-graphite">
+                  <Link to={`/scenes/${group.sceneId}`} className="hover:text-cue-deep">
                     {sceneLabel({ sceneNumber: group.sceneNumber, title: group.sceneTitle })}
                   </Link>
                 </h3>
@@ -147,12 +147,12 @@ function StatusFilter({
             type="button"
             aria-pressed={active}
             onClick={() => onSelect(status)}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ring-inset focus-visible:outline-2 focus-visible:outline-amber-400 ${
-              active ? 'bg-amber-500/15 text-amber-200 ring-amber-400/40' : 'bg-white/[0.03] text-stone-300 ring-white/10 hover:bg-white/[0.07]'
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ring-inset focus-visible:outline-2 focus-visible:outline-ink ${
+              active ? 'bg-cue-wash text-cue-ink ring-cue' : 'bg-ground text-graphite ring-line hover:bg-ground'
             }`}
           >
             {label}{' '}
-            <span className={`ml-1 text-xs font-normal ${active ? 'text-amber-300/80' : 'text-stone-500'}`}>{count}</span>
+            <span className={`ml-1 text-xs font-normal ${active ? 'text-cue-ink' : 'text-subtle'}`}>{count}</span>
           </button>
         )
       })}
@@ -184,9 +184,9 @@ function ProjectMap({ locations, paged }: { locations: ProjectLocation[]; paged:
   const unplaced = locations.length - pins.length
   return (
     <div className="space-y-2">
-      <VenueMap pins={pins} label="Map of the project’s locations" className="h-80 shadow-xl shadow-black/40" />
+      <VenueMap pins={pins} label="Map of the project’s locations" className="h-80" />
       {(paged || unplaced > 0) && (
-        <p className="text-sm text-stone-400">
+        <p className="text-sm text-muted">
           {paged && 'The map shows the venues on this page. '}
           {unplaced > 0 && `${unplaced} of ${locations.length} venues are not on the map yet.`}
         </p>
@@ -200,28 +200,28 @@ function LocationRow({ location, onSaved }: { location: ProjectLocation; onSaved
   return (
     <article
       aria-label={location.name}
-      className={`space-y-2 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-4 shadow-lg shadow-black/30 transition hover:border-white/15 ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
+      className={`space-y-2 board-card rounded-lg bg-white p-4 transition hover:border-ink ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
     >
       <div className="flex flex-wrap items-start gap-4">
-        {location.imageUrl && <VenuePicture src={location.imageUrl} className="hidden h-20 w-32 shrink-0 rounded-md ring-1 ring-white/10 sm:block" />}
+        {location.imageUrl && <VenuePicture src={location.imageUrl} className="hidden h-20 w-32 shrink-0 rounded-md ring-1 ring-line sm:block" />}
         {location.fitScore != null && <FitScore score={location.fitScore} />}
         <div className="min-w-0 flex-1 basis-44 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-semibold">
-              <Link to={`/locations/${location.id}`} className="text-lg text-stone-50 hover:text-amber-300">
+              <Link to={`/locations/${location.id}`} className="text-lg text-ink hover:text-cue-deep">
                 {location.name}
               </Link>
             </h4>
             <LocationBadges location={location} />
           </div>
           {location.address && (
-            <p className="flex items-center gap-1.5 text-sm text-stone-400">
-              <PinIcon aria-hidden className="size-3.5 shrink-0 text-amber-400/70" />
+            <p className="flex items-center gap-1.5 text-sm text-muted">
+              <PinIcon aria-hidden className="size-3.5 shrink-0 text-cue-ink" />
               {location.address}
             </p>
           )}
-          {location.fitReason && <p className="text-sm text-stone-300">{location.fitReason}</p>}
-          {location.notes && <p className="border-l-2 border-stone-700 pl-3 text-sm whitespace-pre-line text-stone-300 italic">{location.notes}</p>}
+          {location.fitReason && <p className="text-sm text-graphite">{location.fitReason}</p>}
+          {location.notes && <p className="border-l-2 border-line pl-3 text-sm whitespace-pre-line text-graphite italic">{location.notes}</p>}
         </div>
         <div className="shrink-0">
           <StatusSelect location={location} update={update} />

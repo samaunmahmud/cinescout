@@ -13,8 +13,8 @@ export function Pager({ data, onChange, label }: { data: Page<unknown>; onChange
         <ChevronLeft aria-hidden className="size-4" />
         Previous
       </Button>
-      <p className="text-sm text-stone-400">
-        <span className="text-stone-200">
+      <p className="text-sm text-muted">
+        <span className="text-ink">
           {first}–{last}
         </span>{' '}
         of {data.totalItems} · page {data.page + 1} of {data.totalPages}

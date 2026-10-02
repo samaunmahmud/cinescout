@@ -86,7 +86,7 @@ export function SceneForm({
         error={errors.sourceText}
       />
       {note && (
-        <p role="note" className="rounded-md border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+        <p role="note" className="rounded-md border border-cue bg-cue-wash px-4 py-3 text-sm text-cue-ink">
           {note}
         </p>
       )}

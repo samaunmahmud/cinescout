@@ -25,7 +25,7 @@ describe('a location', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Tom’s Diner' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Scene 12: INT. DINER - NIGHT' })).toHaveAttribute('href', '/scenes/s1')
     expect(screen.getByLabelText('Fit 82 out of 100')).toBeInTheDocument()
-    const assessment = screen.getByRole('region', { name: 'Assessment' })
+    const assessment = screen.getByRole('region', { name: 'Scout’s report' })
     expect(assessment).toHaveTextContent('Neon sign and red booths match the mood.')
     expect(assessment).toHaveTextContent('A classic Brooklyn diner since 1936.')
     expect(within(assessment).getAllByRole('listitem')).toHaveLength(2)
@@ -42,7 +42,7 @@ describe('a location', () => {
     await logIn()
 
     expect(await screen.findByText('Added by hand')).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Assessment' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Scout’s report' })).toBeNull()
     expect(screen.getByText(/Not set\. Logistics look the venue up from its address/)).toBeInTheDocument()
   })
 

@@ -105,8 +105,11 @@ body {
   @page { margin: 14mm; }
 }
 
+/* In the components layer, so a utility on the same element (hidden, bg-cue, a rotation) wins over these. */
+@layer components {
 .font-display {
   letter-spacing: -0.025em;
+  font-weight: 800;
 }
 
 /* Marker on tape reads a touch small at the same size as the text around it. */
@@ -201,4 +204,5 @@ body {
 .btn-cue:active:not(:disabled) {
   transform: translateY(3px);
   box-shadow: 0 1px 0 var(--color-ink);
+}
 }

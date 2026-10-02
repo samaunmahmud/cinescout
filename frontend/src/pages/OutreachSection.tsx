@@ -26,7 +26,7 @@ const statuses = outreachStatusLabels
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
 const selectClass =
-  'rounded-md border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 focus:outline-none disabled:opacity-50'
+  'rounded-md border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-ink focus:ring-1 focus:ring-cue/25 focus:outline-none disabled:opacity-50'
 
 /** Emails to the venue's owner: written by the AI, edited by the user, sent from their own email app. */
 export function OutreachSection({ location }: { location: Location }) {
@@ -151,19 +151,19 @@ function GenerateForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Write an email" className="space-y-4 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30" noValidate>
+    <form onSubmit={submit} aria-label="Write an email" className="space-y-4 board-card rounded-lg bg-white p-5" noValidate>
       <ErrorAlert error={error} />
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-stone-300">Tone</legend>
+        <legend className="text-sm font-medium text-graphite">Tone</legend>
         <div className="flex flex-wrap gap-2">
           {Object.entries(tones).map(([value, { label, hint }]) => (
             <label
               key={value}
-              className="flex cursor-pointer items-center gap-2 rounded-md border border-stone-700 px-3 py-2 text-sm has-checked:border-amber-400 has-checked:bg-amber-500/10"
+              className="flex cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm has-checked:border-ink has-checked:bg-cue-wash"
             >
-              <input type="radio" name="tone" value={value} checked={tone === value} onChange={() => setTone(value as OutreachTone)} className="accent-amber-500" />
+              <input type="radio" name="tone" value={value} checked={tone === value} onChange={() => setTone(value as OutreachTone)} className="accent-[#c2410c]" />
               <span>
-                {label} <span className="text-stone-500">· {hint}</span>
+                {label} <span className="text-subtle">· {hint}</span>
               </span>
             </label>
           ))}
@@ -267,11 +267,11 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
   const recipient = [draft.recipientName, draft.recipientEmail && `<${draft.recipientEmail}>`].filter(Boolean).join(' ')
 
   return (
-    <article aria-label={draft.subject} className="space-y-3 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-5 shadow-lg shadow-black/30">
+    <article aria-label={draft.subject} className="space-y-3 board-card rounded-lg bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="font-semibold">{draft.subject}</h3>
-          <p className="text-sm text-stone-400">
+          <p className="text-sm text-muted">
             {recipient ? `To ${recipient}` : 'No recipient yet'} · {tones[draft.tone].label} · written {dateFormat.format(new Date(draft.createdAt))}
           </p>
         </div>
@@ -298,7 +298,7 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
       </div>
 
       {/* The letter, as it would come out of the typewriter. */}
-      <div className="rounded-sm bg-paper px-6 py-6 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-stone-900 shadow-xl shadow-black/50 ring-1 ring-black/20 sm:px-8">
+      <div className="rounded-sm bg-paper px-6 py-6 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-xl ring-1 ring-ink/20 sm:px-8">
         {draft.body}
       </div>
 
@@ -380,7 +380,7 @@ function EditDraftForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Edit email" className="space-y-4 rounded-xl border border-amber-400/25 bg-frame/90 p-5" noValidate>
+    <form onSubmit={submit} aria-label="Edit email" className="space-y-4 rounded-xl border border-cue bg-white p-5" noValidate>
       <ErrorAlert error={error} />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Recipient name" maxLength={200} value={values.recipientName} onChange={set('recipientName')} error={server.recipientName} />

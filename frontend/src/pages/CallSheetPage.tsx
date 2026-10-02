@@ -38,12 +38,12 @@ export function CallSheetPage() {
     <div className="space-y-6">
       <div className="no-print flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-3">
-          <Link to={`/projects/${projectId}?tab=schedule`} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+          <Link to={`/projects/${projectId}?tab=schedule`} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
             <ChevronLeft aria-hidden className="size-4" />
             {project.data.title}
           </Link>
           <Eyebrow icon={Printer}>For the crew</Eyebrow>
-          <h1 className="gold-leaf font-display text-6xl leading-none">Call sheet</h1>
+          <h1 className="font-extrabold font-display text-6xl leading-none">Call sheet</h1>
         </div>
         <Button onClick={() => window.print()} disabled={!schedule.data}>
           <Printer aria-hidden className="size-4" />
@@ -95,14 +95,14 @@ function SharePanel({ projectId }: { projectId: string }) {
   }
 
   return (
-    <section aria-labelledby="share-heading" className="no-print gilt mx-auto max-w-4xl space-y-3 rounded-xl border border-white/[0.07] bg-reel/80 p-5">
+    <section aria-labelledby="share-heading" className="no-print mx-auto max-w-4xl space-y-3 board-card rounded-lg bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <h2 id="share-heading" className="flex items-center gap-2 font-display text-2xl leading-none text-stone-50">
-            <Share2 aria-hidden className="size-4 text-amber-300" />
+          <h2 id="share-heading" className="flex items-center gap-2 font-display text-2xl leading-none text-ink">
+            <Share2 aria-hidden className="size-4 text-cue-ink" />
             Share with the crew
           </h2>
-          <p className="text-sm text-stone-400">
+          <p className="text-sm text-muted">
             {url
               ? 'Anyone with this link can read the call sheet, venues and contacts included, without an account.'
               : 'Make a link to this call sheet that works without an account. You can stop it at any time.'}
@@ -122,7 +122,7 @@ function SharePanel({ projectId }: { projectId: string }) {
             aria-label="Call sheet link"
             value={url}
             onFocus={(e) => e.target.select()}
-            className="min-w-0 flex-1 rounded-md border border-white/10 bg-black/50 px-3 py-2 font-mono text-xs text-stone-200"
+            className="min-w-0 flex-1 rounded-lg border-2 border-line bg-ground px-3 py-2 font-mono text-xs text-ink"
           />
           <Button variant="secondary" onClick={copy}>
             {copied ? 'Copied' : 'Copy link'}

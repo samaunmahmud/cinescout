@@ -75,16 +75,16 @@ export function ImportScriptPage() {
 
   return (
     <div className="space-y-6">
-      <Link to={`/projects/${projectId}`} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to={`/projects/${projectId}`} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {project.data.title}
       </Link>
-      <section aria-labelledby="import-script" className="gilt mx-auto max-w-3xl space-y-6 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
+      <section aria-labelledby="import-script" className="mx-auto max-w-3xl space-y-6 board-card rounded-lg bg-white p-6 sm:p-8">
         <div className="space-y-2">
-          <h1 id="import-script" className="gold-leaf font-display text-5xl leading-none">
+          <h1 id="import-script" className="font-extrabold font-display text-5xl leading-none">
             Import script
           </h1>
-          <p className="max-w-prose text-sm text-stone-400">
+          <p className="max-w-prose text-sm text-muted">
             Paste a screenplay and it is cut into scenes at its scene headings, the lines that start with INT. or EXT. Each scene is added to
             the project, ready to be analysed and scouted.
           </p>
@@ -104,13 +104,13 @@ export function ImportScriptPage() {
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <label htmlFor={fileId} className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-amber-300 underline hover:text-amber-200 focus-within:outline-2 focus-within:outline-amber-400">
+              <label htmlFor={fileId} className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-cue-ink underline hover:text-cue-deep focus-within:outline-2 focus-within:outline-ink">
                 <FileText aria-hidden className="size-4" />
                 Or choose a text file
                 <input id={fileId} type="file" accept=".txt,.fountain,.spmd,text/plain" onChange={chooseFile} className="sr-only" />
               </label>
               {fileError && (
-                <p role="alert" className="mt-1 text-sm text-red-400">
+                <p role="alert" className="mt-1 text-sm text-stop-ink">
                   {fileError}
                 </p>
               )}
@@ -147,12 +147,12 @@ function FoundScenes({ found, busy, onImport }: { found: ScriptImport; busy: boo
   }
   const cut = found.scenes.filter((scene) => scene.truncated).length
   return (
-    <section aria-labelledby="found-scenes" className="space-y-4 border-t border-white/[0.07] pt-6">
+    <section aria-labelledby="found-scenes" className="space-y-4 border-t border-line pt-6">
       <div className="space-y-1">
-        <h2 id="found-scenes" className="gold-leaf font-display text-3xl leading-none">
+        <h2 id="found-scenes" className="font-extrabold font-display text-3xl leading-none">
           {count === 1 ? '1 scene found' : `${count} scenes found`}
         </h2>
-        <p className="text-sm text-stone-400">
+        <p className="text-sm text-muted">
           {found.scriptNumbersKept
             ? 'The scenes keep the numbers the script gives them.'
             : 'The scenes are numbered in script order, on from the project’s last scene.'}
@@ -161,11 +161,11 @@ function FoundScenes({ found, busy, onImport }: { found: ScriptImport; busy: boo
       </div>
       <ol aria-label="Scenes found" className="max-h-96 space-y-2 overflow-y-auto pr-1">
         {found.scenes.map((scene, index) => (
-          <li key={index} className="flex items-center gap-3 rounded-lg border border-white/[0.07] bg-ink/40 p-2 pr-4">
+          <li key={index} className="flex items-center gap-3 rounded-lg border-2 border-line bg-white p-2 pr-4">
             <Slate number={scene.sceneNumber} className="scale-90" />
             <span className="sr-only">Scene {scene.sceneNumber}:</span>
-            <span className="min-w-0 flex-1 truncate font-semibold text-stone-100">{scene.title}</span>
-            <span className="shrink-0 text-xs text-stone-500">
+            <span className="min-w-0 flex-1 truncate font-semibold text-ink">{scene.title}</span>
+            <span className="shrink-0 text-xs text-subtle">
               {scene.characters.toLocaleString()} characters{scene.truncated && ', cut short'}
             </span>
           </li>

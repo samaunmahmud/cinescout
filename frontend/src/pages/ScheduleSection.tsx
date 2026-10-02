@@ -63,7 +63,7 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
         <ErrorAlert error={conditions.error} />
       ) : (
         conditions.data && (
-          <p role="status" className="rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+          <p role="status" className="rounded-lg border border-go-mid bg-go-wash px-4 py-3 text-sm text-go-ink">
             {batchLogisticsSummary(conditions.data)}
           </p>
         )
@@ -104,12 +104,12 @@ function Day({
 }) {
   const Icon = dated ? CalendarDays : CalendarOff
   return (
-    <section aria-labelledby={titleId} className="overflow-hidden rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 shadow-lg shadow-black/30">
-      <h3 id={titleId} className={`flex items-center gap-2 border-b border-white/[0.07] px-4 py-3 font-semibold ${dated ? 'text-amber-200' : 'text-stone-400'}`}>
+    <section aria-labelledby={titleId} className="overflow-hidden board-card rounded-lg bg-white">
+      <h3 id={titleId} className={`flex items-center gap-2 border-b border-line px-4 py-3 font-semibold ${dated ? 'text-cue-ink' : 'text-muted'}`}>
         <Icon aria-hidden className="size-4" />
         {title}
       </h3>
-      <ul className="divide-y divide-white/[0.05]">
+      <ul className="divide-y divide-line-soft">
         {scenes.map((scene) => (
           <li key={scene.id}>
             <SceneRow scene={scene} projectId={projectId} dated={dated} />
@@ -126,15 +126,15 @@ function CastDays({ schedule }: { schedule: Schedule }) {
   if (report.cast.length === 0 || report.days.length === 0) return null
   return (
     <section aria-labelledby="cast-days" className="space-y-3">
-      <h3 id="cast-days" className="flex items-center gap-2 font-display text-2xl leading-none text-stone-50">
-        <Users aria-hidden className="size-5 text-amber-300" />
+      <h3 id="cast-days" className="flex items-center gap-2 font-display text-2xl leading-none text-ink">
+        <Users aria-hidden className="size-5 text-cue-ink" />
         Day out of days
       </h3>
-      <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-reel/70">
+      <div className="overflow-x-auto board-card rounded-lg bg-white">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Which of the cast works on which shoot day</caption>
           <thead>
-            <tr className="border-b border-white/[0.07] text-left text-[11px] tracking-wider text-stone-500 uppercase">
+            <tr className="border-b border-line text-left text-[11px] tracking-wider text-subtle uppercase">
               <th scope="col" className="px-4 py-2 font-semibold">Cast</th>
               {report.days.map((day) => (
                 <th key={day} scope="col" className="px-3 py-2 text-center font-semibold">
@@ -144,24 +144,24 @@ function CastDays({ schedule }: { schedule: Schedule }) {
               <th scope="col" className="px-4 py-2 text-right font-semibold">Days</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.05]">
+          <tbody className="divide-y divide-line-soft">
             {report.cast.map(({ name, days }) => (
               <tr key={name}>
-                <th scope="row" className="px-4 py-2 text-left font-semibold text-stone-100">
+                <th scope="row" className="px-4 py-2 text-left font-semibold text-ink">
                   {name}
                 </th>
                 {report.days.map((day) => (
                   <td key={day} className="px-3 py-2 text-center">
                     {days.has(day) ? (
-                      <span className="inline-flex size-6 items-center justify-center rounded bg-amber-300/15 text-xs font-bold text-amber-200 ring-1 ring-amber-300/30">
+                      <span className="inline-flex size-6 items-center justify-center rounded bg-cue-wash text-xs font-bold text-cue-ink ring-1 ring-cue">
                         W<span className="sr-only">orks</span>
                       </span>
                     ) : (
-                      <span className="text-stone-600">·</span>
+                      <span className="text-subtle">·</span>
                     )}
                   </td>
                 ))}
-                <td className="px-4 py-2 text-right text-stone-300">{days.size}</td>
+                <td className="px-4 py-2 text-right text-graphite">{days.size}</td>
               </tr>
             ))}
           </tbody>
@@ -216,13 +216,13 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
       <div className="flex flex-wrap items-center gap-4">
         <Slate number={scene.sceneNumber} />
         <div className="min-w-0 flex-1 space-y-1">
-          <Link to={`/scenes/${scene.id}`} className="block truncate text-lg font-semibold text-stone-100 hover:text-amber-200">
+          <Link to={`/scenes/${scene.id}`} className="block truncate text-lg font-semibold text-ink hover:text-cue-deep">
             {scene.title}
           </Link>
-          <p className="flex flex-wrap gap-x-3 text-sm text-stone-400">
-            {scene.settingType && <span className="text-stone-300">{scene.settingType}</span>}
+          <p className="flex flex-wrap gap-x-3 text-sm text-muted">
+            {scene.settingType && <span className="text-graphite">{scene.settingType}</span>}
             {scene.timeOfDay && <span>{scene.timeOfDay}</span>}
-            {scene.characters.length > 0 && <span className="text-stone-300">{scene.characters.join(', ')}</span>}
+            {scene.characters.length > 0 && <span className="text-graphite">{scene.characters.join(', ')}</span>}
             {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
               <span>until {formatDate(scene.shootDateEnd)}</span>
             )}
@@ -238,7 +238,7 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
         )}
       </div>
       {editing && (
-        <form onSubmit={submit} aria-label={`Shoot dates of ${scene.title}`} className="flex flex-wrap items-end gap-3 rounded-lg bg-black/30 p-3 ring-1 ring-amber-300/10" noValidate>
+        <form onSubmit={submit} aria-label={`Shoot dates of ${scene.title}`} className="flex flex-wrap items-end gap-3 rounded-lg bg-ground p-3 ring-1 ring-line" noValidate>
           <ErrorAlert error={save.error} />
           <TextField label="First shoot day" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
           <TextField
@@ -269,15 +269,15 @@ function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
       <ul aria-label={`Confirmed for ${scene.title}`} className="w-full space-y-1 sm:w-72">
         {scene.venues.map((venue) => (
           <li key={venue.id} className="flex items-start gap-1.5 text-sm">
-            <PinIcon aria-hidden className="mt-0.5 size-3.5 shrink-0 text-emerald-400" />
+            <PinIcon aria-hidden className="mt-0.5 size-3.5 shrink-0 text-go-ink" />
             <span className="min-w-0">
-              <Link to={`/locations/${venue.id}`} className="font-semibold text-emerald-200 hover:underline">
+              <Link to={`/locations/${venue.id}`} className="font-semibold text-go-ink hover:underline">
                 {venue.name}
               </Link>
-              {venue.address && <span className="block truncate text-stone-400">{venue.address}</span>}
-              {dayConditions(venue.day) && <span className="block text-xs text-amber-200/70">{dayConditions(venue.day)}</span>}
+              {venue.address && <span className="block truncate text-muted">{venue.address}</span>}
+              {dayConditions(venue.day) && <span className="block text-xs text-cue-ink">{dayConditions(venue.day)}</span>}
               {venue.day?.warnings.map((warning) => (
-                <span key={warning} className="flex items-start gap-1 text-xs text-amber-300">
+                <span key={warning} className="flex items-start gap-1 text-xs text-cue-ink">
                   <TriangleAlert aria-hidden className="mt-0.5 size-3 shrink-0" />
                   {warning}
                 </span>
@@ -291,7 +291,7 @@ function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
   const next =
     scene.candidates === 0 ? 'Not scouted yet' : scene.candidates === 1 ? '1 candidate, none confirmed' : `${scene.candidates} candidates, none confirmed`
   return (
-    <p className={`flex w-full items-center gap-1.5 text-sm sm:w-72 ${urgent ? 'text-amber-300' : 'text-stone-400'}`}>
+    <p className={`flex w-full items-center gap-1.5 text-sm sm:w-72 ${urgent ? 'text-cue-ink' : 'text-muted'}`}>
       {urgent && <TriangleAlert aria-hidden className="size-3.5 shrink-0" />}
       {next}
     </p>

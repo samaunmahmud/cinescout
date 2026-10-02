@@ -22,14 +22,14 @@ describe('the location page tabs', () => {
 
     const tabs = await screen.findByRole('tablist', { name: 'About this location' })
     expect(within(tabs).getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('heading', { name: 'Assessment' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Scout’s report' })).toBeInTheDocument()
     expect(requests.some((r) => r.path.endsWith('/videos'))).toBe(false)
 
     await user.click(within(tabs).getByRole('tab', { name: 'Videos' }))
 
     expect(await screen.findByRole('list', { name: 'Videos of the venue' })).toBeInTheDocument()
     expect(router.state.location.search).toBe('?tab=videos')
-    expect(screen.queryByRole('heading', { name: 'Assessment' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Scout’s report' })).toBeNull()
     expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Videos')
   })
 

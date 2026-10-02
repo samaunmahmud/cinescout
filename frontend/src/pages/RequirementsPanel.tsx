@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 import { queryKeys } from '../api/queryKeys'
 import type { AcousticSensitivity, Scene, SceneRequirements } from '../api/types'
 import { useSession } from '../auth/context'
-import { Building2, Clock, Lightbulb, Palette, Sparkles, Users, Volume2, type LucideIcon } from 'lucide-react'
-import { Eyebrow, Fact } from '../components/surfaces'
+import { Sparkles } from 'lucide-react'
+import { Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 
 const sensitivity: Record<AcousticSensitivity, string> = {
@@ -36,11 +36,11 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
   )
 
   return (
-    <section aria-labelledby="requirements-heading" className="relative space-y-5 overflow-hidden rounded-xl border border-amber-400/15 bg-gradient-to-br from-amber-500/[0.07] via-frame/90 to-reel p-6">
+    <section aria-labelledby="requirements-heading" className="board-card relative space-y-5 rounded-lg bg-white p-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <Eyebrow icon={Sparkles}>Read by the AI</Eyebrow>
-          <h2 id="requirements-heading" className="gold-leaf font-display text-3xl leading-none">
+          <h2 id="requirements-heading" className="font-display text-3xl leading-none font-extrabold">
             Location requirements
           </h2>
         </div>
@@ -57,7 +57,7 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
         <RequirementsList requirements={requirements} />
       ) : (
         !parse.isPending && (
-          <p className="text-sm text-stone-400">
+          <p className="text-sm text-muted">
             {parseStatus === 'FAILED'
               ? 'The last analysis did not produce usable requirements. Try again, or make the script clearer about where the scene takes place.'
               : 'Not analysed yet. The AI reads the script and works out the setting, mood, lighting, time of day and how quiet the location must be.'}
@@ -69,20 +69,28 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
 }
 
 function RequirementsList({ requirements: r }: { requirements: SceneRequirements }) {
-  const rows: [string, LucideIcon, ReactNode][] = [
-    ['Setting', Building2, r.settingType],
-    ['Time of day', Clock, r.timeOfDay],
-    ['Visual mood', Palette, r.visualMood],
-    ['Lighting', Lightbulb, r.lightingNeeds],
-    ['Sound', Volume2, r.acousticSensitivity && sensitivity[r.acousticSensitivity]],
-    ['Cast and crew', Users, r.estimatedCastAndCrewSize != null && `About ${r.estimatedCastAndCrewSize} people`],
+  const rows: [string, ReactNode][] = [
+    ['Setting', r.settingType],
+    ['Time of day', r.timeOfDay],
+    ['Visual mood', r.visualMood],
+    ['Lighting', r.lightingNeeds],
+    ['Sound', r.acousticSensitivity && sensitivity[r.acousticSensitivity]],
+    ['Cast and crew', r.estimatedCastAndCrewSize != null && `About ${r.estimatedCastAndCrewSize} people`],
   ]
+  // Each requirement on its own strip of tape, as a scout would label the board; the ones the venue hunt turns on
+  // (the light, the sound) in the board's colours.
+  const tapes: Record<string, string> = { Lighting: 'bg-cue', Sound: 'bg-go' }
   return (
-    <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {rows.map(([label, icon, value]) => (
-        <Fact key={label} icon={icon} label={label}>
-          {value || <span className="text-stone-500">Not specified</span>}
-        </Fact>
+    <dl className="flex flex-wrap gap-x-3 gap-y-4 pt-1">
+      {rows.map(([label, value], i) => (
+        <div
+          key={label}
+          style={{ transform: `rotate(${[-1.5, 1.2, -0.8, 1.5, -1.2, 0.8][i]}deg)` }}
+          className={`tape flex flex-col px-4 pt-1.5 pb-1 ${tapes[label] ?? ''}`}
+        >
+          <dt className="font-script text-[11px] font-bold tracking-[0.1em] uppercase">{label}</dt>
+          <dd className="font-marker text-[17px] leading-snug">{value || <span className="opacity-60">Not specified</span>}</dd>
+        </div>
       ))}
     </dl>
   )

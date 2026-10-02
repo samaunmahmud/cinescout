@@ -63,14 +63,14 @@ function SceneDetails({ scene }: { scene: Scene }) {
 
   return (
     <div className="space-y-8">
-      <Link to={projectPath} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to={projectPath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {project.data?.title ?? 'Project'}
       </Link>
 
       {editing ? (
-        <section aria-labelledby="edit-scene" className="rounded-xl border border-white/[0.07] bg-frame/80 p-6">
-          <h1 id="edit-scene" className="mb-4 gold-leaf font-display text-4xl leading-none">
+        <section aria-labelledby="edit-scene" className="board-card rounded-lg bg-white p-6">
+          <h1 id="edit-scene" className="mb-4 font-display text-4xl leading-none font-extrabold">
             Edit scene
           </h1>
           <SceneForm
@@ -98,23 +98,22 @@ function SceneDetails({ scene }: { scene: Scene }) {
         </section>
       ) : (
         // The scene's slate, as it would be held up before the take.
-        <header className="letterbox gilt relative flex animate-fade-in flex-wrap items-start justify-between gap-6 overflow-hidden rounded-xl bg-gradient-to-br from-frame to-black p-6 shadow-2xl shadow-black/70 ring-1 ring-amber-300/20 sm:p-8">
-          <div aria-hidden className="pointer-events-none absolute -top-24 left-10 h-64 w-96 bg-[radial-gradient(ellipse_at_top,rgb(255_243_196/0.14),transparent_65%)]" />
+        <header className="relative flex animate-fade-in flex-wrap items-start justify-between gap-6 rounded-lg border-2 border-ink bg-ink p-6 text-white shadow-[0_5px_0_var(--color-cue)] sm:p-8">
           <div className="flex min-w-0 items-start gap-5">
-            <Slate number={scene.sceneNumber} className="w-24 scale-110" />
+            <Slate number={scene.sceneNumber} className="w-24 -rotate-3 border-white" />
             <div className="min-w-0 space-y-2">
-              <Eyebrow icon={Clapperboard}>{project.data?.title ?? 'Scene'}</Eyebrow>
+              <Eyebrow onDark icon={Clapperboard}>{project.data?.title ?? 'Scene'}</Eyebrow>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="gold-leaf font-display text-5xl leading-none">{sceneLabel(scene)}</h1>
+                <h1 className="font-display text-3xl leading-none font-extrabold break-words sm:text-5xl">{sceneLabel(scene)}</h1>
                 <ParseStatusBadge status={scene.parseStatus} />
               </div>
-              <p className="flex items-center gap-1.5 text-stone-400">
-                <CalendarDays aria-hidden className="size-4 text-amber-400/80" />
+              <p className="flex items-center gap-1.5 font-script text-fog">
+                <CalendarDays aria-hidden className="size-4 text-cue" />
                 {shootWindow ?? 'No shoot dates yet'}
               </p>
               {scene.characters.length > 0 && (
-                <p className="flex items-start gap-1.5 text-stone-400">
-                  <Users aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-400/80" />
+                <p className="flex items-start gap-1.5 font-script text-fog">
+                  <Users aria-hidden className="mt-0.5 size-4 shrink-0 text-cue" />
                   <span>
                     <span className="sr-only">Speaking parts: </span>
                     {scene.characters.join(', ')}
@@ -127,7 +126,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
             <Button variant="secondary" onClick={() => setEditing(true)}>
               Edit
             </Button>
-            <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+            <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
               Delete
             </Button>
           </div>
@@ -155,13 +154,16 @@ function SceneDetails({ scene }: { scene: Scene }) {
           </div>
           <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
             <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>
-            <h2 id="script-heading" className="gold-leaf font-display text-3xl leading-none">
+            <h2 id="script-heading" className="font-display text-3xl leading-none font-extrabold">
               Script
             </h2>
-            {/* A page of the script, as it would come off the printer. */}
-            <pre className="max-h-[70vh] overflow-auto rounded-sm bg-paper px-6 py-7 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-stone-900 shadow-2xl shadow-black/60 ring-1 ring-black/20">
-              {scene.sourceText}
-            </pre>
+            {/* A page of the script, as it came off the printer, taped to the board. */}
+            <div className="relative rotate-1 pt-2">
+              <span aria-hidden className="tape-piece -top-0 right-10 z-10 w-24 rotate-6" />
+              <pre className="max-h-[70vh] overflow-auto rounded-sm bg-paper px-6 py-7 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[0_18px_30px_-18px_rgb(13_19_33/0.55)] ring-1 ring-line">
+                {scene.sourceText}
+              </pre>
+            </div>
           </section>
         </div>
       )}

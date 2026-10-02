@@ -35,12 +35,12 @@ export function NewScenePage() {
 
   return (
     <div className="space-y-6">
-      <Link to={`/projects/${projectId}`} className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to={`/projects/${projectId}`} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {project.data.title}
       </Link>
-      <section aria-labelledby="new-scene" className="gilt mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-6 shadow-xl shadow-black/40 sm:p-8">
-        <h1 id="new-scene" className="mb-6 gold-leaf font-display text-5xl leading-none">
+      <section aria-labelledby="new-scene" className="mx-auto max-w-3xl board-card rounded-lg bg-white p-6 sm:p-8">
+        <h1 id="new-scene" className="mb-6 font-extrabold font-display text-5xl leading-none">
           New scene
         </h1>
         <SceneForm

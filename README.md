@@ -12,8 +12,8 @@ minute to wake up).
 
 | | |
 |---|---|
-| ![The login page: a lit marquee](docs/screenshots/login.jpg) | ![Projects as film posters](docs/screenshots/projects.jpg) |
-| ![A project's title card and scenes](docs/screenshots/project.jpg) | ![A venue with its assessment, contact and map](docs/screenshots/location.jpg) |
+| ![The login page: a chalk slate and stickers](docs/screenshots/login.jpg) | ![Productions pinned to the board](docs/screenshots/projects.jpg) |
+| ![A scene: what the script asks for, on tape](docs/screenshots/scene.jpg) | ![A venue through the viewfinder, with its score](docs/screenshots/location.jpg) |
 
 The schedule prints as a [call sheet](docs/screenshots/callsheet.jpg). The screenshots show made-up productions.
 
@@ -319,4 +319,6 @@ comes back with that section marked `UNAVAILABLE`.
 14. Project-wide outreach: every email with its venue and scene, by status - done
 15. Venue comparison: a scene's shortlist side by side (fit, booking, warnings, noise, light and weather) - done
 16. Scene search, and a contact (name, email, phone) and the venue's quote on each venue; outreach emails start from the contact - done
-17. Premiere-night look for the web app: gold-leaf titles, marquee lights, poster cards for projects - done
+17. Premiere-night look for the web app: gold-leaf titles, marquee lights, poster cards for projects - done, since replaced
+18. Fit scores worked out in code from the model's judgement of the setting and each requirement - done
+19. Location-department look: a bright board, ink panels, tape labels, rubber stamps, polaroids and a camera viewfinder - done

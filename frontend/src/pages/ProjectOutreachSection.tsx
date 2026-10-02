@@ -64,8 +64,8 @@ export function ProjectOutreachSection({ projectId }: { projectId: string }) {
               type="button"
               aria-pressed={active}
               onClick={() => selectStatus(option.status)}
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ring-inset focus-visible:outline-2 focus-visible:outline-amber-400 ${
-                active ? 'bg-amber-500/15 text-amber-200 ring-amber-400/40' : 'bg-white/[0.03] text-stone-300 ring-white/10 hover:bg-white/[0.07]'
+              className={`rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ring-inset focus-visible:outline-2 focus-visible:outline-ink ${
+                active ? 'bg-cue-wash text-cue-ink ring-cue' : 'bg-ground text-graphite ring-line hover:bg-ground'
               }`}
             >
               {option.label}
@@ -106,27 +106,27 @@ function OutreachRow({ draft }: { draft: ProjectOutreach }) {
   return (
     <article
       aria-label={draft.subject}
-      className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/90 to-reel/90 p-4 shadow-lg shadow-black/30"
+      className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 board-card rounded-lg bg-white p-4"
     >
       <div className="min-w-0 flex-1 space-y-1">
         <h3 className="font-semibold">
-          <Link to={`/locations/${draft.locationId}?tab=outreach`} className="text-lg text-stone-50 hover:text-amber-300">
+          <Link to={`/locations/${draft.locationId}?tab=outreach`} className="text-lg text-ink hover:text-cue-deep">
             {draft.subject}
           </Link>
         </h3>
-        <p className="text-sm text-stone-300">
+        <p className="text-sm text-graphite">
           {draft.locationName}
-          <span className="text-stone-500"> · </span>
-          <Link to={`/scenes/${draft.sceneId}`} className="text-stone-400 hover:text-amber-300">
+          <span className="text-subtle"> · </span>
+          <Link to={`/scenes/${draft.sceneId}`} className="text-muted hover:text-cue-deep">
             {sceneLabel({ sceneNumber: draft.sceneNumber, title: draft.sceneTitle })}
           </Link>
         </p>
-        <p className="text-sm text-stone-400">
+        <p className="text-sm text-muted">
           {recipient ? `To ${recipient}` : 'No recipient yet'}
           {draft.recipientName && draft.recipientEmail && ` (${draft.recipientEmail})`}
         </p>
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-1 text-sm text-stone-400">
+      <div className="flex shrink-0 flex-col items-end gap-1 text-sm text-muted">
         <Badge tone={status.tone}>{status.label}</Badge>
         <span>{draft.sentAt ? `Sent ${dateFormat.format(new Date(draft.sentAt))}` : `Written ${dateFormat.format(new Date(draft.createdAt))}`}</span>
       </div>
