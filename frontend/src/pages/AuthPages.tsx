@@ -37,7 +37,9 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
           </p>
         </div>
 
-        <div aria-hidden className="max-w-xl -rotate-[1.5deg]">
+        <div aria-hidden className="relative max-w-xl -rotate-[1.5deg]">
+          <QuietOnSet className="absolute -top-20 -right-4 z-10 !size-28" />
+          <AdmitOne className="absolute -right-5 -bottom-9 z-10" />
           <div className="clapper h-11 rounded-t-lg border-[3px] border-white" />
           <div className="grid grid-cols-3 rounded-b-lg border-[3px] border-t-0 border-white bg-[#1b222b] font-script">
             <div className="col-span-3 flex items-baseline gap-4 border-b-2 border-ink-line px-5 py-3">
@@ -54,8 +56,6 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
           </div>
         </div>
 
-        <QuietOnSet className="absolute top-36 right-12" />
-        <AdmitOne className="absolute right-16 bottom-14" />
       </aside>
 
       <div className="relative flex items-center justify-center px-4 py-12">
