@@ -93,6 +93,7 @@ erDiagram
 - **Venue pictures are fetched by the server, carefully.** A venue's `image_url` is the `og:image` of its web
   page, read once (`image_checked_at`). Because a user can type a venue's address in, the fetch only goes to
   public hosts (checked on the very addresses the client connects to, so a name that changes its answer cannot
-  slip past), does not follow redirects, reads at most a megabyte and times out; the browser then loads the
-  picture straight from its host, without a referrer.
+  slip past), follows at most three redirects, each one checked like the first page, reads at most a megabyte
+  and times out. Pictures are stored as https (the only kind the pages' CSP loads) and SVGs, which are logos,
+  are skipped. The browser then loads the picture straight from its host, without a referrer.
 

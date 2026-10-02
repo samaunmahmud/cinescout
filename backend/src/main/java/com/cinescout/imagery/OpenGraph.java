@@ -9,7 +9,9 @@ import java.util.regex.Pattern;
 /**
  * Reads the picture a web page offers for sharing: its {@code og:image} (or {@code og:image:secure_url}, or
  * {@code twitter:image}) meta tag. Enough of HTML for that and no more: attributes in either order and either
- * quote, a relative address resolved against the page's.
+ * quote, a relative address resolved against the page's. A plain http address is given as https, the only kind
+ * the web app's pages may load (an image host without https then shows nothing, as before); an SVG is left out,
+ * since a site that shares one is sharing its logo, not a picture of the place.
  */
 public final class OpenGraph {
 
@@ -21,7 +23,7 @@ public final class OpenGraph {
     private OpenGraph() {
     }
 
-    /** The page's sharing image as an absolute http(s) address, or empty. */
+    /** The page's sharing image as an absolute https address, or empty. */
     public static Optional<String> imageIn(String html, URI page) {
         String found = null;
         int rank = NAMES.length;
@@ -41,12 +43,16 @@ public final class OpenGraph {
             }
             for (int i = 0; i < rank; i++) {
                 if (NAMES[i].equals(name) && content != null && !content.isEmpty()) {
-                    found = content;
-                    rank = i;
+                    // A candidate that is no use (a logo, not a web address) leaves the next best in play.
+                    Optional<String> usable = absolute(unescape(content), page);
+                    if (usable.isPresent()) {
+                        found = usable.get();
+                        rank = i;
+                    }
                 }
             }
         }
-        return Optional.ofNullable(found).flatMap(url -> absolute(unescape(url), page));
+        return Optional.ofNullable(found);
     }
 
     private static Optional<String> absolute(String url, URI page) {
@@ -56,7 +62,13 @@ public final class OpenGraph {
             if (scheme == null || !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http")) || resolved.getHost() == null) {
                 return Optional.empty();
             }
+            if (resolved.getPath() != null && resolved.getPath().toLowerCase(Locale.ROOT).endsWith(".svg")) {
+                return Optional.empty();
+            }
             String text = resolved.toString();
+            if (scheme.equalsIgnoreCase("http")) {
+                text = "https" + text.substring(scheme.length());
+            }
             return text.length() > MAX_URL_LENGTH ? Optional.empty() : Optional.of(text);
         } catch (IllegalArgumentException e) {
             return Optional.empty();

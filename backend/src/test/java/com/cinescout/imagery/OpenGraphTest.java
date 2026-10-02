@@ -44,4 +44,20 @@ class OpenGraphTest {
         assertThat(OpenGraph.imageIn("<meta property=\"og:image\" content=\"\">", PAGE)).isEmpty();
         assertThat(OpenGraph.imageIn("<meta property=\"og:image\" content=\"https://cdn.example/" + "x".repeat(1000) + "\">", PAGE)).isEmpty();
     }
+
+    @Test
+    void givesAPlainHttpPictureAsHttpsSinceThePagesOnlyLoadThose() {
+        assertThat(OpenGraph.imageIn("<meta property=\"og:image\" content=\"http://static1.squarespace.com/a/b.jpg?format=1500w\">", PAGE))
+                .contains("https://static1.squarespace.com/a/b.jpg?format=1500w");
+        assertThat(OpenGraph.imageIn("<meta property=\"og:image\" content=\"HTTP://cdn.example/a%20b.jpg\">", PAGE))
+                .contains("https://cdn.example/a%20b.jpg");
+    }
+
+    @Test
+    void leavesOutAnSvgLogoForTheNextBestPicture() {
+        assertThat(OpenGraph.imageIn("<meta property=\"og:image\" content=\"https://shop.example/files/Vector.svg?height=628\">", PAGE)).isEmpty();
+        assertThat(OpenGraph.imageIn("""
+                <meta property="og:image" content="/logo.SVG">
+                <meta name="twitter:image" content="https://cdn.example/room.jpg">""", PAGE)).contains("https://cdn.example/room.jpg");
+    }
 }

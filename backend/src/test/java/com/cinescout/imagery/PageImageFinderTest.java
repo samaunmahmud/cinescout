@@ -28,22 +28,58 @@ class PageImageFinderTest {
     void readsTheSharingImageOfAPageAndSaysWhoIsAsking() {
         page("/roof", 200, "text/html; charset=utf-8", "<head><meta property=\"og:image\" content=\"/img/roof.jpg\"></head>");
 
-        assertThat(finder.imageOf(site.baseUrl() + "/roof").block()).isEqualTo(site.baseUrl() + "/img/roof.jpg");
+        assertThat(finder.imageOf(site.baseUrl() + "/roof").block()).isEqualTo(site.baseUrl().replace("http:", "https:") + "/img/roof.jpg");
         site.verify(getRequestedFor(urlEqualTo("/roof")).withHeader("User-Agent", com.github.tomakehurst.wiremock.client.WireMock.equalTo("CineScout-test")));
     }
 
     @Test
-    void givesNothingForAFailureAPageThatIsNotHtmlOrARedirect() {
+    void givesNothingForAFailureOrAPageThatIsNotHtml() {
         page("/gone", 404, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
         page("/data", 200, "application/json", "{\"og:image\":\"https://cdn.example/a.jpg\"}");
-        // Followed, the redirect would reach a page with a picture: it is not followed, as it could lead anywhere.
-        page("/elsewhere", 200, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
-        site.stubFor(get(urlEqualTo("/moved")).willReturn(aResponse().withStatus(302).withHeader("Location", site.baseUrl() + "/elsewhere")));
 
         assertThat(finder.imageOf(site.baseUrl() + "/gone").block()).isNull();
         assertThat(finder.imageOf(site.baseUrl() + "/data").block()).isNull();
-        assertThat(finder.imageOf(site.baseUrl() + "/moved").block()).isNull();
-        site.verify(0, getRequestedFor(urlEqualTo("/elsewhere")));
+    }
+
+    private void redirect(String from, String to) {
+        site.stubFor(get(urlEqualTo(from)).willReturn(aResponse().withStatus(301).withHeader("Location", to)));
+    }
+
+    @Test
+    void followsAFewRedirectsToThePage() {
+        page("/new", 200, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
+        redirect("/old", "/older");
+        redirect("/older", site.baseUrl() + "/new");
+
+        assertThat(finder.imageOf(site.baseUrl() + "/old").block()).isEqualTo("https://cdn.example/a.jpg");
+    }
+
+    @Test
+    void givesUpOnALongChainOfRedirectsOrALoop() {
+        page("/end", 200, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
+        redirect("/r1", "/r2");
+        redirect("/r2", "/r3");
+        redirect("/r3", "/r4");
+        redirect("/r4", "/end");
+        redirect("/loop", "/loop");
+
+        assertThat(finder.imageOf(site.baseUrl() + "/r1").block()).isNull();
+        assertThat(finder.imageOf(site.baseUrl() + "/loop").block()).isNull();
+        site.verify(0, getRequestedFor(urlEqualTo("/end")));
+        site.verify(PageImageFinder.MAX_REDIRECTS + 1, getRequestedFor(urlEqualTo("/loop")));
+    }
+
+    @Test
+    void aRedirectMustLeadToAHostThatPassesTheSameCheck() {
+        page("/roof", 200, "text/html", "<meta property=\"og:image\" content=\"https://cdn.example/a.jpg\">");
+        redirect("/away", "http://127.0.0.1:" + site.getPort() + "/roof");
+        redirect("/file", "file:///etc/passwd");
+        // Only "localhost" passes: the redirect names the same server by its address, which does not.
+        PageImageFinder picky = new PageImageFinder(WebClient.builder(), "CineScout-test", host -> host.equals("localhost"), false);
+
+        assertThat(picky.imageOf(site.baseUrl() + "/away").block()).isNull();
+        assertThat(picky.imageOf(site.baseUrl() + "/file").block()).isNull();
+        site.verify(0, getRequestedFor(urlEqualTo("/roof")));
     }
 
     @Test
