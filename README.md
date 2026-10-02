@@ -133,8 +133,15 @@ watsonx.ai key.
 For many settings the web's first answers are directories ("The 16 best rooftop venues in Brooklyn")
 rather than venues. The model says which results are about one venue; the others are left out and
 counted in the result's `notVenues`, and the venues they name are looked up by name and assessed
-too. A venue found on several of its pages is saved once, and one the model scores 0 (unusable, e.g. in
-another city) is left out and counted in `unsuitable`. Optional tuning, all with defaults:
+too. A venue found on several of its pages is saved once, and one that scores 0 (unusable, e.g. in
+another city) is left out and counted in `unsuitable`.
+
+The model does not pick the fit score. It says what kind of place the venue is next to the one the scene
+needs (exact, close, dressable, unsuitable) and, for each requirement the scene states (mood, lighting,
+time of day, sound, room for the crew), whether the page shows the venue meets it, fails it or does not
+say. `VenueVerdict.fitScore` turns that into 0-100: 70 for the right kind of place, up 6 for each
+requirement met, down 8 for each failed (12 for too small or too loud). Asked for a number directly,
+Llama gave nearly every venue 60. Optional tuning, all with defaults:
 
 | Property | Default |
 |---|---|

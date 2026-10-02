@@ -1,9 +1,10 @@
 package com.cinescout.web;
 
-import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
+import com.cinescout.ai.VenueVerdict;
+import com.cinescout.ai.VenueVerdict.SettingMatch;
+import com.cinescout.ai.Verdicts;
 import com.cinescout.domain.AcousticSensitivity;
-import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.llm.LlmClient;
 import com.cinescout.llm.LlmException;
@@ -54,11 +55,10 @@ class ScoutingApiTest extends ApiTest {
     @BeforeEach
     void defaultAnswers() {
         when(llm.generate(any(), any(), eq(SceneRequirements.class))).thenReturn(Mono.just(REQUIREMENTS));
-        when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
+        when(llm.generate(any(), any(), eq(VenueVerdict.class))).thenAnswer(call -> {
             String prompt = call.getArgument(1);
-            int score = prompt.contains("Venue Best") ? 92 : prompt.contains("Venue Middle") ? 71 : 40;
-            return Mono.just(new LocationAssessment(true, score, "Reason " + score, BookingFriction.COMMERCIAL, "Enquire via events team",
-                    List.of("Lift access only"), null, null, List.of()));
+            return Mono.just(prompt.contains("Venue Best") ? Verdicts.ideal()
+                    : Verdicts.of(prompt.contains("Venue Middle") ? SettingMatch.EXACT : SettingMatch.DRESSABLE));
         });
         when(search.search(any())).thenReturn(Mono.just(List.of(hit("Middle"), hit("Best"), hit("Worst"))));
     }
@@ -219,7 +219,7 @@ class ScoutingApiTest extends ApiTest {
         JsonNode added = result.path("added");
         assertThat(added).hasSize(3);
         assertThat(added.get(0).path("name").asText()).isEqualTo("Venue Best");
-        assertThat(added.get(0).path("fitScore").asInt()).isEqualTo(92);
+        assertThat(added.get(0).path("fitScore").asInt()).isEqualTo(94);
         assertThat(added.get(0).path("bookingFriction").asText()).isEqualTo("COMMERCIAL");
         assertThat(added.get(0).path("footprintWarnings").get(0).asText()).isEqualTo("Lift access only");
         assertThat(added.get(0).path("sourceProvider").asText()).isEqualTo("parallel");
@@ -263,11 +263,11 @@ class ScoutingApiTest extends ApiTest {
 
     @Test
     void aVenueTheModelCannotAssessIsReportedAsUnassessedNotAFailure() {
-        when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
+        when(llm.generate(any(), any(), eq(VenueVerdict.class))).thenAnswer(call -> {
             String prompt = call.getArgument(1);
             return prompt.contains("Venue Worst")
                     ? Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable"))
-                    : Mono.just(new LocationAssessment(true, 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null, List.of()));
+                    : Mono.just(Verdicts.of(SettingMatch.EXACT));
         });
         Account ada = register("Ada");
 
@@ -279,9 +279,9 @@ class ScoutingApiTest extends ApiTest {
 
     @Test
     void aVenueScoredZeroIsLeftOutAndCounted() {
-        when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
+        when(llm.generate(any(), any(), eq(VenueVerdict.class))).thenAnswer(call -> {
             boolean elsewhere = call.<String>getArgument(1).contains("Venue Worst");
-            return Mono.just(new LocationAssessment(true, elsewhere ? 0 : 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null, List.of()));
+            return Mono.just(elsewhere ? Verdicts.elsewhere(null) : Verdicts.of(SettingMatch.EXACT));
         });
         Account ada = register("Ada");
 
@@ -293,9 +293,9 @@ class ScoutingApiTest extends ApiTest {
 
     @Test
     void aDirectoryOfVenuesIsLeftOutAndCounted() {
-        when(llm.generate(any(), any(), eq(LocationAssessment.class))).thenAnswer(call -> {
+        when(llm.generate(any(), any(), eq(VenueVerdict.class))).thenAnswer(call -> {
             boolean directory = call.<String>getArgument(1).contains("Venue Worst");
-            return Mono.just(new LocationAssessment(!directory, directory ? 0 : 80, "ok", BookingFriction.PUBLIC, null, List.of(), null, null, List.of()));
+            return Mono.just(directory ? Verdicts.directory() : Verdicts.of(SettingMatch.EXACT));
         });
         Account ada = register("Ada");
 

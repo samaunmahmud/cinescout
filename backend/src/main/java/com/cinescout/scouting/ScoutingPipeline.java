@@ -1,7 +1,7 @@
 package com.cinescout.scouting;
 
-import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
+import com.cinescout.ai.VenueVerdict;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.domain.VenueNames;
 import com.cinescout.llm.LlmClient;
@@ -157,8 +157,8 @@ public class ScoutingPipeline {
 
     private Mono<ScoutedVenue> assess(SceneRequirements requirements, String area, SearchResult hit) {
         return llmGuard.call(() -> llm.generate(ScoutingPrompts.ASSESSMENT_SYSTEM,
-                        ScoutingPrompts.assessmentUser(requirements, area, hit), LocationAssessment.class))
-                .map(assessment -> new ScoutedVenue(hit, assessment));
+                        ScoutingPrompts.assessmentUser(requirements, area, hit), VenueVerdict.class))
+                .map(verdict -> new ScoutedVenue(hit, verdict.toAssessment(requirements)));
     }
 
     private Mono<ScoutingOutcome> toOutcome(List<Assessed> assessed) {

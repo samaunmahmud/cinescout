@@ -43,19 +43,22 @@ final class ScoutingPrompts {
             - singleVenue: true if the page is about one specific venue: the venue's own website, or a \
             single venue's listing on a booking site such as Peerspace or Giggster. false if it covers \
             several venues (a directory, search results, a "best rooftop bars" list, a news or travel \
-            article) or is not about a venue at all. When false, still fill in the other fields, with \
-            fitScore 0.
-            - fitScore: 0 to 100, how well the venue suits the scene. Judge the setting first: is this the \
-            kind of place the scene needs? A different kind of place that would have to be dressed to pass \
-            for it (a loft for a diner) scores below 40. The right kind of place starts at 60. Then move the \
-            score for what the excerpt shows about mood, lighting, time of day, sound and capacity: up, as \
-            far as 100, for each requirement it clearly meets; down, as far as 40, for each it clearly \
-            fails (too small for the cast and crew, the wrong look, a noisy room for a quiet scene). What \
-            the excerpt does not mention neither raises nor lowers the score: name it in fitReason as \
-            something to check. Use the whole range, so that a venue with more in its favour scores \
-            higher than one with less. A venue the page shows is outside the search area (another city \
-            or region) is unusable: fitScore 0, and say where it is.
-            - fitReason: one or two sentences saying what in the excerpt supports the score.
+            article) or is not about a venue at all. When false, still fill in the other fields.
+            - outsideSearchArea: true if the page shows the venue is in another city or region than the \
+            search area; false if it is in the area or the page does not say.
+            - setting: is this the kind of place the scene needs? EXACT if it is (a bar for a bar). CLOSE if \
+            it is a near kind that would pass on camera with light dressing (a cafe for a diner). DRESSABLE \
+            if it is a different kind of place that would need heavy dressing to pass (a loft for a diner). \
+            UNSUITABLE if it could not pass for it.
+            - mood, lighting, timeOfDay, sound, capacity: for each of the scene's requirements, what the \
+            excerpt shows. MEETS if the excerpt clearly shows the venue meets it (neon signage for a neon \
+            mood, open late for a night scene, a quiet private room for a dialogue scene, room for the cast \
+            and crew). FAILS if the excerpt clearly shows it does not (bright and airy for a dark mood, closes \
+            at 6 pm for a night scene, a loud bar for a quiet scene, too small for the cast and crew). UNKNOWN \
+            if the excerpt does not say, and for any requirement the scene does not state. Judge only from \
+            the excerpt: most answers will be UNKNOWN, and that is correct.
+            - fitReason: one or two sentences: what in the excerpt supports the verdict, and the most \
+            important thing it does not show, as something to check. No numbers or scores.
             - bookingFriction: who has to say yes. PUBLIC = a public space needing a permit from a city or \
             film office. COMMERCIAL = a business with a hire or location-enquiry process (bar, studio, \
             hotel, gallery). PRIVATE = a private owner or residence with no formal process.
