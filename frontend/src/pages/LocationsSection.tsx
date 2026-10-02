@@ -21,6 +21,7 @@ import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { scoutingSummary } from '../lib/format'
 import { displayHost, safeHttpUrl } from '../lib/url'
 import { VenuePicture } from '../components/VenuePicture'
+import { MapSnapshot } from '../components/MapSnapshot'
 
 /**
  * The scene's candidate venues and the button that scouts for more. `locationArea` is the project's search
@@ -253,18 +254,25 @@ function tiltOf(id: string, range = 3): number {
   return ((Math.abs(h) % (range * 20 + 1)) - range * 10) / 10
 }
 
-/** The venue's picture as a polaroid taped to the board, its name scrawled at the foot; a blank one until there is a picture. */
+/**
+ * The venue's picture as a polaroid taped to the board, its name scrawled at the foot. Without a picture (or while
+ * one loads, or if it fails), the street map round the venue; a blank one until it has either.
+ */
 function Polaroid({ location }: { location: Location }) {
+  const placed = location.latitude != null && location.longitude != null
   return (
     <div aria-hidden style={{ transform: `rotate(${tiltOf(location.id)}deg)` }} className="polaroid relative hidden w-36 shrink-0 sm:block">
-      <span className="tape-piece -top-2 left-10 w-14 -rotate-3" />
-      {location.imageUrl ? (
-        <VenuePicture src={location.imageUrl} className="h-24 w-full" />
-      ) : (
-        <div className="flex h-24 items-center justify-center bg-ground">
-          <PinIcon className="size-6 text-line" />
-        </div>
-      )}
+      <span className="tape-piece -top-2 left-10 z-10 w-14 -rotate-3" />
+      <div className="relative h-24 bg-ground">
+        {placed ? (
+          <MapSnapshot latitude={location.latitude!} longitude={location.longitude!} />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <PinIcon className="size-6 text-line" />
+          </div>
+        )}
+        {location.imageUrl && <VenuePicture src={location.imageUrl} className="absolute inset-0 h-full w-full" />}
+      </div>
       <span className="absolute right-2 bottom-1 left-2 truncate font-marker text-[13px] text-graphite">{location.name}</span>
     </div>
   )
