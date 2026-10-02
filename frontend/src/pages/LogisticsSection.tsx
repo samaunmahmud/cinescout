@@ -53,7 +53,7 @@ const placeLabels: Record<PlaceKind, string> = {
   PLACE_OF_WORSHIP: 'Place of worship',
 }
 
-const noiseTones: Record<NoiseLevel, 'green' | 'amber' | 'red'> = { LOW: 'green', MEDIUM: 'amber', HIGH: 'red' }
+const noiseTones: Record<NoiseLevel, 'green' | 'cue' | 'red'> = { LOW: 'green', MEDIUM: 'cue', HIGH: 'red' }
 const noiseLabels: Record<NoiseLevel, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' }
 
 const generatedFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })

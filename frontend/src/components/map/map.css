@@ -1,6 +1,6 @@
-/* Leaflet's light chrome, adjusted to the app's dark theme. Tiles are graded, not inverted, so map colours still read. */
+/* Leaflet's chrome in the board's colours: ink outlines, white paper, cue orange for links. */
 .cinescout-map .leaflet-container {
-  background: #1c1917;
+  background: #e3ebe6;
   font: inherit;
 }
 
@@ -8,16 +8,16 @@
   cursor: crosshair;
 }
 
-.cinescout-map .leaflet-tile-pane {
-  /* Graded like a night exterior: down a stop, less colour, a little warmth. */
-  filter: brightness(0.72) saturate(0.6) sepia(0.28) contrast(1.06);
+.cinescout-map .leaflet-popup-content-wrapper {
+  background: #fff;
+  color: #0d1321;
+  border: 2px solid #0d1321;
+  border-radius: 8px;
+  box-shadow: 0 4px 0 #0d1321;
 }
 
-.cinescout-map .leaflet-popup-content-wrapper,
 .cinescout-map .leaflet-popup-tip {
-  background: #1c1917;
-  color: #f5f5f4;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.5);
+  background: #0d1321;
 }
 
 .cinescout-map .leaflet-popup-content {
@@ -27,24 +27,28 @@
 }
 
 .cinescout-map .leaflet-container a.leaflet-popup-close-button {
-  color: #a8a29e;
+  color: #475467;
 }
 
 .cinescout-map .leaflet-control-attribution {
-  background: rgb(12 10 9 / 0.75);
-  color: #a8a29e;
+  background: rgb(255 255 255 / 0.85);
+  color: #475467;
 }
 
 .cinescout-map .leaflet-control-attribution a {
-  color: #ecd078;
+  color: #c2410c;
+}
+
+.cinescout-map .leaflet-bar {
+  border: 2px solid #0d1321;
 }
 
 .cinescout-map .leaflet-bar a {
-  background: #292524;
-  border-color: #44403c;
-  color: #f5f5f4;
+  background: #fff;
+  border-color: #d0d5dd;
+  color: #0d1321;
 }
 
 .cinescout-map .leaflet-bar a:hover {
-  background: #44403c;
+  background: #eef0f2;
 }

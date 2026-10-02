@@ -16,9 +16,9 @@ export function isLocationStatus(value: string | null): value is LocationStatus 
 }
 
 /** How far an outreach email got, as the user reports it. */
-export const outreachStatusLabels: Record<OutreachStatus, { label: string; tone: 'neutral' | 'amber' | 'green' }> = {
+export const outreachStatusLabels: Record<OutreachStatus, { label: string; tone: 'neutral' | 'cue' | 'green' }> = {
   DRAFT: { label: 'Draft', tone: 'neutral' },
-  SENT: { label: 'Sent', tone: 'amber' },
+  SENT: { label: 'Sent', tone: 'cue' },
   REPLIED: { label: 'Replied', tone: 'green' },
 }
 

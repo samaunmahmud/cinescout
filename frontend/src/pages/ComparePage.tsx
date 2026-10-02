@@ -17,7 +17,7 @@ import { localTime, temperatureRange } from '../lib/logisticsFormat'
 import { NotFoundPage } from './NotFoundPage'
 import { usePageTitle } from '../lib/usePageTitle'
 
-const noiseTones: Record<NoiseLevel, 'green' | 'amber' | 'red'> = { LOW: 'green', MEDIUM: 'amber', HIGH: 'red' }
+const noiseTones: Record<NoiseLevel, 'green' | 'cue' | 'red'> = { LOW: 'green', MEDIUM: 'cue', HIGH: 'red' }
 const noiseLabels: Record<NoiseLevel, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' }
 
 /**

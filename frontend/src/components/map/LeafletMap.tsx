@@ -15,21 +15,22 @@ const PADDING: [number, number] = [56, 56]
 const WORLD = { center: [20, 0] as [number, number], zoom: 2 }
 
 const pinClasses: Record<PinTone, string> = {
-  good: 'bg-emerald-400',
-  fair: 'bg-amber-400',
-  poor: 'bg-red-400',
-  neutral: 'bg-sky-300',
-  muted: 'bg-stone-500',
+  good: 'bg-go',
+  fair: 'bg-cue',
+  poor: 'bg-white',
+  neutral: 'bg-tape',
+  muted: 'bg-line',
 }
 
-// Leaflet's default marker is an image that bundlers lose track of; a styled div needs no asset.
+// Leaflet's default marker is an image that bundlers lose track of; a styled div needs no asset. A push pin: a
+// coloured head with an ink rim, as on a scout's board.
 function pinIcon(tone: PinTone) {
   return divIcon({
     className: '',
-    html: `<span class="block size-4 rounded-full border-2 border-stone-950 shadow ${pinClasses[tone]}"></span>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-    popupAnchor: [0, -8],
+    html: `<span class="block size-5 rounded-full border-[3px] border-ink shadow-[0_2px_0_#0d1321] ${pinClasses[tone]}"></span>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
   })
 }
 
@@ -38,7 +39,7 @@ export default function LeafletMap({ pins, label, onPick, className = 'h-80' }: 
   // MapContainer reads its view once, on mount; KeepPinsInView moves it after that.
   const [initial] = useState(() => initialView(pins))
   return (
-    <div role="region" aria-label={label} className={`cinescout-map overflow-hidden rounded-lg border border-stone-800 ${onPick ? 'picking' : ''} ${className}`}>
+    <div role="region" aria-label={label} className={`cinescout-map overflow-hidden rounded-lg border-2 border-ink ${onPick ? 'picking' : ''} ${className}`}>
       <MapContainer {...initial} className="size-full" scrollWheelZoom={false}>
         <TileLayer url={tiles.url} attribution={tiles.attribution} />
         {pins.map((pin) => (

@@ -1,16 +1,15 @@
 export type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
 
 export const variants: Record<Variant, string> = {
-  // Gold leaf: the one thing on the page that shines, for the main action.
-  primary: 'btn-gold focus-visible:outline-amber-200',
-  secondary:
-    'bg-gradient-to-b from-gate to-frame text-stone-100 ring-1 ring-amber-300/20 ring-inset shadow-sm shadow-black/40 hover:from-stone-700/70 hover:ring-amber-300/45 focus-visible:outline-amber-300',
-  danger: 'bg-gradient-to-b from-velvet-500 to-velvet-600 text-white ring-1 ring-velvet-400/60 ring-inset hover:from-velvet-400 hover:to-velvet-500 focus-visible:outline-red-300',
-  ghost: 'text-stone-300 hover:bg-white/5 hover:text-stone-100 focus-visible:outline-stone-400',
+  // Cue orange with an ink outline that presses down: the one action the page is asking for.
+  primary: 'btn-cue focus-visible:outline-ink',
+  secondary: 'border-2 border-ink bg-white text-ink hover:bg-ground focus-visible:outline-ink',
+  danger: 'border-2 border-stop-ink bg-stop text-white hover:bg-stop-ink focus-visible:outline-stop-ink',
+  ghost: 'text-graphite hover:bg-ink/5 hover:text-ink focus-visible:outline-ink',
 }
 
 export const buttonBase =
-  'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold tracking-wide transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
 
 /** Button styling for a router Link that acts as a button. */
 export const linkButton = (variant: Variant = 'primary') => `${buttonBase} ${variants[variant]}`

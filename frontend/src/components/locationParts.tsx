@@ -5,7 +5,7 @@ import { statusLabels } from '../lib/status'
 import type { useUpdateLocation } from './locationHooks'
 import { Badge } from './ui'
 
-const frictionTones: Record<BookingFriction, 'green' | 'amber' | 'red'> = { PUBLIC: 'green', COMMERCIAL: 'amber', PRIVATE: 'red' }
+const frictionTones: Record<BookingFriction, 'green' | 'cue' | 'red'> = { PUBLIC: 'green', COMMERCIAL: 'cue', PRIVATE: 'red' }
 
 /** A status dropdown that saves on change, keeping the notes as they are. */
 export function StatusSelect({
@@ -26,7 +26,7 @@ export function StatusSelect({
         value={location.status}
         disabled={update.isPending}
         onChange={(e) => update.mutate({ status: e.target.value as LocationStatus, notes: location.notes })}
-        className="rounded-md border border-stone-700 bg-stone-900 px-2 py-1.5 text-sm text-stone-100 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 focus:outline-none disabled:opacity-50"
+        className="rounded-lg border-2 border-ink bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
       >
         {Object.entries(statusLabels).map(([value, label]) => (
           <option key={value} value={value}>
@@ -38,10 +38,16 @@ export function StatusSelect({
   )
 }
 
-const fitColours: Record<FitBand, { text: string; stroke: string }> = {
-  good: { text: 'text-emerald-300', stroke: 'stroke-emerald-400' },
-  fair: { text: 'text-amber-300', stroke: 'stroke-amber-400' },
-  poor: { text: 'text-red-300', stroke: 'stroke-red-400' },
+const fitColours: Record<FitBand, { stroke: string; label: string; ink: string }> = {
+  good: { stroke: 'stroke-go-mid', label: 'Strong fit', ink: 'text-go-ink' },
+  fair: { stroke: 'stroke-cue', label: 'Worth a look', ink: 'text-cue-ink' },
+  poor: { stroke: 'stroke-subtle', label: 'Long shot', ink: 'text-muted' },
+}
+
+/** The band a score falls in, in words and in its colour: "Strong fit", "Worth a look", "Long shot". */
+export function FitLabel({ score, className = '' }: { score: number; className?: string }) {
+  const colour = fitColours[fitBand(score)]
+  return <span className={`font-script text-xs font-bold tracking-[0.06em] uppercase ${colour.ink} ${className}`}>{colour.label}</span>
 }
 
 /** The fit score as a dial: the ring fills to the score. */
@@ -56,20 +62,20 @@ export function FitScore({ score, size = 'md' }: { score: number; size?: 'md' | 
       title="How well the venue suits the scene, out of 100"
     >
       <svg viewBox="0 0 48 48" aria-hidden className="absolute inset-0 size-full -rotate-90">
-        <circle cx="24" cy="24" r={r} fill="none" strokeWidth="4" className="stroke-white/[0.08]" />
+        <circle cx="24" cy="24" r={r} fill="white" strokeWidth="5" className="stroke-line-soft" />
         <circle
           cx="24"
           cy="24"
           r={r}
           fill="none"
-          strokeWidth="4"
-          strokeLinecap="round"
+          strokeWidth="5"
+          strokeLinecap="butt"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - Math.max(0, Math.min(100, score)) / 100)}
           className={colour.stroke}
         />
       </svg>
-      <span aria-hidden className={`font-display leading-none ${colour.text} ${size === 'lg' ? 'text-4xl' : 'text-xl'}`}>
+      <span aria-hidden className={`font-display leading-none font-extrabold text-ink ${size === 'lg' ? 'text-4xl' : 'text-xl'}`}>
         {score}
       </span>
     </span>

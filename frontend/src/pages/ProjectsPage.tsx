@@ -7,9 +7,10 @@ import { useSession } from '../auth/context'
 import { Clapperboard, Film, MapPin, Plus } from 'lucide-react'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
-import { Card, EmptyState, Eyebrow } from '../components/surfaces'
+import { Card, EmptyState } from '../components/surfaces'
+import { TapeLabel } from '../components/stickers'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
-import { posterGradient } from '../lib/poster'
+import { posterColours, posterTilt } from '../lib/poster'
 import { sampleProject, sampleScript } from '../lib/sampleScript'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
@@ -17,7 +18,7 @@ import { usePageTitle } from '../lib/usePageTitle'
 import { VenuePicture } from '../components/VenuePicture'
 
 export function ProjectsPage() {
-  const { api } = useSession()
+  const { api, user } = useSession()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -49,42 +50,45 @@ export function ProjectsPage() {
   })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2">
-          <Eyebrow icon={Clapperboard}>Your slate</Eyebrow>
-          <h1 className="gold-leaf font-display text-7xl leading-none">Projects</h1>
-          <p className="font-serif text-lg text-stone-400 italic">Every production, with its scenes, its venues and its letters to their owners.</p>
+        <div className="space-y-3">
+          <TapeLabel tilt={-2}>{greeting()}, {user.displayName.split(' ')[0]}</TapeLabel>
+          <h1 className="font-display text-5xl leading-none font-extrabold sm:text-[3.5rem]">Your productions</h1>
+          <p className="text-lg text-muted">Every production, with its scenes, its venues and its letters to their owners.</p>
         </div>
         {!creating && (
-          <Button onClick={() => setCreating(true)}>
-            <Plus aria-hidden className="size-4" />
-            New project
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            {(projects.data?.items.length ?? 0) > 0 && <SampleProjectButton />}
+            <Button onClick={() => setCreating(true)} className="py-3">
+              <Plus aria-hidden className="size-4" />
+              New project
+            </Button>
+          </div>
         )}
       </header>
 
       {creating && (
         <Card className="p-6">
-        <section aria-labelledby="new-project">
-          <h2 id="new-project" className="gold-leaf mb-4 font-display text-4xl leading-none">
-            New project
-          </h2>
-          <ProjectForm
-            submitLabel="Create project"
-            busy={create.isPending}
-            error={create.error}
-            onSubmit={(values) => create.mutate(values)}
-            onCancel={() => {
-              setCreating(false)
-              create.reset()
-            }}
-          />
-        </section>
+          <section aria-labelledby="new-project">
+            <h2 id="new-project" className="mb-4 font-display text-3xl leading-none font-extrabold">
+              New project
+            </h2>
+            <ProjectForm
+              submitLabel="Create project"
+              busy={create.isPending}
+              error={create.error}
+              onSubmit={(values) => create.mutate(values)}
+              onCancel={() => {
+                setCreating(false)
+                create.reset()
+              }}
+            />
+          </section>
         </Card>
       )}
 
-      <div role="tablist" aria-label="Project status" className="flex gap-1 border-b border-amber-300/15">
+      <div role="tablist" aria-label="Project status" className="inline-flex gap-1 rounded-full border-2 border-ink bg-white p-1">
         {(['ACTIVE', 'ARCHIVED'] as const).map((s) => (
           <button
             key={s}
@@ -92,8 +96,8 @@ export function ProjectsPage() {
             role="tab"
             aria-selected={status === s}
             onClick={() => setParams(s === 'ACTIVE' ? {} : { status: s })}
-            className={`-mb-px border-b-2 px-4 py-2.5 font-display text-xl leading-none tracking-wider transition ${
-              status === s ? 'border-amber-300 text-amber-100 [text-shadow:0_0_18px_rgb(236_208_120/0.55)]' : 'border-transparent text-stone-500 hover:text-stone-200'
+            className={`rounded-full px-4 py-1.5 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+              status === s ? 'bg-ink text-white' : 'text-graphite hover:bg-ground'
             }`}
           >
             {s === 'ACTIVE' ? 'Active' : 'Archived'}
@@ -113,41 +117,11 @@ export function ProjectsPage() {
         )
       ) : (
         <>
-          {/* One-sheets in a cinema lobby: each production is its own poster. */}
-          <ul className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-3 xl:grid-cols-4">
+          {/* Each production is a card pinned to the board, its name on a strip of tape. */}
+          <ul className="grid gap-x-7 gap-y-10 pt-3 sm:grid-cols-2 lg:grid-cols-3">
             {projects.data.items.map((project) => (
               <li key={project.id}>
-                <Link
-                  to={`/projects/${project.id}`}
-                  className="group relative flex aspect-[2/3] flex-col overflow-hidden rounded-md bg-black shadow-2xl shadow-black/70 ring-1 ring-amber-300/20 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-18px_rgb(223_184_73/0.45)] hover:ring-amber-300/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300"
-                >
-                  <div aria-hidden className="absolute inset-0 transition duration-500 group-hover:scale-105" style={{ background: posterGradient(project.title) }} />
-                  {project.posterImageUrl && (
-                    // A still of one of its locations, washed in the production's colours.
-                    <VenuePicture
-                      src={project.posterImageUrl}
-                      className="absolute inset-0 h-full w-full opacity-45 mix-blend-luminosity brightness-75 transition duration-500 group-hover:scale-105 group-hover:opacity-60"
-                    />
-                  )}
-                  <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_18%,rgb(255_243_196/0.22),transparent_55%)]" />
-                  <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent" />
-                  <div aria-hidden className="absolute inset-2 rounded-sm ring-1 ring-white/10" />
-                  <p aria-hidden className="relative mt-4 px-2 text-center text-[8px] font-semibold tracking-[0.3em] text-amber-100/70 uppercase sm:mt-5 sm:text-[10px] sm:tracking-[0.4em]">
-                    A CineScout production
-                  </p>
-                  <div className="relative mt-auto space-y-2 p-3 text-center sm:space-y-3 sm:p-5">
-                    <h2 className="font-display text-3xl leading-[0.92] break-words sm:text-5xl text-stone-50 drop-shadow-[0_2px_12px_rgb(0_0_0/0.8)] transition group-hover:text-amber-200">
-                      {project.title}
-                    </h2>
-                    {project.description && <p className="line-clamp-2 hidden font-serif text-sm text-stone-200/90 italic sm:block">{project.description}</p>}
-                    <div aria-hidden className="deco-rule text-[9px]">◆</div>
-                    <p className="flex items-center justify-center gap-1.5 text-[10px] tracking-wider text-stone-300 uppercase sm:text-xs">
-                      <MapPin aria-hidden className="size-3.5 text-amber-300" />
-                      {project.locationArea ?? 'No location area set'}
-                    </p>
-                    <PosterProgress project={project} />
-                  </div>
-                </Link>
+                <ProjectCard project={project} />
               </li>
             ))}
           </ul>
@@ -158,25 +132,82 @@ export function ProjectsPage() {
   )
 }
 
-/** The foot of a poster: how many scenes, and how many of them have their location locked. */
+/** Good morning, afternoon or evening, by the user's clock. */
+function greeting(): string {
+  const hour = new Date().getHours()
+  return hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
+}
+
+function ProjectCard({ project }: { project: Project }) {
+  const colours = posterColours(project.title)
+  return (
+    <Link
+      to={`/projects/${project.id}`}
+      style={{ transform: `rotate(${posterTilt(project.title)}deg)` }}
+      className="group board-card relative flex h-full flex-col rounded-lg bg-white transition duration-200 hover:!rotate-0 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+    >
+      <TapeLabel tilt={-3} announce className="absolute -top-4 left-5 z-10 max-w-[75%] overflow-hidden text-ellipsis">
+        {project.locationArea ?? 'No area yet'}
+      </TapeLabel>
+      <div className={`relative flex h-44 flex-col justify-end overflow-hidden rounded-t-md px-5 pt-8 pb-4 pl-9 ${colours.panel} ${colours.text}`}>
+        {project.posterImageUrl && (
+          // A still of one of its locations, printed in the card's colour.
+          <VenuePicture
+            src={project.posterImageUrl}
+            className="absolute inset-0 h-full w-full opacity-35 mix-blend-luminosity grayscale transition duration-500 group-hover:opacity-50"
+          />
+        )}
+        <div aria-hidden className="absolute inset-y-0 left-2 flex w-3 flex-col justify-around opacity-50">
+          {Array.from({ length: 7 }, (_, i) => (
+            <span key={i} className={`h-2.5 rounded-[2px] ${colours.holes}`} />
+          ))}
+        </div>
+        <h2 className="relative font-display text-[2.1rem] leading-[0.95] font-extrabold break-words">{project.title}</h2>
+      </div>
+      <div className="flex flex-1 flex-col gap-4 p-5">
+        {project.description ? (
+          <p className="line-clamp-2 text-[15px] leading-relaxed text-graphite">{project.description}</p>
+        ) : (
+          <p className="flex items-center gap-1.5 text-[15px] text-muted">
+            <MapPin aria-hidden className="size-4" />
+            {project.locationArea ?? 'No location area set'}
+          </p>
+        )}
+        <div className="mt-auto">
+          <PosterProgress project={project} />
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+/** The foot of a card: how many scenes, and how many of them have their location locked, a cell per scene. */
 function PosterProgress({ project }: { project: Project }) {
   const { sceneCount, confirmedSceneCount } = project
-  if (sceneCount === 0) return <p className="billing text-[10px] text-stone-400">No scenes yet</p>
+  if (sceneCount === 0) return <p className="font-script text-sm text-muted">No scenes yet</p>
+  // A cell per scene reads well up to a reel's worth; past that, a bar.
+  const cells = sceneCount <= 16
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
+      <p className="text-sm font-bold">
+        {sceneCount === 1 ? '1 scene' : `${sceneCount} scenes`} · {confirmedSceneCount} locked
+      </p>
       <div
         role="progressbar"
         aria-label="Scenes with a confirmed location"
         aria-valuemin={0}
         aria-valuemax={sceneCount}
         aria-valuenow={confirmedSceneCount}
-        className="h-1 overflow-hidden rounded-full bg-white/15"
+        className={cells ? 'flex gap-1' : 'h-2.5 overflow-hidden rounded-[3px] bg-line-soft'}
       >
-        <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-200" style={{ width: `${(confirmedSceneCount / sceneCount) * 100}%` }} />
+        {cells ? (
+          Array.from({ length: sceneCount }, (_, i) => (
+            <span key={i} className={`h-2.5 flex-1 rounded-[2px] ${i < confirmedSceneCount ? 'bg-go-mid' : 'bg-line-soft'}`} />
+          ))
+        ) : (
+          <div className="h-full bg-go-mid" style={{ width: `${(confirmedSceneCount / sceneCount) * 100}%` }} />
+        )}
       </div>
-      <p className="billing text-[10px] text-stone-300">
-        {sceneCount === 1 ? '1 scene' : `${sceneCount} scenes`} · {confirmedSceneCount} locked
-      </p>
     </div>
   )
 }
@@ -221,25 +252,26 @@ function SampleProjectButton() {
 
 function FirstReel({ onStart, creating }: { onStart: () => void; creating: boolean }) {
   return (
-    <section aria-labelledby="first-reel" className="gilt relative overflow-hidden rounded-xl border border-amber-300/15 bg-reel/70 px-6 py-12 text-center sm:px-12">
-      <div aria-hidden className="absolute inset-x-0 -top-32 mx-auto h-72 w-[36rem] max-w-full bg-[radial-gradient(ellipse_at_top,rgb(255_243_196/0.16),transparent_65%)]" />
+    <section aria-labelledby="first-reel" className="relative rounded-lg border-2 border-dashed border-line bg-white/60 px-6 py-12 text-center sm:px-12">
       <div className="relative space-y-3">
-        <p className="text-[11px] font-semibold tracking-[0.4em] text-amber-300/80 uppercase">No projects yet</p>
-        <h2 id="first-reel" className="gold-leaf font-display text-5xl leading-none">Your first production</h2>
-        <p className="mx-auto max-w-xl font-serif text-lg text-stone-400 italic">From the page to the perfect location, in three acts.</p>
+        <TapeLabel tilt={-2}>No projects yet</TapeLabel>
+        <h2 id="first-reel" className="font-display text-5xl leading-none font-extrabold">
+          Your first production
+        </h2>
+        <p className="mx-auto max-w-xl text-lg text-muted">From the page to the right location, in three acts.</p>
       </div>
       <ol className="relative mt-10 grid gap-6 text-left sm:grid-cols-3">
-        {acts.map(({ act, title, text }) => (
-          <li key={act} className="space-y-2 rounded-lg bg-black/30 p-5 ring-1 ring-amber-300/10">
-            <p className="billing text-[10px] text-amber-300/80">{act}</p>
-            <h3 className="font-display text-2xl leading-none text-stone-50">{title}</h3>
-            <p className="text-sm leading-relaxed text-stone-400">{text}</p>
+        {acts.map(({ act, title, text }, i) => (
+          <li key={act} className="board-card space-y-2 rounded-lg bg-white p-5" style={{ transform: `rotate(${[-0.8, 0.5, -0.3][i]}deg)` }}>
+            <p className="font-script text-[13px] font-bold tracking-[0.1em] text-cue-ink uppercase">{act}</p>
+            <h3 className="font-display text-2xl leading-none font-extrabold">{title}</h3>
+            <p className="text-sm leading-relaxed text-graphite">{text}</p>
           </li>
         ))}
       </ol>
       {!creating && (
         <div className="relative mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={onStart}>
+          <Button onClick={onStart} className="py-3">
             <Plus aria-hidden className="size-4" />
             Create your first project
           </Button>

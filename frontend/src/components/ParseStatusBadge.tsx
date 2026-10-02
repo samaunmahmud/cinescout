@@ -1,7 +1,7 @@
 import type { ParseStatus } from '../api/types'
 import { Badge } from './ui'
 
-const labels: Record<ParseStatus, { text: string; tone: 'neutral' | 'amber' | 'green' | 'red' }> = {
+const labels: Record<ParseStatus, { text: string; tone: 'neutral' | 'cue' | 'green' | 'red' }> = {
   PENDING: { text: 'Not analysed', tone: 'neutral' },
   PARSED: { text: 'Requirements ready', tone: 'green' },
   FAILED: { text: 'Analysis failed', tone: 'red' },

@@ -7,9 +7,9 @@ import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { CalendarDays, ChevronLeft, Clapperboard, Film, Mail, MapPin, MapPinned } from 'lucide-react'
-import { Eyebrow, Tabs, type TabItem } from '../components/surfaces'
-import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
-import { posterGradient } from '../lib/poster'
+import { Card, Eyebrow, Tabs, type TabItem } from '../components/surfaces'
+import { Stamp } from '../components/stickers'
+import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { NotFoundPage } from './NotFoundPage'
@@ -90,44 +90,48 @@ function ProjectDetails({ project }: { project: Project }) {
 
   return (
     <div className="space-y-8">
-      <Link to="/projects" className="inline-flex items-center gap-1 text-sm text-stone-400 hover:text-stone-200">
+      <Link to="/projects" className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
-        Projects
+        Productions
       </Link>
 
       {editing ? (
-        <section aria-labelledby="edit-project" className="gilt rounded-xl border border-white/[0.07] bg-frame/80 p-6">
-          <h1 id="edit-project" className="gold-leaf mb-4 font-display text-5xl leading-none">
-            Edit project
-          </h1>
-          <ProjectForm
-            initial={{ title: project.title, description: project.description ?? '', locationArea: project.locationArea ?? '' }}
-            submitLabel="Save changes"
-            busy={update.isPending}
-            error={update.error}
-            onSubmit={save}
-            onCancel={() => {
-              setEditing(false)
-              update.reset()
-            }}
-          />
-        </section>
+        <Card className="p-6">
+          <section aria-labelledby="edit-project">
+            <h1 id="edit-project" className="mb-4 font-display text-4xl leading-none font-extrabold">
+              Edit project
+            </h1>
+            <ProjectForm
+              initial={{ title: project.title, description: project.description ?? '', locationArea: project.locationArea ?? '' }}
+              submitLabel="Save changes"
+              busy={update.isPending}
+              error={update.error}
+              onSubmit={save}
+              onCancel={() => {
+                setEditing(false)
+                update.reset()
+              }}
+            />
+          </section>
+        </Card>
       ) : (
-        // The title card: a widescreen frame, the production's name in lights.
-        <header className="letterbox gilt relative animate-fade-in overflow-hidden rounded-xl shadow-2xl shadow-black/70 ring-1 ring-amber-300/20">
-          <div aria-hidden className="absolute inset-0 -z-10" style={{ background: posterGradient(project.title) }} />
-          <div aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_22%_0%,rgb(255_243_196/0.20),transparent_55%)]" />
-          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/30" />
-          <div className="space-y-5 p-6 sm:p-10">
+        // The title card: the production's name on an ink panel, the film strip down its edge.
+        <header className="relative animate-fade-in overflow-hidden rounded-lg border-2 border-ink bg-ink text-white shadow-[0_5px_0_var(--color-cue)]">
+          <div aria-hidden className="absolute inset-y-0 left-2.5 flex w-3 flex-col justify-around opacity-40">
+            {Array.from({ length: 9 }, (_, i) => (
+              <span key={i} className="h-2.5 rounded-[2px] bg-white" />
+            ))}
+          </div>
+          <div className="space-y-5 py-7 pr-6 pl-11 sm:py-9 sm:pr-10 sm:pl-14">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-3">
                 <Eyebrow icon={Clapperboard}>A CineScout production</Eyebrow>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="gold-leaf font-display text-7xl leading-[0.9] sm:text-8xl">{project.title}</h1>
-                  {archived && <Badge>Archived</Badge>}
+                  <h1 className="font-display text-5xl leading-[0.95] font-extrabold sm:text-7xl">{project.title}</h1>
+                  {archived && <Stamp tone="ink" announce className="!bg-white text-sm">Archived</Stamp>}
                 </div>
-                <p className="flex items-center gap-1.5 text-stone-200">
-                  <MapPin aria-hidden className="size-4 text-amber-300" />
+                <p className="flex items-center gap-1.5 font-script text-fog">
+                  <MapPin aria-hidden className="size-4 text-cue" />
                   {project.locationArea ?? 'No location area set. Scouting needs one.'}
                 </p>
               </div>
@@ -138,12 +142,12 @@ function ProjectDetails({ project }: { project: Project }) {
                 <Button variant="secondary" onClick={toggleArchived} busy={update.isPending}>
                   {archived ? 'Restore' : 'Archive'}
                 </Button>
-                <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
                   Delete
                 </Button>
               </div>
             </div>
-            {project.description && <p className="max-w-prose font-serif text-lg whitespace-pre-line text-stone-200/90 italic">{project.description}</p>}
+            {project.description && <p className="max-w-prose text-lg whitespace-pre-line text-fog">{project.description}</p>}
             <ErrorAlert error={update.error} />
           </div>
         </header>

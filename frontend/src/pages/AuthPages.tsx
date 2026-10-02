@@ -3,82 +3,74 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/context'
 import { SessionCheck } from '../auth/SessionCheck'
-import { Mail, MapPinned, ScrollText, Sunset } from 'lucide-react'
 import { Logo } from '../components/Layout'
-import { Card } from '../components/surfaces'
+import { AdmitOne, QuietOnSet, TapeLabel } from '../components/stickers'
 import { fieldErrors } from '../api/errors'
 import { usePageTitle } from '../lib/usePageTitle'
 import { Button, ErrorAlert, TextField } from '../components/ui'
 
-const features = [
-  { icon: ScrollText, text: 'Reads your scene and works out the location it needs' },
-  { icon: MapPinned, text: 'Finds real venues nearby and rates how well each one fits' },
-  { icon: Sunset, text: 'Golden hour, weather and noise for every shoot day' },
-  { icon: Mail, text: 'Drafts the email to the venue’s owner for you to send' },
+/** The slate on the login page: one scene, scouted, as an example of what the app does. */
+const exampleSlate = [
+  { label: 'SCENE', value: '2' },
+  { label: 'VENUES', value: '8' },
+  { label: 'BEST FIT', value: '88', cue: true },
 ]
 
-function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
+function AuthCard({ title, tape, children, footer }: { title: string; tape: string; children: ReactNode; footer: ReactNode }) {
   usePageTitle(title)
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
-      {/* Premiere night: searchlights over the theatre, the marquee lit, velvet in the wings. */}
-      <aside className="relative hidden overflow-hidden border-r border-amber-300/15 bg-black lg:block">
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_115%,rgb(223_184_73/0.30),transparent_60%),radial-gradient(ellipse_at_50%_-20%,rgb(23_37_84/0.55),transparent_60%)]" />
-        <div aria-hidden className="searchlight left-[8%] animate-sweep" />
-        <div aria-hidden className="searchlight right-[6%] animate-sweep-slow" />
-        <div aria-hidden className="searchlight left-[38%] animate-sweep-slow opacity-60" />
-        <div aria-hidden className="velvet absolute inset-y-0 left-0 w-10 opacity-90 shadow-[8px_0_24px_rgb(0_0_0/0.7)]" />
-        <div aria-hidden className="velvet absolute inset-y-0 right-0 w-10 opacity-90 shadow-[-8px_0_24px_rgb(0_0_0/0.7)]" />
-
-        <div className="relative flex h-full flex-col items-center justify-between px-20 py-12 text-center">
+      {/* The location department's door: the pitch on a chalk slate, with stickers on it. */}
+      <aside className="relative hidden flex-col justify-between gap-10 overflow-hidden bg-ink px-14 py-11 text-white lg:flex">
+        <div className="flex items-center justify-between">
           <Logo size="lg" />
+          <span className="font-script text-[13px] tracking-[0.1em] text-ink-muted">LOCATION DEPT.</span>
+        </div>
 
-          {/* The marquee. */}
-          <div className="w-full max-w-lg">
-            <div className="rounded-lg bg-gradient-to-b from-amber-200/90 via-amber-400 to-amber-600 p-[3px] shadow-[0_0_70px_-8px_rgb(223_184_73/0.65)]">
-              <div className="rounded-[5px] bg-gradient-to-b from-stone-950 to-black">
-                <div aria-hidden className="bulbs mx-3 mt-2" />
-                <div className="space-y-3 px-8 py-7">
-                  <p className="text-[11px] font-semibold tracking-[0.45em] text-amber-200/80 uppercase">Now scouting</p>
-                  <p className="gold-leaf animate-flicker font-marquee text-5xl leading-[1.05] xl:text-6xl">
-                    The place your scene was written for
-                  </p>
-                  <div aria-hidden className="deco-rule text-xs">◆</div>
-                  <p className="font-serif text-lg text-stone-300 italic">From the page to the perfect location.</p>
-                </div>
-                <div aria-hidden className="bulbs mx-3 mb-2" />
-              </div>
+        <div className="max-w-xl space-y-5">
+          <p className="font-display text-6xl leading-[0.98] font-extrabold xl:text-[4rem]">
+            Find the place your scene was <span className="text-cue">written for.</span>
+          </p>
+          <p className="max-w-lg text-lg leading-relaxed text-fog">
+            Paste a scene. CineScout reads what it needs, finds real venues nearby, scores how well each one fits and
+            drafts the email to the owner.
+          </p>
+        </div>
+
+        <div aria-hidden className="max-w-xl -rotate-[1.5deg]">
+          <div className="clapper h-11 rounded-t-lg border-[3px] border-white" />
+          <div className="grid grid-cols-3 rounded-b-lg border-[3px] border-t-0 border-white bg-[#1b222b] font-script">
+            <div className="col-span-3 flex items-baseline gap-4 border-b-2 border-ink-line px-5 py-3">
+              <span className="text-xs tracking-[0.1em] text-ink-muted">PROD.</span>
+              <span className="font-marker text-2xl text-paper">The Night Ferry</span>
             </div>
-          </div>
-
-          <div className="w-full max-w-lg space-y-6">
-            <ul className="grid grid-cols-2 gap-x-6 gap-y-4 text-left">
-              {features.map(({ icon: Icon, text }) => (
-                <li key={text} className="flex items-start gap-3 text-sm text-stone-300">
-                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-300/10 text-amber-300 ring-1 ring-amber-300/30">
-                    <Icon aria-hidden className="size-4" />
-                  </span>
-                  {text}
-                </li>
-              ))}
-            </ul>
-            <p className="billing text-[10px] text-stone-500">AI location scouting for film and television</p>
+            {exampleSlate.map(({ label, value, cue }) => (
+              <div key={label} className="flex flex-col border-r-2 border-ink-line px-5 py-2.5 last:border-r-0">
+                <span className="text-xs tracking-[0.1em] text-ink-muted">{label}</span>
+                <span className={`font-marker text-3xl ${cue ? 'text-cue' : 'text-paper'}`}>{value}</span>
+              </div>
+            ))}
+            <div className="col-span-3 border-t-2 border-ink-line px-5 py-2.5 text-[15px] text-fog">INT. ALL-NIGHT DINER - NIGHT</div>
           </div>
         </div>
+
+        <QuietOnSet className="absolute top-36 right-12" />
+        <AdmitOne className="absolute right-16 bottom-14" />
       </aside>
 
       <div className="relative flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm animate-fade-in space-y-6">
-          <div className="space-y-4 text-center">
-            <span className="lg:hidden">
-              <Logo size="lg" />
-            </span>
-            <p className="text-[11px] font-semibold tracking-[0.4em] text-amber-300/80 uppercase">Admit one</p>
-            <h1 className="gold-leaf font-display text-6xl leading-none">{title}</h1>
-            <div aria-hidden className="deco-rule text-xs">◆</div>
+          <span className="flex justify-center lg:hidden">
+            <Logo size="lg" onDark={false} />
+          </span>
+          <div className="board-card relative rounded-lg bg-white px-6 pt-10 pb-6">
+            <TapeLabel tilt={-2} className="absolute -top-4 left-1/2 -translate-x-1/2">
+              {tape}
+            </TapeLabel>
+            <h1 className="mb-5 font-display text-4xl leading-none font-extrabold">{title}</h1>
+            {children}
           </div>
-          <Card className="p-6">{children}</Card>
-          <p className="text-center text-sm text-stone-400">{footer}</p>
+          <p className="text-center text-[15px] text-muted">{footer}</p>
         </div>
       </div>
     </div>
@@ -119,10 +111,11 @@ export function LoginPage() {
   return (
     <AuthCard
       title="Log in"
+      tape="Crew sign-in"
       footer={
         <>
           New to CineScout?{' '}
-          <Link to="/register" className="font-semibold text-amber-400 hover:text-amber-300">
+          <Link to="/register" className="font-bold text-cue-ink underline decoration-2 underline-offset-2 hover:text-cue-deep">
             Create an account
           </Link>
         </>
@@ -176,10 +169,11 @@ export function RegisterPage() {
   return (
     <AuthCard
       title="Create an account"
+      tape="New crew"
       footer={
         <>
           Already have one?{' '}
-          <Link to="/login" className="font-semibold text-amber-400 hover:text-amber-300">
+          <Link to="/login" className="font-bold text-cue-ink underline decoration-2 underline-offset-2 hover:text-cue-deep">
             Log in
           </Link>
         </>

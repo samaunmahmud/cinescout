@@ -24,11 +24,11 @@ export function locationPin(location: PinnedVenue, { withLink = true } = {}): Ma
     popup: withLink ? (
       <div className="space-y-1">
         {location.imageUrl && <VenuePicture src={location.imageUrl} className="!mb-1 h-24 w-48 rounded" />}
-        <Link to={`/locations/${location.id}`} className="font-semibold text-amber-300 hover:underline">
+        <Link to={`/locations/${location.id}`} className="font-bold text-ink underline decoration-cue decoration-2 underline-offset-2">
           {location.name}
         </Link>
-        {location.address && <p className="!m-0 text-stone-400">{location.address}</p>}
-        <p className="!m-0 text-stone-400">{location.fitScore == null ? 'Added by hand' : `Fit ${location.fitScore} out of 100`}</p>
+        {location.address && <p className="!m-0 text-muted">{location.address}</p>}
+        <p className="!m-0 text-muted">{location.fitScore == null ? 'Added by hand' : `Fit ${location.fitScore} out of 100`}</p>
       </div>
     ) : undefined,
   }

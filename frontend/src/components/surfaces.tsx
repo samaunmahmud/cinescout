@@ -1,19 +1,19 @@
 import type { LucideIcon } from 'lucide-react'
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 
-/** A panel: a slightly lifted surface whose top edge catches the light. */
+/** A panel on the board: white card with an ink outline and a hard shadow. */
 export function Card({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={`gilt rounded-xl border border-white/[0.07] bg-gradient-to-b from-frame/95 to-reel/95 shadow-xl shadow-black/50 ${className}`}>
+    <div className={`board-card rounded-lg bg-white ${className}`}>
       {children}
     </div>
   )
 }
 
-/** The small caps line above a title, like the department on a call sheet. */
+/** The typed line above a title, like the department on a call sheet. */
 export function Eyebrow({ icon: Icon, children }: { icon?: LucideIcon; children: ReactNode }) {
   return (
-    <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.28em] text-amber-300/90 uppercase">
+    <p className="flex items-center gap-1.5 font-script text-[13px] font-bold tracking-[0.1em] text-cue-ink uppercase">
       {Icon && <Icon aria-hidden className="size-3.5" />}
       {children}
     </p>
@@ -45,13 +45,13 @@ export function Section({
 }) {
   return (
     <section aria-labelledby={titleId} className={`animate-fade-in space-y-4 ${className}`}>
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-amber-300/10 pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-4">
         <div className="space-y-1">
           {eyebrow && <Eyebrow icon={icon}>{eyebrow}</Eyebrow>}
-          <h2 id={titleId} className="gold-leaf font-display text-4xl leading-none">
+          <h2 id={titleId} className="font-display text-[2rem] leading-none font-extrabold">
             {title}
           </h2>
-          {description && <p className="max-w-prose font-serif text-[15px] text-stone-400 italic">{description}</p>}
+          {description && <p className="max-w-prose pt-1 text-[15px] text-muted">{description}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -63,15 +63,14 @@ export function Section({
 /** What a section shows before there is anything in it: what it is for, and what to do. */
 export function EmptyState({ icon: Icon, children }: { icon?: LucideIcon; children: ReactNode }) {
   return (
-    // An empty stage: one spotlight, and a word on what belongs in it.
-    <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-dashed border-amber-300/15 bg-reel/50 px-6 py-12 text-center text-stone-400">
-      <div aria-hidden className="absolute inset-x-0 -top-24 mx-auto h-64 w-72 bg-[radial-gradient(ellipse_at_top,rgb(255_243_196/0.16),transparent_65%)]" />
+    // An empty spot on the board, waiting for something to be pinned to it.
+    <div className="relative flex flex-col items-center gap-4 rounded-lg border-2 border-dashed border-line bg-white/60 px-6 py-12 text-center text-muted">
       {Icon && (
-        <span className="relative flex size-14 items-center justify-center rounded-full bg-gradient-to-b from-amber-300/20 to-amber-500/5 text-amber-300 ring-1 ring-amber-300/30">
+        <span className="relative flex size-14 -rotate-6 items-center justify-center rounded-full border-2 border-ink bg-tape text-ink">
           <Icon aria-hidden className="size-6" />
         </span>
       )}
-      <div className="relative max-w-md font-serif text-[15px] leading-relaxed italic">{children}</div>
+      <div className="relative max-w-md text-[15px] leading-relaxed">{children}</div>
     </div>
   )
 }
@@ -129,7 +128,7 @@ export function Tabs<K extends string>({
         role="tablist"
         aria-label={label}
         onKeyDown={onKeyDown}
-        className="sticky top-[68px] z-20 -mx-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-amber-300/15 bg-ink/90 px-4 backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="sticky top-[82px] z-20 -mx-4 flex gap-1 overflow-x-auto overflow-y-hidden bg-ground/90 px-4 py-2 backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {items.map(({ key, label: text, icon: Icon }) => {
           const active = key === selected
@@ -146,13 +145,11 @@ export function Tabs<K extends string>({
               aria-controls={panelId}
               tabIndex={active ? 0 : -1}
               onClick={() => onSelect(key)}
-              className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 font-display text-xl leading-none tracking-wider transition focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-amber-400 ${
-                active
-                  ? 'border-amber-300 text-amber-100 [text-shadow:0_0_18px_rgb(236_208_120/0.55)]'
-                  : 'border-transparent text-stone-500 hover:text-stone-200'
+              className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2 text-[15px] font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                active ? 'border-ink bg-ink text-white' : 'border-transparent text-graphite hover:border-ink hover:bg-white'
               }`}
             >
-              {Icon && <Icon aria-hidden className={`size-4 ${active ? 'text-amber-400' : ''}`} />}
+              {Icon && <Icon aria-hidden className={`size-4 ${active ? 'text-cue' : ''}`} />}
               {text}
             </button>
           )
@@ -165,14 +162,14 @@ export function Tabs<K extends string>({
   )
 }
 
-/** A clapperboard: the scene number as a slate, with the striped sticks on top. */
+/** A clapperboard: the scene number chalked on a slate, with the striped sticks on top. */
 export function Slate({ number, className = '' }: { number: number | null; className?: string }) {
   return (
-    <div aria-hidden className={`w-20 shrink-0 overflow-hidden rounded-md bg-gradient-to-b from-stone-900 to-black shadow-md shadow-black/60 ring-1 ring-white/15 ${className}`}>
-      <div className="clapper h-3 border-b border-black" />
+    <div aria-hidden className={`w-20 shrink-0 overflow-hidden rounded-md border-2 border-ink bg-ink ${className}`}>
+      <div className="clapper h-3.5 border-b-2 border-ink [background-size:auto]" />
       <div className="px-2 pt-1 pb-1.5 text-center">
-        <div className="border-b border-white/10 pb-0.5 text-[8px] font-semibold tracking-[0.3em] text-stone-400">SCENE</div>
-        <div className="pt-0.5 font-display text-3xl leading-none text-stone-50">{number ?? '—'}</div>
+        <div className="border-b border-ink-line pb-0.5 font-script text-[9px] font-bold tracking-[0.2em] text-ink-muted">SCENE</div>
+        <div className="pt-1 font-marker text-3xl leading-none text-paper">{number ?? '—'}</div>
       </div>
     </div>
   )
@@ -181,11 +178,11 @@ export function Slate({ number, className = '' }: { number: number | null; class
 /** One figure in a row of facts: a label, a value, an optional icon. */
 export function Fact({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg bg-gradient-to-b from-white/[0.05] to-white/[0.015] px-3 py-2.5 ring-1 ring-amber-300/10 ring-inset">
-      <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-400/80" />
+    <div className="flex items-start gap-3 rounded-lg border-[1.5px] border-line bg-white px-3 py-2.5">
+      <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-cue-ink" />
       <div className="min-w-0">
-        <dt className="text-[11px] font-semibold tracking-wider text-stone-500 uppercase">{label}</dt>
-        <dd className="mt-0.5 text-sm text-stone-100">{children}</dd>
+        <dt className="font-script text-[12px] font-bold tracking-[0.08em] text-muted uppercase">{label}</dt>
+        <dd className="mt-0.5 text-sm font-semibold text-ink">{children}</dd>
       </div>
     </div>
   )

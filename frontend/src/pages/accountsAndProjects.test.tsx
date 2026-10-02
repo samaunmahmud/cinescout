@@ -105,7 +105,7 @@ describe('registering', () => {
 
     await fillIn(userEvent.setup())
 
-    expect(await screen.findByRole('heading', { name: 'Projects' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Your productions' })).toBeInTheDocument()
     expect(authRequests.find((r) => r.path === '/api/auth/register')?.body).toEqual({ displayName: 'Ada', email: ada.email, password: PASSWORD })
     expect(authRequests.find((r) => r.path === '/api/auth/login')?.body).toEqual({ email: ada.email, password: PASSWORD })
   })
@@ -157,7 +157,7 @@ describe('projects', () => {
     renderApp('/projects')
     const user = userEvent.setup()
 
-    await screen.findByRole('heading', { name: 'Projects' })
+    await screen.findByRole('heading', { name: 'Your productions' })
     await user.tab()
 
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveFocus()
