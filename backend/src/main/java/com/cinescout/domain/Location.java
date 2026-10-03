@@ -88,6 +88,10 @@ public class Location extends BaseEntity {
 
     private String notes;
 
+    /** Why the crew passed on it, while it is REJECTED; null when they did not say. */
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
     /** Who to talk to at the venue, as the user entered it. */
     @Column(name = "contact_name")
     private String contactName;
@@ -161,6 +165,7 @@ public class Location extends BaseEntity {
     public Instant getVideosFetchedAt() { return videosFetchedAt; }
     public LocationStatus getStatus() { return status; }
     public String getNotes() { return notes; }
+    public String getRejectionReason() { return rejectionReason; }
     public String getContactName() { return contactName; }
     public String getContactEmail() { return contactEmail; }
     public String getContactPhone() { return contactPhone; }
@@ -182,6 +187,7 @@ public class Location extends BaseEntity {
     public void setFootprintWarnings(List<String> footprintWarnings) { this.footprintWarnings = footprintWarnings; }
     public void setStatus(LocationStatus status) { this.status = status; }
     public void setNotes(String notes) { this.notes = notes; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public void setContactName(String contactName) { this.contactName = contactName; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
     public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }

@@ -1,14 +1,20 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import type { BookingFriction, Location, LocationStatus } from '../api/types'
 import { fitBand, frictionLabel, type FitBand } from '../lib/fit'
 import { statusLabels } from '../lib/status'
 import type { useUpdateLocation } from './locationHooks'
-import { Badge } from './ui'
+import { Badge, Button, TextField } from './ui'
 import { useCanEdit } from './projectRole'
 
 const frictionTones: Record<BookingFriction, 'green' | 'cue' | 'red'> = { PUBLIC: 'green', COMMERCIAL: 'cue', PRIVATE: 'red' }
 
-/** A status dropdown that saves on change, keeping the notes as they are; for a viewer, the status as plain text. */
+/** Reasons the crew most often pass on a venue; one tap fills them in. */
+const rejectionPresets = ['Too small', 'Too loud', 'Too expensive', 'Wrong look', 'Hard to get to', 'Not available'] as const
+
+/**
+ * A status dropdown that saves on change, keeping the notes as they are; for a viewer, the status as plain text.
+ * Choosing Rejected first asks why (optional): the reasons steer the scene's next scouting runs.
+ */
 export function StatusSelect({
   location,
   update,
@@ -18,17 +24,22 @@ export function StatusSelect({
 }) {
   const id = useId()
   const canEdit = useCanEdit()
+  const [rejecting, setRejecting] = useState(false)
   if (!canEdit) return <Badge>{statusLabels[location.status]}</Badge>
   return (
-    <>
+    <span className="relative inline-flex">
       <label htmlFor={id} className="sr-only">
         Status of {location.name}
       </label>
       <select
         id={id}
-        value={location.status}
+        value={rejecting ? 'REJECTED' : location.status}
         disabled={update.isPending}
-        onChange={(e) => update.mutate({ status: e.target.value as LocationStatus, notes: location.notes })}
+        onChange={(e) => {
+          const status = e.target.value as LocationStatus
+          if (status === 'REJECTED') setRejecting(true)
+          else update.mutate({ status, notes: location.notes })
+        }}
         className="rounded-lg border-2 border-ink bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
       >
         {Object.entries(statusLabels).map(([value, label]) => (
@@ -37,7 +48,72 @@ export function StatusSelect({
           </option>
         ))}
       </select>
-    </>
+      {rejecting && (
+        <RejectPanel
+          venue={location.name}
+          busy={update.isPending}
+          onCancel={() => setRejecting(false)}
+          onReject={(reason) =>
+            update.mutate({ status: 'REJECTED', notes: location.notes, rejectionReason: reason }, { onSuccess: () => setRejecting(false) })
+          }
+        />
+      )}
+    </span>
+  )
+}
+
+/** Why the crew is passing on a venue: a preset or their own words, or nothing at all. */
+function RejectPanel({
+  venue,
+  busy,
+  onCancel,
+  onReject,
+}: {
+  venue: string
+  busy: boolean
+  onCancel: () => void
+  onReject: (reason: string | null) => void
+}) {
+  const titleId = useId()
+  const [reason, setReason] = useState('')
+  return (
+    <div
+      role="dialog"
+      aria-labelledby={titleId}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onCancel()
+      }}
+      className="absolute top-full right-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] space-y-3 rounded-lg border-2 border-ink bg-white p-4 text-left shadow-[0_4px_0_var(--color-ink)]"
+    >
+      <p id={titleId} className="font-display text-lg leading-tight text-ink">
+        Why pass on {venue}?
+      </p>
+      <div role="group" aria-label="Common reasons" className="flex flex-wrap gap-1.5">
+        {rejectionPresets.map((preset) => (
+          <button
+            key={preset}
+            type="button"
+            aria-pressed={reason === preset}
+            onClick={() => setReason(reason === preset ? '' : preset)}
+            className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset focus-visible:outline-2 focus-visible:outline-ink ${
+              reason === preset ? 'bg-stop-wash text-stop-ink ring-stop' : 'bg-ground text-graphite ring-line hover:ring-ink'
+            }`}
+          >
+            {preset}
+          </button>
+        ))}
+      </div>
+      <TextField label="Or in your words" value={reason} maxLength={300} onChange={(e) => setReason(e.target.value)} autoFocus />
+      <p className="text-xs text-muted">Optional. The scene’s next scouting runs steer away from what you write here.</p>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="secondary" busy={busy} onClick={() => onReject(reason.trim() || null)}>
+          Reject
+        </Button>
+      </div>
+    </div>
   )
 }
 

@@ -56,6 +56,25 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     @Query("select l.sourceUrl from Location l where l.scene.id = :sceneId and l.sourceUrl is not null")
     Set<String> findSourceUrlsBySceneId(@Param("sceneId") UUID sceneId);
 
+    /** A saved venue as scouting compares new finds with it: by page, name, street address or listing. */
+    interface SavedVenueRow {
+        String getName();
+
+        String getAddress();
+
+        String getSourceUrl();
+    }
+
+    @Query("select l.name as name, l.address as address, l.sourceUrl as sourceUrl from Location l where l.scene.id = :sceneId")
+    List<SavedVenueRow> findSavedVenues(@Param("sceneId") UUID sceneId);
+
+    /** Why the crew passed on the scene's venues, latest first; only the rejected ones that say. */
+    @Query("""
+            select l.rejectionReason from Location l
+            where l.scene.id = :sceneId and l.status = com.cinescout.domain.LocationStatus.REJECTED and l.rejectionReason is not null
+            order by l.updatedAt desc, l.id desc""")
+    List<String> findRejectionReasons(@Param("sceneId") UUID sceneId, Pageable pageable);
+
     /** The names of a scene's locations, so a venue found again on another page is recognised as already saved. */
     @Query("select l.name from Location l where l.scene.id = :sceneId")
     Set<String> findNamesBySceneId(@Param("sceneId") UUID sceneId);

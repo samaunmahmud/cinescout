@@ -169,3 +169,28 @@ describe("a scene's locations", () => {
     expect(requests.filter((r) => r.method === 'DELETE').map((r) => r.path)).toEqual(['/api/locations/l1'])
   })
 })
+
+describe('passing on a venue', () => {
+  it('asks why, optionally, and shows the reason on its card', async () => {
+    const { requests } = serverFor([location()], {
+      'PUT /api/locations/l1': (req) => json({ ...location(), ...(req.body as object) }),
+    })
+    renderApp('/scenes/s1')
+    const user = await logIn()
+
+    await user.selectOptions(await screen.findByLabelText('Status of Tom’s Diner'), 'REJECTED')
+    const why = screen.getByRole('dialog', { name: 'Why pass on Tom’s Diner?' })
+    expect(within(why).getByLabelText('Or in your words')).toHaveFocus()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Status of Tom’s Diner')).toHaveValue('SUGGESTED')
+    expect(requests.some((r) => r.method === 'PUT')).toBe(false)
+
+    await user.selectOptions(screen.getByLabelText('Status of Tom’s Diner'), 'REJECTED')
+    await user.type(within(screen.getByRole('dialog')).getByLabelText('Or in your words'), 'Subway rumble every few minutes')
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Reject' }))
+
+    expect(await screen.findByText('Passed: Subway rumble every few minutes')).toBeInTheDocument()
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ status: 'REJECTED', notes: null, rejectionReason: 'Subway rumble every few minutes' })
+  })
+})

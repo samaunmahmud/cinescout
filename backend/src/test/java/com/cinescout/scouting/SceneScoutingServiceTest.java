@@ -224,7 +224,7 @@ class SceneScoutingServiceTest {
     @Test
     void parsingStoresTheRequirementsAndMarksTheScenePARSED() {
         Fixture f = fixture(AREA, false);
-        when(pipeline.extractRequirements("INT. ROOFTOP BAR - NIGHT. Neon hums.")).thenReturn(Mono.just(REQUIREMENTS));
+        when(pipeline.extractRequirements("INT. ROOFTOP BAR - NIGHT. Neon hums.", List.of())).thenReturn(Mono.just(REQUIREMENTS));
 
         SceneResponse response = service.parseScene(f.ownerId(), f.sceneId()).block();
 
@@ -244,7 +244,7 @@ class SceneScoutingServiceTest {
     void parsingAgainReplacesEarlierRequirements() {
         Fixture f = fixture(AREA, true);
         SceneRequirements revised = new SceneRequirements("warehouse", null, null, "dawn", null, 30);
-        when(pipeline.extractRequirements(anyString())).thenReturn(Mono.just(revised));
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.just(revised));
 
         assertThat(service.parseScene(f.ownerId(), f.sceneId()).block().requirements()).isEqualTo(revised);
     }
@@ -252,7 +252,7 @@ class SceneScoutingServiceTest {
     @Test
     void anAnswerThatStaysUnusableMarksTheSceneFAILEDAndSurfacesTheError() {
         Fixture f = fixture(AREA, false);
-        when(pipeline.extractRequirements(anyString())).thenReturn(Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable")));
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable")));
 
         assertThatThrownBy(() -> service.parseScene(f.ownerId(), f.sceneId()).block())
                 .isInstanceOfSatisfying(LlmException.class, e -> assertThat(e.kind()).isEqualTo(Kind.INVALID_OUTPUT));
@@ -262,7 +262,7 @@ class SceneScoutingServiceTest {
     @Test
     void anOutageLeavesTheScenePENDINGBecauseNothingIsKnownAboutTheScene() {
         Fixture f = fixture(AREA, false);
-        when(pipeline.extractRequirements(anyString())).thenReturn(Mono.error(new LlmException(Kind.UNAVAILABLE, "down")));
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.error(new LlmException(Kind.UNAVAILABLE, "down")));
 
         assertThatThrownBy(() -> service.parseScene(f.ownerId(), f.sceneId()).block()).isInstanceOf(LlmException.class);
         assertThat(parseStatus(f)).isEqualTo(ParseStatus.PENDING);
@@ -402,13 +402,13 @@ class SceneScoutingServiceTest {
         service.scout(f.ownerId(), f.sceneId(), 7).block();
 
         verify(pipeline).scout(REQUIREMENTS, AREA, 7, SearchHints.NONE, ScoutFilters.NONE);
-        verify(pipeline, never()).extractRequirements(anyString());
+        verify(pipeline, never()).extractRequirements(anyString(), any());
     }
 
     @Test
     void anUnparsedSceneIsParsedFirstAndThenSearchedWithWhatWasExtracted() {
         Fixture f = fixture(AREA, false);
-        when(pipeline.extractRequirements(anyString())).thenReturn(Mono.just(REQUIREMENTS));
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.just(REQUIREMENTS));
         pipelineFinds(new ScoutingOutcome(List.of(venue("A", 70)), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
@@ -487,7 +487,7 @@ class SceneScoutingServiceTest {
     @Test
     void aSceneWhoseExtractionKeepsFailingIsMarkedFAILEDAndNothingIsSearched() {
         Fixture f = fixture(AREA, false);
-        when(pipeline.extractRequirements(anyString())).thenReturn(Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable")));
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.error(new LlmException(Kind.INVALID_OUTPUT, "unusable")));
 
         assertThatThrownBy(() -> service.scout(f.ownerId(), f.sceneId(), 10).block()).isInstanceOf(LlmException.class);
         assertThat(parseStatus(f)).isEqualTo(ParseStatus.FAILED);
@@ -499,7 +499,7 @@ class SceneScoutingServiceTest {
     @Test
     void noDatabaseWorkRunsOnTheCallersThread() {
         Fixture f = fixture(AREA, false);
-        when(pipeline.extractRequirements(anyString())).thenReturn(Mono.just(REQUIREMENTS));
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.just(REQUIREMENTS));
         pipelineFinds(new ScoutingOutcome(List.of(venue("A", 70)), 0, 0, 0));
 
         service.scout(f.ownerId(), f.sceneId(), 10).block();
@@ -547,5 +547,68 @@ class SceneScoutingServiceTest {
         assertThat(result.filteredOut().outsideRadius()).isEqualTo(1);
         verify(pipeline).scout(any(), anyString(), anyInt(), org.mockito.ArgumentMatchers.eq(
                 new SearchHints("40.71780, -73.95770", 0.2, List.of(), true)), org.mockito.ArgumentMatchers.eq(run));
+    }
+
+    // --- learning from rejections --------------------------------------------------------------
+
+    /** A venue the crew passed on, saved in its own transaction so each is newer than the last. */
+    private void rejected(Fixture f, String name, String reason) {
+        setup.executeWithoutResult(status -> {
+            Location location = new Location(em.find(Scene.class, f.sceneId()), name);
+            location.setStatus(LocationStatus.REJECTED);
+            location.setRejectionReason(reason);
+            em.persist(location);
+        });
+    }
+
+    @Test
+    void theLatestFiveDistinctReasonsForPassingOnVenuesSteerTheNextRun() {
+        Fixture f = fixture(AREA, true);
+        for (int i = 1; i <= 7; i++) {
+            rejected(f, "Old " + i, "Reason " + i);
+        }
+        rejected(f, "Again", "reason 7 ");
+        pipelineFinds(new ScoutingOutcome(List.of(), 0, 0, 0));
+
+        service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        org.mockito.ArgumentCaptor<SearchHints> hints = org.mockito.ArgumentCaptor.forClass(SearchHints.class);
+        verify(pipeline).scout(any(), anyString(), anyInt(), hints.capture(), any());
+        assertThat(hints.getValue().avoid()).containsExactly("reason 7", "Reason 6", "Reason 5", "Reason 4", "Reason 3");
+        assertThat(hints.getValue().knownVenues()).hasSize(8).contains("Old 1", "Again");
+    }
+
+    @Test
+    void anUnparsedSceneIsExtractedWithTheReasonsToo() {
+        Fixture f = fixture(AREA, false);
+        rejected(f, "Loud Bar", "Too loud for dialogue");
+        when(pipeline.extractRequirements(anyString(), any())).thenReturn(Mono.just(REQUIREMENTS));
+
+        service.parseScene(f.ownerId(), f.sceneId()).block();
+
+        verify(pipeline).extractRequirements("INT. ROOFTOP BAR - NIGHT. Neon hums.", List.of("Too loud for dialogue"));
+    }
+
+    @Test
+    void aVenueSavedUnderAnotherNameAtTheSameAddressOrListingIsNotSavedAgain() {
+        Fixture f = fixture(AREA, true);
+        setup.executeWithoutResult(status -> {
+            Location byAddress = new Location(em.find(Scene.class, f.sceneId()), "The Old Name");
+            byAddress.setAddress("80 Wythe Ave, Brooklyn, NY 11249");
+            em.persist(byAddress);
+            Location listing = new Location(em.find(Scene.class, f.sceneId()), "Sunny Loft");
+            listing.setSourceUrl("https://www.peerspace.com/pages/listings/66876899a8dfc287ba3aeb50");
+            em.persist(listing);
+        });
+        ScoutedVenue sameListing = new ScoutedVenue(
+                new SearchResult("Loft", "https://peerspace.com/au/pages/listings/66876899a8dfc287ba3aeb50", "Excerpt", "parallel"),
+                new LocationAssessment(true, 70, "Reason", BookingFriction.COMMERCIAL, null, List.of(), "Bright Loft", null, List.of()));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("W", 90, "Wythe Hotel", "80 Wythe Ave, Brooklyn, NY 11249"), sameListing,
+                venue("N", 60, "New Place", null)), 0, 0, 0));
+
+        ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        assertThat(result.added()).extracting(LocationResponse::name).containsExactly("New Place");
+        assertThat(result.alreadySaved()).isEqualTo(2);
     }
 }

@@ -71,6 +71,10 @@ public class SceneScoutingService {
     private static final int MAX_ADDRESS = 500;
 
     /** How many scenes one batch analyses: each is a model call of a few seconds, and the request waits for them all. */
+    /** How many reasons for passing on venues steer a run, and how many venues already found the search is told of. */
+    static final int MAX_AVOID = 5;
+    static final int MAX_KNOWN_VENUES = 15;
+
     public static final int MAX_BATCH = 20;
     private static final int BATCH_CONCURRENCY = 4;
 
@@ -104,8 +108,8 @@ public class SceneScoutingService {
      * scene is left as it was, since nothing is known about the scene itself.
      */
     public Mono<SceneResponse> parseScene(UUID userId, UUID sceneId) {
-        return db.call(() -> load(userId, sceneId).getSourceText())
-                .flatMap(sourceText -> extractAndStore(userId, sceneId, sourceText));
+        return db.call(() -> Map.entry(load(userId, sceneId).getSourceText(), avoidFor(sceneId)))
+                .flatMap(scene -> extractAndStore(userId, sceneId, scene.getKey(), scene.getValue()));
     }
 
     /**
@@ -162,7 +166,7 @@ public class SceneScoutingService {
                         .defaultIfEmpty(Optional.empty())
                         .flatMap(base -> requirementsFor(userId, sceneId, target)
                                 .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults,
-                                        hints(target.filters()), target.filters()))
+                                        hints(target.filters(), target.known(), target.avoid()), target.filters()))
                                 .flatMap(outcome -> db.call(() -> unsaved(userId, sceneId, outcome))
                                         .flatMap(fresh -> placer.place(fresh, target.area()))
                                         .flatMap(placed -> db.call(() -> saveVenues(userId, sceneId,
@@ -179,10 +183,11 @@ public class SceneScoutingService {
         return picked != null ? Mono.just(picked) : placer.locate(filters.baseAddress());
     }
 
-    static SearchHints hints(ScoutFilters filters) {
+    static SearchHints hints(ScoutFilters filters, List<String> known, List<String> avoid) {
         GeoPoint picked = filters.pickedPoint();
         String near = picked != null ? String.format(Locale.ROOT, "%.5f, %.5f", picked.latitude(), picked.longitude()) : filters.baseAddress();
-        return new SearchHints(near, near == null ? null : filters.radiusKm(), filters.excludedTypes(), filters.privateAllowed());
+        return new SearchHints(near, near == null ? null : filters.radiusKm(), filters.excludedTypes(), filters.privateAllowed(),
+                known, avoid);
     }
 
     /** The outcome without the venues placed further from {@code base} than the radius, counted as such. */
@@ -229,7 +234,8 @@ public class SceneScoutingService {
                 });
     }
 
-    private record Target(String sourceText, SceneRequirements requirements, String area, ScoutFilters filters) {
+    private record Target(String sourceText, SceneRequirements requirements, String area, ScoutFilters filters,
+                          List<String> known, List<String> avoid) {
     }
 
     private Target prepare(UUID userId, UUID sceneId, ScoutFilters override) {
@@ -241,18 +247,38 @@ public class SceneScoutingService {
         }
         ScoutFilters filters = override != null ? override
                 : scene.getProject().getScoutFilters() != null ? scene.getProject().getScoutFilters() : ScoutFilters.NONE;
-        return new Target(scene.getSourceText(), scene.requirements(), area, filters);
+        List<String> known = locations.findSavedVenues(sceneId).stream()
+                .map(LocationRepository.SavedVenueRow::getName)
+                .limit(MAX_KNOWN_VENUES)
+                .toList();
+        return new Target(scene.getSourceText(), scene.requirements(), area, filters, known, avoidFor(sceneId));
     }
 
     private Mono<SceneRequirements> requirementsFor(UUID userId, UUID sceneId, Target target) {
         if (target.requirements() != null) {
             return Mono.just(target.requirements());
         }
-        return extractAndStore(userId, sceneId, target.sourceText()).map(SceneResponse::requirements);
+        return extractAndStore(userId, sceneId, target.sourceText(), target.avoid()).map(SceneResponse::requirements);
     }
 
-    private Mono<SceneResponse> extractAndStore(UUID userId, UUID sceneId, String sourceText) {
-        return pipeline.extractRequirements(sourceText)
+    /**
+     * Why the crew passed on the scene's venues: the latest {@value #MAX_AVOID} distinct reasons (ignoring case),
+     * newest first. They steer the next extraction, search and assessments away from the same problems.
+     */
+    List<String> avoidFor(UUID sceneId) {
+        Set<String> seen = new HashSet<>();
+        List<String> reasons = new ArrayList<>();
+        for (String reason : locations.findRejectionReasons(sceneId, PageRequest.of(0, MAX_AVOID * 4))) {
+            String key = reason.strip().toLowerCase(Locale.ROOT);
+            if (!key.isEmpty() && seen.add(key) && reasons.size() < MAX_AVOID) {
+                reasons.add(reason.strip());
+            }
+        }
+        return reasons;
+    }
+
+    private Mono<SceneResponse> extractAndStore(UUID userId, UUID sceneId, String sourceText, List<String> avoid) {
+        return pipeline.extractRequirements(sourceText, avoid)
                 .flatMap(requirements -> db.call(() -> storeRequirements(userId, sceneId, requirements)))
                 .onErrorResume(LlmException.class, error -> error.kind() == LlmException.Kind.INVALID_OUTPUT
                         ? markParseFailed(userId, sceneId).then(Mono.error(error))
@@ -289,25 +315,45 @@ public class SceneScoutingService {
     }
 
     /**
-     * What a scene already has: a venue counts as saved if its page is, or if a location of the same name is (the
-     * venue found again on another of its pages, or added by hand).
+     * What a scene already has. A venue counts as saved by the same rules that make two finds of one run the same
+     * venue ({@link ScoutingPipeline#sameVenueOnce}): its page is saved, or a location of the same name, at the same
+     * street address, or the same listing on a booking site under another path.
      */
     private Saved saved(UUID sceneId) {
-        return new Saved(new HashSet<>(locations.findSourceUrlsBySceneId(sceneId)), new ArrayList<>(locations.findNamesBySceneId(sceneId)));
+        Saved saved = new Saved(new HashSet<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        for (LocationRepository.SavedVenueRow row : locations.findSavedVenues(sceneId)) {
+            saved.remember(row.getSourceUrl(), row.getName(), row.getAddress());
+        }
+        return saved;
     }
 
-    private record Saved(Set<String> urls, List<String> names) {
+    private record Saved(Set<String> urls, List<String> pages, List<String> names, List<String> addresses) {
         /** True, and remembers it, if {@code venue} is not saved yet. */
         boolean addIfNew(ScoutedVenue venue) {
+            String url = venue.source().url();
             String name = venue.assessment().venueName();
-            if (urls.contains(venue.source().url()) || names.stream().anyMatch(saved -> VenueNames.sameVenue(saved, name))) {
+            String address = venue.assessment().address();
+            if (urls.contains(url)
+                    || names.stream().anyMatch(saved -> VenueNames.sameVenue(saved, name))
+                    || addresses.stream().anyMatch(saved -> VenueNames.sameStreetAddress(saved, address))
+                    || pages.stream().anyMatch(saved -> ScoutingPipeline.sameListing(saved, url))) {
                 return false;
             }
-            urls.add(venue.source().url());
+            remember(url, name, address);
+            return true;
+        }
+
+        void remember(String url, String name, String address) {
+            if (url != null) {
+                urls.add(url);
+                pages.add(url);
+            }
             if (name != null) {
                 names.add(name);
             }
-            return true;
+            if (address != null) {
+                addresses.add(address);
+            }
         }
     }
 

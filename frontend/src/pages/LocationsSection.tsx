@@ -233,6 +233,9 @@ function LocationCard({ location }: { location: Location }) {
         </div>
       </div>
 
+      {location.status === 'REJECTED' && location.rejectionReason && (
+        <p className="font-marker text-[15px] text-stop-ink">Passed: {location.rejectionReason}</p>
+      )}
       {location.fitReason && <p className="text-[15px] leading-relaxed text-graphite">{location.fitReason}</p>}
       {location.frictionNote && <p className="text-sm text-muted">{location.frictionNote}</p>}
       {location.footprintWarnings.length > 0 && (

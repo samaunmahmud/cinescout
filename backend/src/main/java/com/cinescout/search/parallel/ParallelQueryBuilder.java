@@ -102,6 +102,15 @@ final class ParallelQueryBuilder {
         if (!hints.privateAllowed()) {
             objective.append(" Only public spaces and businesses that hire out space; no private homes or privately owned property.");
         }
+        List<String> avoid = hints.avoid().stream().map(ParallelQueryBuilder::clean).filter(t -> t != null).toList();
+        if (!avoid.isEmpty()) {
+            objective.append(" Earlier venues were turned down because: ").append(String.join("; ", avoid))
+                    .append(". Prefer venues without those problems.");
+        }
+        List<String> known = hints.knownVenues().stream().map(ParallelQueryBuilder::clean).filter(t -> t != null).toList();
+        if (!known.isEmpty()) {
+            objective.append(" Already found, so look for others: ").append(String.join(", ", known)).append('.');
+        }
     }
 
     private static String kilometres(double km) {

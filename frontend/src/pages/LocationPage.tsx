@@ -163,6 +163,9 @@ function LocationDetails({ location }: { location: Location }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusSelect location={location} update={update} />
+            {location.status === 'REJECTED' && location.rejectionReason && (
+              <span className="font-marker text-[15px] text-stop-ink">Passed: {location.rejectionReason}</span>
+            )}
             {canEdit && (
               <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
                 Remove

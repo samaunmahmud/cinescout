@@ -77,8 +77,13 @@ public class ScoutingPipeline {
      * retried; if it stays unusable the {@code INVALID_OUTPUT} failure is emitted.
      */
     public Mono<SceneRequirements> extractRequirements(String sceneText) {
+        return extractRequirements(sceneText, List.of());
+    }
+
+    /** As {@link #extractRequirements(String)}, told why the crew passed on earlier venues for the scene. */
+    public Mono<SceneRequirements> extractRequirements(String sceneText, List<String> avoid) {
         return llmGuard.call(() -> llm.generate(
-                ScoutingPrompts.EXTRACTION_SYSTEM, ScoutingPrompts.extractionUser(sceneText), SceneRequirements.class));
+                ScoutingPrompts.EXTRACTION_SYSTEM, ScoutingPrompts.extractionUser(sceneText, avoid), SceneRequirements.class));
     }
 
     /**
@@ -101,8 +106,8 @@ public class ScoutingPipeline {
     public Mono<ScoutingOutcome> scout(SceneRequirements requirements, String area, int maxResults, SearchHints hints,
                                        ScoutFilters filters) {
         return searchGuard.call(() -> search.search(new LocationSearchRequest(requirements, area, maxResults, hints)))
-                .flatMap(hits -> assessAll(requirements, area, hits))
-                .flatMap(first -> followUp(requirements, area, first)
+                .flatMap(hits -> assessAll(requirements, area, hits, hints.avoid()))
+                .flatMap(first -> followUp(requirements, area, first, hints.avoid())
                         .map(more -> {
                             List<Assessed> all = new ArrayList<>(first);
                             all.addAll(more);
@@ -111,10 +116,10 @@ public class ScoutingPipeline {
                 .flatMap(assessed -> toOutcome(assessed, filters));
     }
 
-    private Mono<List<Assessed>> assessAll(SceneRequirements requirements, String area, List<SearchResult> hits) {
+    private Mono<List<Assessed>> assessAll(SceneRequirements requirements, String area, List<SearchResult> hits, List<String> avoid) {
         // flatMapSequential: assessments run concurrently but come back in search-rank order.
         return Flux.fromIterable(hits)
-                .flatMapSequential(hit -> assess(requirements, area, hit)
+                .flatMapSequential(hit -> assess(requirements, area, hit, avoid)
                                 .map(Assessed::new)
                                 .onErrorResume(LlmException.class, error -> Mono.just(new Assessed(error))),
                         assessmentConcurrency)
@@ -122,7 +127,7 @@ public class ScoutingPipeline {
     }
 
     /** Looks up and assesses the venues the first round's directories named and the first round did not find. */
-    private Mono<List<Assessed>> followUp(SceneRequirements requirements, String area, List<Assessed> first) {
+    private Mono<List<Assessed>> followUp(SceneRequirements requirements, String area, List<Assessed> first, List<String> avoid) {
         List<String> names = namedByDirectories(first, followUpVenues);
         if (names.isEmpty()) {
             return Mono.just(List.of());
@@ -140,7 +145,7 @@ public class ScoutingPipeline {
                 .flatMapIterable(hits -> hits)
                 .filter(hit -> seenUrls.add(hit.url()))
                 .collectList()
-                .flatMap(hits -> assessAll(requirements, area, hits));
+                .flatMap(hits -> assessAll(requirements, area, hits, avoid));
     }
 
     /**
@@ -169,9 +174,9 @@ public class ScoutingPipeline {
         return names;
     }
 
-    private Mono<ScoutedVenue> assess(SceneRequirements requirements, String area, SearchResult hit) {
+    private Mono<ScoutedVenue> assess(SceneRequirements requirements, String area, SearchResult hit, List<String> avoid) {
         return llmGuard.call(() -> llm.generate(ScoutingPrompts.ASSESSMENT_SYSTEM,
-                        ScoutingPrompts.assessmentUser(requirements, area, hit), VenueVerdict.class))
+                        ScoutingPrompts.assessmentUser(requirements, area, hit, avoid), VenueVerdict.class))
                 .map(verdict -> new ScoutedVenue(hit, verdict.toAssessment(requirements)));
     }
 

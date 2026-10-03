@@ -266,6 +266,8 @@ export interface Location {
   logisticsFetchedAt: string | null
   status: LocationStatus
   notes: string | null
+  /** Why the crew passed on it, while it is REJECTED; null when they did not say. */
+  rejectionReason: string | null
   /** Who to talk to at the venue, as the user entered it. */
   contactName: string | null
   contactEmail: string | null
@@ -291,6 +293,8 @@ export interface UpdateContactRequest {
 export interface UpdateLocationRequest {
   status: LocationStatus
   notes: string | null
+  /** Why the crew passed on it; only kept with REJECTED, and left as it was when absent. */
+  rejectionReason?: string | null
 }
 
 /** A venue the user found themselves. Coordinates are given together or not at all. */

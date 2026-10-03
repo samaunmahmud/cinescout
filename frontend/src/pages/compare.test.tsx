@@ -78,10 +78,13 @@ describe('comparing the venues of a scene', () => {
     expect(screen.getAllByRole('columnheader')).toHaveLength(3)
 
     await user.selectOptions(screen.getByLabelText('Status of Corner Bistro'), 'REJECTED')
+    const why = screen.getByRole('dialog', { name: 'Why pass on Corner Bistro?' })
+    await user.click(within(why).getByRole('button', { name: 'Too expensive' }))
+    await user.click(within(why).getByRole('button', { name: 'Reject' }))
 
     await screen.findByRole('table', { name: 'Venues compared' })
     await vi.waitFor(() => expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tom’s Diner', 'Sal’s Pizza']))
-    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ status: 'REJECTED', notes: null })
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ status: 'REJECTED', notes: null, rejectionReason: 'Too expensive' })
   })
 
   it('says so when there is nothing to compare, and is not found for another user’s scene', async () => {

@@ -3,6 +3,8 @@ package com.cinescout.scouting;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.SceneRequirements;
 
+import java.util.List;
+
 import static com.cinescout.llm.PromptText.fence;
 import static com.cinescout.llm.PromptText.oneLine;
 
@@ -93,10 +95,31 @@ final class ScoutingPrompts {
     }
 
     static String extractionUser(String sceneText) {
-        return "Scene:\n" + fence("scene", sceneText);
+        return extractionUser(sceneText, List.of());
+    }
+
+    /** With why the crew passed on earlier venues for the scene, so the description steers away from it. */
+    static String extractionUser(String sceneText, List<String> avoid) {
+        return "Scene:\n" + fence("scene", sceneText) + avoidance(avoid,
+                "The scout passed on earlier venues for this scene. Describe the place so as to avoid these problems");
+    }
+
+    /** The reasons as a list under a lead-in, or nothing when there are none. */
+    private static String avoidance(List<String> avoid, String leadIn) {
+        if (avoid == null || avoid.isEmpty()) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder("\n").append(leadIn).append(":\n");
+        avoid.forEach(reason -> out.append("- ").append(oneLine(reason)).append('\n'));
+        return out.toString();
     }
 
     static String assessmentUser(SceneRequirements requirements, String area, SearchResult venue) {
+        return assessmentUser(requirements, area, venue, List.of());
+    }
+
+    /** With why the crew passed on earlier venues, which count against this one where the excerpt shows the same. */
+    static String assessmentUser(SceneRequirements requirements, String area, SearchResult venue, List<String> avoid) {
         StringBuilder prompt = new StringBuilder()
                 .append("Search area: ").append(oneLine(area)).append("\n\nScene requirements:\n");
         line(prompt, "Setting", requirements.settingType());
@@ -109,6 +132,7 @@ final class ScoutingPrompts {
         if (requirements.estimatedCastAndCrewSize() != null) {
             line(prompt, "Cast and crew on set", String.valueOf(requirements.estimatedCastAndCrewSize()));
         }
+        prompt.append(avoidance(avoid, "The crew passed on earlier venues because of these; treat the same problem here as a failed requirement"));
         prompt.append("\nVenue: ").append(oneLine(venue.title()))
                 .append("\nURL: ").append(oneLine(venue.url()))
                 .append("\n");

@@ -105,4 +105,13 @@ class ParallelQueryBuilderTest {
                 .doesNotContain("Not wanted", "private");
         assertThat(ParallelQueryBuilder.objective(request(FULL))).doesNotContain("within about", "Not wanted", "private homes");
     }
+
+    @Test
+    void reasonsForPassingOnVenuesAndTheVenuesAlreadyFoundSteerTheSearch() {
+        String objective = ParallelQueryBuilder.objective(new LocationSearchRequest(FULL, "Brooklyn", 10,
+                new SearchHints(null, null, List.of(), true, List.of("Wythe Hotel", "Bar Blondeau"), List.of("too loud", "no lift"))));
+
+        assertThat(objective).contains("Earlier venues were turned down because: too loud; no lift.",
+                "Already found, so look for others: Wythe Hotel, Bar Blondeau.");
+    }
 }

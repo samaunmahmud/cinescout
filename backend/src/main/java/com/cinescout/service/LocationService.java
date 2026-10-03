@@ -113,6 +113,11 @@ public class LocationService {
             LocationStatus before = location.getStatus();
             location.setStatus(request.status());
             location.setNotes(blankToNull(request.notes()));
+            if (request.status() != LocationStatus.REJECTED) {
+                location.setRejectionReason(null);
+            } else if (blankToNull(request.rejectionReason()) != null) {
+                location.setRejectionReason(blankToNull(request.rejectionReason()));
+            }
             if (before != request.status()) {
                 activity.record(location.getScene().getProject(), userId, ActivityVerb.VENUE_STATUS_CHANGED, ActivityTarget.LOCATION,
                         location.getId(), ActivityLog.facts("venue", location.getName(), "scene", location.getScene().getTitle(),
