@@ -9,8 +9,9 @@ import com.cinescout.domain.SceneRequirements;
  *                     without one cannot find anything meaningful (the LLM may have returned null)
  * @param area         free-text place to search in, e.g. {@code "Brooklyn, New York"}
  * @param maxResults   upper bound on hits returned, 1 to {@value #MAX_RESULTS}
+ * @param hints        what else the search should keep to; never null
  */
-public record LocationSearchRequest(SceneRequirements requirements, String area, int maxResults) {
+public record LocationSearchRequest(SceneRequirements requirements, String area, int maxResults, SearchHints hints) {
 
     public static final int DEFAULT_MAX_RESULTS = 10;
     public static final int MAX_RESULTS = 20;
@@ -29,6 +30,11 @@ public record LocationSearchRequest(SceneRequirements requirements, String area,
         if (maxResults < 1 || maxResults > MAX_RESULTS) {
             throw new IllegalArgumentException("maxResults must be between 1 and " + MAX_RESULTS);
         }
+        hints = hints == null ? SearchHints.NONE : hints;
+    }
+
+    public LocationSearchRequest(SceneRequirements requirements, String area, int maxResults) {
+        this(requirements, area, maxResults, SearchHints.NONE);
     }
 
     public static LocationSearchRequest of(SceneRequirements requirements, String area) {

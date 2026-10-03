@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +32,9 @@ import java.util.Objects;
  * @param listedVenues       for a page that is not one venue: the venues it names that could suit the scene, so
  *                           scouting can look each one up. Never null; empty for a single venue's page. Blank
  *                           and repeated names are dropped and at most {@value #MAX_LISTED_VENUES} kept
+ * @param venueType          what kind of place it is in a few words ("church hall", "rooftop bar"); optional
+ * @param pricePerDay        what the page says a shooting or hire day costs, in its own currency; optional, never
+ *                           guessed, used for a budget filter
  */
 public record LocationAssessment(
         @NotNull Boolean singleVenue,
@@ -41,7 +45,9 @@ public record LocationAssessment(
         List<@NotBlank String> footprintWarnings,
         String venueName,
         String address,
-        List<String> listedVenues
+        List<String> listedVenues,
+        String venueType,
+        @PositiveOrZero Integer pricePerDay
 ) {
 
     public static final int MAX_LISTED_VENUES = 5;
@@ -62,6 +68,19 @@ public record LocationAssessment(
                 .distinct()
                 .limit(MAX_LISTED_VENUES)
                 .toList();
+        venueType = blankToNull(venueType);
+    }
+
+    public LocationAssessment(Boolean singleVenue, Integer fitScore, String fitReason, BookingFriction bookingFriction,
+                              String frictionNote, List<String> footprintWarnings, String venueName, String address,
+                              List<String> listedVenues) {
+        this(singleVenue, fitScore, fitReason, bookingFriction, frictionNote, footprintWarnings, venueName, address,
+                listedVenues, null, null);
+    }
+
+    public LocationAssessment withAddress(String address) {
+        return new LocationAssessment(singleVenue, fitScore, fitReason, bookingFriction, frictionNote, footprintWarnings,
+                venueName, address, listedVenues, venueType, pricePerDay);
     }
 
     private static String blankToNull(String value) {

@@ -2,20 +2,23 @@ package com.cinescout.scouting;
 
 import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
-import com.cinescout.ai.VenueVerdict;
+import com.cinescout.ai.VenueVerdict.Evidence;
 import com.cinescout.ai.VenueVerdict.SettingMatch;
+import com.cinescout.ai.VenueVerdict;
 import com.cinescout.ai.Verdicts;
 import com.cinescout.domain.AcousticSensitivity;
 import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.SceneRequirements;
+import com.cinescout.domain.ScoutFilters;
 import com.cinescout.llm.LlmClient;
-import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmException.Kind;
+import com.cinescout.llm.LlmException;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.resilience.ResilienceProperties;
 import com.cinescout.search.LocationSearchClient;
 import com.cinescout.search.LocationSearchRequest;
 import com.cinescout.search.SearchException;
+import com.cinescout.search.SearchHints;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -553,5 +556,53 @@ class ScoutingPipelineTest {
 
         assertThat(outcome.venues()).extracting(v -> v.assessment().venueName()).containsExactly("Bar Blondeau");
         assertThat(outcome.unsuitable()).isEqualTo(1);
+    }
+
+    // --- filters --------------------------------------------------------------------------------
+
+    private static ScoutedVenue assessed(String name, BookingFriction friction, String venueType, Integer pricePerDay) {
+        return new ScoutedVenue(venue(name), new LocationAssessment(true, 70, "Reason", friction, null, List.of(), "The " + name,
+                null, List.of(), venueType, pricePerDay));
+    }
+
+    @Test
+    void filtersLeaveOutPrivatePropertyExcludedTypesAndVenuesOverBudgetCountingEach() {
+        List<ScoutedVenue> venues = List.of(
+                assessed("Home", BookingFriction.PRIVATE, "private home", null),
+                assessed("Club", BookingFriction.COMMERCIAL, "Nightclub", 500),
+                assessed("Chapel", BookingFriction.COMMERCIAL, null, null),     // named, not typed: "The Chapel"
+                assessed("Dear", BookingFriction.COMMERCIAL, "rooftop bar", 5000),
+                assessed("Unpriced", BookingFriction.COMMERCIAL, "rooftop bar", null),
+                assessed("Cheap", BookingFriction.PUBLIC, "rooftop bar", 900));
+        ScoutFilters filters = new ScoutFilters(null, null, null, null, 1000, List.of("NIGHTCLUB", "chapel"), false);
+
+        var filtered = ScoutingPipeline.applyFilters(venues, filters);
+
+        assertThat(filtered.kept()).extracting(v -> v.assessment().venueName()).containsExactly("The Unpriced", "The Cheap");
+        assertThat(filtered.out()).isEqualTo(new FilteredOut(0, 1, 2, 1));
+        assertThat(ScoutingPipeline.applyFilters(venues, ScoutFilters.NONE).kept()).hasSize(6);
+    }
+
+    @Test
+    void theHintsGoToTheSearchAndTheFiltersApplyToWhatItFinds() {
+        searchReturns(venue("A"), venue("B"));
+        assessments(java.util.Map.of(
+                "A", call -> Mono.just(new VenueVerdict(true, "Alpha", null, false, SettingMatch.EXACT, Evidence.UNKNOWN, Evidence.UNKNOWN,
+                        Evidence.UNKNOWN, Evidence.UNKNOWN, Evidence.UNKNOWN, "Fits", BookingFriction.COMMERCIAL, null, List.of(), List.of(),
+                        "warehouse", 3000)),
+                "B", call -> Mono.just(new VenueVerdict(true, "Beta", null, false, SettingMatch.EXACT, Evidence.UNKNOWN, Evidence.UNKNOWN,
+                        Evidence.UNKNOWN, Evidence.UNKNOWN, Evidence.UNKNOWN, "Fits", BookingFriction.COMMERCIAL, null, List.of(), List.of(),
+                        "warehouse", 800))));
+        SearchHints hints = new SearchHints("Bedford Ave", 3.0, List.of("church"), true);
+
+        ScoutingOutcome outcome = pipeline().scout(REQUIREMENTS, "Brooklyn", 10, hints,
+                new ScoutFilters(null, null, null, null, 1000, List.of(), null)).block();
+
+        assertThat(outcome.venues()).extracting(v -> v.assessment().venueName()).containsExactly("Beta");
+        assertThat(outcome.venues().get(0).assessment().pricePerDay()).isEqualTo(800);
+        assertThat(outcome.filtered().overBudget()).isEqualTo(1);
+        org.mockito.ArgumentCaptor<LocationSearchRequest> request = org.mockito.ArgumentCaptor.forClass(LocationSearchRequest.class);
+        verify(search).search(request.capture());
+        assertThat(request.getValue().hints()).isEqualTo(hints);
     }
 }

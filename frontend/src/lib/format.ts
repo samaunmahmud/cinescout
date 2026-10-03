@@ -32,7 +32,7 @@ export function sceneLabel(scene: { sceneNumber: number | null; title: string })
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** One sentence on what a scouting run did, for the banner after it. */
-export function scoutingSummary({ added, alreadySaved, unassessed, notVenues, unsuitable }: ScoutingResult): string {
+export function scoutingSummary({ added, alreadySaved, unassessed, notVenues, unsuitable, filteredOut }: ScoutingResult): string {
   const parts = [added.length > 0 ? `Found ${plural(added.length, 'new venue', 'new venues')}.` : 'No new venues found.']
   if (alreadySaved > 0) {
     parts.push(`${plural(alreadySaved, 'venue was', 'venues were')} already saved and left as ${alreadySaved === 1 ? 'it was' : 'they were'}.`)
@@ -44,6 +44,15 @@ export function scoutingSummary({ added, alreadySaved, unassessed, notVenues, un
   if (unsuitable > 0) {
     parts.push(`Left out ${plural(unsuitable, 'venue', 'venues')} that could not work for this scene, such as ones in another area.`)
   }
+  const filtered = filteredOut
+    ? [
+        filteredOut.outsideRadius > 0 && `${filteredOut.outsideRadius} outside the radius`,
+        filteredOut.overBudget > 0 && `${filteredOut.overBudget} over budget`,
+        filteredOut.excludedType > 0 && `${filteredOut.excludedType} of a kind you left out`,
+        filteredOut.privateProperty > 0 && `${filteredOut.privateProperty} on private property`,
+      ].filter(Boolean)
+    : []
+  if (filtered.length > 0) parts.push(`Your filters left out ${filtered.join(', ')}.`)
   return parts.join(' ')
 }
 

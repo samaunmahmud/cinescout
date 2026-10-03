@@ -30,6 +30,16 @@ describe('sceneLabel', () => {
 describe('scoutingSummary', () => {
   it('only mentions what happened, in the right number', () => {
     expect(scoutingSummary({ added: [], alreadySaved: 0, unassessed: 0, notVenues: 0, unsuitable: 0 })).toBe('No new venues found.')
+    expect(
+      scoutingSummary({
+        added: [],
+        alreadySaved: 0,
+        unassessed: 0,
+        notVenues: 0,
+        unsuitable: 0,
+        filteredOut: { outsideRadius: 2, overBudget: 1, excludedType: 0, privateProperty: 3 },
+      }),
+    ).toBe('No new venues found. Your filters left out 2 outside the radius, 1 over budget, 3 on private property.')
     expect(scoutingSummary({ added: [location(), location({ id: 'l2' })], alreadySaved: 1, unassessed: 0, notVenues: 0, unsuitable: 0 })).toBe(
       'Found 2 new venues. 1 venue was already saved and left as it was.',
     )

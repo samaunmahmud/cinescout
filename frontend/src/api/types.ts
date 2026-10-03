@@ -402,6 +402,29 @@ export interface UpdateOutreachRequest {
 }
 
 /** What one scouting run saved for a scene. */
+/** What a scouting run keeps to beyond the project's area; every field optional. */
+export interface ScoutFilters {
+  /** Where the radius is measured from, as an address; or a spot on the map in the two fields below. */
+  baseAddress: string | null
+  baseLatitude: number | null
+  baseLongitude: number | null
+  radiusKm: number | null
+  /** The most a shooting day may cost, in the local currency; venues without a price are kept. */
+  maxBudget: number | null
+  /** Kinds of place to leave out, as free tags. */
+  excludedTypes: string[]
+  /** False leaves out private property; null means true. */
+  includePrivate: boolean | null
+}
+
+/** How many venues a run's filters left out, by reason. */
+export interface FilteredOut {
+  outsideRadius: number
+  overBudget: number
+  excludedType: number
+  privateProperty: number
+}
+
 export interface ScoutingResult {
   /** The new candidate locations, best fit first. */
   added: Location[]
@@ -413,6 +436,8 @@ export interface ScoutingResult {
   notVenues: number
   /** Venues left out because the AI found them unusable for the scene, e.g. in another city. */
   unsuitable: number
+  /** Venues the run's filters left out. */
+  filteredOut?: FilteredOut
 }
 
 // The logistics report (com.cinescout.logistics.LogisticsReport). Local times are ISO-8601 with the

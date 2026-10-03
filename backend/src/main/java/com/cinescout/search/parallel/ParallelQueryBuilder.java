@@ -2,6 +2,7 @@ package com.cinescout.search.parallel;
 
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.search.LocationSearchRequest;
+import com.cinescout.search.SearchHints;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,7 @@ final class ParallelQueryBuilder {
         objective.append(" Each result should be about one specific venue: the venue's own website, or that single venue's"
                 + " listing on a location-hire site, showing how to enquire about filming or hire. Avoid directories and"
                 + " search-result pages that list many venues, 'best of' lists, articles and news pages.");
+        hints(objective, request.hints());
 
         return objective.length() > MAX_OBJECTIVE_CHARS ? objective.substring(0, MAX_OBJECTIVE_CHARS) : objective.toString();
     }
@@ -83,6 +85,27 @@ final class ParallelQueryBuilder {
         if (cleaned != null) {
             out.append(label).append(cleaned).append('.');
         }
+    }
+
+    /** Where the venues should be, what they should not be, and whether private property will do. */
+    private static void hints(StringBuilder objective, SearchHints hints) {
+        String near = clean(hints.near());
+        if (near != null) {
+            objective.append(hints.radiusKm() != null
+                    ? " Only venues within about " + kilometres(hints.radiusKm()) + " of " + near + "."
+                    : " Prefer venues near " + near + ".");
+        }
+        List<String> excluded = hints.excludedTypes().stream().map(ParallelQueryBuilder::clean).filter(t -> t != null).toList();
+        if (!excluded.isEmpty()) {
+            objective.append(" Not wanted: ").append(String.join(", ", excluded)).append('.');
+        }
+        if (!hints.privateAllowed()) {
+            objective.append(" Only public spaces and businesses that hire out space; no private homes or privately owned property.");
+        }
+    }
+
+    private static String kilometres(double km) {
+        return (km == Math.rint(km) ? String.valueOf((long) km) : String.valueOf(km)) + " km";
     }
 
     /** Collapses whitespace and caps the length; null for null or blank input. */

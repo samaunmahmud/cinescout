@@ -1,16 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Copy, Crown, Link2, UserPlus, Users } from 'lucide-react'
+import { ChevronLeft, Copy, Crown, Link2, Radar, UserPlus, Users } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { fieldErrors, isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
-import type { AddMemberResult, Crew, Invite, Member, Project, ProjectRole } from '../api/types'
+import type { AddMemberResult, Crew, Invite, Member, Project, ProjectRole, ScoutFilters } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
+import { ScoutFiltersForm } from '../components/ScoutFiltersForm'
 import { Stamp } from '../components/stickers'
 import { Card, Eyebrow, Section, Tabs, type TabItem } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner, TextField } from '../components/ui'
 import { formatDate } from '../lib/format'
+import { describeFilters } from '../lib/scoutFilters'
 import { usePageTitle } from '../lib/usePageTitle'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -26,7 +28,7 @@ export function ProjectSettingsPage() {
   const { projectId = '' } = useParams()
   const { api } = useSession()
   const project = useQuery({ queryKey: queryKeys.project(projectId), queryFn: () => api.projects.get(projectId) })
-  usePageTitle(project.data ? `Crew · ${project.data.title}` : 'Crew')
+  usePageTitle(project.data ? `Settings · ${project.data.title}` : 'Project settings')
 
   if (project.isPending) return <Spinner label="Loading project" />
   if (project.isError) {
@@ -36,9 +38,12 @@ export function ProjectSettingsPage() {
   return <Settings project={project.data} />
 }
 
-type TabKey = 'members'
+type TabKey = 'members' | 'scouting'
 
-const tabs: TabItem<TabKey>[] = [{ key: 'members', label: 'Members', icon: Users }]
+const tabs: TabItem<TabKey>[] = [
+  { key: 'members', label: 'Members', icon: Users },
+  { key: 'scouting', label: 'Scouting', icon: Radar },
+]
 
 function Settings({ project }: { project: Project }) {
   const [params, setParams] = useSearchParams()
@@ -53,16 +58,69 @@ function Settings({ project }: { project: Project }) {
         {project.title}
       </Link>
       <header className="space-y-2">
-        <Eyebrow icon={Users}>Project settings</Eyebrow>
-        <h1 className="font-display text-5xl leading-none">Crew</h1>
+        <Eyebrow icon={Users}>{project.title}</Eyebrow>
+        <h1 className="font-display text-5xl leading-none">Project settings</h1>
         <p className="text-muted">
           You are this project’s <strong className="text-ink">{roleLabels[project.role].toLowerCase()}</strong>: {roleHints[project.role].toLowerCase()}.
         </p>
       </header>
       <Tabs label="Project settings" items={tabs} selected={tab} onSelect={(key) => setParams(key === 'members' ? {} : { tab: key })}>
         {tab === 'members' && <MembersPanel project={project} />}
+        {tab === 'scouting' && <ScoutingPanel project={project} />}
       </Tabs>
     </div>
+  )
+}
+
+/** The project's default scouting filters: every run keeps to them unless it brings its own. */
+function ScoutingPanel({ project }: { project: Project }) {
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const editable = project.role !== 'VIEWER'
+  const [saved, setSaved] = useState(false)
+  const filters = useQuery({ queryKey: queryKeys.scoutFilters(project.id), queryFn: () => api.projects.scoutFilters(project.id) })
+  const save = useMutation({
+    mutationFn: (next: ScoutFilters) => api.projects.setScoutFilters(project.id, next),
+    onSuccess: (stored) => {
+      queryClient.setQueryData(queryKeys.scoutFilters(project.id), stored)
+      setSaved(true)
+    },
+  })
+  return (
+    <Section
+      titleId="scouting-heading"
+      title="Scouting filters"
+      eyebrow="Every run keeps to these"
+      icon={Radar}
+      description={project.locationArea ? `On top of the location area, ${project.locationArea}.` : 'On top of the project’s location area.'}
+    >
+      {filters.isPending ? (
+        <Spinner label="Loading the filters" />
+      ) : filters.isError ? (
+        <ErrorAlert error={filters.error} onRetry={() => filters.refetch()} />
+      ) : editable ? (
+        <Card className="space-y-3 p-5">
+          {saved && !save.isPending && (
+            <p role="status" className="rounded-lg border-2 border-go-mid bg-go-wash px-3 py-2 text-sm text-go-ink">
+              Saved. {describeFilters(filters.data)}
+            </p>
+          )}
+          <ScoutFiltersForm
+            key={JSON.stringify(filters.data)}
+            initial={filters.data}
+            submitLabel="Save filters"
+            busy={save.isPending}
+            error={save.error}
+            onSubmit={(next) => {
+              setSaved(false)
+              save.mutate(next)
+            }}
+          />
+        </Card>
+      ) : (
+        <p className="text-[15px] text-graphite">{describeFilters(filters.data)}</p>
+      )}
+    </Section>
   )
 }
 

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { Location, LocationStatus, Page, Scene } from '../api/types'
+import type { Location, LocationStatus, Page, Scene, ScoutFilters } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { useUpdateLocation } from '../components/locationHooks'
@@ -16,10 +16,12 @@ import { linkButton } from '../components/buttonStyles'
 import { DirectorLinkPanel } from '../components/DirectorLinkPanel'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
-import { Columns3, MapPin as PinIcon, MapPinned, Plus, Radar, TriangleAlert } from 'lucide-react'
+import { ChevronDown, Columns3, MapPin as PinIcon, MapPinned, Plus, Radar, SlidersHorizontal, TriangleAlert } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { scoutingSummary } from '../lib/format'
+import { describeFilters } from '../lib/scoutFilters'
+import { ScoutFiltersForm } from '../components/ScoutFiltersForm'
 import { displayHost, safeHttpUrl } from '../lib/url'
 import { VenuePicture } from '../components/VenuePicture'
 import { MapSnapshot } from '../components/MapSnapshot'
@@ -42,8 +44,10 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
   useStayInRange(locations.data, setPage)
   usePictureLookups(locations.data?.items)
 
+  const [choosingFilters, setChoosingFilters] = useState(false)
   const scout = useMutation({
-    mutationFn: () => api.scenes.scout(scene.id),
+    mutationFn: (filters?: ScoutFilters) => api.scenes.scout(scene.id, filters),
+    onSuccess: () => setChoosingFilters(false),
     // Scouting parses an unparsed scene first, so the scene may have changed too.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.locationList(scene.id) })
@@ -76,7 +80,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
                 <Plus aria-hidden className="size-4" />
                 Add venue
               </Link>
-              <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate()}>
+              <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate(undefined)}>
                 {!scout.isPending && <Radar aria-hidden className="size-4" />}
                 {hasLocations ? 'Scout again' : 'Scout locations'}
               </Button>
@@ -85,6 +89,17 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         </>
       }
     >
+
+      {canEdit && !noArea && (
+        <RunFilters
+          projectId={scene.projectId}
+          open={choosingFilters}
+          onToggle={() => setChoosingFilters(!choosingFilters)}
+          busy={scout.isPending}
+          error={scout.error}
+          onScout={(filters) => scout.mutate(filters)}
+        />
+      )}
 
       {noArea && (
         <p className="rounded-lg border border-cue bg-cue-wash px-4 py-3 text-sm text-cue-ink">
@@ -304,4 +319,60 @@ function StatusStamp({ status, className = '' }: { status: LocationStatus; class
       {stamp.text}
     </Stamp>
   ) : null
+}
+
+/**
+ * Scouting with other filters than the project's, for one run: folded until asked for, then the project's filters
+ * to start from. The project's own stay as they were.
+ */
+function RunFilters({
+  projectId,
+  open,
+  onToggle,
+  busy,
+  error,
+  onScout,
+}: {
+  projectId: string
+  open: boolean
+  onToggle: () => void
+  busy: boolean
+  error: unknown
+  onScout: (filters: ScoutFilters) => void
+}) {
+  const { api } = useSession()
+  const filters = useQuery({ queryKey: queryKeys.scoutFilters(projectId), queryFn: () => api.projects.scoutFilters(projectId), enabled: open })
+  return (
+    <div className="rounded-lg border-2 border-dashed border-line bg-paper px-4 py-3">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className="flex w-full items-center gap-2 text-left text-sm font-semibold text-graphite hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+      >
+        <SlidersHorizontal aria-hidden className="size-4 text-cue-ink" />
+        Scout with other filters this time
+        <ChevronDown aria-hidden className={`ml-auto size-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="space-y-3 pt-3">
+          {filters.isPending ? (
+            <Spinner label="Loading the project’s filters" />
+          ) : filters.isError ? (
+            <ErrorAlert error={filters.error} onRetry={() => filters.refetch()} />
+          ) : (
+            <>
+              <p className="text-sm text-muted">
+                The project’s filters: {describeFilters(filters.data)}{' '}
+                <Link to={`/projects/${projectId}/settings?tab=scouting`} className="font-semibold text-cue-ink underline">
+                  Change them for every run
+                </Link>
+              </p>
+              <ScoutFiltersForm initial={filters.data} submitLabel="Scout with these filters" busy={busy} error={error} onSubmit={onScout} />
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }

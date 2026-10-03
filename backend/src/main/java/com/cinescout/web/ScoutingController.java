@@ -1,6 +1,7 @@
 package com.cinescout.web;
 
 import com.cinescout.dto.SceneResponse;
+import com.cinescout.dto.ScoutRequest;
 import com.cinescout.ratelimit.RateLimit;
 import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.scouting.BatchParseResult;
@@ -11,12 +12,14 @@ import com.cinescout.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,7 +86,8 @@ class ScoutingController {
      * @param maxResults how many venues to look for
      */
     @Operation(summary = "Scout venues for a scene",
-            description = "Searches the project's location area, assesses each venue against the scene and saves the new ones as suggested locations.")
+            description = "Searches the project's location area, assesses each venue against the scene and saves the new ones as suggested locations. "
+                    + "Keeps to the project's scouting filters, or to `filters` in the body for this run; `filteredOut` counts what they left out.")
     @ApiResponse(responseCode = "409", description = "The scene's project has no location area yet")
     @ApiResponse(responseCode = "429", description = "The user's hourly allowance of scouting runs is used up; see Retry-After")
     @ApiResponse(responseCode = "502", description = "The model returned an unusable answer or a provider key is misconfigured")
@@ -91,8 +95,9 @@ class ScoutingController {
     @PostMapping("/scenes/{sceneId}/scout")
     Mono<ScoutingResult> scout(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
                                @RequestParam(defaultValue = "" + LocationSearchRequest.DEFAULT_MAX_RESULTS)
-                               @Min(1) @Max(LocationSearchRequest.MAX_RESULTS) int maxResults) {
-        return service(RateLimit.SCOUTING, user).flatMap(s -> s.scout(user.id(), sceneId, maxResults));
+                               @Min(1) @Max(LocationSearchRequest.MAX_RESULTS) int maxResults,
+                               @Valid @RequestBody(required = false) ScoutRequest request) {
+        return service(RateLimit.SCOUTING, user).flatMap(s -> s.scout(user.id(), sceneId, maxResults, request == null ? null : request.filters()));
     }
 
     /** The service, once the call is within the user's limit; an unconfigured server does not count the call. */

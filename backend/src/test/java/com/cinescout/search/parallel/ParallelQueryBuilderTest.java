@@ -3,6 +3,7 @@ package com.cinescout.search.parallel;
 import com.cinescout.domain.AcousticSensitivity;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.search.LocationSearchRequest;
+import com.cinescout.search.SearchHints;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -90,5 +91,18 @@ class ParallelQueryBuilderTest {
                 .contains("skip directories");
         assertThat(ParallelQueryBuilder.venueQueries("MEILI Rooftop", "Brooklyn, New York"))
                 .containsExactly("MEILI Rooftop Brooklyn, New York", "MEILI Rooftop official site");
+    }
+
+    @Test
+    void searchHintsAddWhereTheVenuesShouldBeWhatIsNotWantedAndNoPrivateHomes() {
+        String objective = ParallelQueryBuilder.objective(new LocationSearchRequest(FULL, "Brooklyn, New York", 10,
+                new SearchHints("Bedford Ave,   Brooklyn", 2.5, List.of("church", " nightclub "), false)));
+
+        assertThat(objective).contains("Only venues within about 2.5 km of Bedford Ave, Brooklyn.",
+                "Not wanted: church, nightclub.", "no private homes");
+        assertThat(ParallelQueryBuilder.objective(new LocationSearchRequest(FULL, "Brooklyn", 10,
+                new SearchHints("51.50720, -0.12760", 3.0, List.of(), true)))).contains("within about 3 km of 51.50720, -0.12760.")
+                .doesNotContain("Not wanted", "private");
+        assertThat(ParallelQueryBuilder.objective(request(FULL))).doesNotContain("within about", "Not wanted", "private homes");
     }
 }

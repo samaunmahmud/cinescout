@@ -31,7 +31,7 @@ describe('the crew page', () => {
     renderApp('/projects/p1/settings')
     const user = await logIn()
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Crew' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Project settings' })).toBeInTheDocument()
     const members = within(await screen.findByRole('list', { name: 'Members' }))
     expect(members.getByText('Grace')).toBeInTheDocument()
     expect(members.getByRole('combobox', { name: 'Role of Grace' })).toHaveValue('EDITOR')

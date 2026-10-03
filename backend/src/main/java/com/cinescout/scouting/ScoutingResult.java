@@ -14,6 +14,16 @@ import java.util.List;
  * @param notVenues    search results dropped because they were not about one venue (a directory, a "best of"
  *                     list, an article)
  * @param unsuitable   venues dropped because the model found them unusable for the scene, e.g. in another city
+ * @param filteredOut  venues the run's filters left out (radius, budget, type, private property), by reason
  */
-public record ScoutingResult(List<LocationResponse> added, int alreadySaved, int unassessed, int notVenues, int unsuitable) {
+public record ScoutingResult(List<LocationResponse> added, int alreadySaved, int unassessed, int notVenues, int unsuitable,
+                             FilteredOut filteredOut) {
+
+    public ScoutingResult {
+        filteredOut = filteredOut == null ? FilteredOut.NONE : filteredOut;
+    }
+
+    public ScoutingResult(List<LocationResponse> added, int alreadySaved, int unassessed, int notVenues, int unsuitable) {
+        this(added, alreadySaved, unassessed, notVenues, unsuitable, FilteredOut.NONE);
+    }
 }

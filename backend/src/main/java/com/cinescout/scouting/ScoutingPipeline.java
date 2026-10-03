@@ -1,8 +1,11 @@
 package com.cinescout.scouting;
 
+import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.ai.VenueVerdict;
+import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.SceneRequirements;
+import com.cinescout.domain.ScoutFilters;
 import com.cinescout.domain.VenueNames;
 import com.cinescout.llm.LlmClient;
 import com.cinescout.llm.LlmException;
@@ -12,6 +15,7 @@ import com.cinescout.resilience.GuardFactory;
 import com.cinescout.search.LocationSearchClient;
 import com.cinescout.search.LocationSearchRequest;
 import com.cinescout.search.SearchException;
+import com.cinescout.search.SearchHints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -86,7 +90,17 @@ public class ScoutingPipeline {
      * @param maxResults how many venues to look for, see {@link LocationSearchRequest#MAX_RESULTS}
      */
     public Mono<ScoutingOutcome> scout(SceneRequirements requirements, String area, int maxResults) {
-        return searchGuard.call(() -> search.search(new LocationSearchRequest(requirements, area, maxResults)))
+        return scout(requirements, area, maxResults, SearchHints.NONE, ScoutFilters.NONE);
+    }
+
+    /**
+     * As {@link #scout(SceneRequirements, String, int)}, with hints for the search and filters applied to what it
+     * finds: venues over the budget, of an excluded type or private when private property is not wanted are left
+     * out here; the radius needs the venues' map positions, so the caller applies it once they are placed.
+     */
+    public Mono<ScoutingOutcome> scout(SceneRequirements requirements, String area, int maxResults, SearchHints hints,
+                                       ScoutFilters filters) {
+        return searchGuard.call(() -> search.search(new LocationSearchRequest(requirements, area, maxResults, hints)))
                 .flatMap(hits -> assessAll(requirements, area, hits))
                 .flatMap(first -> followUp(requirements, area, first)
                         .map(more -> {
@@ -94,7 +108,7 @@ public class ScoutingPipeline {
                             all.addAll(more);
                             return all;
                         }))
-                .flatMap(this::toOutcome);
+                .flatMap(assessed -> toOutcome(assessed, filters));
     }
 
     private Mono<List<Assessed>> assessAll(SceneRequirements requirements, String area, List<SearchResult> hits) {
@@ -161,7 +175,7 @@ public class ScoutingPipeline {
                 .map(verdict -> new ScoutedVenue(hit, verdict.toAssessment(requirements)));
     }
 
-    private Mono<ScoutingOutcome> toOutcome(List<Assessed> assessed) {
+    private Mono<ScoutingOutcome> toOutcome(List<Assessed> assessed, ScoutFilters filters) {
         List<ScoutedVenue> venues = new ArrayList<>();
         List<LlmException> failures = new ArrayList<>();
         int notVenues = 0;
@@ -193,7 +207,46 @@ public class ScoutingPipeline {
             log.info("Scouting dropped {} of {} search result(s) that were not about one venue and {} unsuitable venue(s)",
                     notVenues, assessed.size(), unsuitable);
         }
-        return Mono.just(new ScoutingOutcome(usable, failures.size(), notVenues, unsuitable));
+        Filtered filtered = applyFilters(usable, filters);
+        return Mono.just(new ScoutingOutcome(filtered.kept(), failures.size(), notVenues, unsuitable, filtered.out()));
+    }
+
+    record Filtered(List<ScoutedVenue> kept, FilteredOut out) {
+    }
+
+    /** Leaves out what the filters rule out on the assessment alone: budget, kind of place, private property. */
+    static Filtered applyFilters(List<ScoutedVenue> venues, ScoutFilters filters) {
+        List<String> excluded = filters.excludedLowerCase();
+        List<ScoutedVenue> kept = new ArrayList<>();
+        int overBudget = 0;
+        int excludedType = 0;
+        int privateProperty = 0;
+        for (ScoutedVenue venue : venues) {
+            LocationAssessment a = venue.assessment();
+            if (!filters.privateAllowed() && a.bookingFriction() == BookingFriction.PRIVATE) {
+                privateProperty++;
+            } else if (isExcludedType(a, excluded)) {
+                excludedType++;
+            } else if (filters.maxBudget() != null && a.pricePerDay() != null && a.pricePerDay() > filters.maxBudget()) {
+                overBudget++;
+            } else {
+                kept.add(venue);
+            }
+        }
+        if (kept.size() < venues.size()) {
+            log.info("Scouting filters left out {} over budget, {} of an excluded type and {} private", overBudget, excludedType, privateProperty);
+        }
+        return new Filtered(kept, new FilteredOut(0, overBudget, excludedType, privateProperty));
+    }
+
+    /** Whether the venue's kind, or failing that its name, names one of the excluded types. */
+    private static boolean isExcludedType(LocationAssessment assessment, List<String> excluded) {
+        if (excluded.isEmpty()) {
+            return false;
+        }
+        String kind = ((assessment.venueType() == null ? "" : assessment.venueType()) + " "
+                + (assessment.venueName() == null ? "" : assessment.venueName())).toLowerCase(Locale.ROOT);
+        return excluded.stream().anyMatch(kind::contains);
     }
 
     /**

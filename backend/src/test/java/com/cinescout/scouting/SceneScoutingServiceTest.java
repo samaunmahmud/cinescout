@@ -13,11 +13,12 @@ import com.cinescout.domain.ProjectMember;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
+import com.cinescout.domain.ScoutFilters;
 import com.cinescout.domain.User;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
-import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmException.Kind;
+import com.cinescout.llm.LlmException;
 import com.cinescout.logistics.GeoPoint;
 import com.cinescout.logistics.LogisticsException;
 import com.cinescout.logistics.geocoding.Geocoder;
@@ -29,6 +30,7 @@ import com.cinescout.repository.ProjectMemberRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.repository.UserRepository;
+import com.cinescout.search.SearchHints;
 import com.cinescout.service.ActivityLog;
 import com.cinescout.service.ProjectAccess;
 import jakarta.persistence.EntityManager;
@@ -214,7 +216,7 @@ class SceneScoutingServiceTest {
     }
 
     private void pipelineFinds(ScoutingOutcome outcome) {
-        when(pipeline.scout(any(), anyString(), anyInt())).thenReturn(Mono.just(outcome));
+        when(pipeline.scout(any(), anyString(), anyInt(), any(), any())).thenReturn(Mono.just(outcome));
     }
 
     // --- parseScene -----------------------------------------------------------------------------
@@ -399,7 +401,7 @@ class SceneScoutingServiceTest {
 
         service.scout(f.ownerId(), f.sceneId(), 7).block();
 
-        verify(pipeline).scout(REQUIREMENTS, AREA, 7);
+        verify(pipeline).scout(REQUIREMENTS, AREA, 7, SearchHints.NONE, ScoutFilters.NONE);
         verify(pipeline, never()).extractRequirements(anyString());
     }
 
@@ -413,7 +415,7 @@ class SceneScoutingServiceTest {
 
         assertThat(result.added()).hasSize(1);
         assertThat(parseStatus(f)).isEqualTo(ParseStatus.PARSED);
-        verify(pipeline).scout(REQUIREMENTS, AREA, 10);
+        verify(pipeline).scout(REQUIREMENTS, AREA, 10, SearchHints.NONE, ScoutFilters.NONE);
     }
 
     @Test
@@ -476,7 +478,7 @@ class SceneScoutingServiceTest {
     @Test
     void aFailingPipelineSavesNothingAndSurfacesTheError() {
         Fixture f = fixture(AREA, true);
-        when(pipeline.scout(any(), anyString(), anyInt())).thenReturn(Mono.error(new LlmException(Kind.UNAVAILABLE, "down")));
+        when(pipeline.scout(any(), anyString(), anyInt(), any(), any())).thenReturn(Mono.error(new LlmException(Kind.UNAVAILABLE, "down")));
 
         assertThatThrownBy(() -> service.scout(f.ownerId(), f.sceneId(), 10).block()).isInstanceOf(LlmException.class);
         assertThat(savedLocations(f)).isEmpty();
@@ -489,7 +491,7 @@ class SceneScoutingServiceTest {
 
         assertThatThrownBy(() -> service.scout(f.ownerId(), f.sceneId(), 10).block()).isInstanceOf(LlmException.class);
         assertThat(parseStatus(f)).isEqualTo(ParseStatus.FAILED);
-        verify(pipeline, never()).scout(any(), anyString(), anyInt());
+        verify(pipeline, never()).scout(any(), anyString(), anyInt(), any(), any());
     }
 
     // --- threading ------------------------------------------------------------------------------
@@ -504,5 +506,46 @@ class SceneScoutingServiceTest {
 
         assertThat(serviceTx.threads).isNotEmpty().doesNotContain(Thread.currentThread().getName())
                 .allSatisfy(name -> assertThat(name).startsWith("boundedElastic"));
+    }
+
+    // --- filters --------------------------------------------------------------------------------
+
+    @Test
+    void theProjectsFiltersGoIntoTheSearchAndVenuesPlacedBeyondTheRadiusAreLeftOut() {
+        Fixture f = fixture(AREA, true);
+        setup.executeWithoutResult(status -> projects.findById(f.projectId()).orElseThrow()
+                .setScoutFilters(new ScoutFilters("Bedford Ave, Brooklyn", null, null, 2.0, 2000, List.of("Nightclub"), false)));
+        GeoPoint base = new GeoPoint(40.7178, -73.9577);
+        geocoder.known.put("Bedford Ave, Brooklyn", base);
+        geocoder.known.put("1 Near St", new GeoPoint(40.7200, -73.9600));     // about 0.3 km away
+        geocoder.known.put("9 Far Rd", new GeoPoint(40.6000, -73.9000));      // about 14 km away
+        pipelineFinds(new ScoutingOutcome(List.of(venue("N", 80, "Near Bar", "1 Near St"), venue("F", 70, "Far Bar", "9 Far Rd"),
+                venue("U", 60, "Unplaced Bar", null)), 0, 0, 0, new FilteredOut(0, 1, 2, 3)));
+
+        ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
+
+        assertThat(result.added()).extracting(LocationResponse::name).containsExactly("Near Bar", "Unplaced Bar");
+        assertThat(result.filteredOut()).isEqualTo(new FilteredOut(1, 1, 2, 3));
+        assertThat(result.alreadySaved()).isZero();
+        org.mockito.ArgumentCaptor<SearchHints> hints = org.mockito.ArgumentCaptor.forClass(SearchHints.class);
+        verify(pipeline).scout(any(), anyString(), anyInt(), hints.capture(), any());
+        assertThat(hints.getValue()).isEqualTo(new SearchHints("Bedford Ave, Brooklyn", 2.0, List.of("Nightclub"), false));
+    }
+
+    @Test
+    void aRunsOwnFiltersReplaceTheProjectsAndASpotOnTheMapNeedsNoLookUp() {
+        Fixture f = fixture(AREA, true);
+        setup.executeWithoutResult(status -> projects.findById(f.projectId()).orElseThrow()
+                .setScoutFilters(new ScoutFilters(null, null, null, null, 100, List.of("church"), true)));
+        geocoder.known.put("1 Near St", new GeoPoint(40.7200, -73.9600));
+        pipelineFinds(new ScoutingOutcome(List.of(venue("N", 80, "Near Bar", "1 Near St")), 0, 0, 0));
+        ScoutFilters run = new ScoutFilters(null, 40.7178, -73.9577, 0.2, null, List.of(), null);
+
+        ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10, run).block();
+
+        assertThat(result.added()).isEmpty();
+        assertThat(result.filteredOut().outsideRadius()).isEqualTo(1);
+        verify(pipeline).scout(any(), anyString(), anyInt(), org.mockito.ArgumentMatchers.eq(
+                new SearchHints("40.71780, -73.95770", 0.2, List.of(), true)), org.mockito.ArgumentMatchers.eq(run));
     }
 }

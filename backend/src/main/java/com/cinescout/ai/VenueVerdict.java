@@ -5,6 +5,7 @@ import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.SceneRequirements;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import java.util.List;
 
@@ -30,6 +31,8 @@ import java.util.List;
  * @param frictionNote      what that means in practice; optional
  * @param footprintWarnings short warnings about the crew's footprint; null or empty when there are none
  * @param listedVenues      for a page that is not one venue, the venues it names; see {@link LocationAssessment}
+ * @param venueType         what kind of place it is, in a few words; optional
+ * @param pricePerDay       a day's hire as the page states it; optional, never guessed
  */
 public record VenueVerdict(
         @NotNull Boolean singleVenue,
@@ -46,8 +49,17 @@ public record VenueVerdict(
         @NotNull BookingFriction bookingFriction,
         String frictionNote,
         List<@NotBlank String> footprintWarnings,
-        List<String> listedVenues
+        List<String> listedVenues,
+        String venueType,
+        @PositiveOrZero Integer pricePerDay
 ) {
+
+    public VenueVerdict(Boolean singleVenue, String venueName, String address, Boolean outsideSearchArea, SettingMatch setting,
+                        Evidence mood, Evidence lighting, Evidence timeOfDay, Evidence sound, Evidence capacity, String fitReason,
+                        BookingFriction bookingFriction, String frictionNote, List<String> footprintWarnings, List<String> listedVenues) {
+        this(singleVenue, venueName, address, outsideSearchArea, setting, mood, lighting, timeOfDay, sound, capacity, fitReason,
+                bookingFriction, frictionNote, footprintWarnings, listedVenues, null, null);
+    }
 
     /** How close the kind of place is to the setting the scene names. */
     public enum SettingMatch {
@@ -103,7 +115,7 @@ public record VenueVerdict(
     /** The assessment the rest of scouting works with, scored against {@code requirements}. */
     public LocationAssessment toAssessment(SceneRequirements requirements) {
         return new LocationAssessment(singleVenue, fitScore(requirements), fitReason, bookingFriction, frictionNote,
-                footprintWarnings, venueName, address, listedVenues);
+                footprintWarnings, venueName, address, listedVenues, venueType, pricePerDay);
     }
 
     private static int points(Evidence evidence, boolean counted, int whenFails) {

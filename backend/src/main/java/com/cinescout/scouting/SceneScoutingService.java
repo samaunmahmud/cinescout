@@ -9,6 +9,7 @@ import com.cinescout.domain.ParseStatus;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
+import com.cinescout.domain.ScoutFilters;
 import com.cinescout.domain.VenueNames;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
@@ -19,6 +20,7 @@ import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.scouting.ScoutingException.Kind;
+import com.cinescout.search.SearchHints;
 import com.cinescout.service.ActivityLog;
 import com.cinescout.service.Conflicts;
 import com.cinescout.service.NotFoundException;
@@ -36,8 +38,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -143,13 +147,58 @@ public class SceneScoutingService {
      *                           has no location area
      */
     public Mono<ScoutingResult> scout(UUID userId, UUID sceneId, int maxResults) {
-        return db.call(() -> prepare(userId, sceneId))
-                .flatMap(target -> requirementsFor(userId, sceneId, target)
-                        .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults))
-                        .flatMap(outcome -> db.call(() -> unsaved(userId, sceneId, outcome))
-                                .flatMap(fresh -> placer.place(fresh, target.area()))
-                                .flatMap(placed -> db.call(() -> saveVenues(userId, sceneId, outcome, placed)))
-                                .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate)));
+        return scout(userId, sceneId, maxResults, null);
+    }
+
+    /**
+     * As {@link #scout(UUID, UUID, int)}, keeping to {@code filters}, or to the project's own when null. Venues
+     * placed further from the base point than the radius are left out once placed; ones that cannot be placed stay,
+     * as nothing says they are far.
+     */
+    public Mono<ScoutingResult> scout(UUID userId, UUID sceneId, int maxResults, ScoutFilters filters) {
+        return db.call(() -> prepare(userId, sceneId, filters))
+                .flatMap(target -> basePoint(target.filters())
+                        .map(Optional::of)
+                        .defaultIfEmpty(Optional.empty())
+                        .flatMap(base -> requirementsFor(userId, sceneId, target)
+                                .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults,
+                                        hints(target.filters()), target.filters()))
+                                .flatMap(outcome -> db.call(() -> unsaved(userId, sceneId, outcome))
+                                        .flatMap(fresh -> placer.place(fresh, target.area()))
+                                        .flatMap(placed -> db.call(() -> saveVenues(userId, sceneId,
+                                                withinRadius(outcome, placed, base.orElse(null), target.filters()), placed)))
+                                        .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate))));
+    }
+
+    /** The base point a radius is measured from: the spot picked on the map, or the address found on it. */
+    private Mono<GeoPoint> basePoint(ScoutFilters filters) {
+        if (filters.radiusKm() == null) {
+            return Mono.empty();
+        }
+        GeoPoint picked = filters.pickedPoint();
+        return picked != null ? Mono.just(picked) : placer.locate(filters.baseAddress());
+    }
+
+    static SearchHints hints(ScoutFilters filters) {
+        GeoPoint picked = filters.pickedPoint();
+        String near = picked != null ? String.format(Locale.ROOT, "%.5f, %.5f", picked.latitude(), picked.longitude()) : filters.baseAddress();
+        return new SearchHints(near, near == null ? null : filters.radiusKm(), filters.excludedTypes(), filters.privateAllowed());
+    }
+
+    /** The outcome without the venues placed further from {@code base} than the radius, counted as such. */
+    static ScoutingOutcome withinRadius(ScoutingOutcome outcome, Map<String, GeoPoint> placed, GeoPoint base, ScoutFilters filters) {
+        if (base == null || filters.radiusKm() == null) {
+            return outcome;
+        }
+        double limitMeters = filters.radiusKm() * 1000;
+        List<ScoutedVenue> kept = outcome.venues().stream()
+                .filter(venue -> {
+                    GeoPoint point = placed.get(venue.source().url());
+                    return point == null || point.distanceTo(base) <= limitMeters;
+                })
+                .toList();
+        return new ScoutingOutcome(kept, outcome.unassessed(), outcome.notVenues(), outcome.unsuitable(),
+                outcome.filtered().plusOutsideRadius(outcome.venues().size() - kept.size()));
     }
 
     // --- steps ----------------------------------------------------------------------------------
@@ -180,17 +229,19 @@ public class SceneScoutingService {
                 });
     }
 
-    private record Target(String sourceText, SceneRequirements requirements, String area) {
+    private record Target(String sourceText, SceneRequirements requirements, String area, ScoutFilters filters) {
     }
 
-    private Target prepare(UUID userId, UUID sceneId) {
+    private Target prepare(UUID userId, UUID sceneId, ScoutFilters override) {
         Scene scene = load(userId, sceneId);
         String area = scene.getProject().getLocationArea();
         if (area == null) {
             throw new ScoutingException(Kind.LOCATION_AREA_MISSING,
                     "The scene's project has no location area to search in; set one first");
         }
-        return new Target(scene.getSourceText(), scene.requirements(), area);
+        ScoutFilters filters = override != null ? override
+                : scene.getProject().getScoutFilters() != null ? scene.getProject().getScoutFilters() : ScoutFilters.NONE;
+        return new Target(scene.getSourceText(), scene.requirements(), area, filters);
     }
 
     private Mono<SceneRequirements> requirementsFor(UUID userId, UUID sceneId, Target target) {
@@ -274,7 +325,8 @@ public class SceneScoutingService {
         List<LocationResponse> added = locations.saveAllAndFlush(toSave).stream().map(LocationResponse::from).toList();
         activity.record(scene.getProject(), userId, ActivityVerb.SCOUTED, ActivityTarget.SCENE, scene.getId(),
                 ActivityLog.facts("scene", scene.getTitle(), "added", added.size()));
-        return new ScoutingResult(added, outcome.venues().size() - added.size(), outcome.unassessed(), outcome.notVenues(), outcome.unsuitable());
+        return new ScoutingResult(added, outcome.venues().size() - added.size(), outcome.unassessed(), outcome.notVenues(), outcome.unsuitable(),
+                outcome.filtered());
     }
 
     private static Location toLocation(Scene scene, ScoutedVenue venue, GeoPoint point) {

@@ -37,6 +37,7 @@ import type {
   Scene,
   Schedule,
   SceneRequest,
+  ScoutFilters,
   ScoutingResult,
   ScriptImport,
   UpdateContactRequest,
@@ -123,6 +124,10 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The project's activity log, newest first; `kind` null means every kind. */
       activity: (id: string, kind: ActivityKind | null, page = 0) =>
         call<Page<Activity>>(`/api/projects/${encodeURIComponent(id)}/activity?${kind ? `kind=${kind}&` : ''}${pageQuery(page)}`),
+      /** The project's scouting filters; every field empty while none are set. */
+      scoutFilters: (id: string) => call<ScoutFilters>(`/api/projects/${encodeURIComponent(id)}/scout-filters`),
+      setScoutFilters: (id: string, body: ScoutFilters) =>
+        call<ScoutFilters>(`/api/projects/${encodeURIComponent(id)}/scout-filters`, { method: 'PUT', body }),
       /** Everyone on the project; the owner also gets the open invites. */
       crew: (id: string) => call<Crew>(`/api/projects/${encodeURIComponent(id)}/members`),
       addMember: (id: string, email: string, role: ProjectRole) =>
@@ -193,7 +198,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
        * Finds and assesses venues in the project's location area and saves the new ones; parses the scene first
        * if needed. Takes up to minutes; 409 when the project has no location area, 503 when not configured.
        */
-      scout: (id: string) => call<ScoutingResult>(`/api/scenes/${encodeURIComponent(id)}/scout`, { method: 'POST' }),
+      /** Keeps to the project's scouting filters, or to `filters` for this run. */
+      scout: (id: string, filters?: ScoutFilters) =>
+        call<ScoutingResult>(`/api/scenes/${encodeURIComponent(id)}/scout`, { method: 'POST', ...(filters ? { body: { filters } } : {}) }),
     },
     locations: {
       /** Best fit first; venues added by hand (no score) last. */

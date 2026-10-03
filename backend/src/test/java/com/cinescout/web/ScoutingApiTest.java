@@ -387,4 +387,60 @@ class ScoutingApiTest extends ApiTest {
         web.post().uri("/api/scenes/" + java.util.UUID.randomUUID() + "/parse").exchange().expectStatus().isUnauthorized();
         verifyNoInteractions(llm, search);
     }
+
+    // --- filters --------------------------------------------------------------------------------
+
+    @Test
+    void aProjectsScoutingFiltersAreSetByEditorsReadByTheCrewAndChecked() {
+        Account ada = register("Ada");
+        Account vera = register("Vera");
+        Account outsider = register("Mallory");
+        String project = project(ada, "Brooklyn, New York");
+        ada.client().post().uri("/api/projects/" + project + "/members").bodyValue(Map.of("email", vera.email(), "role", "VIEWER"))
+                .exchange().expectStatus().isCreated();
+        String uri = "/api/projects/" + project + "/scout-filters";
+
+        JsonNode empty = json(ada.client().get().uri(uri).exchange().expectStatus().isOk());
+        assertThat(empty.path("radiusKm").isNull()).isTrue();
+        assertThat(empty.path("excludedTypes")).isEmpty();
+
+        JsonNode saved = json(ada.client().put().uri(uri).bodyValue(Map.of("baseAddress", " Bedford Ave ", "radiusKm", 3,
+                "maxBudget", 1500, "excludedTypes", List.of("church", " church ", "nightclub"), "includePrivate", false))
+                .exchange().expectStatus().isOk());
+        assertThat(saved.path("baseAddress").asText()).isEqualTo("Bedford Ave");
+        assertThat(saved.path("excludedTypes")).hasSize(2);
+        assertThat(json(vera.client().get().uri(uri).exchange().expectStatus().isOk()).path("maxBudget").asInt()).isEqualTo(1500);
+
+        ada.client().put().uri(uri).bodyValue(Map.of("radiusKm", 3)).exchange().expectStatus().isBadRequest();
+        ada.client().put().uri(uri).bodyValue(Map.of("baseLatitude", 40.7)).exchange().expectStatus().isBadRequest();
+        ada.client().put().uri(uri).bodyValue(Map.of("baseAddress", "x", "radiusKm", 500)).exchange().expectStatus().isBadRequest();
+        vera.client().put().uri(uri).bodyValue(Map.of()).exchange().expectStatus().isForbidden();
+        outsider.client().get().uri(uri).exchange().expectStatus().isNotFound();
+        outsider.client().put().uri(uri).bodyValue(Map.of()).exchange().expectStatus().isNotFound();
+    }
+
+    @Test
+    void aRunsFiltersReachTheSearchAndWhatTheyLeaveOutIsCounted() {
+        when(llm.generate(any(), any(), eq(VenueVerdict.class))).thenAnswer(call -> {
+            boolean club = call.<String>getArgument(1).contains("Venue Worst");
+            return Mono.just(club
+                    ? new VenueVerdict(true, "Club Neon", null, false, SettingMatch.EXACT, VenueVerdict.Evidence.UNKNOWN,
+                    VenueVerdict.Evidence.UNKNOWN, VenueVerdict.Evidence.UNKNOWN, VenueVerdict.Evidence.UNKNOWN,
+                    VenueVerdict.Evidence.UNKNOWN, "Fits", com.cinescout.domain.BookingFriction.COMMERCIAL, null, List.of(), List.of(),
+                    "nightclub", null)
+                    : Verdicts.of(SettingMatch.EXACT));
+        });
+        Account ada = register("Ada");
+
+        JsonNode result = json(ada.client().post().uri("/api/scenes/" + sceneWithArea(ada) + "/scout")
+                .bodyValue(Map.of("filters", Map.of("excludedTypes", List.of("Nightclub")))).exchange().expectStatus().isOk());
+
+        assertThat(result.path("added")).hasSize(2);
+        assertThat(result.path("filteredOut").path("excludedType").asInt()).isEqualTo(1);
+        ArgumentCaptor<LocationSearchRequest> request = ArgumentCaptor.forClass(LocationSearchRequest.class);
+        verify(search).search(request.capture());
+        assertThat(request.getValue().hints().excludedTypes()).containsExactly("Nightclub");
+        ada.client().post().uri("/api/scenes/" + sceneWithArea(ada) + "/scout")
+                .bodyValue(Map.of("filters", Map.of("radiusKm", 2))).exchange().expectStatus().isBadRequest();
+    }
 }

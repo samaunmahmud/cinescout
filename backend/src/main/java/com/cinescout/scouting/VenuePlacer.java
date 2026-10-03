@@ -49,6 +49,22 @@ public class VenuePlacer {
                 .collectMap(found -> found.getT1(), found -> found.getT2());
     }
 
+    /**
+     * Where an address is, for a scouting run's base point; empty when it cannot be found (or the lookup fails or
+     * takes longer than the budget), in which case the run goes on without a radius.
+     */
+    public Mono<GeoPoint> locate(String address) {
+        if (address == null || address.isBlank()) {
+            return Mono.empty();
+        }
+        return geocoder.locate(address)
+                .timeout(budget.isZero() ? Duration.ofSeconds(10) : budget)
+                .onErrorResume(error -> {
+                    log.info("Could not find a scouting base point at {}: {}", address, error.toString());
+                    return Mono.empty();
+                });
+    }
+
     /** The address the page gives; failing that the venue's name, in the search area so it is found in the right city. */
     static String query(ScoutedVenue venue, String area) {
         String address = venue.assessment().address();

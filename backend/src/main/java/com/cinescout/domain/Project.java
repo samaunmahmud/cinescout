@@ -8,6 +8,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "projects")
@@ -35,6 +37,11 @@ public class Project extends BaseEntity {
     @Column(name = "call_sheet_token")
     private String callSheetToken;
 
+    /** The scouting filters a run keeps to unless it brings its own; null until set. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "scout_filters")
+    private ScoutFilters scoutFilters;
+
     protected Project() {
     }
 
@@ -50,9 +57,11 @@ public class Project extends BaseEntity {
     public String getLocationArea() { return locationArea; }
     public ProjectStatus getStatus() { return status; }
     public String getCallSheetToken() { return callSheetToken; }
+    public ScoutFilters getScoutFilters() { return scoutFilters; }
 
     public void setTitle(String title) { this.title = title; }
     public void setCallSheetToken(String callSheetToken) { this.callSheetToken = callSheetToken; }
+    public void setScoutFilters(ScoutFilters scoutFilters) { this.scoutFilters = scoutFilters; }
     public void setDescription(String description) { this.description = description; }
 
     /** Blank means "not set": it is stored as null, which the database constraint requires. */
