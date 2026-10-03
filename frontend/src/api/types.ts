@@ -268,6 +268,8 @@ export interface Location {
   notes: string | null
   /** Why the crew passed on it, while it is REJECTED; null when they did not say. */
   rejectionReason: string | null
+  /** The recce photo shown as its picture (then `imageUrl` is that photo's short-lived link); null for the web page's picture. */
+  coverPhotoId: string | null
   /** Who to talk to at the venue, as the user entered it. */
   contactName: string | null
   contactEmail: string | null
@@ -406,6 +408,29 @@ export interface UpdateOutreachRequest {
 }
 
 /** What one scouting run saved for a scene. */
+/** A recce photo; `url` and `thumbUrl` are short-lived links (refetch the list for fresh ones). */
+export interface Photo {
+  id: string
+  locationId: string
+  url: string
+  thumbUrl: string
+  width: number
+  height: number
+  /** Where it was taken, when the photo said. */
+  latitude: number | null
+  longitude: number | null
+  uploadedBy: string | null
+  /** Whether the venue's polaroid shows it. */
+  cover: boolean
+  createdAt: string
+}
+
+/** A photo just taken up; `suggestPin` when the venue has no position and the photo has one. */
+export interface PhotoUpload {
+  photo: Photo
+  suggestPin: boolean
+}
+
 /** A venue in the user's own library: the facts that hold whatever the scene, with their tags and notes. */
 export interface LibraryVenue {
   id: string

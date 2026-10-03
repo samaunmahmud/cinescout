@@ -60,7 +60,9 @@ async function send(path: string, accept: string, options: RequestOptions = {}):
     // server not to send WWW-Authenticate on a 401, which would open the browser's own login dialog.
     'X-Requested-With': 'XMLHttpRequest',
   }
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+  // A form (a file upload) sets its own multipart Content-Type, boundary included.
+  const form = options.body instanceof FormData
+  if (options.body !== undefined && !form) headers['Content-Type'] = 'application/json'
 
   let response: Response
   try {
@@ -69,7 +71,7 @@ async function send(path: string, accept: string, options: RequestOptions = {}):
       headers,
       // The HttpOnly session cookie: sent to this origin only, never readable by scripts.
       credentials: 'same-origin',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.body === undefined ? undefined : form ? (options.body as FormData) : JSON.stringify(options.body),
       signal: options.signal,
     })
   } catch (e) {

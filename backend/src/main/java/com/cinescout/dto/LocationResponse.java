@@ -3,6 +3,7 @@ package com.cinescout.dto;
 import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
+import com.cinescout.files.FileLinks;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
@@ -15,7 +16,8 @@ import java.util.UUID;
  * was stored (so its local times keep their offsets). It is null until logistics have been worked out.
  * The {@code contact...} fields are who to talk to at the venue, and {@code quote} what it asks for the shoot, as the user
  * entered them. {@code rejectionReason} is why the crew passed on it, while it is REJECTED. {@code imageUrl} is the
- * picture the venue's page offers; {@code imageCheckedAt} is null until it has been looked up.
+ * picture the venue shows: its chosen recce photo ({@code coverPhotoId}, as a short-lived link) or else the one its page
+ * offers; {@code imageCheckedAt} is null until the page has been looked at.
  */
 public record LocationResponse(
         UUID id,
@@ -43,6 +45,7 @@ public record LocationResponse(
         String quote,
         String imageUrl,
         Instant imageCheckedAt,
+        UUID coverPhotoId,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -57,7 +60,8 @@ public record LocationResponse(
                 location.getLogisticsJson(), location.getLogisticsFetchedAt(),
                 location.getStatus(), location.getNotes(), location.getRejectionReason(),
                 location.getContactName(), location.getContactEmail(), location.getContactPhone(), location.getQuote(),
-                location.getImageUrl(), location.getImageCheckedAt(),
+                location.getCoverPhotoId() != null ? FileLinks.current().photo(location.getCoverPhotoId(), "full") : location.getImageUrl(),
+                location.getImageCheckedAt(), location.getCoverPhotoId(),
                 location.getCreatedAt(), location.getUpdatedAt());
     }
 }

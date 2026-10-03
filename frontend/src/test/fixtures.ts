@@ -75,6 +75,7 @@ export function location(overrides: Partial<Location> = {}): Location {
     status: 'SUGGESTED',
     notes: null,
     rejectionReason: null,
+    coverPhotoId: null,
     contactName: null,
     contactEmail: null,
     contactPhone: null,

@@ -101,6 +101,8 @@ class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/public/call-sheets/*").permitAll()
                         // Director links: the same, and the guest may answer each venue.
                         .pathMatchers(HttpMethod.GET, "/api/public/shortlists/*").permitAll()
+                        // Photos by signed, short-lived link (an <img> sends no API headers).
+                        .pathMatchers(HttpMethod.GET, "/api/public/photos/*").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/public/shortlists/*/venues/*/response").permitAll()
                         .pathMatchers("/api/**", "/actuator/**").authenticated()
                         // The web app's own files and pages, when the backend serves them (see WebAppConfig):

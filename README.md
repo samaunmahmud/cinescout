@@ -174,6 +174,24 @@ costs 100 of the free 10,000 daily quota units, so results are cached on the loc
 (`cinescout.video.cache-ttl`), or until its name or address changes. Without a key the endpoint answers 503
 and the page links to a YouTube search instead.
 
+## Recce photos
+
+Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,
+after their GPS position is read to offer as the venue's pin; HEIC photos are turned into JPEG in the browser
+(iOS does it by itself). They are kept in a file store and shown through short-lived signed links.
+
+| Variable | Default |
+|---|---|
+| `FILES_STORE` | `local`: a directory on this machine. `s3`: an S3-compatible bucket (Cloudflare R2, MinIO, AWS S3) |
+| `FILES_DIR` | `<tmp>/cinescout-files`, the directory for `local` |
+| `FILES_S3_ENDPOINT` | none, e.g. `https://<account-id>.r2.cloudflarestorage.com` |
+| `FILES_S3_BUCKET` / `FILES_S3_REGION` | none / `auto` (R2's region) |
+| `FILES_S3_ACCESS_KEY` / `FILES_S3_SECRET_KEY` | none |
+| `FILES_SIGNING_KEY` | random at each start; set it so photo links survive a restart |
+
+Render's disk is wiped on every deploy, so there photos last only until the next one unless `FILES_STORE=s3`
+and the bucket is set. With `s3` but a missing setting the server logs a warning and uses the local disk.
+
 ## Deploying
 
 `docker-compose.yml` runs the whole thing on one machine: PostgreSQL, the API, and nginx serving the web
@@ -241,6 +259,7 @@ burst of `capacity` calls, refilled evenly over `period` (`cinescout.rate-limits
 | `lookups` | logistics runs and venue video searches, per user | 120 an hour |
 | `login` | failed logins (web app and HTTP Basic), per address | 20 per 10 minutes |
 | `register` | new accounts, per address | 5 an hour |
+| `guest` | answers through a director's shortlist link, per address | 60 an hour |
 
 The counts live in memory: a restart forgets them, and each instance counts on its own. Behind nginx the
 client address comes from `X-Forwarded-For`, which nginx sets itself (trusting it only from private networks,

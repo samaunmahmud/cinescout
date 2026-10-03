@@ -12,6 +12,7 @@ import com.cinescout.service.NotFoundException;
 import com.cinescout.video.VideoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.buffer.DataBufferLimitException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -23,8 +24,8 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
-import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.reactive.resource.NoResourceFoundException;
+import org.springframework.web.reactive.result.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -99,6 +100,12 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Validation failed");
         problem.setProperty("errors", List.of(Map.of("field", e.field(), "message", e.getMessage())));
         return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+    }
+
+    /** A body or an uploaded part over its limit (a photo over 10 MB). */
+    @ExceptionHandler(DataBufferLimitException.class)
+    ResponseEntity<ProblemDetail> tooLarge(DataBufferLimitException e) {
+        return problem(HttpStatus.PAYLOAD_TOO_LARGE, "Too large", "The upload is too large; a photo may be up to 10 MB");
     }
 
     @ExceptionHandler(ForbiddenException.class)

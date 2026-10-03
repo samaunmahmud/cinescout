@@ -10,6 +10,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current),
     'GET /api/locations/l1/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
+    'GET /api/locations/l1/photos?page=0&size=30': () => json(pageOf([], { size: 30 })),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
@@ -215,6 +216,7 @@ describe('adding a venue by hand', () => {
       'GET /api/locations/l9/outreach-drafts?page=0&size=24': () => json(pageOf([])),
       'GET /api/locations/l9/videos': () => json(locationVideos({ videos: [] })),
       'GET /api/locations/l9/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
+      'GET /api/locations/l9/photos?page=0&size=30': () => json(pageOf([], { size: 30 })),
     })
     const { router } = renderApp('/scenes/s1')
     const user = await logIn()

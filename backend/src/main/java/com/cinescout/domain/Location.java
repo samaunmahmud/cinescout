@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "locations")
@@ -87,6 +88,10 @@ public class Location extends BaseEntity {
     private LocationStatus status = LocationStatus.SUGGESTED;
 
     private String notes;
+
+    /** The recce photo its polaroid shows, over the picture from its web page; null for none. */
+    @Column(name = "cover_photo_id")
+    private UUID coverPhotoId;
 
     /** Why the crew passed on it, while it is REJECTED; null when they did not say. */
     @Column(name = "rejection_reason")
@@ -166,6 +171,7 @@ public class Location extends BaseEntity {
     public LocationStatus getStatus() { return status; }
     public String getNotes() { return notes; }
     public String getRejectionReason() { return rejectionReason; }
+    public java.util.UUID getCoverPhotoId() { return coverPhotoId; }
     public String getContactName() { return contactName; }
     public String getContactEmail() { return contactEmail; }
     public String getContactPhone() { return contactPhone; }
@@ -188,6 +194,7 @@ public class Location extends BaseEntity {
     public void setStatus(LocationStatus status) { this.status = status; }
     public void setNotes(String notes) { this.notes = notes; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+    public void setCoverPhotoId(UUID coverPhotoId) { this.coverPhotoId = coverPhotoId; }
     public void setContactName(String contactName) { this.contactName = contactName; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
     public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }

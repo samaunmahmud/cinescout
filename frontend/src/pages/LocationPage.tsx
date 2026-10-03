@@ -50,6 +50,7 @@ import { CommentsSection } from './CommentsSection'
 import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
+import { PhotosSection } from './PhotosSection'
 import { VideosSection } from './VideosSection'
 import { usePageTitle } from '../lib/usePageTitle'
 import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
@@ -220,6 +221,9 @@ function LocationDetails({ location }: { location: Location }) {
               <Notes location={location} update={update} />
             </div>
             <Position location={location} />
+            <div className="lg:col-span-2">
+              <PhotosSection location={location} />
+            </div>
           </div>
         )}
         {tab === 'comments' && <CommentsSection location={location} projectId={scene.data?.projectId} />}

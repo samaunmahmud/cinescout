@@ -17,6 +17,8 @@ import type {
   GenerateOutreachRequest,
   InvitePreview,
   LibraryVenue,
+  Photo,
+  PhotoUpload,
   LoginRequest,
   Location,
   LocationStatus,
@@ -163,6 +165,23 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<VenueComment>(`/api/locations/${encodeURIComponent(locationId)}/comments`, { method: 'POST', body }),
       edit: (id: string, body: Omit<CommentRequest, 'parentId'>) => call<VenueComment>(`/api/comments/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/comments/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    photos: {
+      list: (locationId: string) => call<Page<Photo>>(`/api/locations/${encodeURIComponent(locationId)}/photos?page=0&size=30`),
+      /** A JPEG or PNG; `gps` is where a photo the browser converted (HEIC) said it was taken. */
+      upload: (locationId: string, file: Blob, filename: string, gps: { latitude: number; longitude: number } | null) => {
+        const form = new FormData()
+        form.append('file', file, filename)
+        if (gps) {
+          form.append('latitude', String(gps.latitude))
+          form.append('longitude', String(gps.longitude))
+        }
+        return call<PhotoUpload>(`/api/locations/${encodeURIComponent(locationId)}/photos`, { method: 'POST', body: form })
+      },
+      remove: (id: string) => call<void>(`/api/photos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** `photoId` null goes back to the web page's picture. */
+      setCover: (locationId: string, photoId: string | null) =>
+        call<Location>(`/api/locations/${encodeURIComponent(locationId)}/cover`, { method: 'PUT', body: { photoId } }),
     },
     library: {
       /** Newest first; `search` matches the name, address, notes or a tag; `tag` keeps one tag. */
