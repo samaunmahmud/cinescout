@@ -45,10 +45,18 @@ public class OutreachService {
         this.activity = activity;
     }
 
-    /** Every draft of a project, newest first, each with its venue and scene; {@code status} null means all. */
-    public Mono<PageResponse<ProjectOutreachResponse>> listForProject(UUID userId, UUID projectId, OutreachStatus status, PageQuery page) {
+    /**
+     * Every draft of a project, newest first, each with its venue and scene; {@code status} null means all. With
+     * {@code followUp}, only the emails waiting on a follow-up, oldest sent first (the status is then ignored).
+     */
+    public Mono<PageResponse<ProjectOutreachResponse>> listForProject(UUID userId, UUID projectId, OutreachStatus status, boolean followUp,
+                                                                      PageQuery page) {
         return db.call(() -> {
             access.project(userId, projectId, ProjectRole.VIEWER);
+            if (followUp) {
+                return PageResponse.from(drafts.findVisibleByProjectDueForFollowUp(projectId, userId, page.pageable()),
+                        ProjectOutreachResponse::from);
+            }
             return PageResponse.from(status == null
                     ? drafts.findVisibleByProject(projectId, userId, page.pageable())
                     : drafts.findVisibleByProjectAndStatus(projectId, userId, status, page.pageable()),

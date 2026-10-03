@@ -28,11 +28,12 @@ import type {
   Member,
   OutreachDraft,
   OutreachReply,
-  OutreachStatus,
+  OutreachFilter,
   Page,
   Project,
   ProjectLocation,
   ProjectOutreach,
+  ProjectSettings,
   ProjectProgress,
   ProjectRole,
   ProjectStatus,
@@ -135,6 +136,10 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       scoutFilters: (id: string) => call<ScoutFilters>(`/api/projects/${encodeURIComponent(id)}/scout-filters`),
       setScoutFilters: (id: string, body: ScoutFilters) =>
         call<ScoutFilters>(`/api/projects/${encodeURIComponent(id)}/scout-filters`, { method: 'PUT', body }),
+      /** The project's working settings (how long before an unanswered email is flagged for a follow-up). */
+      settings: (id: string) => call<ProjectSettings>(`/api/projects/${encodeURIComponent(id)}/settings`),
+      setSettings: (id: string, body: ProjectSettings) =>
+        call<ProjectSettings>(`/api/projects/${encodeURIComponent(id)}/settings`, { method: 'PUT', body }),
       /** Everyone on the project; the owner also gets the open invites. */
       crew: (id: string) => call<Crew>(`/api/projects/${encodeURIComponent(id)}/members`),
       addMember: (id: string, email: string, role: ProjectRole) =>
@@ -293,10 +298,15 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Records a reply by hand (every field optional) and marks the email replied. */
       recordReply: (draftId: string, body: ManualReplyRequest) =>
         call<OutreachReply>(`/api/outreach-drafts/${encodeURIComponent(draftId)}/replies`, { method: 'POST', body }),
-      /** Every draft of the project, newest first, each with its venue and scene; `status` null means all. */
-      listForProject: (projectId: string, status: OutreachStatus | null, page = 0) =>
+      /**
+       * Every draft of the project, newest first, each with its venue and scene; `filter` null means all, FOLLOW_UP the
+       * emails waiting on a follow-up (oldest sent first).
+       */
+      listForProject: (projectId: string, filter: OutreachFilter | null, page = 0) =>
         call<Page<ProjectOutreach>>(
-          `/api/projects/${encodeURIComponent(projectId)}/outreach-drafts?${status ? `status=${status}&` : ''}${pageQuery(page)}`,
+          `/api/projects/${encodeURIComponent(projectId)}/outreach-drafts?${
+            filter === 'FOLLOW_UP' ? 'followUp=true&' : filter ? `status=${filter}&` : ''
+          }${pageQuery(page)}`,
         ),
       /** Newest first. */
       list: (locationId: string, page = 0) =>
@@ -307,6 +317,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
        */
       generate: (locationId: string, body: GenerateOutreachRequest) =>
         call<OutreachDraft>(`/api/locations/${encodeURIComponent(locationId)}/outreach-drafts/generate`, { method: 'POST', body }),
+      /**
+       * Has the AI write a short chaser for an email marked as sent, saved as a new draft. It sees the first email's
+       * subject and the day it went, never its text or any reply. 409 unless the email is marked sent.
+       */
+      followUp: (id: string) => call<OutreachDraft>(`/api/outreach-drafts/${encodeURIComponent(id)}/follow-up`, { method: 'POST' }),
       update: (id: string, body: UpdateOutreachRequest) =>
         call<OutreachDraft>(`/api/outreach-drafts/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/outreach-drafts/${encodeURIComponent(id)}`, { method: 'DELETE' }),

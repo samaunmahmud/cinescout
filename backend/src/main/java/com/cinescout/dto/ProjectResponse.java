@@ -14,6 +14,7 @@ import java.util.UUID;
  * @param posterImageUrl      a picture of one of the project's venues (a confirmed one if it has any), for its poster;
  *                            null while none has a picture
  * @param role                the asking user's role on the project, so the app can offer only what they may do
+ * @param followUpCount       how many sent emails have gone unanswered too long and wait on a follow-up
  */
 public record ProjectResponse(
         UUID id,
@@ -25,14 +26,15 @@ public record ProjectResponse(
         long confirmedSceneCount,
         String posterImageUrl,
         ProjectRole role,
+        long followUpCount,
         Instant createdAt,
         Instant updatedAt
 ) {
 
     public static ProjectResponse from(Project project, long sceneCount, long confirmedSceneCount, String posterImageUrl,
-                                       ProjectRole role) {
+                                       ProjectRole role, long followUpCount) {
         return new ProjectResponse(project.getId(), project.getTitle(), project.getDescription(),
-                project.getLocationArea(), project.getStatus(), sceneCount, confirmedSceneCount, posterImageUrl, role,
+                project.getLocationArea(), project.getStatus(), sceneCount, confirmedSceneCount, posterImageUrl, role, followUpCount,
                 project.getCreatedAt(), project.getUpdatedAt());
     }
 }

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Copy, Crown, Link2, Radar, UserPlus, Users } from 'lucide-react'
+import { ChevronLeft, Copy, Crown, Link2, Mail, Radar, UserPlus, Users } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { fieldErrors, isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
-import type { AddMemberResult, Crew, Invite, Member, Project, ProjectRole, ScoutFilters } from '../api/types'
+import type { AddMemberResult, Crew, Invite, Member, Project, ProjectRole, ProjectSettings, ScoutFilters } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { ScoutFiltersForm } from '../components/ScoutFiltersForm'
@@ -38,11 +38,12 @@ export function ProjectSettingsPage() {
   return <Settings project={project.data} />
 }
 
-type TabKey = 'members' | 'scouting'
+type TabKey = 'members' | 'scouting' | 'outreach'
 
 const tabs: TabItem<TabKey>[] = [
   { key: 'members', label: 'Members', icon: Users },
   { key: 'scouting', label: 'Scouting', icon: Radar },
+  { key: 'outreach', label: 'Outreach', icon: Mail },
 ]
 
 function Settings({ project }: { project: Project }) {
@@ -67,6 +68,7 @@ function Settings({ project }: { project: Project }) {
       <Tabs label="Project settings" items={tabs} selected={tab} onSelect={(key) => setParams(key === 'members' ? {} : { tab: key })}>
         {tab === 'members' && <MembersPanel project={project} />}
         {tab === 'scouting' && <ScoutingPanel project={project} />}
+        {tab === 'outreach' && <OutreachPanel project={project} />}
       </Tabs>
     </div>
   )
@@ -121,6 +123,102 @@ function ScoutingPanel({ project }: { project: Project }) {
         <p className="text-[15px] text-graphite">{describeFilters(filters.data)}</p>
       )}
     </Section>
+  )
+}
+
+/** How long a sent email may go unanswered before CineScout flags it for a follow-up. */
+function OutreachPanel({ project }: { project: Project }) {
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const editable = project.role !== 'VIEWER'
+  const settings = useQuery({ queryKey: queryKeys.projectSettings(project.id), queryFn: () => api.projects.settings(project.id) })
+  const save = useMutation({
+    mutationFn: (next: ProjectSettings) => api.projects.setSettings(project.id, next),
+    onSuccess: (stored) => queryClient.setQueryData(queryKeys.projectSettings(project.id), stored),
+  })
+  return (
+    <Section
+      titleId="follow-up-heading"
+      title="Follow-ups"
+      eyebrow="Chasing unanswered emails"
+      icon={Mail}
+      description="Once a day CineScout looks for emails marked as sent that have had no answer, and flags them “Follow up”."
+    >
+      {settings.isPending ? (
+        <Spinner label="Loading the settings" />
+      ) : settings.isError ? (
+        <ErrorAlert error={settings.error} onRetry={() => settings.refetch()} />
+      ) : editable ? (
+        <Card className="p-5">
+          <FollowUpForm
+            key={settings.data.followUpDays}
+            initial={settings.data.followUpDays}
+            busy={save.isPending}
+            saved={save.isSuccess}
+            error={save.error}
+            onSubmit={(followUpDays) => save.mutate({ ...settings.data, followUpDays })}
+          />
+        </Card>
+      ) : (
+        <p className="text-[15px] text-graphite">{followUpSentence(settings.data.followUpDays)}</p>
+      )}
+    </Section>
+  )
+}
+
+function followUpSentence(days: number): string {
+  return `An email is flagged for a follow-up after ${days === 1 ? '1 day' : `${days} days`} without an answer.`
+}
+
+function FollowUpForm({
+  initial,
+  busy,
+  saved,
+  error,
+  onSubmit,
+}: {
+  initial: number
+  busy: boolean
+  saved: boolean
+  error: unknown
+  onSubmit: (days: number) => void
+}) {
+  const [value, setValue] = useState(String(initial))
+  const days = Number(value)
+  const valid = Number.isInteger(days) && days >= 1 && days <= 60
+  const server = fieldErrors(error)
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    if (valid) onSubmit(days)
+  }
+
+  return (
+    <form onSubmit={submit} aria-label="Follow-up settings" className="space-y-3" noValidate>
+      {saved && !busy && (
+        <p role="status" className="rounded-lg border-2 border-go-mid bg-go-wash px-3 py-2 text-sm text-go-ink">
+          Saved. {followUpSentence(initial)}
+        </p>
+      )}
+      <ErrorAlert error={error} />
+      <TextField
+        label="Days before a follow-up"
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={60}
+        className="max-w-40"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        hint="From 1 to 60. The default is 5."
+        error={valid ? server.followUpDays : 'Enter a whole number of days from 1 to 60.'}
+      />
+      <div className="flex justify-end">
+        <Button type="submit" busy={busy} disabled={!valid}>
+          Save
+        </Button>
+      </div>
+    </form>
   )
 }
 

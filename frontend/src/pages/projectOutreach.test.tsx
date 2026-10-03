@@ -19,6 +19,8 @@ function outreach(overrides: Partial<ProjectOutreach> = {}): ProjectOutreach {
     tone: 'PROFESSIONAL',
     status: 'SENT',
     sentAt: '2026-09-21T09:30:00Z',
+    followUpFlaggedAt: null,
+    followUpOfId: null,
     createdAt: '2026-09-20T10:00:00Z',
     updatedAt: '2026-09-21T09:30:00Z',
     ...overrides,

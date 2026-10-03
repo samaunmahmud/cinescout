@@ -8,7 +8,7 @@ import { linkButton } from '../components/buttonStyles'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
-import { Mail, Sparkles } from 'lucide-react'
+import { Mail, Redo2, Sparkles } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { emailText, looksLikeEmail, mailtoLink } from '../lib/email'
@@ -233,6 +233,22 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
     },
   })
 
+  // A chaser is a new draft at the head of the list; this one stops waiting on a follow-up.
+  const followUp = useMutation({
+    mutationFn: () => api.outreach.followUp(draft.id),
+    onSuccess: (chaser) => {
+      queryClient.setQueryData<Page<OutreachDraft>>(queryKeys.outreachPage(draft.locationId, 0), (first) =>
+        first && {
+          ...first,
+          items: [chaser, ...first.items.map((d) => (d.id === draft.id ? { ...d, followUpFlaggedAt: null } : d))].slice(0, first.size),
+          totalItems: first.totalItems + 1,
+        },
+      )
+      queryClient.invalidateQueries({ queryKey: listKey })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+    },
+  })
+
   const remove = useMutation({
     mutationFn: () => api.outreach.remove(draft.id),
     onSuccess: () => {
@@ -277,10 +293,12 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
         <div className="min-w-0 space-y-1">
           <h3 className="font-semibold">{draft.subject}</h3>
           <p className="text-sm text-muted">
+            {draft.followUpOfId && 'Follow-up · '}
             {recipient ? `To ${recipient}` : 'No recipient yet'} · {tones[draft.tone].label} · written {dateFormat.format(new Date(draft.createdAt))}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {draft.followUpFlaggedAt && <Badge tone="red">Follow up</Badge>}
           <Badge tone={status.tone}>
             {status.label}
             {draft.sentAt && ` ${dateFormat.format(new Date(draft.sentAt))}`}
@@ -313,7 +331,13 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
 
       <RepliesPanel draft={draft} />
 
-      <ErrorAlert error={update.error} />
+      {draft.followUpFlaggedAt && (
+        <p className="rounded-lg border-2 border-stop bg-stop-wash px-3 py-2 text-sm text-stop-ink">
+          No answer since {draft.sentAt ? dateFormat.format(new Date(draft.sentAt)) : 'it was sent'}. A short, polite follow-up often does it.
+        </p>
+      )}
+      {followUp.isPending && <Spinner label="Writing the follow-up. This can take up to a minute." />}
+      <ErrorAlert error={update.error ?? followUp.error} />
 
       {confirmingDelete ? (
         <ConfirmDelete
@@ -328,6 +352,12 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
         </ConfirmDelete>
       ) : (
         <div className="flex flex-wrap justify-end gap-2">
+          {canEdit && draft.status === 'SENT' && (
+            <Button variant={draft.followUpFlaggedAt ? 'primary' : 'secondary'} busy={followUp.isPending} onClick={() => followUp.mutate()}>
+              <Redo2 aria-hidden className="size-4" />
+              Draft follow-up
+            </Button>
+          )}
           {canEdit && (
             <>
               <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>

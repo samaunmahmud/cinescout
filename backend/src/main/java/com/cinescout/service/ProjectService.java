@@ -14,6 +14,7 @@ import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.OutreachDraftRepository;
 import com.cinescout.repository.ProjectMemberRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
@@ -41,16 +42,18 @@ public class ProjectService {
     private final SceneRepository scenes;
     private final LocationRepository locations;
     private final ProjectMemberRepository members;
+    private final OutreachDraftRepository drafts;
     private final ProjectAccess access;
     private final BlockingTransactions db;
 
     public ProjectService(ProjectRepository projects, UserRepository users, SceneRepository scenes, LocationRepository locations,
-                          ProjectMemberRepository members, ProjectAccess access, BlockingTransactions db) {
+                          ProjectMemberRepository members, OutreachDraftRepository drafts, ProjectAccess access, BlockingTransactions db) {
         this.projects = projects;
         this.users = users;
         this.scenes = scenes;
         this.locations = locations;
         this.members = members;
+        this.drafts = drafts;
         this.access = access;
         this.db = db;
     }
@@ -63,7 +66,7 @@ public class ProjectService {
             project.setLocationArea(request.locationArea());
             Project saved = projects.saveAndFlush(project);
             members.saveAndFlush(new ProjectMember(saved, creator, ProjectRole.OWNER, null));
-            return ProjectResponse.from(saved, 0, 0, null, ProjectRole.OWNER);
+            return ProjectResponse.from(saved, 0, 0, null, ProjectRole.OWNER, 0);
         });
     }
 
@@ -128,29 +131,31 @@ public class ProjectService {
     }
 
     /**
-     * The scene counts, poster pictures and the user's roles for a page of projects, in four queries however many
+     * The scene counts, poster pictures and the user's roles for a page of projects, in five queries however many
      * projects there are.
      */
     private Counts counts(UUID userId, List<UUID> projectIds) {
         if (projectIds.isEmpty()) {
-            return new Counts(Map.of(), Map.of(), Map.of(), Map.of());
+            return new Counts(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
         }
         Map<UUID, String> images = new HashMap<>();
         locations.findImagesByProjects(projectIds).forEach(image -> images.putIfAbsent(image.getProjectId(), image.getImageUrl()));
         Map<UUID, ProjectRole> roles = members.findRoles(userId, projectIds).stream()
                 .collect(Collectors.toMap(ProjectMemberRepository.ProjectRoleRow::getProjectId, ProjectMemberRepository.ProjectRoleRow::getRole));
         return new Counts(byProject(scenes.countByProjects(projectIds)),
-                byProject(locations.countScenesByProjectsAndStatus(projectIds, LocationStatus.CONFIRMED)), images, roles);
+                byProject(locations.countScenesByProjectsAndStatus(projectIds, LocationStatus.CONFIRMED)), images, roles,
+                byProject(drafts.countDueForFollowUpByProjects(projectIds)));
     }
 
     private static Map<UUID, Long> byProject(List<SceneRepository.ProjectCount> counts) {
         return counts.stream().collect(Collectors.toMap(SceneRepository.ProjectCount::getProjectId, SceneRepository.ProjectCount::getTotal));
     }
 
-    private record Counts(Map<UUID, Long> scenes, Map<UUID, Long> confirmed, Map<UUID, String> images, Map<UUID, ProjectRole> roles) {
+    private record Counts(Map<UUID, Long> scenes, Map<UUID, Long> confirmed, Map<UUID, String> images, Map<UUID, ProjectRole> roles,
+                          Map<UUID, Long> followUps) {
         ProjectResponse respond(Project project) {
             return ProjectResponse.from(project, scenes.getOrDefault(project.getId(), 0L), confirmed.getOrDefault(project.getId(), 0L),
-                    images.get(project.getId()), roles.get(project.getId()));
+                    images.get(project.getId()), roles.get(project.getId()), followUps.getOrDefault(project.getId(), 0L));
         }
     }
 

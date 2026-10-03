@@ -37,3 +37,6 @@ services:
         sync: false
       - key: YOUTUBE_API_KEY
         sync: false
+      # Shared with the scheduled GitHub Actions workflow (.github/workflows/jobs.yml), which runs the jobs.
+      - key: JOBS_SECRET
+        generateValue: true

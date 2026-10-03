@@ -189,6 +189,24 @@ replied") and the webhook answers 404.
 | `MAIL_INBOUND_PROVIDER` | none, or `postmark` |
 | `MAIL_INBOUND_USERNAME` / `MAIL_INBOUND_PASSWORD` | none: the HTTP Basic credentials put in the webhook URL set in Postmark, `https://<user>:<pass>@<host>/api/inbound/postmark` |
 
+## Follow-ups and scheduled jobs
+
+An email marked as sent that has had no reply for a project's follow-up days (5 by default, set on the project's
+settings page) is flagged "Follow up" on its venue's Outreach tab, in the project's outreach list and on the project's
+poster. "Draft follow-up" has the AI write a short chaser as a new draft, from the first email's subject and the day it
+went only (never its text, notes or replies).
+
+The flagging is a scheduled job. Render's free tier sleeps when idle, so besides the app's own hourly timer the job can
+be run through `POST /api/internal/jobs/follow-ups` with the header `X-Job-Secret`, which the daily
+`.github/workflows/jobs.yml` workflow does when the repository has the secrets `CINESCOUT_URL` and `JOBS_SECRET`.
+Running a job twice is harmless.
+
+| Variable | Default |
+|---|---|
+| `JOBS_SECRET` | none: the job endpoint answers 404 and only the app's own timer runs the jobs |
+| `JOBS_SCHEDULER` | `true`: also run the jobs on the app's own timer while it is awake |
+| `JOBS_FOLLOW_UPS_CRON` | `0 17 * * * *` (hourly) |
+
 ## Recce photos
 
 Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,

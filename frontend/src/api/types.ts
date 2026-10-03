@@ -51,6 +51,8 @@ export interface Project {
   posterImageUrl: string | null
   /** The user's role on the project: what they may do there. */
   role: ProjectRole
+  /** Sent emails left unanswered too long, waiting on a follow-up. */
+  followUpCount: number
   createdAt: string
   updatedAt: string
 }
@@ -369,8 +371,21 @@ export interface ProjectOutreach {
   tone: OutreachTone
   status: OutreachStatus
   sentAt: string | null
+  /** When the email was found unanswered for too long; null while it waits on no follow-up. */
+  followUpFlaggedAt: string | null
+  /** The earlier email this one chases; null for a first email. */
+  followUpOfId: string | null
   createdAt: string
   updatedAt: string
+}
+
+/** What the project's outreach list can be narrowed to: a status, or the emails waiting on a follow-up. */
+export type OutreachFilter = OutreachStatus | 'FOLLOW_UP'
+
+/** A project's working settings. */
+export interface ProjectSettings {
+  /** Days a sent email may go unanswered before it is flagged for a follow-up (1 to 60, default 5). */
+  followUpDays: number
 }
 
 export interface OutreachDraft {
@@ -388,6 +403,10 @@ export interface OutreachDraft {
   sentAt: string | null
   /** This email's own reply address, while reply tracking is set up; null otherwise. */
   replyTo: string | null
+  /** When the email was found unanswered for too long; null while it waits on no follow-up. */
+  followUpFlaggedAt: string | null
+  /** The earlier email this one chases; null for a first email. */
+  followUpOfId: string | null
   createdAt: string
   updatedAt: string
 }

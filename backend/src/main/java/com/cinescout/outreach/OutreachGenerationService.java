@@ -2,6 +2,7 @@ package com.cinescout.outreach;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.OutreachDraft;
+import com.cinescout.domain.OutreachStatus;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.GenerateOutreachRequest;
@@ -14,10 +15,13 @@ import com.cinescout.repository.OutreachDraftRepository;
 import com.cinescout.repository.UserRepository;
 import com.cinescout.resilience.Guard;
 import com.cinescout.resilience.GuardFactory;
+import com.cinescout.service.ConflictException;
 import com.cinescout.service.NotFoundException;
 import com.cinescout.service.ProjectAccess;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -64,6 +68,60 @@ public class OutreachGenerationService {
                 .flatMap(brief -> llmGuard.call(() -> llm.generate(
                         OutreachPrompts.SYSTEM, OutreachPrompts.user(brief), OutreachEmail.class)))
                 .flatMap(email -> db.call(() -> save(userId, locationId, options, email)));
+    }
+
+    /**
+     * Drafts a short chaser for an email that was sent and has had no answer, and saves it as a new {@code DRAFT} that
+     * points at it. The first email then no longer waits on a follow-up; the chaser, once sent, may in turn be flagged.
+     * Its subject is "Re: " and the first one's, set here rather than by the model.
+     *
+     * @throws ConflictException (as an error signal) unless the email is marked as sent
+     */
+    public Mono<OutreachDraftResponse> followUp(UUID userId, UUID draftId) {
+        return db.call(() -> followUpBrief(userId, draftId))
+                .flatMap(brief -> llmGuard.call(() -> llm.generate(
+                        OutreachPrompts.FOLLOW_UP_SYSTEM, OutreachPrompts.followUpUser(brief), OutreachEmail.class)))
+                .flatMap(email -> db.call(() -> saveFollowUp(userId, draftId, email)));
+    }
+
+    private FollowUpBrief followUpBrief(UUID userId, UUID draftId) {
+        OutreachDraft earlier = sentDraft(userId, draftId);
+        Location location = earlier.getLocation();
+        return new FollowUpBrief(
+                users.getReferenceById(userId).getDisplayName(),
+                location.getScene().getProject().getTitle(),
+                location.getName(),
+                earlier.getRecipientName(),
+                earlier.getSubject(),
+                earlier.getSentAt() == null ? null : LocalDate.ofInstant(earlier.getSentAt(), ZoneOffset.UTC),
+                earlier.getTone());
+    }
+
+    private OutreachDraftResponse saveFollowUp(UUID userId, UUID draftId, OutreachEmail email) {
+        OutreachDraft earlier = sentDraft(userId, draftId);
+        OutreachDraft draft = new OutreachDraft(earlier.getLocation(), users.getReferenceById(userId),
+                oneLine(reply(earlier.getSubject())), email.body().strip(), earlier.getTone());
+        draft.setRecipientName(earlier.getRecipientName());
+        draft.setRecipientEmail(earlier.getRecipientEmail());
+        draft.setGeneratedBy(llm.modelId());
+        draft.followUp(earlier);
+        drafts.save(earlier);
+        return OutreachDraftResponse.from(drafts.saveAndFlush(draft));
+    }
+
+    private OutreachDraft sentDraft(UUID userId, UUID draftId) {
+        OutreachDraft draft = access.draft(userId, draftId, ProjectRole.EDITOR);
+        if (draft.getStatus() != OutreachStatus.SENT) {
+            throw new ConflictException(draft.getStatus() == OutreachStatus.REPLIED
+                    ? "This email has had a reply, so it needs no follow-up"
+                    : "Mark this email as sent before drafting a follow-up");
+        }
+        return draft;
+    }
+
+    private static String reply(String subject) {
+        String stripped = subject.strip();
+        return stripped.regionMatches(true, 0, "Re:", 0, 3) ? stripped : "Re: " + stripped;
     }
 
     private OutreachBrief brief(UUID userId, UUID locationId, GenerateOutreachRequest options) {

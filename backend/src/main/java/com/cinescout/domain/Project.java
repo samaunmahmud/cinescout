@@ -42,6 +42,10 @@ public class Project extends BaseEntity {
     @Column(name = "scout_filters")
     private ScoutFilters scoutFilters;
 
+    /** How many days a sent outreach email may go unanswered before it is flagged for a follow-up. */
+    @Column(name = "follow_up_days", nullable = false)
+    private int followUpDays = 5;
+
     protected Project() {
     }
 
@@ -58,10 +62,12 @@ public class Project extends BaseEntity {
     public ProjectStatus getStatus() { return status; }
     public String getCallSheetToken() { return callSheetToken; }
     public ScoutFilters getScoutFilters() { return scoutFilters; }
+    public int getFollowUpDays() { return followUpDays; }
 
     public void setTitle(String title) { this.title = title; }
     public void setCallSheetToken(String callSheetToken) { this.callSheetToken = callSheetToken; }
     public void setScoutFilters(ScoutFilters scoutFilters) { this.scoutFilters = scoutFilters; }
+    public void setFollowUpDays(int followUpDays) { this.followUpDays = followUpDays; }
     public void setDescription(String description) { this.description = description; }
 
     /** Blank means "not set": it is stored as null, which the database constraint requires. */

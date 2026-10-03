@@ -55,6 +55,15 @@ public class OutreachDraft extends BaseEntity {
     @Column(name = "reply_token", nullable = false, updatable = false)
     private String replyToken = SecretTokens.newHexToken();
 
+    /** When the follow-up job found this email unanswered for too long; null while it is not waiting on a follow-up. */
+    @Column(name = "follow_up_flagged_at")
+    private Instant followUpFlaggedAt;
+
+    /** The earlier email this one chases; null for a first email. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follow_up_of", updatable = false)
+    private OutreachDraft followUpOf;
+
     protected OutreachDraft() {
     }
 
@@ -86,15 +95,26 @@ public class OutreachDraft extends BaseEntity {
     public void setStatus(OutreachStatus status) { this.status = status; }
     public void setSentAt(Instant sentAt) { this.sentAt = sentAt; }
 
+    public String getReplyToken() { return replyToken; }
+    public Instant getFollowUpFlaggedAt() { return followUpFlaggedAt; }
+    public OutreachDraft getFollowUpOf() { return followUpOf; }
+
+    /** Makes this draft the follow-up of {@code earlier}, which then no longer waits on one. */
+    public void followUp(OutreachDraft earlier) {
+        this.followUpOf = earlier;
+        earlier.followUpFlaggedAt = null;
+    }
+
     /**
      * Moves the draft to {@code next} and keeps {@code sentAt} consistent with it: stamped when the
-     * draft first leaves {@code DRAFT}, cleared when it goes back. The user reports what happened;
-     * nothing here sends an email.
+     * draft first leaves {@code DRAFT}, cleared when it goes back. A draft that is no longer SENT waits on no
+     * follow-up. The user reports what happened; nothing here sends an email.
      */
-    public String getReplyToken() { return replyToken; }
-
     public void changeStatus(OutreachStatus next) {
         this.status = next;
+        if (next != OutreachStatus.SENT) {
+            this.followUpFlaggedAt = null;
+        }
         if (next == OutreachStatus.DRAFT) {
             this.sentAt = null;
         } else if (this.sentAt == null) {

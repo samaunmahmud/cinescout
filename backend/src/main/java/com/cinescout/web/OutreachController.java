@@ -57,12 +57,14 @@ class OutreachController {
 
     /** Who has been written to across the project, and how far each email got. */
     @Operation(summary = "List a project's outreach drafts across all its locations, newest first",
-            description = "Each row names its venue and scene; `status` narrows the list (DRAFT, SENT or REPLIED). The email text is on the draft itself.")
+            description = "Each row names its venue and scene; `status` narrows the list (DRAFT, SENT or REPLIED), and `followUp=true` to "
+                    + "the emails waiting on a follow-up, oldest sent first. The email text is on the draft itself.")
     @GetMapping("/projects/{projectId}/outreach-drafts")
     Mono<PageResponse<ProjectOutreachResponse>> listForProject(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId,
                                                                @RequestParam(required = false) OutreachStatus status,
+                                                               @RequestParam(defaultValue = "false") boolean followUp,
                                                                @Valid @ParameterObject PageQuery page) {
-        return outreach.listForProject(user.id(), projectId, status, page);
+        return outreach.listForProject(user.id(), projectId, status, followUp, page);
     }
 
     /** A location's drafts, newest first. */
@@ -88,6 +90,23 @@ class OutreachController {
     Mono<ResponseEntity<OutreachDraftResponse>> generate(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
                                                          @Valid @RequestBody(required = false) GenerateOutreachRequest request) {
         return service(user).flatMap(s -> s.generate(user.id(), locationId, request))
+                .map(draft -> ResponseEntity.created(URI.create("/api/outreach-drafts/" + draft.id())).body(draft));
+    }
+
+    /**
+     * Has the model write a short chaser for an email marked as sent, saved as a new draft that points at it. The model
+     * sees the first email's subject, the day it went, the venue and the sender: never its text, notes or any reply.
+     */
+    @Operation(summary = "Draft a follow-up to an unanswered email",
+            description = "Only for an email whose status is SENT (409 otherwise). The new draft's subject is \"Re: \" and the first one's; "
+                    + "the first email then stops waiting on a follow-up. Calls a paid service and can take many seconds.")
+    @ApiResponse(responseCode = "201", description = "Created; the Location header points at the new draft")
+    @ApiResponse(responseCode = "409", description = "The email is not marked as sent, or has had a reply")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of AI calls is used up; see Retry-After")
+    @ApiResponse(responseCode = "503", description = "The AI provider is unavailable, or generation is not configured on this server")
+    @PostMapping("/outreach-drafts/{draftId}/follow-up")
+    Mono<ResponseEntity<OutreachDraftResponse>> followUp(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID draftId) {
+        return service(user).flatMap(s -> s.followUp(user.id(), draftId))
                 .map(draft -> ResponseEntity.created(URI.create("/api/outreach-drafts/" + draft.id())).body(draft));
     }
 

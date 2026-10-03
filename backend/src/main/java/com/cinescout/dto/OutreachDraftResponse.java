@@ -8,6 +8,11 @@ import com.cinescout.mail.ReplyAddresses;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * @param followUpFlaggedAt when the email was found unanswered for longer than the project allows; null while it is not
+ *                          waiting on a follow-up
+ * @param followUpOfId      the earlier email this one chases; null for a first email
+ */
 public record OutreachDraftResponse(
         UUID id,
         UUID locationId,
@@ -20,6 +25,8 @@ public record OutreachDraftResponse(
         OutreachStatus status,
         Instant sentAt,
         String replyTo,
+        Instant followUpFlaggedAt,
+        UUID followUpOfId,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -29,6 +36,7 @@ public record OutreachDraftResponse(
                 draft.getRecipientName(), draft.getRecipientEmail(), draft.getSubject(), draft.getBody(),
                 draft.getTone(), draft.getGeneratedBy(), draft.getStatus(), draft.getSentAt(),
                 ReplyAddresses.current().address(draft.getReplyToken()),
+                draft.getFollowUpFlaggedAt(), draft.getFollowUpOf() == null ? null : draft.getFollowUpOf().getId(),
                 draft.getCreatedAt(), draft.getUpdatedAt());
     }
 }

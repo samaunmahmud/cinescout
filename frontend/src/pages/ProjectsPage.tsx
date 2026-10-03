@@ -9,7 +9,7 @@ import { linkButton } from '../components/buttonStyles'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { Card, EmptyState } from '../components/surfaces'
-import { TapeLabel } from '../components/stickers'
+import { Stamp, TapeLabel } from '../components/stickers'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterColours, posterTilt } from '../lib/poster'
 import { sampleProject, sampleScript } from '../lib/sampleScript'
@@ -168,6 +168,12 @@ function ProjectCard({ project }: { project: Project }) {
           ))}
         </div>
         <h2 className="relative font-display text-[2.1rem] leading-[0.95] font-extrabold break-words">{project.title}</h2>
+        {project.followUpCount > 0 && (
+          // Emails gone unanswered too long: stamped across the poster's corner.
+          <Stamp tone="stop" announce className="absolute top-3 right-3 rotate-6 text-xs">
+            {project.followUpCount === 1 ? '1 to follow up' : `${project.followUpCount} to follow up`}
+          </Stamp>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-4 p-5">
         {project.description ? (

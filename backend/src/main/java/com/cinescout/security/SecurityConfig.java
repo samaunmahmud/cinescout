@@ -85,14 +85,15 @@ class SecurityConfig {
     }
 
     /**
-     * The inbound-mail webhook has a chain of its own, ahead of the main one: the provider sends its own HTTP Basic
-     * credentials, which are not a user's and must not be tried as one. The controller checks them.
+     * The inbound-mail webhook and the job runner have a chain of their own, ahead of the main one: the mail provider
+     * sends its own HTTP Basic credentials and the job timer a shared secret, neither of which is a user's login or may
+     * be tried as one. Their controllers check them.
      */
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     SecurityWebFilterChain inboundMailChain(ServerHttpSecurity http) {
         return http
-                .securityMatcher(ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/api/inbound/*"))
+                .securityMatcher(ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/api/inbound/*", "/api/internal/jobs/*"))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)

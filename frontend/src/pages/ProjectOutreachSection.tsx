@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Mail } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { OutreachStatus, Page, ProjectOutreach } from '../api/types'
+import type { OutreachFilter, Page, ProjectOutreach } from '../api/types'
 import { useSession } from '../auth/context'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
@@ -23,7 +23,7 @@ export function ProjectOutreachSection({ projectId }: { projectId: string }) {
   const [params, setParams] = useSearchParams()
   const [page, setPage] = usePageParam()
   const rawStatus = params.get('status')
-  const status = isOutreachStatus(rawStatus) ? rawStatus : null
+  const status: OutreachFilter | null = rawStatus === 'FOLLOW_UP' || isOutreachStatus(rawStatus) ? rawStatus : null
 
   const drafts = useQuery({
     queryKey: queryKeys.projectOutreachPage(projectId, status, page),
@@ -33,7 +33,7 @@ export function ProjectOutreachSection({ projectId }: { projectId: string }) {
   })
   useStayInRange(drafts.data, setPage)
 
-  const selectStatus = (next: OutreachStatus | null) =>
+  const selectStatus = (next: OutreachFilter | null) =>
     setParams((current) => {
       const updated = new URLSearchParams(current)
       if (next) updated.set('status', next)
@@ -42,9 +42,10 @@ export function ProjectOutreachSection({ projectId }: { projectId: string }) {
       return updated
     })
 
-  const options: { status: OutreachStatus | null; label: string }[] = [
+  const options: { status: OutreachFilter | null; label: string }[] = [
     { status: null, label: 'All' },
     ...outreachStatuses.map((value) => ({ status: value, label: value === 'DRAFT' ? 'Not sent' : outreachStatusLabels[value].label })),
+    { status: 'FOLLOW_UP', label: 'Follow up' },
   ]
 
   return (
@@ -80,7 +81,9 @@ export function ProjectOutreachSection({ projectId }: { projectId: string }) {
         <ErrorAlert error={drafts.error} onRetry={() => drafts.refetch()} />
       ) : drafts.data.items.length === 0 ? (
         <EmptyState icon={Mail}>
-          {status
+          {status === 'FOLLOW_UP'
+            ? 'Nothing to chase. An email shows up here when it has gone unanswered for longer than the project allows.'
+            : status
             ? 'No emails in this state.'
             : 'No emails yet. Open a venue and have CineScout draft the email to its owner; it shows up here with all the others.'}
         </EmptyState>
@@ -128,6 +131,8 @@ function OutreachRow({ draft }: { draft: ProjectOutreach }) {
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1 text-sm text-muted">
         <Badge tone={status.tone}>{status.label}</Badge>
+        {draft.followUpFlaggedAt && <Badge tone="red">Follow up</Badge>}
+        {draft.followUpOfId && <span className="font-script text-xs">Follow-up</span>}
         <span>{draft.sentAt ? `Sent ${dateFormat.format(new Date(draft.sentAt))}` : `Written ${dateFormat.format(new Date(draft.createdAt))}`}</span>
       </div>
     </article>

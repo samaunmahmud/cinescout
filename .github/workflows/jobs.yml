@@ -1,0 +1,35 @@
+# Runs CineScout's scheduled jobs on the deployed app. Render's free tier sleeps when idle, so the app's own timer
+# cannot be relied on; this wakes it and runs each job through POST /api/internal/jobs/<name>.
+# Needs two repository secrets: CINESCOUT_URL (e.g. https://cinescout.example.com) and JOBS_SECRET (the same value as
+# the app's JOBS_SECRET). Without them the run does nothing.
+name: Scheduled jobs
+
+on:
+  schedule:
+    - cron: "17 7 * * *"   # daily, 07:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Run jobs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CINESCOUT_URL: ${{ secrets.CINESCOUT_URL }}
+      JOBS_SECRET: ${{ secrets.JOBS_SECRET }}
+    steps:
+      - name: Follow-up nudges
+        run: |
+          if [ -z "$CINESCOUT_URL" ] || [ -z "$JOBS_SECRET" ]; then
+            echo "CINESCOUT_URL or JOBS_SECRET is not set; nothing to do."
+            exit 0
+          fi
+          # A sleeping free instance takes a minute or so to wake: retry with room to spare.
+          curl --fail-with-body --silent --show-error --retry 4 --retry-delay 20 --retry-all-errors --max-time 120 \
+            -X POST -H "X-Job-Secret: $JOBS_SECRET" "$CINESCOUT_URL/api/internal/jobs/follow-ups"

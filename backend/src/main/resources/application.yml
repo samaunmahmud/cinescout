@@ -26,6 +26,10 @@ cinescout:
       provider: ${MAIL_INBOUND_PROVIDER:}             # postmark
       username: ${MAIL_INBOUND_USERNAME:}             # the HTTP Basic credentials in the provider's webhook URL
       password: ${MAIL_INBOUND_PASSWORD:}
+  jobs:                        # scheduled work (follow-up nudges); see .github/workflows/jobs.yml
+    secret: ${JOBS_SECRET:}                           # X-Job-Secret for POST /api/internal/jobs/<name>; empty = endpoint off
+    scheduler: ${JOBS_SCHEDULER:true}                 # also run them on the app's own timer while it is awake
+    follow-ups: ${JOBS_FOLLOW_UPS_CRON:0 17 * * * *}  # hourly
   files:                       # uploaded files (recce photos). Render's disk is wiped on every deploy: set FILES_STORE=s3
     store: ${FILES_STORE:local}                       # local | s3 (Cloudflare R2 or any S3-compatible store)
     local-dir: ${FILES_DIR:${java.io.tmpdir}/cinescout-files}

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * An outreach email as one row of a project-wide list: who was written to about which venue, for which
- * scene, and how far it got. The email's text stays on the draft itself.
+ * scene, and how far it got, and whether it waits on a follow-up. The email's text stays on the draft itself.
  */
 public record ProjectOutreachResponse(
         UUID id,
@@ -26,6 +26,8 @@ public record ProjectOutreachResponse(
         OutreachTone tone,
         OutreachStatus status,
         Instant sentAt,
+        Instant followUpFlaggedAt,
+        UUID followUpOfId,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -36,6 +38,7 @@ public record ProjectOutreachResponse(
         return new ProjectOutreachResponse(draft.getId(), location.getId(), location.getName(),
                 scene.getId(), scene.getSceneNumber(), scene.getTitle(),
                 draft.getRecipientName(), draft.getRecipientEmail(), draft.getSubject(), draft.getTone(),
-                draft.getStatus(), draft.getSentAt(), draft.getCreatedAt(), draft.getUpdatedAt());
+                draft.getStatus(), draft.getSentAt(), draft.getFollowUpFlaggedAt(),
+                draft.getFollowUpOf() == null ? null : draft.getFollowUpOf().getId(), draft.getCreatedAt(), draft.getUpdatedAt());
     }
 }

@@ -1,4 +1,4 @@
-import type { LocationStatus, OutreachStatus, ProjectStatus } from './types'
+import type { LocationStatus, OutreachFilter, ProjectStatus } from './types'
 
 /**
  * React Query cache keys, one place so invalidation matches what was cached. A `...List` key covers every cached
@@ -23,6 +23,7 @@ export const queryKeys = {
   callSheetLink: (projectId: string) => ['projects', 'call-sheet-link', projectId] as const,
   activity: (projectId: string, kind: string | null, page: number) => ['projects', 'activity', projectId, kind, page] as const,
   scoutFilters: (projectId: string) => ['projects', 'scout-filters', projectId] as const,
+  projectSettings: (projectId: string) => ['projects', 'settings', projectId] as const,
   crew: (projectId: string) => ['projects', 'crew', projectId] as const,
   invite: (token: string) => ['invites', token] as const,
   publicCallSheet: (token: string) => ['public', 'call-sheet', token] as const,
@@ -38,7 +39,7 @@ export const queryKeys = {
   outreachList: (locationId: string) => ['outreach', 'list', locationId] as const,
   outreachPage: (locationId: string, page: number) => ['outreach', 'list', locationId, page] as const,
   projectOutreachList: (projectId: string) => ['outreach', 'project', projectId] as const,
-  projectOutreachPage: (projectId: string, status: OutreachStatus | null, page: number) =>
+  projectOutreachPage: (projectId: string, status: OutreachFilter | null, page: number) =>
     ['outreach', 'project', projectId, status, page] as const,
   replies: (draftId: string) => ['outreach', 'replies', draftId] as const,
   videos: (locationId: string) => ['videos', locationId] as const,
