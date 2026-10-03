@@ -1,11 +1,13 @@
 package com.cinescout.service;
 
 import com.cinescout.domain.DirectorLink;
+import com.cinescout.domain.DirectorResponse;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Project;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
+import com.cinescout.domain.VenueComment;
 import com.cinescout.dto.DirectorLinkRequest;
 import com.cinescout.dto.DirectorLinkResponse;
 import com.cinescout.dto.DirectorResponseRequest;
@@ -19,6 +21,7 @@ import com.cinescout.repository.DirectorLinkRepository;
 import com.cinescout.repository.DirectorResponseRepository;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.UserRepository;
+import com.cinescout.repository.VenueCommentRepository;
 import com.cinescout.security.SecretTokens;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -46,15 +49,17 @@ public class DirectorLinkService {
 
     private final DirectorLinkRepository links;
     private final DirectorResponseRepository responses;
+    private final VenueCommentRepository comments;
     private final LocationRepository locations;
     private final UserRepository users;
     private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public DirectorLinkService(DirectorLinkRepository links, DirectorResponseRepository responses, LocationRepository locations,
-                               UserRepository users, ProjectAccess access, BlockingTransactions db) {
+    public DirectorLinkService(DirectorLinkRepository links, DirectorResponseRepository responses, VenueCommentRepository comments,
+                               LocationRepository locations, UserRepository users, ProjectAccess access, BlockingTransactions db) {
         this.links = links;
         this.responses = responses;
+        this.comments = comments;
         this.locations = locations;
         this.users = users;
         this.access = access;
@@ -141,13 +146,31 @@ public class DirectorLinkService {
                     .filter(location -> shows(link, location))
                     .orElseThrow(() -> new NotFoundException("Venue", locationId));
             String name = request.guestName().strip();
-            responses.upsert(venue.getId(), name, request.verdict().name(), blankToNull(request.comment()));
-            return responses.findByLocations(List.of(venue.getId())).stream()
+            String comment = blankToNull(request.comment());
+            responses.upsert(venue.getId(), name, request.verdict().name(), comment);
+            DirectorResponse saved = responses.findByLocations(List.of(venue.getId())).stream()
                     .filter(response -> response.getGuestName().equalsIgnoreCase(name))
                     .findFirst()
-                    .map(DirectorResponseResponse::from)
                     .orElseThrow();
+            followInThread(locations.getReferenceById(venue.getId()), saved, comment);
+            return DirectorResponseResponse.from(saved);
         });
+    }
+
+    /**
+     * The guest's comment, in the venue's comment thread: made with their first comment, kept in step as they change
+     * their call, and taken away when they clear it.
+     */
+    private void followInThread(Location venue, DirectorResponse response, String comment) {
+        Optional<VenueComment> existing = comments.findByDirectorResponseId(response.getId());
+        if (comment == null) {
+            existing.ifPresent(comments::delete);
+        } else if (existing.isPresent()) {
+            existing.get().followGuest(response.getGuestName(), comment);
+            comments.save(existing.get());
+        } else {
+            comments.save(VenueComment.byGuest(venue, response, response.getGuestName(), comment));
+        }
     }
 
     private static boolean shows(DirectorLink link, Location location) {

@@ -519,6 +519,30 @@ export interface LocationVideos {
 }
 
 /** A call sheet as the crew sees it through a shared link. */
+/** A comment on a venue; `guest` when it came through a director link, under the name the guest typed. */
+export interface VenueComment {
+  id: string
+  locationId: string
+  parentId: string | null
+  /** Null for a guest, or for a member whose account is gone (then `authorName` is null too). */
+  authorId: string | null
+  authorName: string | null
+  guest: boolean
+  body: string
+  mentions: { userId: string; displayName: string }[]
+  edited: boolean
+  createdAt: string
+  updatedAt: string
+  /** On a thread's first comment: every reply, oldest first. */
+  replies: VenueComment[]
+}
+
+export interface CommentRequest {
+  body: string
+  parentId?: string | null
+  mentions: string[]
+}
+
 /** A guest's call on a venue through a director link. */
 export type DirectorVerdict = 'APPROVE' | 'MAYBE' | 'NO'
 

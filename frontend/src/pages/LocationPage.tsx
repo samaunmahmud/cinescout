@@ -22,6 +22,7 @@ import {
   Mail,
   MapPin as PinIcon,
   MapPinned,
+  MessagesSquare,
   NotebookPen,
   Phone,
   Quote,
@@ -44,6 +45,7 @@ import { looksLikeEmail } from '../lib/email'
 import { formatCoordinates, osmLink, parseCoordinates, roundCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
+import { CommentsSection } from './CommentsSection'
 import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
@@ -215,6 +217,7 @@ function LocationDetails({ location }: { location: Location }) {
             <Position location={location} />
           </div>
         )}
+        {tab === 'comments' && <CommentsSection location={location} projectId={scene.data?.projectId} />}
         {tab === 'videos' && <VideosSection location={location} />}
         {tab === 'logistics' && <LogisticsSection location={location} />}
         {tab === 'outreach' && <OutreachSection location={location} />}
@@ -224,10 +227,11 @@ function LocationDetails({ location }: { location: Location }) {
   )
 }
 
-type TabKey = 'overview' | 'videos' | 'logistics' | 'outreach'
+type TabKey = 'overview' | 'comments' | 'videos' | 'logistics' | 'outreach'
 
 const tabs: TabItem<TabKey>[] = [
   { key: 'overview', label: 'Overview', icon: LayoutGrid },
+  { key: 'comments', label: 'Comments', icon: MessagesSquare },
   { key: 'videos', label: 'Videos', icon: Clapperboard },
   { key: 'logistics', label: 'Logistics', icon: Sun },
   { key: 'outreach', label: 'Outreach', icon: Mail },

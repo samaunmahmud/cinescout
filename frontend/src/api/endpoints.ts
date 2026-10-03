@@ -4,6 +4,7 @@ import type {
   BatchLogisticsResult,
   BatchParseResult,
   ChangePasswordRequest,
+  CommentRequest,
   CreateLocationRequest,
   CreateProjectRequest,
   DirectorCall,
@@ -39,6 +40,7 @@ import type {
   UpdateContactRequest,
   UpdateCoordinatesRequest,
   UpdateLocationRequest,
+  VenueComment,
   UpdateOutreachRequest,
   UpdateProjectRequest,
   User,
@@ -141,6 +143,14 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<Page<DirectorCall>>(`/api/locations/${encodeURIComponent(locationId)}/director-responses?page=0&size=100`),
       /** The calls on a scene's venues, latest first. */
       forScene: (sceneId: string) => call<Page<DirectorCall>>(`/api/scenes/${encodeURIComponent(sceneId)}/director-responses?page=0&size=100`),
+    },
+    comments: {
+      /** The venue's threads, oldest first, each with all its replies. */
+      list: (locationId: string, page = 0) => call<Page<VenueComment>>(`/api/locations/${encodeURIComponent(locationId)}/comments?${pageQuery(page)}`),
+      post: (locationId: string, body: CommentRequest) =>
+        call<VenueComment>(`/api/locations/${encodeURIComponent(locationId)}/comments`, { method: 'POST', body }),
+      edit: (id: string, body: Omit<CommentRequest, 'parentId'>) => call<VenueComment>(`/api/comments/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      remove: (id: string) => call<void>(`/api/comments/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
     invites: {
       preview: (token: string) => call<InvitePreview>(`/api/invites/${encodeURIComponent(token)}`),
