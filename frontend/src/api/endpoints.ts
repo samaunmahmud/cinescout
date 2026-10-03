@@ -16,6 +16,7 @@ import type {
   Crew,
   GenerateOutreachRequest,
   InvitePreview,
+  LibraryVenue,
   LoginRequest,
   Location,
   LocationStatus,
@@ -38,6 +39,7 @@ import type {
   Schedule,
   SceneRequest,
   ScoutFilters,
+  TagCount,
   ScoutingResult,
   ScriptImport,
   UpdateContactRequest,
@@ -161,6 +163,26 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<VenueComment>(`/api/locations/${encodeURIComponent(locationId)}/comments`, { method: 'POST', body }),
       edit: (id: string, body: Omit<CommentRequest, 'parentId'>) => call<VenueComment>(`/api/comments/${encodeURIComponent(id)}`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/comments/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    library: {
+      /** Newest first; `search` matches the name, address, notes or a tag; `tag` keeps one tag. */
+      list: (search: string, tag: string | null, page = 0) => {
+        const query = new URLSearchParams()
+        if (search.trim()) query.set('q', search.trim())
+        if (tag) query.set('tag', tag)
+        query.set('page', String(page))
+        query.set('size', String(PAGE_SIZE))
+        return call<Page<LibraryVenue>>(`/api/library?${query.toString().replace(/\+/g, '%20')}`)
+      },
+      tags: () => call<TagCount[]>('/api/library/tags'),
+      /** Saving the same venue again returns the copy already saved. */
+      save: (locationId: string) => call<LibraryVenue>('/api/library', { method: 'POST', body: { locationId } }),
+      update: (id: string, body: { name: string; tags: string[]; notes: string | null }) =>
+        call<LibraryVenue>(`/api/library/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      remove: (id: string) => call<void>(`/api/library/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** Copies the venue into the scene, without an AI call; 409 when the scene has a venue from the same page. */
+      addToScene: (sceneId: string, libraryVenueId: string) =>
+        call<Location>(`/api/scenes/${encodeURIComponent(sceneId)}/locations/from-library`, { method: 'POST', body: { libraryVenueId } }),
     },
     invites: {
       preview: (token: string) => call<InvitePreview>(`/api/invites/${encodeURIComponent(token)}`),

@@ -1,3 +1,4 @@
+import { LibraryPicker } from '../components/LibraryPicker'
 import { ChevronLeft } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
@@ -109,6 +110,7 @@ export function NewLocationPage() {
           </div>
         </form>
       </section>
+      <LibraryPicker sceneId={sceneId} />
     </div>
   )
 }

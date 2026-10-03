@@ -1,4 +1,4 @@
-import { Clapperboard, LogOut } from 'lucide-react'
+import { BookMarked, Clapperboard, LogOut } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useAuth, useSession } from '../auth/context'
 import { ClapperMark } from './stickers'
@@ -43,6 +43,17 @@ export function Layout() {
               >
                 <Clapperboard aria-hidden className="size-4" />
                 Productions
+              </NavLink>
+              <NavLink
+                to="/library"
+                className={({ isActive }) =>
+                  `ml-1 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-cue ${
+                    isActive ? 'bg-white text-ink' : 'text-fog hover:text-white'
+                  }`
+                }
+              >
+                <BookMarked aria-hidden className="size-4" />
+                My locations
               </NavLink>
             </nav>
           </div>

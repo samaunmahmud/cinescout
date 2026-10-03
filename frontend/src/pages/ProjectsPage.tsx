@@ -4,7 +4,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Page, Project, ProjectStatus } from '../api/types'
 import { useSession } from '../auth/context'
-import { Clapperboard, Film, MapPin, Plus } from 'lucide-react'
+import { BookMarked, Clapperboard, Film, MapPin, Plus } from 'lucide-react'
+import { linkButton } from '../components/buttonStyles'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { Card, EmptyState } from '../components/surfaces'
@@ -59,6 +60,10 @@ export function ProjectsPage() {
         </div>
         {!creating && (
           <div className="flex flex-wrap items-center gap-3">
+            <Link to="/library" className={linkButton('ghost')}>
+              <BookMarked aria-hidden className="size-4" />
+              My locations
+            </Link>
             {(projects.data?.items.length ?? 0) > 0 && <SampleProjectButton />}
             <Button onClick={() => setCreating(true)} className="py-3">
               <Plus aria-hidden className="size-4" />

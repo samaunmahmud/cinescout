@@ -7,6 +7,7 @@ import type { Location } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { DirectorsCall } from '../components/DirectorsCall'
+import { SaveToLibrary } from '../components/SaveToLibrary'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
 import {
   Banknote,
@@ -166,6 +167,7 @@ function LocationDetails({ location }: { location: Location }) {
             {location.status === 'REJECTED' && location.rejectionReason && (
               <span className="font-marker text-[15px] text-stop-ink">Passed: {location.rejectionReason}</span>
             )}
+            <SaveToLibrary locationId={location.id} />
             {canEdit && (
               <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
                 Remove

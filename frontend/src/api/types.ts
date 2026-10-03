@@ -406,6 +406,34 @@ export interface UpdateOutreachRequest {
 }
 
 /** What one scouting run saved for a scene. */
+/** A venue in the user's own library: the facts that hold whatever the scene, with their tags and notes. */
+export interface LibraryVenue {
+  id: string
+  /** The scouted venue it was saved from, while that still exists. */
+  sourceLocationId: string | null
+  name: string
+  address: string | null
+  latitude: number | null
+  longitude: number | null
+  sourceUrl: string | null
+  imageUrl: string | null
+  bookingFriction: BookingFriction | null
+  frictionNote: string | null
+  footprintWarnings: string[]
+  contactName: string | null
+  contactEmail: string | null
+  contactPhone: string | null
+  tags: string[]
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TagCount {
+  tag: string
+  venues: number
+}
+
 /** What a scouting run keeps to beyond the project's area; every field optional. */
 export interface ScoutFilters {
   /** Where the radius is measured from, as an address; or a spot on the map in the two fields below. */

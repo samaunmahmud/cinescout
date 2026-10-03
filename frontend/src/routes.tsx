@@ -34,6 +34,7 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/', element: <Navigate to="/projects" replace /> },
           { path: '/projects', element: <ProjectsPage /> },
+          { path: '/library', lazy: lazyPage(() => import('./pages/LibraryPage').then((m) => ({ default: m.LibraryPage }))) },
           { path: '/account', lazy: lazyPage(() => import('./pages/AccountPage').then((m) => ({ default: m.AccountPage }))) },
           { path: '/projects/:projectId', element: <ProjectPage /> },
           { path: '/projects/:projectId/settings', lazy: lazyPage(() => import('./pages/ProjectSettingsPage').then((m) => ({ default: m.ProjectSettingsPage }))) },
