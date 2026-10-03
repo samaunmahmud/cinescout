@@ -152,6 +152,16 @@ export interface ScheduleConflict {
   message: string
 }
 
+/** One version of a venue's location release (a PDF template). */
+export interface Agreement {
+  id: string
+  locationId: string
+  version: number
+  sizeBytes: number
+  createdByName: string | null
+  createdAt: string
+}
+
 /** How far booking a venue for a day has got, or that it cannot be had. */
 export type AvailabilityState = 'PENCILLED' | 'HELD' | 'CONFIRMED' | 'UNAVAILABLE'
 

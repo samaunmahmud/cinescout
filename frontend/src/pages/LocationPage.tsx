@@ -47,6 +47,7 @@ import { looksLikeEmail } from '../lib/email'
 import { formatCoordinates, osmLink, parseCoordinates, roundCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
+import { AgreementsSection } from './AgreementsSection'
 import { AvailabilitySection } from './AvailabilitySection'
 import { CommentsSection } from './CommentsSection'
 import { LogisticsSection } from './LogisticsSection'
@@ -240,7 +241,12 @@ function LocationDetails({ location }: { location: Location }) {
         {tab === 'comments' && <CommentsSection location={location} projectId={scene.data?.projectId} />}
         {tab === 'videos' && <VideosSection location={location} />}
         {tab === 'logistics' && <LogisticsSection location={location} />}
-        {tab === 'outreach' && <OutreachSection location={location} />}
+        {tab === 'outreach' && (
+          <div className="space-y-10">
+            <OutreachSection location={location} />
+            <AgreementsSection location={location} />
+          </div>
+        )}
       </Tabs>
     </div>
     </ProjectRoleProvider>

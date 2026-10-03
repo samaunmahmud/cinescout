@@ -15,6 +15,7 @@ function serverFor(videos: () => Response) {
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
+    'GET /api/locations/l1/agreements?page=0&size=50': () => json(pageOf([], { size: 50 })),
     'GET /api/locations/l1/videos': videos,
   })
 }

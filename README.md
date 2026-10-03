@@ -215,6 +215,14 @@ next morning). The Schedule tab lists clashes: a confirmed venue unavailable on 
 before its day, and, as a warning, two scenes at the same venue on one day at overlapping or unset times. The same
 venue on several scenes is matched by name or street address. Shared call sheets show the times but no holds.
 
+## Location releases
+
+The venue's Outreach tab makes a location release as a PDF (Apache PDFBox, no external service): a clearly labelled
+template filled in from the production, the venue, its contact and quote, the scene's shoot dates, call and wrap times
+and estimated crew size, with blanks for the rest and "Template only — not legal advice. Have it reviewed before
+signing." on every page. Each one is a new version kept in the file store (30 a venue at most), downloaded by members
+only through `GET /api/agreements/{id}/file`.
+
 ## Recce photos
 
 Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,

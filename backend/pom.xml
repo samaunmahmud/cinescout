@@ -25,6 +25,7 @@
         <resilience4j.version>2.4.0</resilience4j.version>
         <springdoc.version>2.8.17</springdoc.version>
         <metadata-extractor.version>2.21.0</metadata-extractor.version>
+        <pdfbox.version>3.0.3</pdfbox.version>
     </properties>
 
     <dependencies>
@@ -92,6 +93,19 @@
             <groupId>com.drewnoakes</groupId>
             <artifactId>metadata-extractor</artifactId>
             <version>${metadata-extractor.version}</version>
+        </dependency>
+
+        <!-- Writes location agreements as PDF; Spring's own commons-logging bridge stands in for the logging API -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Circuit breaker for the LLM and search dependencies (retry uses Reactor's own backoff) -->

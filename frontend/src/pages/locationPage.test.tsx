@@ -15,6 +15,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
+    'GET /api/locations/l1/agreements?page=0&size=50': () => json(pageOf([], { size: 50 })),
     'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
   })
@@ -215,6 +216,7 @@ describe('adding a venue by hand', () => {
       'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([])),
       'POST /api/scenes/s1/locations': () => json(created, 201),
       'GET /api/locations/l9/outreach-drafts?page=0&size=24': () => json(pageOf([])),
+      'GET /api/locations/l9/agreements?page=0&size=50': () => json(pageOf([], { size: 50 })),
       'GET /api/locations/l9/videos': () => json(locationVideos({ videos: [] })),
       'GET /api/locations/l9/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
       'GET /api/locations/l9/photos?page=0&size=30': () => json(pageOf([], { size: 30 })),

@@ -3,6 +3,7 @@ import type {
   Activity,
   ActivityKind,
   AddMemberResult,
+  Agreement,
   Availability,
   AvailabilityRequest,
   BatchLogisticsResult,
@@ -296,6 +297,16 @@ export function createApi(onUnauthorized: () => void = () => {}) {
        */
       refreshLogistics: (id: string) =>
         call<LogisticsReport>(`/api/locations/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
+    },
+    agreements: {
+      /** A venue's location releases, newest version first. */
+      list: (locationId: string) => call<Page<Agreement>>(`/api/locations/${encodeURIComponent(locationId)}/agreements?page=0&size=50`),
+      /** Makes a new version from the venue's details; 409 once the venue has 30. */
+      generate: (locationId: string, productionCompany: string | null) =>
+        call<Agreement>(`/api/locations/${encodeURIComponent(locationId)}/agreements`, { method: 'POST', body: { productionCompany } }),
+      /** The PDF, to save. */
+      download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
+      remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
     availability: {
       /** A venue's recorded days, earliest first. */
