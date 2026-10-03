@@ -9,6 +9,7 @@ import { useSession } from '../auth/context'
 import { useUpdateLocation } from '../components/locationHooks'
 import { FitScore, StatusSelect } from '../components/locationParts'
 import { callsByVenue } from '../components/directorCalls'
+import { recceAnswerText, recceQuestions } from '../lib/recce'
 import { DirectorsCall } from '../components/DirectorsCall'
 import { EmptyState, Eyebrow } from '../components/surfaces'
 import { Badge, ErrorAlert, Spinner } from '../components/ui'
@@ -79,6 +80,9 @@ export function ComparePage() {
   )
 }
 
+/** The tech recce answers worth comparing side by side. */
+const recceRows = ['sockets', 'threePhase', 'ceilingHeightM', 'stairsOrLift', 'stepFree', 'ambientNoise', 'phoneSignal', 'toilets', 'holdingSpace']
+
 function ComparisonTable({ sceneId, venues }: { sceneId: string; venues: Location[] }) {
   const { api } = useSession()
   const directorCalls = useQuery({
@@ -121,6 +125,10 @@ function ComparisonTable({ sceneId, venues }: { sceneId: string; venues: Locatio
     { label: 'First shoot day', cell: (venue) => <FirstDay venue={venue} /> },
     { label: 'Your notes', cell: (venue) => (venue.notes ? <span className="whitespace-pre-line italic">{venue.notes}</span> : <Muted>—</Muted>) },
     { label: 'Status', cell: (venue) => <Status venue={venue} /> },
+    ...recceRows.map((name) => {
+      const question = recceQuestions.find((q) => q.name === name)!
+      return { label: question.label, cell: (venue: Location) => recceAnswerText(question, venue.recce[name]?.value) ?? <Muted>Not checked</Muted> }
+    }),
     { label: 'Director’s call', cell: (venue) => <DirectorsCall compact calls={calls.get(venue.id) ?? []} /> },
   ]
   return (

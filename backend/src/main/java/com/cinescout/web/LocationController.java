@@ -7,13 +7,15 @@ import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectLocationResponse;
 import com.cinescout.dto.UpdateContactRequest;
+import com.cinescout.dto.UpdateCoordinatesRequest;
+import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.imagery.LocationImageService;
 import com.cinescout.ratelimit.RateLimit;
 import com.cinescout.ratelimit.RateLimiter;
-import com.cinescout.dto.UpdateCoordinatesRequest;
-import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.security.AuthenticatedUser;
 import com.cinescout.service.LocationService;
+import com.cinescout.service.RecceService;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -28,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -50,11 +53,13 @@ class LocationController {
     private static final MediaType CSV = new MediaType("text", "csv", StandardCharsets.UTF_8);
 
     private final LocationService locations;
+    private final RecceService recce;
     private final LocationImageService images;
     private final RateLimiter limits;
 
-    LocationController(LocationService locations, LocationImageService images, RateLimiter limits) {
+    LocationController(LocationService locations, LocationImageService images, RecceService recce, RateLimiter limits) {
         this.locations = locations;
+        this.recce = recce;
         this.images = images;
         this.limits = limits;
     }
@@ -128,6 +133,17 @@ class LocationController {
     }
 
     /** Records who to talk to at the venue, so every email to it can start from there. */
+    @Operation(summary = "Answer questions on a venue's tech recce",
+            description = "Only the answers sent change; null clears one. Fields: sockets (0-200), threePhase, powerNotes, "
+                    + "ceilingHeightM (1-50), loadInRoute, stairsOrLift (GROUND_LEVEL, STAIRS, LIFT, STAIRS_AND_LIFT), stepFree, "
+                    + "ambientNoise (1-5), phoneSignal (NONE, POOR, OK, STRONG), toilets, holdingSpace, notes. Each changed answer "
+                    + "records who gave it and when.")
+    @PatchMapping("/locations/{locationId}/recce")
+    Mono<LocationResponse> recce(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId,
+                                 @RequestBody JsonNode answers) {
+        return recce.update(user.id(), locationId, answers);
+    }
+
     @Operation(summary = "Set a location's contact",
             description = "Who to talk to at the venue (a name, an email address, a phone number) and what they quote for the shoot, each optional. "
                     + "A full replacement: an omitted field is cleared.")

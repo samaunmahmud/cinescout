@@ -270,6 +270,8 @@ export interface Location {
   rejectionReason: string | null
   /** The recce photo shown as its picture (then `imageUrl` is that photo's short-lived link); null for the web page's picture. */
   coverPhotoId: string | null
+  /** The tech recce checklist: answers by field name, each with who gave it and when. */
+  recce: Record<string, RecceEntry>
   /** Who to talk to at the venue, as the user entered it. */
   contactName: string | null
   contactEmail: string | null
@@ -408,6 +410,17 @@ export interface UpdateOutreachRequest {
 }
 
 /** What one scouting run saved for a scene. */
+/** One answer on a venue's tech recce. */
+export interface RecceEntry {
+  value: string | number | boolean
+  by: string | null
+  byName: string | null
+  at: string
+}
+
+/** Answers to change on a tech recce: a value per field name, null to clear one. */
+export type RecceAnswers = Record<string, string | number | boolean | null>
+
 /** A recce photo; `url` and `thumbUrl` are short-lived links (refetch the list for fresh ones). */
 export interface Photo {
   id: string

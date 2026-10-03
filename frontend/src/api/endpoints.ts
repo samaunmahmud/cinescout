@@ -36,6 +36,7 @@ import type {
   ProjectStatus,
   PublicCallSheet,
   PublicShortlist,
+  RecceAnswers,
   RegisterRequest,
   Scene,
   Schedule,
@@ -269,6 +270,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Who to talk to at the venue: a full replacement of name, email and phone. */
       updateContact: (id: string, body: UpdateContactRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/contact`, { method: 'PUT', body }),
+      /** Changes only the tech recce answers sent; null clears one. */
+      answerRecce: (id: string, answers: RecceAnswers) =>
+        call<Location>(`/api/locations/${encodeURIComponent(id)}/recce`, { method: 'PATCH', body: answers }),
       /** Looks up the picture the venue's page offers, once; later calls return the location as it is. */
       lookUpImage: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}/image`, { method: 'POST' }),
       /** Moves the pin; the server drops the cached logistics, which were for the old spot. */

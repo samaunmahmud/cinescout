@@ -76,6 +76,7 @@ export function location(overrides: Partial<Location> = {}): Location {
     notes: null,
     rejectionReason: null,
     coverPhotoId: null,
+    recce: {},
     contactName: null,
     contactEmail: null,
     contactPhone: null,

@@ -15,7 +15,9 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -88,6 +90,11 @@ public class Location extends BaseEntity {
     private LocationStatus status = LocationStatus.SUGGESTED;
 
     private String notes;
+
+    /** The tech recce checklist: answers by field name ({@link RecceField#json()}), each with who gave it. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false)
+    private Map<String, RecceEntry> recce = new LinkedHashMap<>();
 
     /** The recce photo its polaroid shows, over the picture from its web page; null for none. */
     @Column(name = "cover_photo_id")
@@ -171,7 +178,8 @@ public class Location extends BaseEntity {
     public LocationStatus getStatus() { return status; }
     public String getNotes() { return notes; }
     public String getRejectionReason() { return rejectionReason; }
-    public java.util.UUID getCoverPhotoId() { return coverPhotoId; }
+    public UUID getCoverPhotoId() { return coverPhotoId; }
+    public Map<String, RecceEntry> getRecce() { return recce == null ? Map.of() : Map.copyOf(recce); }
     public String getContactName() { return contactName; }
     public String getContactEmail() { return contactEmail; }
     public String getContactPhone() { return contactPhone; }
@@ -195,6 +203,7 @@ public class Location extends BaseEntity {
     public void setNotes(String notes) { this.notes = notes; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public void setCoverPhotoId(UUID coverPhotoId) { this.coverPhotoId = coverPhotoId; }
+    public void setRecce(Map<String, RecceEntry> recce) { this.recce = new LinkedHashMap<>(recce); }
     public void setContactName(String contactName) { this.contactName = contactName; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
     public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }

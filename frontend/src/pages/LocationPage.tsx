@@ -13,6 +13,7 @@ import {
   Banknote,
   ChevronLeft,
   Clapperboard,
+  ClipboardCheck,
   Contact as Contact2,
   Crosshair,
   ExternalLink,
@@ -51,6 +52,7 @@ import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
 import { PhotosSection } from './PhotosSection'
+import { RecceSection } from './RecceSection'
 import { VideosSection } from './VideosSection'
 import { usePageTitle } from '../lib/usePageTitle'
 import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
@@ -226,6 +228,7 @@ function LocationDetails({ location }: { location: Location }) {
             </div>
           </div>
         )}
+        {tab === 'recce' && <RecceSection location={location} />}
         {tab === 'comments' && <CommentsSection location={location} projectId={scene.data?.projectId} />}
         {tab === 'videos' && <VideosSection location={location} />}
         {tab === 'logistics' && <LogisticsSection location={location} />}
@@ -236,11 +239,12 @@ function LocationDetails({ location }: { location: Location }) {
   )
 }
 
-type TabKey = 'overview' | 'comments' | 'videos' | 'logistics' | 'outreach'
+type TabKey = 'overview' | 'comments' | 'recce' | 'videos' | 'logistics' | 'outreach'
 
 const tabs: TabItem<TabKey>[] = [
   { key: 'overview', label: 'Overview', icon: LayoutGrid },
   { key: 'comments', label: 'Comments', icon: MessagesSquare },
+  { key: 'recce', label: 'Recce', icon: ClipboardCheck },
   { key: 'videos', label: 'Videos', icon: Clapperboard },
   { key: 'logistics', label: 'Logistics', icon: Sun },
   { key: 'outreach', label: 'Outreach', icon: Mail },
