@@ -20,7 +20,8 @@ public record RateLimitProperties(
         Rule scouting,
         Rule lookups,
         Rule login,
-        Rule register
+        Rule register,
+        Rule guest
 ) {
 
     public RateLimitProperties {
@@ -29,6 +30,7 @@ public record RateLimitProperties(
         lookups = Objects.requireNonNullElse(lookups, new Rule(120, Duration.ofHours(1)));
         login = Objects.requireNonNullElse(login, new Rule(20, Duration.ofMinutes(10)));
         register = Objects.requireNonNullElse(register, new Rule(5, Duration.ofHours(1)));
+        guest = Objects.requireNonNullElse(guest, new Rule(60, Duration.ofHours(1)));
     }
 
     public Rule rule(RateLimit limit) {
@@ -38,6 +40,7 @@ public record RateLimitProperties(
             case LOOKUPS -> lookups;
             case LOGIN -> login;
             case REGISTER -> register;
+            case GUEST -> guest;
         };
     }
 

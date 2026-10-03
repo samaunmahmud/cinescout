@@ -99,6 +99,9 @@ class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         // Shared call sheets: the token in the path is the permission.
                         .pathMatchers(HttpMethod.GET, "/api/public/call-sheets/*").permitAll()
+                        // Director links: the same, and the guest may answer each venue.
+                        .pathMatchers(HttpMethod.GET, "/api/public/shortlists/*").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/public/shortlists/*/venues/*/response").permitAll()
                         .pathMatchers("/api/**", "/actuator/**").authenticated()
                         // The web app's own files and pages, when the backend serves them (see WebAppConfig):
                         // nothing in them is private; everything the app shows comes from the API above.

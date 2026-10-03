@@ -9,6 +9,7 @@ import { FitScore, LocationBadges, StatusSelect } from '../components/locationPa
 import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
+import { DirectorLinkPanel } from '../components/DirectorLinkPanel'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { EmptyState, Section } from '../components/surfaces'
@@ -118,6 +119,7 @@ export function ProjectLocationsSection({ projectId }: { projectId: string }) {
             ))}
           </div>
           <Pager data={locations.data} onChange={setPage} label="Location pages" />
+          <DirectorLinkPanel scope={{ kind: 'project', id: projectId }} />
         </>
       )}
     </Section>

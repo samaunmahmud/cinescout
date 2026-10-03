@@ -12,5 +12,7 @@ public enum RateLimit {
     /** Failed logins (the login form and HTTP Basic alike), against password guessing. Per client address. */
     LOGIN,
     /** New accounts, so limits per user cannot be dodged by opening more accounts. Per client address. */
-    REGISTER
+    REGISTER,
+    /** What visitors without an account write through a shared link (a director's calls). Per client address. */
+    GUEST
 }

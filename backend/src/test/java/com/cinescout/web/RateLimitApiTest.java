@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
         "cinescout.rate-limits.ai.capacity=2", "cinescout.rate-limits.ai.period=1h",
         "cinescout.rate-limits.login.capacity=3", "cinescout.rate-limits.login.period=10m",
         "cinescout.rate-limits.register.capacity=3", "cinescout.rate-limits.register.period=1h",
+        "cinescout.rate-limits.guest.capacity=2", "cinescout.rate-limits.guest.period=1h",
         "server.forward-headers-strategy=framework",
         "cinescout.llm.watsonx.api-key=dummy", "cinescout.llm.watsonx.project-id=dummy", "cinescout.llm.watsonx.model-id=dummy",
         "cinescout.search.parallel.api-key=dummy"
@@ -172,5 +173,29 @@ class RateLimitApiTest extends ApiTest {
                 .expectBody().jsonPath("$.detail").value(detail -> assertThat((String) detail).startsWith("Too many accounts"));
         registerFrom("192.0.2.11", "Elsewhere");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM users", Long.class)).isEqualTo(4);
+    }
+
+    @Test
+    void answersThroughADirectorLinkAreLimitedPerAddress() {
+        Account ada = registerFrom("192.0.2.30", "Ada");
+        String scene = scene(ada);
+        String venue = ada.client().post().uri("/api/scenes/" + scene + "/locations").bodyValue(Map.of("name", "Rooftop"))
+                .exchange().expectStatus().isCreated().expectBody(JsonNode.class).returnResult().getResponseBody().path("id").asText();
+        ada.client().put().uri("/api/locations/" + venue).bodyValue(Map.of("status", "SHORTLISTED")).exchange().expectStatus().isOk();
+        String token = ada.client().post().uri("/api/scenes/" + scene + "/director-link").exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody().path("token").asText();
+        String uri = "/api/public/shortlists/" + token + "/venues/" + venue + "/response";
+
+        for (int i = 0; i < 2; i++) {
+            web.post().uri(uri).header(XFF, "192.0.2.31").bodyValue(Map.of("guestName", "Wes", "verdict", "MAYBE"))
+                    .exchange().expectStatus().isOk();
+        }
+        web.post().uri(uri).header(XFF, "192.0.2.31").bodyValue(Map.of("guestName", "Wes", "verdict", "APPROVE"))
+                .exchange()
+                .expectStatus().isEqualTo(429)
+                .expectHeader().exists("Retry-After")
+                .expectBody().jsonPath("$.detail").value(detail -> assertThat((String) detail).startsWith("Too many answers"));
+        web.post().uri(uri).header(XFF, "192.0.2.32").bodyValue(Map.of("guestName", "Wes", "verdict", "APPROVE"))
+                .exchange().expectStatus().isOk();
     }
 }

@@ -18,6 +18,7 @@ function server(locations: Location[], extra: Parameters<typeof fakeServer>[0] =
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(locations)),
     'GET /api/scenes/s1/locations?page=0&size=100': () => json(pageOf(locations, { size: 100 })),
+    'GET /api/scenes/s1/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
     ...extra,
   })
 }

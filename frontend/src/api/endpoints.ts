@@ -6,6 +6,10 @@ import type {
   ChangePasswordRequest,
   CreateLocationRequest,
   CreateProjectRequest,
+  DirectorCall,
+  DirectorCallRequest,
+  DirectorLink,
+  DirectorScope,
   Crew,
   GenerateOutreachRequest,
   InvitePreview,
@@ -25,6 +29,7 @@ import type {
   ProjectRole,
   ProjectStatus,
   PublicCallSheet,
+  PublicShortlist,
   RegisterRequest,
   Scene,
   Schedule,
@@ -45,8 +50,18 @@ export const PAGE_SIZE = 24
 const pageQuery = (page: number) => `page=${page}&size=${PAGE_SIZE}`
 
 /** What needs no login: a shared call sheet, whose token is the permission. */
+const directorBase = (scope: DirectorScope) => `/api/${scope.kind === 'project' ? 'projects' : 'scenes'}/${encodeURIComponent(scope.id)}`
+
 export const publicApi = {
   callSheet: (token: string) => request<PublicCallSheet>(`/api/public/call-sheets/${encodeURIComponent(token)}`),
+  /** A director link's shortlisted venues, a page at a time. */
+  shortlist: (token: string, page = 0) => request<PublicShortlist>(`/api/public/shortlists/${encodeURIComponent(token)}?${pageQuery(page)}`),
+  /** A guest's call on one venue; the same name answering again replaces the earlier call. */
+  answer: (token: string, locationId: string, body: DirectorCallRequest) =>
+    request<DirectorCall>(`/api/public/shortlists/${encodeURIComponent(token)}/venues/${encodeURIComponent(locationId)}/response`, {
+      method: 'POST',
+      body,
+    }),
 }
 
 export const authApi = {
@@ -113,6 +128,19 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       transfer: (id: string, userId: string) => call<Crew>(`/api/projects/${encodeURIComponent(id)}/transfer`, { method: 'POST', body: { userId } }),
       revokeInvite: (id: string, inviteId: string) =>
         call<void>(`/api/projects/${encodeURIComponent(id)}/invites/${encodeURIComponent(inviteId)}`, { method: 'DELETE' }),
+    },
+    director: {
+      /** The link for the project or the scene; 404 while there is none. */
+      link: (scope: DirectorScope) => call<DirectorLink>(`${directorBase(scope)}/director-link`),
+      /** A new link, replacing the old one. Only the owner may set `showPrivate`. */
+      share: (scope: DirectorScope, showPrivate: boolean) =>
+        call<DirectorLink>(`${directorBase(scope)}/director-link`, { method: 'POST', body: { showPrivate } }),
+      stop: (scope: DirectorScope) => call<void>(`${directorBase(scope)}/director-link`, { method: 'DELETE' }),
+      /** The calls on one venue, latest first (one per guest name, so few). */
+      forLocation: (locationId: string) =>
+        call<Page<DirectorCall>>(`/api/locations/${encodeURIComponent(locationId)}/director-responses?page=0&size=100`),
+      /** The calls on a scene's venues, latest first. */
+      forScene: (sceneId: string) => call<Page<DirectorCall>>(`/api/scenes/${encodeURIComponent(sceneId)}/director-responses?page=0&size=100`),
     },
     invites: {
       preview: (token: string) => call<InvitePreview>(`/api/invites/${encodeURIComponent(token)}`),

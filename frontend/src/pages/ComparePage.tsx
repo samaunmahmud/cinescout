@@ -8,6 +8,8 @@ import type { Location, NoiseLevel, Page } from '../api/types'
 import { useSession } from '../auth/context'
 import { useUpdateLocation } from '../components/locationHooks'
 import { FitScore, StatusSelect } from '../components/locationParts'
+import { callsByVenue } from '../components/directorCalls'
+import { DirectorsCall } from '../components/DirectorsCall'
 import { EmptyState, Eyebrow } from '../components/surfaces'
 import { Badge, ErrorAlert, Spinner } from '../components/ui'
 import { MAX_COMPARED, venuesToCompare } from '../lib/compare'
@@ -71,13 +73,20 @@ export function ComparePage() {
       ) : compared!.venues.length < 2 ? (
         <EmptyState icon={Columns3}>There is nothing to compare yet: this scene needs at least two venues that have not been rejected.</EmptyState>
       ) : (
-        <ComparisonTable venues={compared!.venues} />
+        <ComparisonTable sceneId={sceneId} venues={compared!.venues} />
       )}
     </div>
   )
 }
 
-function ComparisonTable({ venues }: { venues: Location[] }) {
+function ComparisonTable({ sceneId, venues }: { sceneId: string; venues: Location[] }) {
+  const { api } = useSession()
+  const directorCalls = useQuery({
+    queryKey: queryKeys.directorCalls('scene', sceneId),
+    queryFn: () => api.director.forScene(sceneId),
+    refetchOnMount: 'always',
+  })
+  const calls = callsByVenue(directorCalls.data?.items ?? [])
   const rows: { label: string; cell: (venue: Location) => ReactNode }[] = [
     { label: 'Fit', cell: (venue) => (venue.fitScore != null ? <FitScore score={venue.fitScore} /> : <Muted>Not assessed</Muted>) },
     { label: 'Why', cell: (venue) => venue.fitReason ?? <Muted>—</Muted> },
@@ -112,6 +121,7 @@ function ComparisonTable({ venues }: { venues: Location[] }) {
     { label: 'First shoot day', cell: (venue) => <FirstDay venue={venue} /> },
     { label: 'Your notes', cell: (venue) => (venue.notes ? <span className="whitespace-pre-line italic">{venue.notes}</span> : <Muted>—</Muted>) },
     { label: 'Status', cell: (venue) => <Status venue={venue} /> },
+    { label: 'Director’s call', cell: (venue) => <DirectorsCall compact calls={calls.get(venue.id) ?? []} /> },
   ]
   return (
     <>

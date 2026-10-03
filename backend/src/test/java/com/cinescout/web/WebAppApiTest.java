@@ -33,12 +33,14 @@ class WebAppApiTest extends ApiTest {
     }
 
     @Test
-    void aSharedCallSheetPageIsKeptOutOfSearchEnginesAndCaches() {
-        web.get().uri("/call-sheet/sometoken").exchange()
-                .expectStatus().isOk()
-                .expectHeader().valueEquals("X-Robots-Tag", "noindex, nofollow")
-                .expectHeader().valueEquals("Cache-Control", "no-store")
-                .expectHeader().valueEquals("Referrer-Policy", "no-referrer");
+    void pagesWhoseAddressIsThePermissionAreKeptOutOfSearchEnginesAndCaches() {
+        for (String page : new String[] {"/call-sheet/sometoken", "/shortlist/sometoken", "/invite/sometoken"}) {
+            web.get().uri(page).exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().valueEquals("X-Robots-Tag", "noindex, nofollow")
+                    .expectHeader().valueEquals("Cache-Control", "no-store")
+                    .expectHeader().valueEquals("Referrer-Policy", "no-referrer");
+        }
     }
 
     @Test

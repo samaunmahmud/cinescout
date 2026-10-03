@@ -519,6 +519,71 @@ export interface LocationVideos {
 }
 
 /** A call sheet as the crew sees it through a shared link. */
+/** A guest's call on a venue through a director link. */
+export type DirectorVerdict = 'APPROVE' | 'MAYBE' | 'NO'
+
+/** What a director link is for: the whole project, or one scene. */
+export interface DirectorScope {
+  kind: 'project' | 'scene'
+  id: string
+}
+
+export interface DirectorLink {
+  token: string
+  /** Null for a link to the whole project. */
+  sceneId: string | null
+  /** Whether it also shows private notes, quotes and the reasons behind fit scores. */
+  showPrivate: boolean
+  createdAt: string
+}
+
+/** A guest's call on a venue, under the name they typed: one per name per venue, the latest kept. */
+export interface DirectorCall {
+  id: string
+  locationId: string
+  guestName: string
+  verdict: DirectorVerdict
+  comment: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DirectorCallRequest {
+  guestName: string
+  verdict: DirectorVerdict
+  comment?: string | null
+}
+
+/** A venue as a director link shows it; `fitReason`, `notes` and `quote` are null unless the link shows them. */
+export interface ShortlistVenue {
+  id: string
+  sceneId: string
+  sceneTitle: string
+  name: string
+  address: string | null
+  latitude: number | null
+  longitude: number | null
+  imageUrl: string | null
+  fitScore: number | null
+  bookingFriction: BookingFriction | null
+  frictionNote: string | null
+  warnings: string[]
+  status: LocationStatus
+  fitReason: string | null
+  notes: string | null
+  quote: string | null
+  responses: DirectorCall[]
+}
+
+export interface PublicShortlist {
+  projectTitle: string
+  /** Set when the link is for one scene. */
+  sceneTitle: string | null
+  sharedBy: string | null
+  showPrivate: boolean
+  venues: Page<ShortlistVenue>
+}
+
 export interface PublicCallSheet {
   projectTitle: string
   locationArea: string | null

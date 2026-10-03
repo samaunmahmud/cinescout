@@ -30,6 +30,28 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
             countQuery = "select count(l) from Location l where l.scene.id = :sceneId and exists (select m.id from ProjectMember m where m.project = l.scene.project and m.user.id = :userId)")
     Page<Location> findVisibleByScene(@Param("sceneId") UUID sceneId, @Param("userId") UUID userId, Pageable pageable);
 
+    /**
+     * The venues a director link to a whole project shows: those in {@code statuses} (the shortlist and beyond),
+     * scene by scene in script order and best fit first. No user check: the link's token is the permission, so
+     * callers check that first.
+     */
+    @Query(value = """
+            select l from Location l join fetch l.scene s
+            where s.project.id = :projectId and l.status in :statuses
+            order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc, l.fitScore desc nulls last, l.createdAt asc, l.id asc""",
+            countQuery = "select count(l) from Location l where l.scene.project.id = :projectId and l.status in :statuses")
+    Page<Location> findProjectShortlist(@Param("projectId") UUID projectId, @Param("statuses") Collection<LocationStatus> statuses,
+                                        Pageable pageable);
+
+    /** As {@link #findProjectShortlist}, for a link to one scene. */
+    @Query(value = """
+            select l from Location l join fetch l.scene s
+            where s.id = :sceneId and l.status in :statuses
+            order by l.fitScore desc nulls last, l.createdAt asc, l.id asc""",
+            countQuery = "select count(l) from Location l where l.scene.id = :sceneId and l.status in :statuses")
+    Page<Location> findSceneShortlist(@Param("sceneId") UUID sceneId, @Param("statuses") Collection<LocationStatus> statuses,
+                                      Pageable pageable);
+
     /** The pages already saved for a scene; the same page must not be saved twice (uq_locations_scene_source). */
     @Query("select l.sourceUrl from Location l where l.scene.id = :sceneId and l.sourceUrl is not null")
     Set<String> findSourceUrlsBySceneId(@Param("sceneId") UUID sceneId);

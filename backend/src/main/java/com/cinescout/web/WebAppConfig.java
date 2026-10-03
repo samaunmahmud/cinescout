@@ -34,6 +34,8 @@ class WebAppConfig {
             + "form-action 'self'; frame-ancestors 'none'";
 
     private static final List<String> NOT_PAGES = List.of("/api/", "/v3/", "/swagger-ui", "/webjars/", "/actuator");
+    /** Pages whose address is the permission: kept out of caches, search engines and referrers. */
+    private static final List<String> SECRET_PAGES = List.of("/call-sheet/", "/shortlist/", "/invite/");
 
     private final Resource index;
 
@@ -78,7 +80,7 @@ class WebAppConfig {
                     if (path.startsWith("/assets/")) {
                         headers.setCacheControl(CacheControl.maxAge(java.time.Duration.ofDays(365)).cachePublic().immutable());
                     }
-                    if (path.startsWith("/call-sheet/")) {
+                    if (SECRET_PAGES.stream().anyMatch(path::startsWith)) {
                         headers.setCacheControl(CacheControl.noStore());
                         headers.set("X-Robots-Tag", "noindex, nofollow");
                         headers.set("Referrer-Policy", "no-referrer");

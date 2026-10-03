@@ -13,6 +13,7 @@ import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
 import { linkButton } from '../components/buttonStyles'
+import { DirectorLinkPanel } from '../components/DirectorLinkPanel'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { Columns3, MapPin as PinIcon, MapPinned, Plus, Radar, TriangleAlert } from 'lucide-react'
@@ -128,6 +129,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
             ))}
           </ul>
           <Pager data={locations.data} onChange={setPage} label="Location pages" />
+          <DirectorLinkPanel scope={{ kind: 'scene', id: scene.id }} />
         </>
       )}
     </Section>

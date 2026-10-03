@@ -36,6 +36,7 @@ public class RateLimitExceededException extends RuntimeException {
             case LOOKUPS -> "You have reached the limit on map and video lookups for now";
             case LOGIN -> "Too many failed logins from your network";
             case REGISTER -> "Too many accounts have been opened from your network";
+            case GUEST -> "Too many answers have been sent from your network";
         };
         return what + "; try again in " + inWords(retryAfterSeconds()) + ".";
     }

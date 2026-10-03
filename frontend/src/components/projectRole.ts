@@ -27,3 +27,8 @@ export function useProjectRole(projectId: string | undefined): ProjectRole | und
   })
   return project.data?.role
 }
+
+/** The user's role on the page's project; undefined while it loads. */
+export function useRole(): ProjectRole | undefined {
+  return useContext(RoleContext)
+}

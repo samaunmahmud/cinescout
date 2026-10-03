@@ -17,8 +17,9 @@ const lazyPage = (load: () => Promise<{ default: ComponentType }>) => async () =
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage />, errorElement: <CrashPage /> },
   { path: '/register', element: <RegisterPage />, errorElement: <CrashPage /> },
-  // Shared with the crew: no login.
+  // Shared by link with the crew or the director: no login.
   { path: '/call-sheet/:token', lazy: lazyPage(() => import('./pages/PublicCallSheetPage').then((m) => ({ default: m.PublicCallSheetPage }))), errorElement: <CrashPage /> },
+  { path: '/shortlist/:token', lazy: lazyPage(() => import('./pages/PublicShortlistPage').then((m) => ({ default: m.PublicShortlistPage }))), errorElement: <CrashPage /> },
   {
     element: (
       <RequireAuth>

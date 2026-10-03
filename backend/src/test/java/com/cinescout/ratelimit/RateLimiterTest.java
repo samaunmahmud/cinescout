@@ -31,7 +31,7 @@ class RateLimiterTest {
 
     /** AI: 3 an hour, so one more every 20 minutes. */
     private RateLimiter limiter(boolean enabled) {
-        return new RateLimiter(new RateLimitProperties(enabled, new Rule(3, Duration.ofHours(1)), null, null, null, null), clock);
+        return new RateLimiter(new RateLimitProperties(enabled, new Rule(3, Duration.ofHours(1)), null, null, null, null, null), clock);
     }
 
     @Test
@@ -136,7 +136,7 @@ class RateLimiterTest {
         assertThatThrownBy(() -> new Rule(5, Duration.ZERO)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new Rule(5, null)).isInstanceOf(IllegalArgumentException.class);
 
-        RateLimitProperties defaults = new RateLimitProperties(true, null, null, null, null, null);
+        RateLimitProperties defaults = new RateLimitProperties(true, null, null, null, null, null, null);
         for (RateLimit limit : RateLimit.values()) {
             assertThat(defaults.rule(limit)).isNotNull();
         }

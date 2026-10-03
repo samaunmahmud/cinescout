@@ -9,6 +9,7 @@ function serverFor(drafts: OutreachDraft[], extra: Parameters<typeof fakeServer>
   return fakeServer({
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(location()),
+    'GET /api/locations/l1/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf(drafts)),

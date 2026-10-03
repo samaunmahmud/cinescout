@@ -6,6 +6,7 @@ import { queryKeys } from '../api/queryKeys'
 import type { Location } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
+import { DirectorsCall } from '../components/DirectorsCall'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
 import {
   Banknote,
@@ -15,6 +16,7 @@ import {
   Crosshair,
   ExternalLink,
   Gauge,
+  Gavel,
   KeyRound,
   LayoutGrid,
   Mail,
@@ -206,6 +208,7 @@ function LocationDetails({ location }: { location: Location }) {
           <div className="grid items-start gap-8 lg:grid-cols-2">
             <div className="space-y-8">
               <Assessment location={location} />
+              <DirectorsCallSection location={location} />
               <Contact location={location} />
               <Notes location={location} update={update} />
             </div>
@@ -291,6 +294,21 @@ function Assessment({ location }: { location: Location }) {
         </figure>
       )}
     </section>
+  )
+}
+
+/** What the director said through a director link; nothing until someone has answered. */
+function DirectorsCallSection({ location }: { location: Location }) {
+  const { api } = useSession()
+  const calls = useQuery({
+    queryKey: queryKeys.directorCalls('location', location.id),
+    queryFn: () => api.director.forLocation(location.id),
+  })
+  if (!calls.data || calls.data.items.length === 0) return null
+  return (
+    <Section titleId="directors-call-heading" title="Director’s call" eyebrow="From the director link" icon={Gavel}>
+      <DirectorsCall calls={calls.data.items} />
+    </Section>
   )
 }
 
