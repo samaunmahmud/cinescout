@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { LocationVideos } from '../api/types'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, location, locationVideos, logIn, scene, pageOf } from '../test/fixtures'
+import { ada, location, locationVideos, logIn, scene, pageOf, project } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(videos: () => Response) {
@@ -10,6 +10,7 @@ function serverFor(videos: () => Response) {
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(location()),
     'GET /api/scenes/s1': () => json(scene()),
+    'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
     'GET /api/locations/l1/videos': videos,
   })

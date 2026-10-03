@@ -8,6 +8,8 @@ import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.ParseStatus;
 import com.cinescout.domain.Project;
+import com.cinescout.domain.ProjectMember;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.domain.User;
@@ -20,8 +22,11 @@ import com.cinescout.logistics.LogisticsException;
 import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.OutreachDraftRepository;
+import com.cinescout.repository.ProjectMemberRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
+import com.cinescout.service.ProjectAccess;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,6 +105,8 @@ class SceneScoutingServiceTest {
     @Autowired SceneRepository scenes;
     @Autowired ProjectRepository projects;
     @Autowired LocationRepository locations;
+    @Autowired OutreachDraftRepository drafts;
+    @Autowired ProjectMemberRepository members;
     @Autowired PlatformTransactionManager transactionManager;
 
     private final ScoutingPipeline pipeline = mock(ScoutingPipeline.class);
@@ -115,7 +122,7 @@ class SceneScoutingServiceTest {
     void setUp() {
         setup = new TransactionTemplate(transactionManager);
         serviceTx = new RecordingTransactions(transactionManager);
-        service = new SceneScoutingService(pipeline, new VenuePlacer(geocoder, Duration.ofSeconds(5)), scenes, projects, locations,
+        service = new SceneScoutingService(pipeline, new VenuePlacer(geocoder, Duration.ofSeconds(5)), scenes, projects, locations, access(),
                 new BlockingTransactions(serviceTx),
                 Jackson2ObjectMapperBuilder.json().build());
     }
@@ -123,6 +130,10 @@ class SceneScoutingServiceTest {
     @AfterEach
     void cleanUp() {
         setup.executeWithoutResult(status -> em.createNativeQuery("DELETE FROM users").executeUpdate());
+    }
+
+    private ProjectAccess access() {
+        return new ProjectAccess(projects, scenes, locations, drafts, members);
     }
 
     // --- fixtures and reads (each in its own committed transaction) ---------------------------
@@ -134,6 +145,7 @@ class SceneScoutingServiceTest {
             Project project = new Project(user, "Neon Nights", null);
             project.setLocationArea(area);
             em.persist(project);
+            em.persist(new ProjectMember(project, user, ProjectRole.OWNER, null));
             Scene scene = new Scene(project, "Rooftop", "INT. ROOFTOP BAR - NIGHT. Neon hums.");
             if (parsed) {
                 scene.applyRequirements(REQUIREMENTS, Jackson2ObjectMapperBuilder.json().build().valueToTree(REQUIREMENTS));
@@ -355,7 +367,7 @@ class SceneScoutingServiceTest {
             public Mono<GeoPoint> locate(String query) {
                 return Mono.error(new LogisticsException(LogisticsException.Kind.UNAVAILABLE, "down"));
             }
-        }, Duration.ofSeconds(5)), scenes, projects, locations, new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
+        }, Duration.ofSeconds(5)), scenes, projects, locations, access(), new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
         pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, "Alpha", "1 First St")), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();

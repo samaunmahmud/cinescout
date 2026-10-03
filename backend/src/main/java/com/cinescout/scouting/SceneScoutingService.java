@@ -4,6 +4,7 @@ import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.ParseStatus;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.domain.VenueNames;
@@ -18,6 +19,7 @@ import com.cinescout.repository.SceneRepository;
 import com.cinescout.scouting.ScoutingException.Kind;
 import com.cinescout.service.Conflicts;
 import com.cinescout.service.NotFoundException;
+import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +44,7 @@ import java.util.function.Supplier;
  *
  * <p>JPA is blocking, so every database step runs on {@code boundedElastic} in its own short
  * transaction, never on an event-loop thread and never spanning an LLM or search call (those take
- * seconds). Every step re-checks that the scene belongs to {@code ownerId}, so a scene deleted or
+ * seconds). Every step re-checks that the scene belongs to {@code userId}, so a scene deleted or
  * reassigned mid-run fails cleanly instead of being written to.
  *
  * <p>New venues are placed on the map before they are saved (by the address the page gives, or their
@@ -70,16 +72,18 @@ public class SceneScoutingService {
     private final SceneRepository scenes;
     private final ProjectRepository projects;
     private final LocationRepository locations;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
     private final ObjectMapper mapper;
 
     public SceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes, ProjectRepository projects,
-                                LocationRepository locations, BlockingTransactions db, ObjectMapper mapper) {
+                                LocationRepository locations, ProjectAccess access, BlockingTransactions db, ObjectMapper mapper) {
         this.pipeline = pipeline;
         this.placer = placer;
         this.scenes = scenes;
         this.projects = projects;
         this.locations = locations;
+        this.access = access;
         this.db = db;
         this.mapper = mapper;
     }
@@ -89,9 +93,9 @@ public class SceneScoutingService {
      * but never usably, the scene is marked {@code FAILED}; if it could not be reached at all the
      * scene is left as it was, since nothing is known about the scene itself.
      */
-    public Mono<SceneResponse> parseScene(UUID ownerId, UUID sceneId) {
-        return db.call(() -> load(ownerId, sceneId).getSourceText())
-                .flatMap(sourceText -> extractAndStore(ownerId, sceneId, sourceText));
+    public Mono<SceneResponse> parseScene(UUID userId, UUID sceneId) {
+        return db.call(() -> load(userId, sceneId).getSourceText())
+                .flatMap(sourceText -> extractAndStore(userId, sceneId, sourceText));
     }
 
     /**
@@ -107,10 +111,10 @@ public class SceneScoutingService {
      * @param permit subscribed to once per scene, before its model call; an error skips the scene
      * @throws NotFoundException (as an error signal) if the project is not the owner's
      */
-    public Mono<BatchParseResult> parseProject(UUID ownerId, UUID projectId, Supplier<Mono<Void>> permit) {
-        return db.call(() -> pendingScenes(ownerId, projectId))
+    public Mono<BatchParseResult> parseProject(UUID userId, UUID projectId, Supplier<Mono<Void>> permit) {
+        return db.call(() -> pendingScenes(userId, projectId))
                 .flatMapMany(Flux::fromIterable)
-                .flatMap(sceneId -> parseOne(ownerId, sceneId, permit), BATCH_CONCURRENCY)
+                .flatMap(sceneId -> parseOne(userId, sceneId, permit), BATCH_CONCURRENCY)
                 .collectList()
                 .flatMap(attempts -> {
                     int parsed = (int) attempts.stream().filter(attempt -> attempt.outcome() == Attempt.Outcome.PARSED).count();
@@ -132,20 +136,20 @@ public class SceneScoutingService {
      * @throws ScoutingException (as an error signal) if the scene is not the owner's or the project
      *                           has no location area
      */
-    public Mono<ScoutingResult> scout(UUID ownerId, UUID sceneId, int maxResults) {
-        return db.call(() -> prepare(ownerId, sceneId))
-                .flatMap(target -> requirementsFor(ownerId, sceneId, target)
+    public Mono<ScoutingResult> scout(UUID userId, UUID sceneId, int maxResults) {
+        return db.call(() -> prepare(userId, sceneId))
+                .flatMap(target -> requirementsFor(userId, sceneId, target)
                         .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults))
-                        .flatMap(outcome -> db.call(() -> unsaved(ownerId, sceneId, outcome))
+                        .flatMap(outcome -> db.call(() -> unsaved(userId, sceneId, outcome))
                                 .flatMap(fresh -> placer.place(fresh, target.area()))
-                                .flatMap(placed -> db.call(() -> saveVenues(ownerId, sceneId, outcome, placed)))
+                                .flatMap(placed -> db.call(() -> saveVenues(userId, sceneId, outcome, placed)))
                                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate)));
     }
 
     // --- steps ----------------------------------------------------------------------------------
 
-    private List<UUID> pendingScenes(UUID ownerId, UUID projectId) {
-        projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+    private List<UUID> pendingScenes(UUID userId, UUID projectId) {
+        access.project(userId, projectId, ProjectRole.EDITOR);
         return scenes.findIdsByProjectAndParseStatus(projectId, ParseStatus.PENDING, PageRequest.of(0, MAX_BATCH));
     }
 
@@ -157,9 +161,9 @@ public class SceneScoutingService {
         static final Attempt FAILED = new Attempt(Outcome.FAILED, null);
     }
 
-    private Mono<Attempt> parseOne(UUID ownerId, UUID sceneId, Supplier<Mono<Void>> permit) {
+    private Mono<Attempt> parseOne(UUID userId, UUID sceneId, Supplier<Mono<Void>> permit) {
         return permit.get()
-                .then(Mono.defer(() -> parseScene(ownerId, sceneId)))
+                .then(Mono.defer(() -> parseScene(userId, sceneId)))
                 .thenReturn(Attempt.PARSED)
                 .onErrorResume(error -> {
                     if (error instanceof LlmException llm && llm.kind() == LlmException.Kind.INVALID_OUTPUT) {
@@ -173,8 +177,8 @@ public class SceneScoutingService {
     private record Target(String sourceText, SceneRequirements requirements, String area) {
     }
 
-    private Target prepare(UUID ownerId, UUID sceneId) {
-        Scene scene = load(ownerId, sceneId);
+    private Target prepare(UUID userId, UUID sceneId) {
+        Scene scene = load(userId, sceneId);
         String area = scene.getProject().getLocationArea();
         if (area == null) {
             throw new ScoutingException(Kind.LOCATION_AREA_MISSING,
@@ -183,32 +187,32 @@ public class SceneScoutingService {
         return new Target(scene.getSourceText(), scene.requirements(), area);
     }
 
-    private Mono<SceneRequirements> requirementsFor(UUID ownerId, UUID sceneId, Target target) {
+    private Mono<SceneRequirements> requirementsFor(UUID userId, UUID sceneId, Target target) {
         if (target.requirements() != null) {
             return Mono.just(target.requirements());
         }
-        return extractAndStore(ownerId, sceneId, target.sourceText()).map(SceneResponse::requirements);
+        return extractAndStore(userId, sceneId, target.sourceText()).map(SceneResponse::requirements);
     }
 
-    private Mono<SceneResponse> extractAndStore(UUID ownerId, UUID sceneId, String sourceText) {
+    private Mono<SceneResponse> extractAndStore(UUID userId, UUID sceneId, String sourceText) {
         return pipeline.extractRequirements(sourceText)
-                .flatMap(requirements -> db.call(() -> storeRequirements(ownerId, sceneId, requirements)))
+                .flatMap(requirements -> db.call(() -> storeRequirements(userId, sceneId, requirements)))
                 .onErrorResume(LlmException.class, error -> error.kind() == LlmException.Kind.INVALID_OUTPUT
-                        ? markParseFailed(ownerId, sceneId).then(Mono.error(error))
+                        ? markParseFailed(userId, sceneId).then(Mono.error(error))
                         : Mono.error(error));
     }
 
-    private SceneResponse storeRequirements(UUID ownerId, UUID sceneId, SceneRequirements requirements) {
-        Scene scene = load(ownerId, sceneId);
+    private SceneResponse storeRequirements(UUID userId, UUID sceneId, SceneRequirements requirements) {
+        Scene scene = load(userId, sceneId);
         // The typed answer re-serialised: extra fields the model may have added were already dropped.
         scene.applyRequirements(requirements, mapper.valueToTree(requirements));
         return SceneResponse.from(scenes.saveAndFlush(scene));
     }
 
     /** Best effort: failing to record the failure must not hide the failure that caused it. */
-    private Mono<Void> markParseFailed(UUID ownerId, UUID sceneId) {
+    private Mono<Void> markParseFailed(UUID userId, UUID sceneId) {
         return db.call(() -> {
-                    Scene scene = load(ownerId, sceneId);
+                    Scene scene = load(userId, sceneId);
                     scene.markParseFailed();
                     scenes.saveAndFlush(scene);
                     return Boolean.TRUE;
@@ -221,8 +225,8 @@ public class SceneScoutingService {
     }
 
     /** The venues not saved for the scene yet: only these are worth placing on the map. */
-    private List<ScoutedVenue> unsaved(UUID ownerId, UUID sceneId, ScoutingOutcome outcome) {
-        load(ownerId, sceneId);
+    private List<ScoutedVenue> unsaved(UUID userId, UUID sceneId, ScoutingOutcome outcome) {
+        load(userId, sceneId);
         Saved saved = saved(sceneId);
         return outcome.venues().stream().filter(saved::addIfNew).toList();
     }
@@ -250,8 +254,8 @@ public class SceneScoutingService {
         }
     }
 
-    private ScoutingResult saveVenues(UUID ownerId, UUID sceneId, ScoutingOutcome outcome, Map<String, GeoPoint> placed) {
-        Scene scene = load(ownerId, sceneId);
+    private ScoutingResult saveVenues(UUID userId, UUID sceneId, ScoutingOutcome outcome, Map<String, GeoPoint> placed) {
+        Scene scene = load(userId, sceneId);
         // Checked again: another run may have saved some of these while they were being placed.
         Saved saved = saved(sceneId);
 
@@ -295,8 +299,15 @@ public class SceneScoutingService {
         return BigDecimal.valueOf(value).setScale(6, RoundingMode.HALF_UP);
     }
 
-    private Scene load(UUID ownerId, UUID sceneId) {
-        return scenes.findOwned(sceneId, ownerId)
-                .orElseThrow(() -> new ScoutingException(Kind.SCENE_NOT_FOUND, "Scene " + sceneId + " not found"));
+    /**
+     * Parsing and scouting change the scene and spend the AI allowance: an editor's work. A scene the user cannot see
+     * is reported in scouting's own terms, which the API answers with the same 404.
+     */
+    private Scene load(UUID userId, UUID sceneId) {
+        try {
+            return access.scene(userId, sceneId, ProjectRole.EDITOR);
+        } catch (NotFoundException e) {
+            throw new ScoutingException(Kind.SCENE_NOT_FOUND, "Scene " + sceneId + " not found");
+        }
     }
 }

@@ -1,11 +1,13 @@
 package com.cinescout.video;
 
 import com.cinescout.domain.Location;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.resilience.Guard;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.service.NotFoundException;
+import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,12 +33,13 @@ public class VideoService {
     private final VideoSearchClient client;
     private final Guard guard;
     private final LocationRepository locations;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
     private final ObjectMapper mapper;
     private final VideoProperties props;
     private final Clock clock;
 
-    public VideoService(VideoSearchClient client, GuardFactory guards, LocationRepository locations, BlockingTransactions db,
+    public VideoService(VideoSearchClient client, GuardFactory guards, LocationRepository locations, ProjectAccess access, BlockingTransactions db,
                         ObjectMapper mapper, VideoProperties props, Clock clock) {
         this.client = client;
         // Only outages trip the breaker; a spent quota or a bad key is not the provider being down.
@@ -45,6 +48,7 @@ public class VideoService {
                 error -> error instanceof VideoException e && e.kind() == VideoException.Kind.UNAVAILABLE,
                 open -> new VideoException(VideoException.Kind.UNAVAILABLE, "The video circuit breaker is open; the call was not made", open));
         this.locations = locations;
+        this.access = access;
         this.db = db;
         this.mapper = mapper;
         this.props = props;
@@ -57,12 +61,12 @@ public class VideoService {
      * @throws NotFoundException (as an error signal) if the location is not the owner's
      * @throws VideoException    (as an error signal) if a search was needed and failed
      */
-    public Mono<LocationVideos> videos(UUID ownerId, UUID locationId) {
-        return db.call(() -> lookup(owned(ownerId, locationId)))
+    public Mono<LocationVideos> videos(UUID userId, UUID locationId) {
+        return db.call(() -> lookup(access.location(userId, locationId, ProjectRole.VIEWER)))
                 .flatMap(lookup -> lookup.cached() != null
                         ? Mono.just(lookup.cached())
                         : guard.call(() -> client.search(lookup.query(), props.maxResults()))
-                                .flatMap(videos -> db.call(() -> save(ownerId, locationId, lookup.query(), videos))));
+                                .flatMap(videos -> db.call(() -> save(userId, locationId, lookup.query(), videos))));
     }
 
     private record Lookup(String query, LocationVideos cached) {
@@ -87,8 +91,8 @@ public class VideoService {
         return where == null || where.isBlank() ? location.getName() : location.getName() + " " + where;
     }
 
-    private LocationVideos save(UUID ownerId, UUID locationId, String query, List<Video> videos) {
-        Location location = owned(ownerId, locationId);
+    private LocationVideos save(UUID userId, UUID locationId, String query, List<Video> videos) {
+        Location location = access.location(userId, locationId, ProjectRole.VIEWER);
         Instant now = clock.instant();
         location.cacheVideos(mapper.valueToTree(videos), query, now);
         locations.saveAndFlush(location);
@@ -99,7 +103,4 @@ public class VideoService {
         return mapper.convertValue(json, VIDEO_LIST).stream().filter(video -> Video.isValidId(video.id())).toList();
     }
 
-    private Location owned(UUID ownerId, UUID locationId) {
-        return locations.findOwned(locationId, ownerId).orElseThrow(() -> new NotFoundException("Location", locationId));
-    }
 }

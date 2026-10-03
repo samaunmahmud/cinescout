@@ -35,6 +35,8 @@ export const routes: RouteObject[] = [
           { path: '/projects', element: <ProjectsPage /> },
           { path: '/account', lazy: lazyPage(() => import('./pages/AccountPage').then((m) => ({ default: m.AccountPage }))) },
           { path: '/projects/:projectId', element: <ProjectPage /> },
+          { path: '/projects/:projectId/settings', lazy: lazyPage(() => import('./pages/ProjectSettingsPage').then((m) => ({ default: m.ProjectSettingsPage }))) },
+          { path: '/invite/:token', lazy: lazyPage(() => import('./pages/InvitePage').then((m) => ({ default: m.InvitePage }))) },
           { path: '/projects/:projectId/call-sheet', lazy: lazyPage(() => import('./pages/CallSheetPage').then((m) => ({ default: m.CallSheetPage }))) },
           { path: '/projects/:projectId/scenes/new', element: <NewScenePage /> },
           { path: '/projects/:projectId/scenes/import', lazy: lazyPage(() => import('./pages/ImportScriptPage').then((m) => ({ default: m.ImportScriptPage }))) },

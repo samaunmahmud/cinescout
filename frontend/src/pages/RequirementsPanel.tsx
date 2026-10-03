@@ -6,6 +6,7 @@ import { useSession } from '../auth/context'
 import { Sparkles } from 'lucide-react'
 import { Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
+import { useCanEdit } from '../components/projectRole'
 
 const sensitivity: Record<AcousticSensitivity, string> = {
   LOW: 'Low: background noise is fine',
@@ -15,6 +16,7 @@ const sensitivity: Record<AcousticSensitivity, string> = {
 
 /** The requirements the AI extracted from the script, and the button that (re-)extracts them. */
 export function RequirementsPanel({ scene }: { scene: Scene }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
 
@@ -44,7 +46,7 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
             Location requirements
           </h2>
         </div>
-        {action}
+        {canEdit && action}
       </div>
 
       {parse.isPending ? (

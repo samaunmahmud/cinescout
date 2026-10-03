@@ -28,6 +28,7 @@ export function project(overrides: Partial<Project> = {}): Project {
     sceneCount: 12,
     confirmedSceneCount: 3,
     posterImageUrl: null,
+    role: 'OWNER',
     createdAt: '2026-09-01T10:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
     ...overrides,

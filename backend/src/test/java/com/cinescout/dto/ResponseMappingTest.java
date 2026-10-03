@@ -8,6 +8,7 @@ import com.cinescout.domain.OutreachDraft;
 import com.cinescout.domain.OutreachTone;
 import com.cinescout.domain.ParseStatus;
 import com.cinescout.domain.Project;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.domain.User;
@@ -82,10 +83,10 @@ class ResponseMappingTest {
     @Test
     void projectResponseMapsAllFields() {
         Project project = project();
-        ProjectResponse response = ProjectResponse.from(project, 12, 3, "https://cdn.example/a.jpg");
+        ProjectResponse response = ProjectResponse.from(project, 12, 3, "https://cdn.example/a.jpg", ProjectRole.EDITOR);
 
         assertThat(response).isEqualTo(new ProjectResponse(project.getId(), "Neon Nights", "A neo-noir short",
-                "Brooklyn, New York", project.getStatus(), 12, 3, "https://cdn.example/a.jpg", CREATED, UPDATED));
+                "Brooklyn, New York", project.getStatus(), 12, 3, "https://cdn.example/a.jpg", ProjectRole.EDITOR, CREATED, UPDATED));
     }
 
     @Test

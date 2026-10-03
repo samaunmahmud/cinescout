@@ -4,10 +4,11 @@ import { fitBand, frictionLabel, type FitBand } from '../lib/fit'
 import { statusLabels } from '../lib/status'
 import type { useUpdateLocation } from './locationHooks'
 import { Badge } from './ui'
+import { useCanEdit } from './projectRole'
 
 const frictionTones: Record<BookingFriction, 'green' | 'cue' | 'red'> = { PUBLIC: 'green', COMMERCIAL: 'cue', PRIVATE: 'red' }
 
-/** A status dropdown that saves on change, keeping the notes as they are. */
+/** A status dropdown that saves on change, keeping the notes as they are; for a viewer, the status as plain text. */
 export function StatusSelect({
   location,
   update,
@@ -16,6 +17,8 @@ export function StatusSelect({
   update: ReturnType<typeof useUpdateLocation>
 }) {
   const id = useId()
+  const canEdit = useCanEdit()
+  if (!canEdit) return <Badge>{statusLabels[location.status]}</Badge>
   return (
     <>
       <label htmlFor={id} className="sr-only">

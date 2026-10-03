@@ -17,6 +17,8 @@ import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
+import com.cinescout.repository.OutreachDraftRepository;
+import com.cinescout.repository.ProjectMemberRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.repository.UserRepository;
@@ -64,6 +66,8 @@ class ResourceServicesTest {
     @Autowired ProjectRepository projects;
     @Autowired SceneRepository scenes;
     @Autowired LocationRepository locations;
+    @Autowired OutreachDraftRepository drafts;
+    @Autowired ProjectMemberRepository members;
     @Autowired PlatformTransactionManager transactionManager;
 
     private TransactionTemplate setup;
@@ -78,9 +82,10 @@ class ResourceServicesTest {
     void setUp() {
         setup = new TransactionTemplate(transactionManager);
         BlockingTransactions db = new BlockingTransactions(setup);
-        projectService = new ProjectService(projects, users, scenes, locations, db);
-        sceneService = new SceneService(scenes, projects, db);
-        locationService = new LocationService(locations, scenes, projects, db);
+        ProjectAccess access = new ProjectAccess(projects, scenes, locations, drafts, members);
+        projectService = new ProjectService(projects, users, scenes, locations, members, access, db);
+        sceneService = new SceneService(scenes, projects, access, db);
+        locationService = new LocationService(locations, scenes, projects, access, db);
         ada = newUser("Ada");
         grace = newUser("Grace");
     }
@@ -360,7 +365,8 @@ class ResourceServicesTest {
             }
         });
 
-        new ProjectService(projects, users, scenes, locations, db).list(ada, null, PageQuery.first()).block();
+        new ProjectService(projects, users, scenes, locations, members,
+                new ProjectAccess(projects, scenes, locations, drafts, members), db).list(ada, null, PageQuery.first()).block();
 
         assertThat(threads).hasSize(1).allSatisfy(name -> assertThat(name).startsWith("boundedElastic"));
     }

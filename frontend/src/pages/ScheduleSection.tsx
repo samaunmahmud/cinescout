@@ -10,6 +10,7 @@ import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner, TextField } from '../components/ui'
 import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
+import { useCanEdit } from '../components/projectRole'
 
 /**
  * The shoot laid out by day: which scenes start when, and where each is shot. What is missing stands out: a
@@ -17,6 +18,7 @@ import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSu
  * dates and confirmations change on other pages.
  */
 export function ScheduleSection({ projectId }: { projectId: string }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const schedule = useQuery({
     queryKey: queryKeys.projectSchedule(projectId),
@@ -43,7 +45,7 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
         schedule.data &&
         schedule.data.days.length > 0 && (
           <>
-            {missingConditions && (
+            {canEdit && missingConditions && (
               <Button variant="ghost" busy={conditions.isPending} onClick={() => conditions.mutate()}>
                 {!conditions.isPending && <SunMedium aria-hidden className="size-4" />}
                 Get light and weather
@@ -183,6 +185,7 @@ function shortDay(isoDate: string): string {
  * and a scheduled one is moved: saving refetches the schedule, and the scene turns up under its new day.
  */
 function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectId: string; dated: boolean }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
@@ -230,7 +233,7 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
           </p>
         </div>
         <Venues scene={scene} urgent={dated} />
-        {!editing && (
+        {canEdit && !editing && (
           <Button variant="ghost" aria-label={`${dated ? 'Change the dates of' : 'Schedule'} ${scene.title}`} onClick={edit}>
             <CalendarClock aria-hidden className="size-4" />
             {dated ? 'Dates' : 'Schedule'}

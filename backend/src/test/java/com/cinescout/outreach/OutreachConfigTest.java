@@ -5,6 +5,7 @@ import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.OutreachDraftRepository;
 import com.cinescout.repository.UserRepository;
+import com.cinescout.service.ProjectAccess;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
@@ -31,6 +32,7 @@ class OutreachConfigTest {
             .withBean(LocationRepository.class, () -> mock(LocationRepository.class))
             .withBean(OutreachDraftRepository.class, () -> mock(OutreachDraftRepository.class))
             .withBean(UserRepository.class, () -> mock(UserRepository.class))
+            .withBean(ProjectAccess.class, () -> mock(ProjectAccess.class))
             .withBean(BlockingTransactions.class, () -> mock(BlockingTransactions.class));
 
     /** The wiring classes are deliberately package-private, so tests in other packages load them by name. */

@@ -2,6 +2,7 @@ package com.cinescout.service;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.dto.ScheduleResponse.ScheduledScene;
@@ -32,12 +33,14 @@ public class ScheduleService {
     private final ProjectRepository projects;
     private final SceneRepository scenes;
     private final LocationRepository locations;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public ScheduleService(ProjectRepository projects, SceneRepository scenes, LocationRepository locations, BlockingTransactions db) {
+    public ScheduleService(ProjectRepository projects, SceneRepository scenes, LocationRepository locations, ProjectAccess access, BlockingTransactions db) {
         this.projects = projects;
         this.scenes = scenes;
         this.locations = locations;
+        this.access = access;
         this.db = db;
     }
 
@@ -45,11 +48,11 @@ public class ScheduleService {
      * A scene is listed on the day its shoot starts (its last day, if that is all it has); a shoot window of
      * several days is one entry carrying both dates, not one a day.
      */
-    public Mono<ScheduleResponse> schedule(UUID ownerId, UUID projectId) {
+    public Mono<ScheduleResponse> schedule(UUID userId, UUID projectId) {
         return db.call(() -> {
-            projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            access.project(userId, projectId, ProjectRole.VIEWER);
             Map<UUID, List<Location>> confirmed = locations
-                    .findOwnedByProjectAndStatus(projectId, ownerId, LocationStatus.CONFIRMED, Pageable.unpaged())
+                    .findVisibleByProjectAndStatus(projectId, userId, LocationStatus.CONFIRMED, Pageable.unpaged())
                     .stream().collect(Collectors.groupingBy(location -> location.getScene().getId()));
             Map<UUID, Long> candidates = locations.countByScene(projectId).stream()
                     .collect(Collectors.toMap(LocationRepository.SceneCount::getSceneId, LocationRepository.SceneCount::getLocations));
@@ -57,7 +60,7 @@ public class ScheduleService {
             Map<LocalDate, List<ScheduledScene>> byDay = new TreeMap<>();
             List<ScheduledScene> unscheduled = new ArrayList<>();
             // In script order, so each day's scenes and the unscheduled ones come out in script order too.
-            for (Scene scene : scenes.findOwnedByProject(projectId, ownerId, Pageable.unpaged())) {
+            for (Scene scene : scenes.findVisibleByProject(projectId, userId, Pageable.unpaged())) {
                 ScheduledScene entry = ScheduledScene.from(scene, confirmed.getOrDefault(scene.getId(), List.of()),
                         candidates.getOrDefault(scene.getId(), 0L));
                 LocalDate day = scene.getShootDateStart() != null ? scene.getShootDateStart() : scene.getShootDateEnd();

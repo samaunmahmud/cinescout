@@ -1,6 +1,7 @@
 package com.cinescout.service;
 
 import com.cinescout.domain.Project;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.ScriptImportResponse;
 import com.cinescout.dto.ScriptImportResponse.ImportedScene;
@@ -36,18 +37,20 @@ public class ScriptImportService {
 
     private final SceneRepository scenes;
     private final ProjectRepository projects;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public ScriptImportService(SceneRepository scenes, ProjectRepository projects, BlockingTransactions db) {
+    public ScriptImportService(SceneRepository scenes, ProjectRepository projects, ProjectAccess access, BlockingTransactions db) {
         this.scenes = scenes;
         this.projects = projects;
+        this.access = access;
         this.db = db;
     }
 
     /** The scenes an import of {@code script} would add, without adding them. */
-    public Mono<ScriptImportResponse> preview(UUID ownerId, UUID projectId, String script) {
+    public Mono<ScriptImportResponse> preview(UUID userId, UUID projectId, String script) {
         return db.call(() -> {
-            owned(ownerId, projectId);
+            access.project(userId, projectId, ProjectRole.EDITOR);
             Plan plan = plan(projectId, script);
             List<ImportedScene> found = new ArrayList<>();
             for (int i = 0; i < plan.scenes().size(); i++) {
@@ -62,9 +65,9 @@ public class ScriptImportService {
      *
      * @throws InvalidRequestException (as an error signal) if the script has no scene headings, or too many
      */
-    public Mono<ScriptImportResponse> importScript(UUID ownerId, UUID projectId, String script) {
+    public Mono<ScriptImportResponse> importScript(UUID userId, UUID projectId, String script) {
         return db.call(() -> {
-                    Project project = owned(ownerId, projectId);
+                    Project project = access.project(userId, projectId, ProjectRole.EDITOR);
                     Plan plan = plan(projectId, script);
                     if (plan.scenes().isEmpty()) {
                         throw new InvalidRequestException("script",
@@ -83,9 +86,6 @@ public class ScriptImportService {
                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
     }
 
-    private Project owned(UUID ownerId, UUID projectId) {
-        return projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
-    }
 
     private record Plan(List<ScriptScene> scenes, List<Integer> numbers, boolean scriptNumbersKept) {
     }

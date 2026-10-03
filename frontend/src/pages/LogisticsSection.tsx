@@ -18,6 +18,7 @@ import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatDate, formatShootWindow } from '../lib/format'
 import { formatDaylight, formatDistance, localTime, temperatureRange, timeWindow } from '../lib/logisticsFormat'
+import { useCanEdit } from '../components/projectRole'
 
 /** The report shape this page understands (LogisticsReport.VERSION on the server). */
 const SUPPORTED_VERSION = 1
@@ -60,6 +61,7 @@ const generatedFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium'
 
 /** A location's shoot logistics: the light, the weather and the surroundings on the scene's shoot days. */
 export function LogisticsSection({ location }: { location: Location }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
 
@@ -82,7 +84,7 @@ export function LogisticsSection({ location }: { location: Location }) {
       icon={Sun}
       description={report && `Worked out ${generatedFormat.format(new Date(report.generatedAt))}`}
       actions={
-        <Button variant={report ? 'secondary' : 'primary'} busy={refresh.isPending} onClick={() => refresh.mutate()}>
+        canEdit && <Button variant={report ? 'secondary' : 'primary'} busy={refresh.isPending} onClick={() => refresh.mutate()}>
           {report ? 'Refresh' : 'Work out logistics'}
         </Button>
       }

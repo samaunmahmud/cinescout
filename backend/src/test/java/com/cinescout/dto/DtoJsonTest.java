@@ -1,6 +1,7 @@
 package com.cinescout.dto;
 
 import com.cinescout.domain.AcousticSensitivity;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.ProjectStatus;
 import com.cinescout.domain.SceneRequirements;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,7 @@ class DtoJsonTest {
     @Test
     void timestampsAreWrittenAsIsoStrings() throws Exception {
         ProjectResponse response = new ProjectResponse(UUID.randomUUID(), "Neon Nights", null, null,
-                ProjectStatus.ACTIVE, 0, 0, null, Instant.parse("2026-09-20T10:00:00Z"), Instant.parse("2026-09-20T11:00:00Z"));
+                ProjectStatus.ACTIVE, 0, 0, null, ProjectRole.OWNER, Instant.parse("2026-09-20T10:00:00Z"), Instant.parse("2026-09-20T11:00:00Z"));
 
         assertThat(json.writeValueAsString(response)).contains("\"createdAt\":\"2026-09-20T10:00:00Z\"");
     }

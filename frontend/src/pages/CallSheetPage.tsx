@@ -57,7 +57,7 @@ export function CallSheetPage() {
         <ErrorAlert error={schedule.error} onRetry={() => schedule.refetch()} />
       ) : (
         <>
-          <SharePanel projectId={projectId} />
+          {project.data.role !== 'VIEWER' && <SharePanel projectId={projectId} />}
           <CallSheet title={project.data.title} locationArea={project.data.locationArea} preparedBy={user.displayName} schedule={schedule.data} />
         </>
       )}

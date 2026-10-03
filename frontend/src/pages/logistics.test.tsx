@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { Location } from '../api/types'
 import { formatDate } from '../lib/format'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, location, logIn, logisticsReport, scene, locationVideos, pageOf } from '../test/fixtures'
+import { ada, location, logIn, logisticsReport, scene, locationVideos, pageOf, project } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 function serverFor(current: () => Location, extra: Parameters<typeof fakeServer>[0] = {}) {
@@ -11,6 +11,7 @@ function serverFor(current: () => Location, extra: Parameters<typeof fakeServer>
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current()),
     'GET /api/scenes/s1': () => json(scene()),
+    'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
     'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,

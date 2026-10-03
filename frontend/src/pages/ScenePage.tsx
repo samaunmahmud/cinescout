@@ -16,6 +16,7 @@ import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
 import { SceneForm } from './SceneForm'
 import { usePageTitle } from '../lib/usePageTitle'
+import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
 
 export function ScenePage() {
   const { sceneId = '' } = useParams()
@@ -61,7 +62,10 @@ function SceneDetails({ scene }: { scene: Scene }) {
 
   const shootWindow = formatShootWindow(scene.shootDateStart, scene.shootDateEnd)
 
+  const canEdit = project.data?.role !== 'VIEWER'
+
   return (
+    <ProjectRoleProvider role={project.data?.role}>
     <div className="space-y-8">
       <Link to={projectPath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
@@ -122,14 +126,16 @@ function SceneDetails({ scene }: { scene: Scene }) {
               )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => setEditing(true)}>
-              Edit
-            </Button>
-            <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
-              Delete
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+              <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
+                Delete
+              </Button>
+            </div>
+          )}
         </header>
       )}
 
@@ -168,5 +174,6 @@ function SceneDetails({ scene }: { scene: Scene }) {
         </div>
       )}
     </div>
+    </ProjectRoleProvider>
   )
 }

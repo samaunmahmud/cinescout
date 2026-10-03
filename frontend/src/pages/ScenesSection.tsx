@@ -12,9 +12,11 @@ import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { batchParseSummary, formatShootWindow, sceneLabel } from '../lib/format'
+import { useCanEdit } from '../components/projectRole'
 
 /** A project's scenes in script order, each as a slate. */
 export function ScenesSection({ projectId }: { projectId: string }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const [page, setPage] = usePageParam()
   const [params, setParams] = useSearchParams()
@@ -46,20 +48,24 @@ export function ScenesSection({ projectId }: { projectId: string }) {
       icon={Film}
       actions={
         <>
-          {waiting && (
+          {canEdit && waiting && (
             <Button variant="secondary" busy={analyse.isPending} onClick={() => analyse.mutate()}>
               {!analyse.isPending && <Sparkles aria-hidden className="size-4" />}
               Analyse scenes
             </Button>
           )}
-          <Link to={`/projects/${projectId}/scenes/import`} className={linkButton('ghost')}>
-            <FileText aria-hidden className="size-4" />
-            Import script
-          </Link>
-          <Link to={`/projects/${projectId}/scenes/new`} className={linkButton()}>
-            <Plus aria-hidden className="size-4" />
-            Add scene
-          </Link>
+          {canEdit && (
+            <>
+              <Link to={`/projects/${projectId}/scenes/import`} className={linkButton('ghost')}>
+                <FileText aria-hidden className="size-4" />
+                Import script
+              </Link>
+              <Link to={`/projects/${projectId}/scenes/new`} className={linkButton()}>
+                <Plus aria-hidden className="size-4" />
+                Add scene
+              </Link>
+            </>
+          )}
         </>
       }
     >

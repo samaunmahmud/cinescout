@@ -6,6 +6,7 @@ import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.OutreachDraftRepository;
 import com.cinescout.repository.UserRepository;
 import com.cinescout.resilience.GuardFactory;
+import com.cinescout.service.ProjectAccess;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +23,7 @@ class OutreachConfig {
     @Bean
     OutreachGenerationService outreachGenerationService(LlmClient llm, GuardFactory guards, LocationRepository locations,
                                                         OutreachDraftRepository drafts, UserRepository users,
-                                                        BlockingTransactions db) {
-        return new OutreachGenerationService(llm, guards, locations, drafts, users, db);
+                                                        ProjectAccess access, BlockingTransactions db) {
+        return new OutreachGenerationService(llm, guards, locations, drafts, users, access, db);
     }
 }

@@ -6,6 +6,7 @@ import com.cinescout.logistics.weather.WeatherClient;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.resilience.GuardFactory;
+import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -20,8 +21,8 @@ class LogisticsConfig {
 
     @Bean
     LogisticsService logisticsService(WeatherClient weather, PlacesClient places, Geocoder geocoder, GuardFactory guards,
-                                      LocationRepository locations, BlockingTransactions db, ObjectMapper mapper,
+                                      LocationRepository locations, ProjectAccess access, BlockingTransactions db, ObjectMapper mapper,
                                       LogisticsProperties props) {
-        return new LogisticsService(weather, places, geocoder, guards, locations, db, mapper, props, Clock.systemUTC());
+        return new LogisticsService(weather, places, geocoder, guards, locations, access, db, mapper, props, Clock.systemUTC());
     }
 }

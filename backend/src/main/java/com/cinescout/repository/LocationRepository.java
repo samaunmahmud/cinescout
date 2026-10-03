@@ -16,19 +16,19 @@ import java.util.UUID;
 
 public interface LocationRepository extends JpaRepository<Location, UUID> {
 
-    /** The location with its scene, only if the scene's project belongs to {@code ownerId}. */
+    /** The location with its scene, only if the scene's project is one {@code userId} is a member of. */
     @Query("""
             select l from Location l join fetch l.scene s join fetch s.project p
-            where l.id = :locationId and p.owner.id = :ownerId""")
-    Optional<Location> findOwned(@Param("locationId") UUID locationId, @Param("ownerId") UUID ownerId);
+            where l.id = :locationId and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)""")
+    Optional<Location> findVisible(@Param("locationId") UUID locationId, @Param("userId") UUID userId);
 
     /** A scene's locations, best fit first; ones without a score (added by hand) come last. */
     @Query(value = """
             select l from Location l join fetch l.scene s
-            where s.id = :sceneId and s.project.owner.id = :ownerId
+            where s.id = :sceneId and exists (select m.id from ProjectMember m where m.project = s.project and m.user.id = :userId)
             order by l.fitScore desc nulls last, l.createdAt asc, l.id asc""",
-            countQuery = "select count(l) from Location l where l.scene.id = :sceneId and l.scene.project.owner.id = :ownerId")
-    Page<Location> findOwnedByScene(@Param("sceneId") UUID sceneId, @Param("ownerId") UUID ownerId, Pageable pageable);
+            countQuery = "select count(l) from Location l where l.scene.id = :sceneId and exists (select m.id from ProjectMember m where m.project = l.scene.project and m.user.id = :userId)")
+    Page<Location> findVisibleByScene(@Param("sceneId") UUID sceneId, @Param("userId") UUID userId, Pageable pageable);
 
     /** The pages already saved for a scene; the same page must not be saved twice (uq_locations_scene_source). */
     @Query("select l.sourceUrl from Location l where l.scene.id = :sceneId and l.sourceUrl is not null")
@@ -44,20 +44,20 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
      */
     @Query(value = """
             select l from Location l join fetch l.scene s
-            where s.project.id = :projectId and s.project.owner.id = :ownerId
+            where s.project.id = :projectId and exists (select m.id from ProjectMember m where m.project = s.project and m.user.id = :userId)
             order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc, l.fitScore desc nulls last, l.createdAt asc, l.id asc""",
-            countQuery = "select count(l) from Location l where l.scene.project.id = :projectId and l.scene.project.owner.id = :ownerId")
-    Page<Location> findOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId, Pageable pageable);
+            countQuery = "select count(l) from Location l where l.scene.project.id = :projectId and exists (select m.id from ProjectMember m where m.project = l.scene.project and m.user.id = :userId)")
+    Page<Location> findVisibleByProject(@Param("projectId") UUID projectId, @Param("userId") UUID userId, Pageable pageable);
 
-    /** As {@link #findOwnedByProject}, only the locations in one status. */
+    /** As {@link #findVisibleByProject}, only the locations in one status. */
     @Query(value = """
             select l from Location l join fetch l.scene s
-            where s.project.id = :projectId and s.project.owner.id = :ownerId and l.status = :status
+            where s.project.id = :projectId and exists (select m.id from ProjectMember m where m.project = s.project and m.user.id = :userId) and l.status = :status
             order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc, l.fitScore desc nulls last, l.createdAt asc, l.id asc""",
             countQuery = """
                     select count(l) from Location l
-                    where l.scene.project.id = :projectId and l.scene.project.owner.id = :ownerId and l.status = :status""")
-    Page<Location> findOwnedByProjectAndStatus(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId,
+                    where l.scene.project.id = :projectId and exists (select m.id from ProjectMember m where m.project = l.scene.project and m.user.id = :userId) and l.status = :status""")
+    Page<Location> findVisibleByProjectAndStatus(@Param("projectId") UUID projectId, @Param("userId") UUID userId,
                                                @Param("status") LocationStatus status, Pageable pageable);
 
     /** How many locations a project has in each status, and over how many scenes they are spread. */

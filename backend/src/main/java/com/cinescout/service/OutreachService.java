@@ -2,6 +2,7 @@ package com.cinescout.service;
 
 import com.cinescout.domain.OutreachDraft;
 import com.cinescout.domain.OutreachStatus;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.dto.OutreachDraftResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
@@ -19,7 +20,7 @@ import java.util.UUID;
 /**
  * The user's own work on outreach drafts: reading, editing, marking as sent or replied, deleting. The
  * drafts themselves are written by the model in {@code OutreachGenerationService}. Every operation is
- * scoped to {@code ownerId}; entities never leave this class.
+ * scoped to {@code userId}; entities never leave this class.
  */
 @Service
 public class OutreachService {
@@ -27,45 +28,47 @@ public class OutreachService {
     private final OutreachDraftRepository drafts;
     private final LocationRepository locations;
     private final ProjectRepository projects;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public OutreachService(OutreachDraftRepository drafts, LocationRepository locations, ProjectRepository projects, BlockingTransactions db) {
+    public OutreachService(OutreachDraftRepository drafts, LocationRepository locations, ProjectRepository projects, ProjectAccess access, BlockingTransactions db) {
         this.drafts = drafts;
         this.locations = locations;
         this.projects = projects;
+        this.access = access;
         this.db = db;
     }
 
     /** Every draft of a project, newest first, each with its venue and scene; {@code status} null means all. */
-    public Mono<PageResponse<ProjectOutreachResponse>> listForProject(UUID ownerId, UUID projectId, OutreachStatus status, PageQuery page) {
+    public Mono<PageResponse<ProjectOutreachResponse>> listForProject(UUID userId, UUID projectId, OutreachStatus status, PageQuery page) {
         return db.call(() -> {
-            projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            access.project(userId, projectId, ProjectRole.VIEWER);
             return PageResponse.from(status == null
-                    ? drafts.findOwnedByProject(projectId, ownerId, page.pageable())
-                    : drafts.findOwnedByProjectAndStatus(projectId, ownerId, status, page.pageable()),
+                    ? drafts.findVisibleByProject(projectId, userId, page.pageable())
+                    : drafts.findVisibleByProjectAndStatus(projectId, userId, status, page.pageable()),
                     ProjectOutreachResponse::from);
         });
     }
 
     /** Newest first. */
-    public Mono<PageResponse<OutreachDraftResponse>> list(UUID ownerId, UUID locationId, PageQuery page) {
+    public Mono<PageResponse<OutreachDraftResponse>> list(UUID userId, UUID locationId, PageQuery page) {
         return db.call(() -> {
-            locations.findOwned(locationId, ownerId).orElseThrow(() -> new NotFoundException("Location", locationId));
-            return PageResponse.from(drafts.findOwnedByLocation(locationId, ownerId, page.pageable()), OutreachDraftResponse::from);
+            access.location(userId, locationId, ProjectRole.VIEWER);
+            return PageResponse.from(drafts.findVisibleByLocation(locationId, userId, page.pageable()), OutreachDraftResponse::from);
         });
     }
 
-    public Mono<OutreachDraftResponse> get(UUID ownerId, UUID draftId) {
-        return db.call(() -> OutreachDraftResponse.from(owned(ownerId, draftId)));
+    public Mono<OutreachDraftResponse> get(UUID userId, UUID draftId) {
+        return db.call(() -> OutreachDraftResponse.from(access.draft(userId, draftId, ProjectRole.VIEWER)));
     }
 
     /**
      * Full replacement of the editable fields: a null recipient name or email clears it. Moving the draft
      * out of {@code DRAFT} stamps {@code sentAt}, moving it back clears it, see {@link OutreachDraft#changeStatus}.
      */
-    public Mono<OutreachDraftResponse> update(UUID ownerId, UUID draftId, UpdateOutreachRequest request) {
+    public Mono<OutreachDraftResponse> update(UUID userId, UUID draftId, UpdateOutreachRequest request) {
         return db.call(() -> {
-            OutreachDraft draft = owned(ownerId, draftId);
+            OutreachDraft draft = access.draft(userId, draftId, ProjectRole.EDITOR);
             draft.setSubject(request.subject().strip());
             draft.setBody(request.body().strip());
             draft.setTone(request.tone());
@@ -76,13 +79,10 @@ public class OutreachService {
         });
     }
 
-    public Mono<Void> delete(UUID ownerId, UUID draftId) {
-        return db.run(() -> drafts.delete(owned(ownerId, draftId)));
+    public Mono<Void> delete(UUID userId, UUID draftId) {
+        return db.run(() -> drafts.delete(access.draft(userId, draftId, ProjectRole.EDITOR)));
     }
 
-    private OutreachDraft owned(UUID ownerId, UUID draftId) {
-        return drafts.findOwned(draftId, ownerId).orElseThrow(() -> new NotFoundException("Outreach draft", draftId));
-    }
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.strip();

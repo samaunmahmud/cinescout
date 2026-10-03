@@ -6,6 +6,7 @@ import com.cinescout.ratelimit.RateLimitExceededException;
 import com.cinescout.scouting.ScoutingException;
 import com.cinescout.search.SearchException;
 import com.cinescout.service.ConflictException;
+import com.cinescout.service.ForbiddenException;
 import com.cinescout.service.InvalidRequestException;
 import com.cinescout.service.NotFoundException;
 import com.cinescout.video.VideoException;
@@ -98,6 +99,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Validation failed");
         problem.setProperty("errors", List.of(Map.of("field", e.field(), "message", e.getMessage())));
         return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    ResponseEntity<ProblemDetail> forbidden(ForbiddenException e) {
+        return problem(HttpStatus.FORBIDDEN, "Not allowed", e.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)

@@ -80,12 +80,13 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
 /** Where to go after logging in: back to the page that sent the user here, or the project list. */
 function useReturnTo(): string {
   const state = useLocation().state as { from?: string } | null
-  return state?.from?.startsWith('/') ? state.from : '/projects'
+  return state?.from?.startsWith('/') && !state.from.startsWith('//') ? state.from : '/projects'
 }
 
 export function LoginPage() {
   const { session, checking, logIn } = useAuth()
   const navigate = useNavigate()
+  const entry = useLocation().state as unknown
   const returnTo = useReturnTo()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -115,7 +116,7 @@ export function LoginPage() {
       footer={
         <>
           New to CineScout?{' '}
-          <Link to="/register" className="font-bold text-cue-ink underline decoration-2 underline-offset-2 hover:text-cue-deep">
+          <Link to="/register" state={entry} className="font-bold text-cue-ink underline decoration-2 underline-offset-2 hover:text-cue-deep">
             Create an account
           </Link>
         </>
@@ -143,12 +144,14 @@ export function LoginPage() {
 export function RegisterPage() {
   const { session, checking, register } = useAuth()
   const navigate = useNavigate()
+  const entry = useLocation().state as unknown
+  const returnTo = useReturnTo()
   const [form, setForm] = useState({ displayName: '', email: '', password: '' })
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
 
   if (checking) return <SessionCheck />
-  if (session) return <Navigate to="/projects" replace />
+  if (session) return <Navigate to={returnTo} replace />
 
   const errors = fieldErrors(error)
   const set = (field: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [field]: e.target.value })
@@ -159,7 +162,7 @@ export function RegisterPage() {
     setError(null)
     try {
       await register(form)
-      navigate('/projects', { replace: true })
+      navigate(returnTo, { replace: true })
     } catch (err) {
       setError(err)
       setBusy(false)
@@ -173,7 +176,7 @@ export function RegisterPage() {
       footer={
         <>
           Already have one?{' '}
-          <Link to="/login" className="font-bold text-cue-ink underline decoration-2 underline-offset-2 hover:text-cue-deep">
+          <Link to="/login" state={entry} className="font-bold text-cue-ink underline decoration-2 underline-offset-2 hover:text-cue-deep">
             Log in
           </Link>
         </>

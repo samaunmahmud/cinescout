@@ -6,7 +6,9 @@ import { queryKeys } from '../api/queryKeys'
 import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
-import { CalendarDays, ChevronLeft, Clapperboard, Film, Mail, MapPin, MapPinned } from 'lucide-react'
+import { CalendarDays, ChevronLeft, Clapperboard, Film, Mail, MapPin, MapPinned, Users } from 'lucide-react'
+import { linkButton } from '../components/buttonStyles'
+import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
 import { Card, Eyebrow, Tabs, type TabItem } from '../components/surfaces'
 import { Stamp } from '../components/stickers'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
@@ -88,7 +90,11 @@ function ProjectDetails({ project }: { project: Project }) {
       status: project.status,
     })
 
+  const owner = project.role === 'OWNER'
+  const editor = project.role !== 'VIEWER'
+
   return (
+    <ProjectRoleProvider role={project.role}>
     <div className="space-y-8">
       <Link to="/projects" className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
@@ -136,15 +142,25 @@ function ProjectDetails({ project }: { project: Project }) {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => setEditing(true)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" onClick={toggleArchived} busy={update.isPending}>
-                  {archived ? 'Restore' : 'Archive'}
-                </Button>
-                <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
-                  Delete
-                </Button>
+                <Link to={`/projects/${project.id}/settings`} className={linkButton('secondary')}>
+                  <Users aria-hidden className="size-4" />
+                  Crew
+                </Link>
+                {editor && (
+                  <Button variant="secondary" onClick={() => setEditing(true)}>
+                    Edit
+                  </Button>
+                )}
+                {owner && (
+                  <>
+                    <Button variant="secondary" onClick={toggleArchived} busy={update.isPending}>
+                      {archived ? 'Restore' : 'Archive'}
+                    </Button>
+                    <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
+                      Delete
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             {project.description && <p className="max-w-prose text-lg whitespace-pre-line text-fog">{project.description}</p>}
@@ -175,5 +191,6 @@ function ProjectDetails({ project }: { project: Project }) {
         </Tabs>
       )}
     </div>
+    </ProjectRoleProvider>
   )
 }

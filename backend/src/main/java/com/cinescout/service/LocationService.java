@@ -3,6 +3,7 @@ package com.cinescout.service;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Project;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
@@ -37,20 +38,22 @@ public class LocationService {
     private final LocationRepository locations;
     private final SceneRepository scenes;
     private final ProjectRepository projects;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public LocationService(LocationRepository locations, SceneRepository scenes, ProjectRepository projects, BlockingTransactions db) {
+    public LocationService(LocationRepository locations, SceneRepository scenes, ProjectRepository projects, ProjectAccess access, BlockingTransactions db) {
         this.locations = locations;
         this.scenes = scenes;
         this.projects = projects;
+        this.access = access;
         this.db = db;
     }
 
     /** Best fit first; venues without an assessment (added by hand) come last. */
-    public Mono<PageResponse<LocationResponse>> list(UUID ownerId, UUID sceneId, PageQuery page) {
+    public Mono<PageResponse<LocationResponse>> list(UUID userId, UUID sceneId, PageQuery page) {
         return db.call(() -> {
-            scenes.findOwned(sceneId, ownerId).orElseThrow(() -> new NotFoundException("Scene", sceneId));
-            return PageResponse.from(locations.findOwnedByScene(sceneId, ownerId, page.pageable()), LocationResponse::from);
+            access.scene(userId, sceneId, ProjectRole.VIEWER);
+            return PageResponse.from(locations.findVisibleByScene(sceneId, userId, page.pageable()), LocationResponse::from);
         });
     }
 
@@ -58,30 +61,30 @@ public class LocationService {
      * Every candidate location of a project: scene by scene in script order, best fit first within a scene.
      * {@code status} null means all.
      */
-    public Mono<PageResponse<ProjectLocationResponse>> listForProject(UUID ownerId, UUID projectId, LocationStatus status, PageQuery page) {
+    public Mono<PageResponse<ProjectLocationResponse>> listForProject(UUID userId, UUID projectId, LocationStatus status, PageQuery page) {
         return db.call(() -> {
-            projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            access.project(userId, projectId, ProjectRole.VIEWER);
             return PageResponse.from(status == null
-                    ? locations.findOwnedByProject(projectId, ownerId, page.pageable())
-                    : locations.findOwnedByProjectAndStatus(projectId, ownerId, status, page.pageable()),
+                    ? locations.findVisibleByProject(projectId, userId, page.pageable())
+                    : locations.findVisibleByProjectAndStatus(projectId, userId, status, page.pageable()),
                     ProjectLocationResponse::from);
         });
     }
 
     /** The same list as {@link #listForProject}, all of it, as a spreadsheet. */
-    public Mono<LocationExport> exportForProject(UUID ownerId, UUID projectId, LocationStatus status) {
+    public Mono<LocationExport> exportForProject(UUID userId, UUID projectId, LocationStatus status) {
         return db.call(() -> {
-            Project project = projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
+            Project project = access.project(userId, projectId, ProjectRole.VIEWER);
             return LocationExport.of(project, (status == null
-                    ? locations.findOwnedByProject(projectId, ownerId, Pageable.unpaged())
-                    : locations.findOwnedByProjectAndStatus(projectId, ownerId, status, Pageable.unpaged())).getContent());
+                    ? locations.findVisibleByProject(projectId, userId, Pageable.unpaged())
+                    : locations.findVisibleByProjectAndStatus(projectId, userId, status, Pageable.unpaged())).getContent());
         });
     }
 
     /** @throws ConflictException (as an error signal) if the scene already has a location with that URL */
-    public Mono<LocationResponse> create(UUID ownerId, UUID sceneId, CreateLocationRequest request) {
+    public Mono<LocationResponse> create(UUID userId, UUID sceneId, CreateLocationRequest request) {
         return db.call(() -> {
-                    Scene scene = scenes.findOwned(sceneId, ownerId).orElseThrow(() -> new NotFoundException("Scene", sceneId));
+                    Scene scene = access.scene(userId, sceneId, ProjectRole.EDITOR);
                     Location location = new Location(scene, request.name().strip());
                     location.setAddress(blankToNull(request.address()));
                     location.setLatitude(request.latitude());
@@ -94,14 +97,14 @@ public class LocationService {
                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
     }
 
-    public Mono<LocationResponse> get(UUID ownerId, UUID locationId) {
-        return db.call(() -> LocationResponse.from(owned(ownerId, locationId)));
+    public Mono<LocationResponse> get(UUID userId, UUID locationId) {
+        return db.call(() -> LocationResponse.from(access.location(userId, locationId, ProjectRole.VIEWER)));
     }
 
     /** Full replacement of the user-owned workflow fields; a null note clears it. */
-    public Mono<LocationResponse> update(UUID ownerId, UUID locationId, UpdateLocationRequest request) {
+    public Mono<LocationResponse> update(UUID userId, UUID locationId, UpdateLocationRequest request) {
         return db.call(() -> {
-            Location location = owned(ownerId, locationId);
+            Location location = access.location(userId, locationId, ProjectRole.EDITOR);
             location.setStatus(request.status());
             location.setNotes(blankToNull(request.notes()));
             return LocationResponse.from(locations.saveAndFlush(location));
@@ -112,18 +115,18 @@ public class LocationService {
      * Sets where the venue is, e.g. because it could not be geocoded or the pin was wrong. Its cached
      * logistics are dropped, as they were for the old spot.
      */
-    public Mono<LocationResponse> relocate(UUID ownerId, UUID locationId, UpdateCoordinatesRequest request) {
+    public Mono<LocationResponse> relocate(UUID userId, UUID locationId, UpdateCoordinatesRequest request) {
         return db.call(() -> {
-            Location location = owned(ownerId, locationId);
+            Location location = access.location(userId, locationId, ProjectRole.EDITOR);
             location.relocate(request.latitude(), request.longitude());
             return LocationResponse.from(locations.saveAndFlush(location));
         });
     }
 
     /** Full replacement of who to talk to at the venue; a null or blank field clears it. */
-    public Mono<LocationResponse> updateContact(UUID ownerId, UUID locationId, UpdateContactRequest request) {
+    public Mono<LocationResponse> updateContact(UUID userId, UUID locationId, UpdateContactRequest request) {
         return db.call(() -> {
-            Location location = owned(ownerId, locationId);
+            Location location = access.location(userId, locationId, ProjectRole.EDITOR);
             location.setContactName(blankToNull(request.name()));
             location.setContactEmail(blankToNull(request.email()));
             location.setContactPhone(blankToNull(request.phone()));
@@ -132,13 +135,10 @@ public class LocationService {
         });
     }
 
-    public Mono<Void> delete(UUID ownerId, UUID locationId) {
-        return db.run(() -> locations.delete(owned(ownerId, locationId)));
+    public Mono<Void> delete(UUID userId, UUID locationId) {
+        return db.run(() -> locations.delete(access.location(userId, locationId, ProjectRole.EDITOR)));
     }
 
-    private Location owned(UUID ownerId, UUID locationId) {
-        return locations.findOwned(locationId, ownerId).orElseThrow(() -> new NotFoundException("Location", locationId));
-    }
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.strip();

@@ -14,6 +14,7 @@ import { Badge, Button, ErrorAlert, Spinner, TextArea, TextField } from '../comp
 import { emailText, looksLikeEmail, mailtoLink } from '../lib/email'
 import { blankToNull } from '../lib/text'
 import { outreachStatusLabels } from '../lib/status'
+import { useCanEdit } from '../components/projectRole'
 
 const tones: Record<OutreachTone, { label: string; hint: string }> = {
   PROFESSIONAL: { label: 'Professional', hint: 'Polite and complete' },
@@ -30,6 +31,7 @@ const selectClass =
 
 /** Emails to the venue's owner: written by the AI, edited by the user, sent from their own email app. */
 export function OutreachSection({ location }: { location: Location }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const listKey = queryKeys.outreachList(location.id)
@@ -66,6 +68,7 @@ export function OutreachSection({ location }: { location: Location }) {
       icon={Mail}
       description="Emails to the venue's owner. CineScout never sends them: you do, from your own email."
       actions={
+        canEdit &&
         !composing && (
           <Button
             onClick={() => {
@@ -204,6 +207,7 @@ function GenerateForm({
 }
 
 function DraftCard({ draft }: { draft: OutreachDraft }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const listKey = queryKeys.outreachList(draft.locationId)
@@ -280,20 +284,24 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
             {status.label}
             {draft.sentAt && ` ${dateFormat.format(new Date(draft.sentAt))}`}
           </Badge>
-          <label htmlFor={statusId} className="sr-only">
-            Status of “{draft.subject}”
-          </label>
-          <select
-            id={statusId}
-            value={draft.status}
-            disabled={update.isPending}
-            onChange={(e) => update.mutate({ ...current, status: e.target.value as OutreachStatus })}
-            className={selectClass}
-          >
-            <option value="DRAFT">Not sent</option>
-            <option value="SENT">Sent</option>
-            <option value="REPLIED">Replied</option>
-          </select>
+          {canEdit && (
+            <>
+              <label htmlFor={statusId} className="sr-only">
+                Status of “{draft.subject}”
+              </label>
+              <select
+                id={statusId}
+                value={draft.status}
+                disabled={update.isPending}
+                onChange={(e) => update.mutate({ ...current, status: e.target.value as OutreachStatus })}
+                className={selectClass}
+              >
+                <option value="DRAFT">Not sent</option>
+                <option value="SENT">Sent</option>
+                <option value="REPLIED">Replied</option>
+              </select>
+            </>
+          )}
         </div>
       </div>
 
@@ -317,12 +325,16 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
         </ConfirmDelete>
       ) : (
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
-            Delete
-          </Button>
-          <Button variant="secondary" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
+          {canEdit && (
+            <>
+              <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                Delete
+              </Button>
+              <Button variant="secondary" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+            </>
+          )}
           <Button
             variant="secondary"
             onClick={() =>

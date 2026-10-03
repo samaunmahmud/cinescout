@@ -14,7 +14,8 @@ import jakarta.persistence.Table;
 public class Project extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "owner_id", nullable = false, updatable = false)
+    /** The project's one OWNER member, kept in step with project_members when ownership is handed over. */
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
     @Column(nullable = false)
@@ -60,4 +61,5 @@ public class Project extends BaseEntity {
     }
 
     public void setStatus(ProjectStatus status) { this.status = status; }
+    public void setOwner(User owner) { this.owner = owner; }
 }

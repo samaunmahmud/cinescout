@@ -47,6 +47,8 @@ import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
 import { VideosSection } from './VideosSection'
 import { usePageTitle } from '../lib/usePageTitle'
+import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
+import { useCanEdit, useProjectRole } from '../components/projectRole'
 
 export function LocationPage() {
   const { locationId = '' } = useParams()
@@ -81,6 +83,8 @@ function LocationDetails({ location }: { location: Location }) {
   const scene = useQuery({ queryKey: queryKeys.scene(location.sceneId), queryFn: () => api.scenes.get(location.sceneId) })
   const scenePath = `/scenes/${location.sceneId}`
   const sourceUrl = safeHttpUrl(location.sourceUrl)
+  const role = useProjectRole(scene.data?.projectId)
+  const canEdit = role !== 'VIEWER'
 
   const remove = useMutation({
     mutationFn: () => api.locations.remove(location.id),
@@ -94,6 +98,7 @@ function LocationDetails({ location }: { location: Location }) {
   const tab = tabOf(params.get('tab'))
   const pin = location.latitude != null && location.longitude != null
   return (
+    <ProjectRoleProvider role={role}>
     <div className="space-y-8">
       <Link to={scenePath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
@@ -154,9 +159,11 @@ function LocationDetails({ location }: { location: Location }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusSelect location={location} update={update} />
-            <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
-              Remove
-            </Button>
+            {canEdit && (
+              <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                Remove
+              </Button>
+            )}
           </div>
         </div>
 
@@ -210,6 +217,7 @@ function LocationDetails({ location }: { location: Location }) {
         {tab === 'outreach' && <OutreachSection location={location} />}
       </Tabs>
     </div>
+    </ProjectRoleProvider>
   )
 }
 
@@ -287,6 +295,7 @@ function Assessment({ location }: { location: Location }) {
 }
 
 function Notes({ location, update }: { location: Location; update: ReturnType<typeof useUpdateLocation> }) {
+  const canEdit = useCanEdit()
   const [notes, setNotes] = useState(location.notes ?? '')
   const changed = (blankToNull(notes) ?? null) !== (location.notes ?? null)
 
@@ -296,7 +305,10 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
   }
 
   return (
-    <Section titleId="notes-heading" title="Notes" eyebrow="Just for you" icon={NotebookPen}>
+    <Section titleId="notes-heading" title="Notes" eyebrow="For the crew" icon={NotebookPen}>
+      {!canEdit ? (
+        <p className="text-[15px] whitespace-pre-line text-graphite">{location.notes ?? 'No notes yet.'}</p>
+      ) : (
       <form onSubmit={save} className="space-y-3" noValidate>
         <ErrorAlert error={update.error} />
         <TextArea
@@ -305,7 +317,7 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           error={fieldErrors(update.error).notes}
-          hint="Private to you. Never shared with the venue."
+          hint="Shared with the project's crew. Never with the venue."
         />
         <div className="flex justify-end">
           <Button type="submit" variant="secondary" busy={update.isPending} disabled={!changed}>
@@ -313,12 +325,14 @@ function Notes({ location, update }: { location: Location; update: ReturnType<ty
           </Button>
         </div>
       </form>
+      )}
     </Section>
   )
 }
 
 /** Who to talk to at the venue. Shown as links to write or call; edited as a whole. */
 function Contact({ location }: { location: Location }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const store = useStoreLocation()
   const known = location.contactName != null || location.contactEmail != null || location.contactPhone != null || location.quote != null
@@ -360,6 +374,7 @@ function Contact({ location }: { location: Location }) {
       eyebrow="Who to talk to, and what they ask"
       icon={Contact2}
       actions={
+        canEdit &&
         !editing && (
           <Button variant="secondary" onClick={edit}>
             {known ? 'Edit contact' : 'Add a contact'}
@@ -449,6 +464,7 @@ function Contact({ location }: { location: Location }) {
 
 /** Where the venue is: logistics are worked out for this spot. */
 function Position({ location }: { location: Location }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const store = useStoreLocation()
   const current = location.latitude != null && location.longitude != null ? { latitude: location.latitude, longitude: location.longitude } : null
@@ -481,6 +497,7 @@ function Position({ location }: { location: Location }) {
       eyebrow="On the map"
       icon={Crosshair}
       actions={
+        canEdit &&
         !editing && (
           <Button
             variant="secondary"

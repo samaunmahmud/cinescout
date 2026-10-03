@@ -2,6 +2,7 @@ package com.cinescout.logistics;
 
 import com.cinescout.domain.AcousticSensitivity;
 import com.cinescout.domain.Location;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.logistics.LogisticsException.Kind;
@@ -30,6 +31,7 @@ import com.cinescout.resilience.Guard;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.service.ConflictException;
 import com.cinescout.service.NotFoundException;
+import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -74,13 +76,14 @@ public class LogisticsService {
     private final Guard placesGuard;
     private final Guard geocodingGuard;
     private final LocationRepository locations;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
     private final ObjectMapper mapper;
     private final LogisticsProperties props;
     private final Clock clock;
 
     public LogisticsService(WeatherClient weather, PlacesClient places, Geocoder geocoder, GuardFactory guards,
-                            LocationRepository locations, BlockingTransactions db, ObjectMapper mapper,
+                            LocationRepository locations, ProjectAccess access, BlockingTransactions db, ObjectMapper mapper,
                             LogisticsProperties props, Clock clock) {
         this.weather = weather;
         this.places = places;
@@ -93,6 +96,7 @@ public class LogisticsService {
         this.placesGuard = guard(guards, "places", false);
         this.geocodingGuard = guard(guards, "geocoding", true);
         this.locations = locations;
+        this.access = access;
         this.db = db;
         this.mapper = mapper;
         this.props = props;
@@ -114,11 +118,11 @@ public class LogisticsService {
      * @throws ConflictException  (as an error signal) if the venue has no coordinates and cannot be found on the map
      * @throws LogisticsException (as an error signal) if the venue has to be geocoded and the geocoder is down
      */
-    public Mono<LogisticsReport> refresh(UUID ownerId, UUID locationId) {
-        return db.call(() -> brief(owned(ownerId, locationId)))
+    public Mono<LogisticsReport> refresh(UUID userId, UUID locationId) {
+        return db.call(() -> brief(access.location(userId, locationId, ProjectRole.EDITOR)))
                 .flatMap(brief -> locate(brief, locationId))
                 .flatMap(this::report)
-                .flatMap(report -> db.call(() -> save(ownerId, locationId, report)));
+                .flatMap(report -> db.call(() -> save(userId, locationId, report)));
     }
 
     /**
@@ -126,9 +130,9 @@ public class LogisticsService {
      *
      * @throws NotFoundException (as an error signal) if the location is not the owner's or has none yet
      */
-    public Mono<JsonNode> cached(UUID ownerId, UUID locationId) {
+    public Mono<JsonNode> cached(UUID userId, UUID locationId) {
         return db.call(() -> {
-            JsonNode logistics = owned(ownerId, locationId).getLogisticsJson();
+            JsonNode logistics = access.location(userId, locationId, ProjectRole.VIEWER).getLogisticsJson();
             if (logistics == null) {
                 throw new NotFoundException("Logistics for location", locationId);
             }
@@ -321,8 +325,8 @@ public class LogisticsService {
      * Caches the report, and keeps coordinates that were geocoded. If the location's coordinates changed
      * while the report was being worked out, the report is for the old spot: it is returned but not cached.
      */
-    private LogisticsReport save(UUID ownerId, UUID locationId, LogisticsReport report) {
-        Location location = owned(ownerId, locationId);
+    private LogisticsReport save(UUID userId, UUID locationId, LogisticsReport report) {
+        Location location = access.location(userId, locationId, ProjectRole.EDITOR);
         BigDecimal latitude = report.position().latitude();
         BigDecimal longitude = report.position().longitude();
         if (location.getLatitude() == null && location.getLongitude() == null && report.position().geocoded()) {
@@ -341,7 +345,4 @@ public class LogisticsService {
         return stored != null && stored.compareTo(used) == 0;
     }
 
-    private Location owned(UUID ownerId, UUID locationId) {
-        return locations.findOwned(locationId, ownerId).orElseThrow(() -> new NotFoundException("Location", locationId));
-    }
 }

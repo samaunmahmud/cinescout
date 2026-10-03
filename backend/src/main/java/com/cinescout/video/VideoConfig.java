@@ -4,6 +4,7 @@ import com.cinescout.domain.DatabaseTime;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.resilience.GuardFactory;
+import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -20,8 +21,8 @@ import org.springframework.context.annotation.Configuration;
 class VideoConfig {
 
     @Bean
-    VideoService videoService(VideoSearchClient client, GuardFactory guards, LocationRepository locations, BlockingTransactions db,
+    VideoService videoService(VideoSearchClient client, GuardFactory guards, LocationRepository locations, ProjectAccess access, BlockingTransactions db,
                               ObjectMapper mapper, VideoProperties props) {
-        return new VideoService(client, guards, locations, db, mapper, props, DatabaseTime.clock());
+        return new VideoService(client, guards, locations, access, db, mapper, props, DatabaseTime.clock());
     }
 }

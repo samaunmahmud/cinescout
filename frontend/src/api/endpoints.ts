@@ -1,16 +1,20 @@
 import { ApiError, download, request } from './client'
 import type {
+  AddMemberResult,
   BatchLogisticsResult,
   BatchParseResult,
   ChangePasswordRequest,
   CreateLocationRequest,
   CreateProjectRequest,
+  Crew,
   GenerateOutreachRequest,
+  InvitePreview,
   LoginRequest,
   Location,
   LocationStatus,
   LocationVideos,
   LogisticsReport,
+  Member,
   OutreachDraft,
   OutreachStatus,
   Page,
@@ -18,6 +22,7 @@ import type {
   ProjectLocation,
   ProjectOutreach,
   ProjectProgress,
+  ProjectRole,
   ProjectStatus,
   PublicCallSheet,
   RegisterRequest,
@@ -96,6 +101,22 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       stopSharingCallSheet: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`, { method: 'DELETE' }),
       /** The scenes by the day their shoot starts, each with its confirmed locations. */
       schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
+      /** Everyone on the project; the owner also gets the open invites. */
+      crew: (id: string) => call<Crew>(`/api/projects/${encodeURIComponent(id)}/members`),
+      addMember: (id: string, email: string, role: ProjectRole) =>
+        call<AddMemberResult>(`/api/projects/${encodeURIComponent(id)}/members`, { method: 'POST', body: { email, role } }),
+      changeRole: (id: string, userId: string, role: ProjectRole) =>
+        call<Member>(`/api/projects/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}`, { method: 'PUT', body: { role } }),
+      /** Removes a member, or (for the user's own id) leaves the project. */
+      removeMember: (id: string, userId: string) =>
+        call<void>(`/api/projects/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE' }),
+      transfer: (id: string, userId: string) => call<Crew>(`/api/projects/${encodeURIComponent(id)}/transfer`, { method: 'POST', body: { userId } }),
+      revokeInvite: (id: string, inviteId: string) =>
+        call<void>(`/api/projects/${encodeURIComponent(id)}/invites/${encodeURIComponent(inviteId)}`, { method: 'DELETE' }),
+    },
+    invites: {
+      preview: (token: string) => call<InvitePreview>(`/api/invites/${encodeURIComponent(token)}`),
+      accept: (token: string) => call<InvitePreview>(`/api/invites/${encodeURIComponent(token)}/accept`, { method: 'POST' }),
     },
     scenes: {
       /** In script order; `search` keeps the scenes whose title, script or setting contains it. */

@@ -17,36 +17,36 @@ import java.util.UUID;
 public interface SceneRepository extends JpaRepository<Scene, UUID> {
 
     /**
-     * The scene, with its project, only if the project belongs to {@code ownerId}. Ownership is a
-     * join, not a separate check, so a scene of someone else looks exactly like one that does not exist.
+     * The scene, with its project, only if the project is one {@code userId} is a member of. Membership is part
+     * of the lookup, not a separate check, so a scene of someone else's project looks exactly like one that does not exist.
      */
-    @Query("select s from Scene s join fetch s.project p where s.id = :sceneId and p.owner.id = :ownerId")
-    Optional<Scene> findOwned(@Param("sceneId") UUID sceneId, @Param("ownerId") UUID ownerId);
+    @Query("select s from Scene s join fetch s.project p where s.id = :sceneId and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)")
+    Optional<Scene> findVisible(@Param("sceneId") UUID sceneId, @Param("userId") UUID userId);
 
-    /** A project's scenes in script order (numbered ones first, by number), if the project is the owner's. */
+    /** A project's scenes in script order (numbered ones first, by number), if the project is one the user is a member of. */
     @Query(value = """
             select s from Scene s join fetch s.project p
-            where p.id = :projectId and p.owner.id = :ownerId
+            where p.id = :projectId and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)
             order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""",
-            countQuery = "select count(s) from Scene s where s.project.id = :projectId and s.project.owner.id = :ownerId")
-    Page<Scene> findOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId, Pageable pageable);
+            countQuery = "select count(s) from Scene s where s.project.id = :projectId and exists (select m.id from ProjectMember m where m.project = s.project and m.user.id = :userId)")
+    Page<Scene> findVisibleByProject(@Param("projectId") UUID projectId, @Param("userId") UUID userId, Pageable pageable);
 
     /**
-     * As {@link #findOwnedByProject}, only the scenes whose title, script or extracted setting contains
+     * As {@link #findVisibleByProject}, only the scenes whose title, script or extracted setting contains
      * {@code pattern}: a LIKE pattern in lower case, with {@code \} as its escape character.
      */
     @Query(value = """
             select s from Scene s join fetch s.project p
-            where p.id = :projectId and p.owner.id = :ownerId
+            where p.id = :projectId and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)
               and (lower(s.title) like :pattern escape '\\' or lower(s.sourceText) like :pattern escape '\\'
                    or lower(s.settingType) like :pattern escape '\\')
             order by s.sceneNumber asc nulls last, s.createdAt asc, s.id asc""",
             countQuery = """
             select count(s) from Scene s
-            where s.project.id = :projectId and s.project.owner.id = :ownerId
+            where s.project.id = :projectId and exists (select m.id from ProjectMember m where m.project = s.project and m.user.id = :userId)
               and (lower(s.title) like :pattern escape '\\' or lower(s.sourceText) like :pattern escape '\\'
                    or lower(s.settingType) like :pattern escape '\\')""")
-    Page<Scene> searchOwnedByProject(@Param("projectId") UUID projectId, @Param("ownerId") UUID ownerId,
+    Page<Scene> searchVisibleByProject(@Param("projectId") UUID projectId, @Param("userId") UUID userId,
                                      @Param("pattern") String pattern, Pageable pageable);
 
     /** The scene numbers in use in a project; each can be used once (uq_scenes_project_number). */

@@ -2,12 +2,14 @@ package com.cinescout.logistics;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.service.NotFoundException;
+import com.cinescout.service.ProjectAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -42,12 +44,14 @@ public class ProjectLogisticsService {
     private final LogisticsService logistics;
     private final ProjectRepository projects;
     private final LocationRepository locations;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public ProjectLogisticsService(LogisticsService logistics, ProjectRepository projects, LocationRepository locations, BlockingTransactions db) {
+    public ProjectLogisticsService(LogisticsService logistics, ProjectRepository projects, LocationRepository locations, ProjectAccess access, BlockingTransactions db) {
         this.logistics = logistics;
         this.projects = projects;
         this.locations = locations;
+        this.access = access;
         this.db = db;
     }
 
@@ -55,11 +59,11 @@ public class ProjectLogisticsService {
      * @param permit subscribed to once per venue before its lookups (the caller's rate limit); an error skips it
      * @throws NotFoundException (as an error signal) if the project is not the owner's
      */
-    public Mono<BatchLogisticsResult> refreshConfirmed(UUID ownerId, UUID projectId, Supplier<Mono<Void>> permit) {
-        return db.call(() -> missing(ownerId, projectId).stream().limit(MAX_BATCH).map(Location::getId).toList())
+    public Mono<BatchLogisticsResult> refreshConfirmed(UUID userId, UUID projectId, Supplier<Mono<Void>> permit) {
+        return db.call(() -> missing(userId, projectId).stream().limit(MAX_BATCH).map(Location::getId).toList())
                 .flatMapMany(Flux::fromIterable)
                 .concatMap(locationId -> permit.get()
-                        .then(Mono.defer(() -> logistics.refresh(ownerId, locationId)))
+                        .then(Mono.defer(() -> logistics.refresh(userId, locationId)))
                         .thenReturn(Attempt.DONE)
                         .onErrorResume(error -> {
                             log.info("Logistics of location {} not worked out in a batch: {}", locationId, error.toString());
@@ -72,13 +76,13 @@ public class ProjectLogisticsService {
                     if (updated == 0 && !errors.isEmpty()) {
                         return Mono.error(errors.getFirst());
                     }
-                    return db.call(() -> new BatchLogisticsResult(updated, errors.size(), missing(ownerId, projectId).size()));
+                    return db.call(() -> new BatchLogisticsResult(updated, errors.size(), missing(userId, projectId).size()));
                 });
     }
 
-    private List<Location> missing(UUID ownerId, UUID projectId) {
-        projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
-        return locations.findOwnedByProjectAndStatus(projectId, ownerId, LocationStatus.CONFIRMED, Pageable.unpaged())
+    private List<Location> missing(UUID userId, UUID projectId) {
+        access.project(userId, projectId, ProjectRole.EDITOR);
+        return locations.findVisibleByProjectAndStatus(projectId, userId, LocationStatus.CONFIRMED, Pageable.unpaged())
                 .stream().filter(ProjectLogisticsService::needsLogistics).toList();
     }
 

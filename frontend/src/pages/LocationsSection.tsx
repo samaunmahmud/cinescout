@@ -22,12 +22,14 @@ import { scoutingSummary } from '../lib/format'
 import { displayHost, safeHttpUrl } from '../lib/url'
 import { VenuePicture } from '../components/VenuePicture'
 import { MapSnapshot } from '../components/MapSnapshot'
+import { useCanEdit } from '../components/projectRole'
 
 /**
  * The scene's candidate venues and the button that scouts for more. `locationArea` is the project's search
  * area: undefined while the project loads, null when it has none (scouting then has nowhere to search).
  */
 export function LocationsSection({ scene, locationArea }: { scene: Scene; locationArea: string | null | undefined }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const [page, setPage] = usePageParam()
@@ -67,14 +69,18 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
               Compare
             </Link>
           )}
-          <Link to={`/scenes/${scene.id}/locations/new`} className={linkButton('ghost')}>
-            <Plus aria-hidden className="size-4" />
-            Add venue
-          </Link>
-          <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate()}>
-            {!scout.isPending && <Radar aria-hidden className="size-4" />}
-            {hasLocations ? 'Scout again' : 'Scout locations'}
-          </Button>
+          {canEdit && (
+            <>
+              <Link to={`/scenes/${scene.id}/locations/new`} className={linkButton('ghost')}>
+                <Plus aria-hidden className="size-4" />
+                Add venue
+              </Link>
+              <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate()}>
+                {!scout.isPending && <Radar aria-hidden className="size-4" />}
+                {hasLocations ? 'Scout again' : 'Scout locations'}
+              </Button>
+            </>
+          )}
         </>
       }
     >
@@ -147,6 +153,7 @@ function LocationsMap({ locations, paged }: { locations: Location[]; paged: bool
 }
 
 function LocationCard({ location }: { location: Location }) {
+  const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -237,11 +244,13 @@ function LocationCard({ location }: { location: Location }) {
           This also deletes its outreach drafts. Scouting again may find it again as a new suggestion.
         </ConfirmDelete>
       ) : (
-        <div className="flex justify-end">
-          <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
-            Remove
-          </Button>
-        </div>
+        canEdit && (
+          <div className="flex justify-end">
+            <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+              Remove
+            </Button>
+          </div>
+        )
       )}
     </article>
   )

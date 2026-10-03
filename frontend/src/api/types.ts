@@ -49,8 +49,53 @@ export interface Project {
   confirmedSceneCount: number
   /** A picture of one of its venues (a confirmed one first), for its poster; null while none has one. */
   posterImageUrl: string | null
+  /** The user's role on the project: what they may do there. */
+  role: ProjectRole
   createdAt: string
   updatedAt: string
+}
+
+/** What a member may do, weakest first: VIEWER reads, EDITOR changes the work, OWNER also runs the project and its crew. */
+export type ProjectRole = 'VIEWER' | 'EDITOR' | 'OWNER'
+
+export interface Member {
+  userId: string
+  displayName: string
+  email: string
+  role: ProjectRole
+  joinedAt: string
+}
+
+export interface Invite {
+  id: string
+  email: string
+  role: ProjectRole
+  createdAt: string
+  expiresAt: string
+  /** The link's secret: only in the answer that made the invite. */
+  token: string | null
+}
+
+export interface Crew {
+  members: Member[]
+  /** Open invites; only the owner sees them. */
+  invites: Invite[]
+}
+
+/** Adding someone: an account that exists joins (`member`); anyone else gets an invite to pass on (`invite`). */
+export interface AddMemberResult {
+  member: Member | null
+  invite: Invite | null
+}
+
+export interface InvitePreview {
+  projectId: string
+  projectTitle: string
+  invitedBy: string | null
+  email: string
+  role: ProjectRole
+  expiresAt: string
+  state: 'OPEN' | 'ACCEPTED' | 'EXPIRED'
 }
 
 export interface CreateProjectRequest {

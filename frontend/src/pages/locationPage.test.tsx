@@ -10,6 +10,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/auth/me': () => json(ada),
     'GET /api/locations/l1': () => json(current),
     'GET /api/scenes/s1': () => json(scene()),
+    'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
     'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
     ...extra,
@@ -199,6 +200,7 @@ describe('adding a venue by hand', () => {
     return fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/scenes/s1': () => json(scene()),
+      'GET /api/projects/p1': () => json(project()),
       ...extra,
     })
   }
@@ -266,6 +268,7 @@ describe('adding a venue by hand, server-side checks', () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/scenes/s1': () => json(scene()),
+      'GET /api/projects/p1': () => json(project()),
       'POST /api/scenes/s1/locations': () =>
         problem(400, 'Validation failed', 'The request is invalid', {
           errors: [{ field: 'coordinates', message: 'latitude and longitude must be given together' }],

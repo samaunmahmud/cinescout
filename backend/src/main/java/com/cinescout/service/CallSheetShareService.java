@@ -1,6 +1,7 @@
 package com.cinescout.service;
 
 import com.cinescout.domain.Project;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.dto.CallSheetLinkResponse;
 import com.cinescout.dto.PublicCallSheetResponse;
 import com.cinescout.persistence.BlockingTransactions;
@@ -27,18 +28,20 @@ public class CallSheetShareService {
 
     private final ProjectRepository projects;
     private final ScheduleService schedules;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public CallSheetShareService(ProjectRepository projects, ScheduleService schedules, BlockingTransactions db) {
+    public CallSheetShareService(ProjectRepository projects, ScheduleService schedules, ProjectAccess access, BlockingTransactions db) {
         this.projects = projects;
         this.schedules = schedules;
+        this.access = access;
         this.db = db;
     }
 
     /** @throws NotFoundException (as an error signal) if the project is not the owner's, or is not shared */
-    public Mono<CallSheetLinkResponse> link(UUID ownerId, UUID projectId) {
+    public Mono<CallSheetLinkResponse> link(UUID userId, UUID projectId) {
         return db.call(() -> {
-            String token = owned(ownerId, projectId).getCallSheetToken();
+            String token = access.project(userId, projectId, ProjectRole.VIEWER).getCallSheetToken();
             if (token == null) {
                 throw new NotFoundException("Call sheet link of project", projectId);
             }
@@ -47,9 +50,9 @@ public class CallSheetShareService {
     }
 
     /** A new link, which replaces the old one if there was one. */
-    public Mono<CallSheetLinkResponse> share(UUID ownerId, UUID projectId) {
+    public Mono<CallSheetLinkResponse> share(UUID userId, UUID projectId) {
         return db.call(() -> {
-            Project project = owned(ownerId, projectId);
+            Project project = access.project(userId, projectId, ProjectRole.EDITOR);
             byte[] secret = new byte[32];
             RANDOM.nextBytes(secret);
             project.setCallSheetToken(Base64.getUrlEncoder().withoutPadding().encodeToString(secret));
@@ -58,9 +61,9 @@ public class CallSheetShareService {
     }
 
     /** Stops sharing: the link stops working at once. Doing it twice is harmless. */
-    public Mono<Void> stopSharing(UUID ownerId, UUID projectId) {
+    public Mono<Void> stopSharing(UUID userId, UUID projectId) {
         return db.run(() -> {
-            Project project = owned(ownerId, projectId);
+            Project project = access.project(userId, projectId, ProjectRole.EDITOR);
             project.setCallSheetToken(null);
             projects.saveAndFlush(project);
         });
@@ -80,7 +83,4 @@ public class CallSheetShareService {
                                 project.getOwner().getDisplayName(), schedule)));
     }
 
-    private Project owned(UUID ownerId, UUID projectId) {
-        return projects.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new NotFoundException("Project", projectId));
-    }
 }

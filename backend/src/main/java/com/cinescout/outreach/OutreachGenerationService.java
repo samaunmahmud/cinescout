@@ -2,6 +2,7 @@ package com.cinescout.outreach;
 
 import com.cinescout.domain.Location;
 import com.cinescout.domain.OutreachDraft;
+import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
 import com.cinescout.dto.GenerateOutreachRequest;
 import com.cinescout.dto.OutreachDraftResponse;
@@ -14,6 +15,7 @@ import com.cinescout.repository.UserRepository;
 import com.cinescout.resilience.Guard;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.service.NotFoundException;
+import com.cinescout.service.ProjectAccess;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -22,7 +24,7 @@ import java.util.UUID;
  * Has the model draft an email to the owner of a saved location and stores it as an outreach draft.
  *
  * <p>Like scouting, every database step runs on {@code boundedElastic} in its own short transaction and
- * never spans the model call. Ownership is checked when the context is read and again when the draft is
+ * never spans the model call. Access is checked when the context is read and again when the draft is
  * saved, so a location deleted mid-run fails as a 404 instead of being written to. The model call shares
  * the LLM circuit breaker with scouting, see {@link LlmGuards}.
  */
@@ -35,15 +37,17 @@ public class OutreachGenerationService {
     private final LocationRepository locations;
     private final OutreachDraftRepository drafts;
     private final UserRepository users;
+    private final ProjectAccess access;
     private final BlockingTransactions db;
 
     public OutreachGenerationService(LlmClient llm, GuardFactory guards, LocationRepository locations,
-                                     OutreachDraftRepository drafts, UserRepository users, BlockingTransactions db) {
+                                     OutreachDraftRepository drafts, UserRepository users, ProjectAccess access, BlockingTransactions db) {
         this.llm = llm;
         this.llmGuard = LlmGuards.create(guards);
         this.locations = locations;
         this.drafts = drafts;
         this.users = users;
+        this.access = access;
         this.db = db;
     }
 
@@ -54,19 +58,20 @@ public class OutreachGenerationService {
      * @param request may be null, which means "all defaults"
      * @throws NotFoundException (as an error signal) if the location is not the owner's
      */
-    public Mono<OutreachDraftResponse> generate(UUID ownerId, UUID locationId, GenerateOutreachRequest request) {
+    public Mono<OutreachDraftResponse> generate(UUID userId, UUID locationId, GenerateOutreachRequest request) {
         GenerateOutreachRequest options = request == null ? new GenerateOutreachRequest(null, null, null, null) : request;
-        return db.call(() -> brief(ownerId, locationId, options))
+        return db.call(() -> brief(userId, locationId, options))
                 .flatMap(brief -> llmGuard.call(() -> llm.generate(
                         OutreachPrompts.SYSTEM, OutreachPrompts.user(brief), OutreachEmail.class)))
-                .flatMap(email -> db.call(() -> save(ownerId, locationId, options, email)));
+                .flatMap(email -> db.call(() -> save(userId, locationId, options, email)));
     }
 
-    private OutreachBrief brief(UUID ownerId, UUID locationId, GenerateOutreachRequest options) {
-        Location location = owned(ownerId, locationId);
+    private OutreachBrief brief(UUID userId, UUID locationId, GenerateOutreachRequest options) {
+        Location location = access.location(userId, locationId, ProjectRole.EDITOR);
         Scene scene = location.getScene();
+        // Signed by whoever on the crew writes it, not necessarily the project's owner.
         return new OutreachBrief(
-                scene.getProject().getOwner().getDisplayName(),
+                users.getReferenceById(userId).getDisplayName(),
                 scene.getProject().getTitle(),
                 scene.getShootDateStart(),
                 scene.getShootDateEnd(),
@@ -81,9 +86,9 @@ public class OutreachGenerationService {
                 blankToNull(options.additionalContext()));
     }
 
-    private OutreachDraftResponse save(UUID ownerId, UUID locationId, GenerateOutreachRequest options, OutreachEmail email) {
-        Location location = owned(ownerId, locationId);
-        OutreachDraft draft = new OutreachDraft(location, users.getReferenceById(ownerId),
+    private OutreachDraftResponse save(UUID userId, UUID locationId, GenerateOutreachRequest options, OutreachEmail email) {
+        Location location = access.location(userId, locationId, ProjectRole.EDITOR);
+        OutreachDraft draft = new OutreachDraft(location, users.getReferenceById(userId),
                 oneLine(email.subject()), email.body().strip(), options.tone());
         draft.setRecipientName(blankToNull(options.recipientName()));
         draft.setRecipientEmail(blankToNull(options.recipientEmail()));
@@ -91,9 +96,6 @@ public class OutreachGenerationService {
         return OutreachDraftResponse.from(drafts.saveAndFlush(draft));
     }
 
-    private Location owned(UUID ownerId, UUID locationId) {
-        return locations.findOwned(locationId, ownerId).orElseThrow(() -> new NotFoundException("Location", locationId));
-    }
 
     /** A subject is one line; a model that breaks it over several is tidied, not rejected. */
     private static String oneLine(String subject) {
