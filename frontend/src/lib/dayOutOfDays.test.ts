@@ -10,6 +10,7 @@ describe('dayOutOfDays', () => {
         { date: '2026-10-15', scenes: [scheduled({ id: 's3', characters: ['KAPLAN', 'MARA'] })] },
       ],
       unscheduled: [scheduled({ id: 's4', characters: ['EXTRA'] })],
+      conflicts: [],
     })
 
     expect(report.days).toEqual(['2026-10-12', '2026-10-15'])

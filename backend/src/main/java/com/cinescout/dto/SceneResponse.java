@@ -7,6 +7,7 @@ import com.cinescout.script.ScriptCharacters;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +24,8 @@ public record SceneResponse(
         String sourceText,
         LocalDate shootDateStart,
         LocalDate shootDateEnd,
+        LocalTime callTime,
+        LocalTime wrapTime,
         ParseStatus parseStatus,
         SceneRequirements requirements,
         List<String> characters,
@@ -34,7 +37,7 @@ public record SceneResponse(
     public static SceneResponse from(Scene scene) {
         return new SceneResponse(scene.getId(), scene.getProject().getId(), scene.getSceneNumber(),
                 scene.getTitle(), scene.getSourceText(), scene.getShootDateStart(), scene.getShootDateEnd(),
-                scene.getParseStatus(), scene.requirements(), ScriptCharacters.in(scene.getSourceText()), scene.getParsedAt(),
+                scene.getCallTime(), scene.getWrapTime(), scene.getParseStatus(), scene.requirements(), ScriptCharacters.in(scene.getSourceText()), scene.getParsedAt(),
                 scene.getCreatedAt(), scene.getUpdatedAt());
     }
 }

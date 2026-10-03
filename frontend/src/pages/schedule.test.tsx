@@ -36,14 +36,14 @@ describe('the schedule of a project', () => {
   })
 
   it('says when every dated scene has its location, and when nothing is dated yet', async () => {
-    let current: Schedule = { days: [{ date: '2026-10-12', scenes: [scheduled()] }], unscheduled: [] }
+    let current: Schedule = { days: [{ date: '2026-10-12', scenes: [scheduled()] }], unscheduled: [], conflicts: [] }
     fakeServer({ ...base, 'GET /api/projects/p1/schedule': () => json(current) })
     const { unmount } = renderApp('/projects/p1?tab=schedule')
     await logIn()
     expect(await screen.findByText('1 shoot day. Every dated scene has a confirmed location.')).toBeInTheDocument()
     unmount()
 
-    current = { days: [], unscheduled: schedule.unscheduled }
+    current = { days: [], unscheduled: schedule.unscheduled, conflicts: [] }
     renderApp('/projects/p1?tab=schedule')
     expect(await screen.findByText('No scene has a shoot date yet.')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Not scheduled yet' })).toBeInTheDocument()
@@ -56,7 +56,7 @@ describe('the schedule of a project', () => {
       'GET /api/projects/p1/schedule': () => json(current),
       'PUT /api/scenes/s4/shoot-dates': () => {
         const car = { ...schedule.unscheduled[0], shootDateStart: '2026-10-20', shootDateEnd: null }
-        current = { days: [schedule.days[0], { date: '2026-10-20', scenes: [...schedule.days[1].scenes, car] }], unscheduled: [] }
+        current = { days: [schedule.days[0], { date: '2026-10-20', scenes: [...schedule.days[1].scenes, car] }], unscheduled: [], conflicts: [] }
         return json(scene({ id: 's4', shootDateStart: '2026-10-20' }))
       },
     })
@@ -75,7 +75,7 @@ describe('the schedule of a project', () => {
     const day = within(await screen.findByRole('region', { name: /Tuesday.*October.*2026/ }))
     expect(await day.findByRole('link', { name: 'INT. CAR - DAY' })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Not scheduled yet' })).not.toBeInTheDocument()
-    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ shootDateStart: '2026-10-20', shootDateEnd: null })
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ shootDateStart: '2026-10-20', shootDateEnd: null, callTime: null, wrapTime: null })
   })
 
   it('opens a dated scene with its dates filled in, to move it', async () => {

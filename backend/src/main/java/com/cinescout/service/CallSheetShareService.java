@@ -80,7 +80,7 @@ public class CallSheetShareService {
                 })
                 .flatMap(project -> schedules.schedule(project.getOwner().getId(), project.getId())
                         .map(schedule -> new PublicCallSheetResponse(project.getTitle(), project.getLocationArea(),
-                                project.getOwner().getDisplayName(), schedule)));
+                                project.getOwner().getDisplayName(), schedule.withoutBookings())));
     }
 
 }

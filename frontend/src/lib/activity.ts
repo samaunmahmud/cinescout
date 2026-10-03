@@ -1,5 +1,6 @@
-import type { Activity, LocationStatus, OutreachStatus, ProjectRole } from '../api/types'
-import { formatShootWindow } from './format'
+import type { Activity, AvailabilityState, LocationStatus, OutreachStatus, ProjectRole } from '../api/types'
+import { availabilityLabels } from './availability'
+import { formatDate, formatShootWindow } from './format'
 import { outreachStatusLabels, statusLabels } from './status'
 
 /** A piece of an activity line: words, or words that link somewhere. */
@@ -56,6 +57,15 @@ export function activityLine(line: Activity): LinePart[] {
     case 'SHOOT_DATES_CHANGED': {
       const window = formatShootWindow(text(p.toStart) || null, text(p.toEnd) || null)
       return window ? [actor, ' set ', sceneLink, ` to shoot ${window.charAt(0).toLowerCase()}${window.slice(1)}`] : [actor, ' cleared the dates of ', sceneLink]
+    }
+    case 'AVAILABILITY_CHANGED': {
+      const from = text(p.from)
+      const to = text(p.to)
+      const days = from && to && from !== to ? `${formatDate(from)} to ${formatDate(to)}` : from ? formatDate(from) : 'a day'
+      const state = availabilityLabels[p.state as AvailabilityState]
+      return state
+        ? [actor, ' marked ', venueLink(line.targetId), ` ${state.label.toLowerCase()} for ${days}`]
+        : [actor, ' cleared ', venueLink(line.targetId), ` for ${days}`]
     }
     case 'COMMENTED':
       return [actor, p.reply ? ' replied on ' : ' commented on ', venueLink(line.targetId, '?tab=comments')]

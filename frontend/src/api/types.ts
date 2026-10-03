@@ -134,6 +134,47 @@ export interface Schedule {
   days: { date: string; scenes: ScheduledScene[] }[]
   /** Scenes without shoot dates, in script order. */
   unscheduled: ScheduledScene[]
+  /** What stands in the way, by date, problems first; always empty on a shared call sheet. */
+  conflicts: ScheduleConflict[]
+}
+
+export type ConflictKind = 'UNAVAILABLE' | 'HOLD_EXPIRES' | 'DOUBLE_BOOKED'
+
+export interface ScheduleConflict {
+  kind: ConflictKind
+  /** True when it must be sorted out; false for a warning (two scenes at one venue at once). */
+  problem: boolean
+  date: string
+  sceneIds: string[]
+  locationId: string
+  venueName: string
+  /** The conflict in plain English. */
+  message: string
+}
+
+/** How far booking a venue for a day has got, or that it cannot be had. */
+export type AvailabilityState = 'PENCILLED' | 'HELD' | 'CONFIRMED' | 'UNAVAILABLE'
+
+export interface Availability {
+  id: string
+  locationId: string
+  /** ISO date. */
+  day: string
+  state: AvailabilityState
+  /** When a pencil or hold lapses; null for none. */
+  holdExpiresOn: string | null
+  note: string | null
+  setByName: string | null
+  updatedAt: string
+}
+
+/** Sets a venue's state on `from`, or on every day from `from` to `to` (at most 62 days). */
+export interface AvailabilityRequest {
+  from: string
+  to: string | null
+  state: AvailabilityState
+  holdExpiresOn: string | null
+  note: string | null
 }
 
 export interface ScheduledVenue {
@@ -147,6 +188,8 @@ export interface ScheduledVenue {
   contactPhone: string | null
   /** The light and weather there on the scene's day; null until the venue's logistics cover that day. */
   day: DayConditions | null
+  /** The venue's state on the scene's (first) day; null when not recorded, and on a shared call sheet. */
+  booking: { state: AvailabilityState; holdExpiresOn: string | null } | null
 }
 
 /** One day at a venue, as a call sheet gives it; times are the venue's own clock ("07:04"). */
@@ -166,6 +209,9 @@ export interface ScheduledScene {
   title: string
   shootDateStart: string | null
   shootDateEnd: string | null
+  /** When the crew is called and the scene wraps on its days ("07:30:00"); a wrap at or before the call is the next morning. */
+  callTime: string | null
+  wrapTime: string | null
   /** Null until the scene has been analysed. */
   settingType: string | null
   timeOfDay: string | null
@@ -222,6 +268,9 @@ export interface Scene {
   /** ISO dates (yyyy-mm-dd). */
   shootDateStart: string | null
   shootDateEnd: string | null
+  /** When the crew is called and the scene wraps on its days ("07:30:00"); null when not set. */
+  callTime: string | null
+  wrapTime: string | null
   parseStatus: ParseStatus
   /** Null until the scene has been parsed. */
   requirements: SceneRequirements | null
@@ -669,6 +718,7 @@ export type ActivityVerb =
   | 'ROLE_CHANGED'
   | 'OWNERSHIP_TRANSFERRED'
   | 'SHOOT_DATES_CHANGED'
+  | 'AVAILABILITY_CHANGED'
   | 'COMMENTED'
 
 /** A line of a project's activity log; `payload` holds the facts the line needs, which differ by verb. */

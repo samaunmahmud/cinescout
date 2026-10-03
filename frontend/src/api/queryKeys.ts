@@ -29,6 +29,7 @@ export const queryKeys = {
   publicCallSheet: (token: string) => ['public', 'call-sheet', token] as const,
   publicShortlist: (token: string, page: number) => ['public', 'shortlist', token, page] as const,
   photos: (locationId: string) => ['photos', locationId] as const,
+  availability: (locationId: string) => ['availability', locationId] as const,
   libraryList: ['library', 'list'] as const,
   libraryPage: (search: string, tag: string | null, page: number) => ['library', 'list', search, tag, page] as const,
   libraryTags: ['library', 'tags'] as const,

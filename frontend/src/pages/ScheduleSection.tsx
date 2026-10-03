@@ -1,14 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { CalendarClock, CalendarDays, CalendarOff, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Users } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarOff, CircleAlert, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { Schedule, ScheduledScene } from '../api/types'
+import type { Schedule, ScheduleConflict, ScheduledScene } from '../api/types'
 import { dayOutOfDays } from '../lib/dayOutOfDays'
 import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
-import { Button, ErrorAlert, Spinner, TextField } from '../components/ui'
+import { Badge, Button, ErrorAlert, Spinner, TextField } from '../components/ui'
+import { availabilityLabels, bookingText, clockTime, timeWindow } from '../lib/availability'
 import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
 import { useCanEdit } from '../components/projectRole'
 
@@ -78,6 +79,7 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
         <EmptyState icon={CalendarDays}>No scenes yet. Add scenes with their shoot dates and the schedule builds itself.</EmptyState>
       ) : (
         <div className="space-y-6">
+          {schedule.data.conflicts.length > 0 && <Conflicts conflicts={schedule.data.conflicts} />}
           {schedule.data.days.map((day) => (
             <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated projectId={projectId} />
           ))}
@@ -88,6 +90,34 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
         </div>
       )}
     </Section>
+  )
+}
+
+/** What stands in the way of the schedule: problems to sort out, then warnings, each linking to its venue. */
+function Conflicts({ conflicts }: { conflicts: ScheduleConflict[] }) {
+  const problems = conflicts.filter((conflict) => conflict.problem).length
+  const warnings = conflicts.length - problems
+  const summary = [problems > 0 && `${problems} to sort out`, warnings > 0 && `${warnings} to check`].filter(Boolean).join(', ')
+  return (
+    <section aria-labelledby="conflicts-heading" className={`space-y-3 rounded-lg border-2 p-4 ${problems > 0 ? 'border-stop bg-stop-wash' : 'border-cue bg-cue-wash'}`}>
+      <h3 id="conflicts-heading" className={`flex items-center gap-2 font-semibold ${problems > 0 ? 'text-stop-ink' : 'text-cue-ink'}`}>
+        <CircleAlert aria-hidden className="size-4" />
+        Clashes: {summary}
+      </h3>
+      <ul className="space-y-2">
+        {conflicts.map((conflict, i) => (
+          <li key={`${conflict.kind}-${conflict.date}-${conflict.locationId}-${i}`} className="flex items-start gap-2 text-sm text-ink">
+            <Badge tone={conflict.problem ? 'red' : 'cue'}>{conflict.problem ? 'Problem' : 'Check'}</Badge>
+            <span className="min-w-0">
+              {conflict.message}{' '}
+              <Link to={`/locations/${conflict.locationId}`} className="font-semibold text-cue-deep underline-offset-2 hover:underline">
+                Open {conflict.venueName}
+              </Link>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -191,8 +221,11 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
   const [editing, setEditing] = useState(false)
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
+  const [call, setCall] = useState('')
+  const [wrap, setWrap] = useState('')
   const save = useMutation({
-    mutationFn: () => api.scenes.reschedule(scene.id, { shootDateStart: start || null, shootDateEnd: end || null }),
+    mutationFn: () =>
+      api.scenes.reschedule(scene.id, { shootDateStart: start || null, shootDateEnd: end || null, callTime: call || null, wrapTime: wrap || null }),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.scene(updated.id), updated)
       queryClient.invalidateQueries({ queryKey: queryKeys.sceneList(projectId) })
@@ -205,6 +238,8 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
   function edit() {
     setStart(scene.shootDateStart ?? '')
     setEnd(scene.shootDateEnd ?? '')
+    setCall(clockTime(scene.callTime) ?? '')
+    setWrap(clockTime(scene.wrapTime) ?? '')
     save.reset()
     setEditing(true)
   }
@@ -225,6 +260,7 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
           <p className="flex flex-wrap gap-x-3 text-sm text-muted">
             {scene.settingType && <span className="text-graphite">{scene.settingType}</span>}
             {scene.timeOfDay && <span>{scene.timeOfDay}</span>}
+            {timeWindow(scene.callTime, scene.wrapTime) && <span className="text-graphite">{timeWindow(scene.callTime, scene.wrapTime)}</span>}
             {scene.characters.length > 0 && <span className="text-graphite">{scene.characters.join(', ')}</span>}
             {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
               <span>until {formatDate(scene.shootDateEnd)}</span>
@@ -250,6 +286,15 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
             value={end}
             onChange={(e) => setEnd(e.target.value)}
             error={backwards ? 'The last shoot day cannot be before the first.' : undefined}
+          />
+          <TextField label="Call" type="time" className="w-32" value={call} onChange={(e) => setCall(e.target.value)} />
+          <TextField
+            label="Wrap"
+            type="time"
+            className="w-32"
+            hint={call && wrap && wrap <= call ? 'The next morning.' : undefined}
+            value={wrap}
+            onChange={(e) => setWrap(e.target.value)}
           />
           <div className="flex gap-2">
             <Button type="submit" busy={save.isPending} disabled={backwards}>
@@ -278,6 +323,11 @@ function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
                 {venue.name}
               </Link>
               {venue.address && <span className="block truncate text-muted">{venue.address}</span>}
+              {venue.booking && (
+                <span className="mt-0.5 block">
+                  <Badge tone={availabilityLabels[venue.booking.state].tone}>{bookingText(venue.booking)}</Badge>
+                </span>
+              )}
               {dayConditions(venue.day) && <span className="block text-xs text-cue-ink">{dayConditions(venue.day)}</span>}
               {venue.day?.warnings.map((warning) => (
                 <span key={warning} className="flex items-start gap-1 text-xs text-cue-ink">

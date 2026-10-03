@@ -45,6 +45,8 @@ export function scene(overrides: Partial<Scene> = {}): Scene {
     sourceText: 'A near-empty diner. Rain on the windows. Two detectives talk in low voices.',
     shootDateStart: null,
     shootDateEnd: null,
+    callTime: null,
+    wrapTime: null,
     parseStatus: 'PENDING',
     requirements: null,
     characters: [],
@@ -230,10 +232,12 @@ export function scheduled(overrides: Partial<ScheduledScene> = {}): ScheduledSce
     title: 'INT. DINER - NIGHT',
     shootDateStart: '2026-10-12',
     shootDateEnd: '2026-10-12',
+    callTime: null,
+    wrapTime: null,
     settingType: 'Late-night diner',
     timeOfDay: 'Night',
     characters: ['MARA', 'DET. JONES'],
-    venues: [{ id: 'l1', name: 'Tom’s Diner', address: '782 Washington Ave, Brooklyn, NY', latitude: null, longitude: null, contactName: 'Tom Miller', contactPhone: '+1 718 555 0100', day: { sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1, warnings: ['Strong wind: secure lights and flags'] } }],
+    venues: [{ id: 'l1', name: 'Tom’s Diner', address: '782 Washington Ave, Brooklyn, NY', latitude: null, longitude: null, contactName: 'Tom Miller', contactPhone: '+1 718 555 0100', day: { sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1, warnings: ['Strong wind: secure lights and flags'] }, booking: null }],
     candidates: 3,
     ...overrides,
   }
@@ -249,6 +253,7 @@ export const schedule: Schedule = {
     { date: '2026-10-20', scenes: [scheduled({ id: 's3', sceneNumber: null, title: 'Montage', shootDateStart: '2026-10-20', shootDateEnd: null, venues: [], candidates: 0 })] },
   ],
   unscheduled: [scheduled({ id: 's4', sceneNumber: 40, title: 'INT. CAR - DAY', shootDateStart: null, shootDateEnd: null, venues: [], candidates: 1 })],
+  conflicts: [],
 }
 
 /** Fills in and submits the login form that a logged-out visit lands on. */

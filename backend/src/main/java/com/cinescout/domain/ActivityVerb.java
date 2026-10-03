@@ -12,6 +12,7 @@ public enum ActivityVerb {
     ROLE_CHANGED(ActivityKind.CREW),
     OWNERSHIP_TRANSFERRED(ActivityKind.CREW),
     SHOOT_DATES_CHANGED(ActivityKind.SCHEDULE),
+    AVAILABILITY_CHANGED(ActivityKind.SCHEDULE),
     COMMENTED(ActivityKind.COMMENT);
 
     private final ActivityKind kind;

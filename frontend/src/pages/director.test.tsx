@@ -178,6 +178,7 @@ describe("the director's call", () => {
       'GET /api/locations/l1/director-responses?page=0&size=100': () =>
         json(pageOf([call(), call({ id: 'c2', guestName: 'Sofia', verdict: 'NO', comment: 'Too bright' })], { size: 100 })),
       'GET /api/locations/l1/photos?page=0&size=30': () => json(pageOf([], { size: 30 })),
+      'GET /api/locations/l1/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
     })
     renderApp('/locations/l1')
     await logIn()

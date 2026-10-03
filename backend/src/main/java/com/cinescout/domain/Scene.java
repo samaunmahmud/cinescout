@@ -14,6 +14,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "scenes")
@@ -37,6 +38,14 @@ public class Scene extends BaseEntity {
 
     @Column(name = "shoot_date_end")
     private LocalDate shootDateEnd;
+
+    /** When the crew is called on a shoot day; null when not set. */
+    @Column(name = "call_time")
+    private LocalTime callTime;
+
+    /** When the scene wraps; at or before {@code callTime} it is the next morning. Null when not set. */
+    @Column(name = "wrap_time")
+    private LocalTime wrapTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "parse_status", nullable = false)
@@ -123,6 +132,8 @@ public class Scene extends BaseEntity {
     public String getSourceText() { return sourceText; }
     public LocalDate getShootDateStart() { return shootDateStart; }
     public LocalDate getShootDateEnd() { return shootDateEnd; }
+    public LocalTime getCallTime() { return callTime; }
+    public LocalTime getWrapTime() { return wrapTime; }
     public ParseStatus getParseStatus() { return parseStatus; }
     public JsonNode getRequirementsJson() { return requirementsJson; }
     public Instant getParsedAt() { return parsedAt; }
@@ -132,4 +143,6 @@ public class Scene extends BaseEntity {
     public void setSourceText(String sourceText) { this.sourceText = sourceText; }
     public void setShootDateStart(LocalDate shootDateStart) { this.shootDateStart = shootDateStart; }
     public void setShootDateEnd(LocalDate shootDateEnd) { this.shootDateEnd = shootDateEnd; }
+    public void setCallTime(LocalTime callTime) { this.callTime = callTime; }
+    public void setWrapTime(LocalTime wrapTime) { this.wrapTime = wrapTime; }
 }

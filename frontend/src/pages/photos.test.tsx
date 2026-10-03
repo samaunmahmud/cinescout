@@ -28,6 +28,7 @@ function server(role: ProjectRole, photos: () => Photo[], extra: Parameters<type
     'GET /api/projects/p1': () => json(project({ role })),
     'GET /api/locations/l1/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
     'GET /api/locations/l1/photos?page=0&size=30': () => json(pageOf(photos(), { size: 30 })),
+    'GET /api/locations/l1/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
     ...extra,
   })
 }

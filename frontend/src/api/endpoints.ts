@@ -3,6 +3,8 @@ import type {
   Activity,
   ActivityKind,
   AddMemberResult,
+  Availability,
+  AvailabilityRequest,
   BatchLogisticsResult,
   BatchParseResult,
   ChangePasswordRequest,
@@ -231,8 +233,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       importScript: (projectId: string, script: string) =>
         call<ScriptImport>(`/api/projects/${encodeURIComponent(projectId)}/scenes/import`, { method: 'POST', body: { script } }),
       update: (id: string, body: SceneRequest) => call<Scene>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'PUT', body }),
-      /** Sets the shoot window and nothing else; a null date clears it. */
-      reschedule: (id: string, body: { shootDateStart: string | null; shootDateEnd: string | null }) =>
+      /** Sets the shoot window and its times and nothing else; a null date or time clears it. */
+      reschedule: (
+        id: string,
+        body: { shootDateStart: string | null; shootDateEnd: string | null; callTime: string | null; wrapTime: string | null },
+      ) =>
         call<Scene>(`/api/scenes/${encodeURIComponent(id)}/shoot-dates`, { method: 'PUT', body }),
       remove: (id: string) => call<void>(`/api/scenes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
       /** Extracts the filming requirements with the AI. Takes seconds; answers 503 when scouting is not configured. */
@@ -291,6 +296,15 @@ export function createApi(onUnauthorized: () => void = () => {}) {
        */
       refreshLogistics: (id: string) =>
         call<LogisticsReport>(`/api/locations/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
+    },
+    availability: {
+      /** A venue's recorded days, earliest first. */
+      list: (locationId: string) => call<Page<Availability>>(`/api/locations/${encodeURIComponent(locationId)}/availability?page=0&size=100`),
+      /** Sets the state of a day or a run of days, replacing what was there. */
+      set: (locationId: string, body: AvailabilityRequest) =>
+        call<Availability[]>(`/api/locations/${encodeURIComponent(locationId)}/availability`, { method: 'PUT', body }),
+      clear: (locationId: string, day: string) =>
+        call<void>(`/api/locations/${encodeURIComponent(locationId)}/availability/${encodeURIComponent(day)}`, { method: 'DELETE' }),
     },
     outreach: {
       /** The replies to an email, latest first. */

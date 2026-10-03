@@ -1,5 +1,6 @@
 import type { Schedule, ScheduledScene } from '../api/types'
 import { dayConditions, formatDate, formatDay } from '../lib/format'
+import { timeWindow } from '../lib/availability'
 
 /**
  * The shoot on paper: for each day, which scenes, where, and who to call there. A scene without a confirmed
@@ -74,7 +75,10 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                   <span className="block text-subtle">until {formatDate(scene.shootDateEnd)}</span>
                 )}
               </td>
-              <td className="px-3 py-2 uppercase">{scene.timeOfDay ?? '—'}</td>
+              <td className="px-3 py-2 uppercase">
+                {scene.timeOfDay ?? '—'}
+                {timeWindow(scene.callTime, scene.wrapTime) && <span className="block normal-case">{timeWindow(scene.callTime, scene.wrapTime)}</span>}
+              </td>
               <td className="px-3 py-2">
                 {scene.venues.length === 0 ? (
                   <span className="font-bold">TBC</span>

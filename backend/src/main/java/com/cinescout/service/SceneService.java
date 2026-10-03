@@ -119,6 +119,8 @@ public class SceneService {
             logDates(userId, scene, request.shootDateStart(), request.shootDateEnd());
             scene.setShootDateStart(request.shootDateStart());
             scene.setShootDateEnd(request.shootDateEnd());
+            scene.setCallTime(request.callTime());
+            scene.setWrapTime(request.wrapTime());
             return SceneResponse.from(scenes.saveAndFlush(scene));
         });
     }

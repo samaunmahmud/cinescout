@@ -207,6 +207,14 @@ Running a job twice is harmless.
 | `JOBS_SCHEDULER` | `true`: also run the jobs on the app's own timer while it is awake |
 | `JOBS_FOLLOW_UPS_CRON` | `0 17 * * * *` (hourly) |
 
+## Holds and availability
+
+Each venue's Overview tab records its days: pencilled, held (optionally until a date the hold lapses), confirmed or
+unavailable, with a note. Scenes can carry a call and wrap time with their dates (a wrap at or before the call is the
+next morning). The Schedule tab lists clashes: a confirmed venue unavailable on a shoot day, a pencil or hold lapsing
+before its day, and, as a warning, two scenes at the same venue on one day at overlapping or unset times. The same
+venue on several scenes is matched by name or street address. Shared call sheets show the times but no holds.
+
 ## Recce photos
 
 Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,

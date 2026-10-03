@@ -1,14 +1,18 @@
 package com.cinescout.dto;
 
+import com.cinescout.domain.AvailabilityState;
 import com.cinescout.domain.Location;
+import com.cinescout.domain.VenueAvailability;
 import com.cinescout.domain.Scene;
 import com.cinescout.script.ScriptCharacters;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -16,8 +20,35 @@ import java.util.UUID;
  *
  * @param days        the days on which scenes start shooting, earliest first
  * @param unscheduled scenes without shoot dates, in script order
+ * @param conflicts   what stands in the way of the schedule as it is (a venue unavailable on a shoot day, a hold
+ *                    lapsing before it) and what may (two scenes at one venue at once), by date
  */
-public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unscheduled) {
+public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unscheduled, List<Conflict> conflicts) {
+
+    /** The schedule for people outside the production office: no holds, no conflicts. */
+    public ScheduleResponse withoutBookings() {
+        return new ScheduleResponse(days.stream().map(day -> new ShootDay(day.date(), day.scenes().stream().map(ScheduledScene::withoutBookings).toList())).toList(),
+                unscheduled.stream().map(ScheduledScene::withoutBookings).toList(), List.of());
+    }
+
+    public enum ConflictKind {
+        /** A confirmed venue is marked unavailable on one of the scene's shoot days. */
+        UNAVAILABLE,
+        /** A pencil or hold on a shoot day lapses before that day. */
+        HOLD_EXPIRES,
+        /** Two scenes are at the same venue on the same day, at times that overlap or are not set. A warning only. */
+        DOUBLE_BOOKED
+    }
+
+    /**
+     * @param problem    true when it must be sorted out (unavailable, a hold lapsing); false for a warning
+     * @param sceneIds   the scene, or both scenes of a double booking
+     * @param locationId the venue as confirmed for the (first) scene
+     * @param message    the conflict in plain English
+     */
+    public record Conflict(ConflictKind kind, boolean problem, LocalDate date, List<UUID> sceneIds, UUID locationId, String venueName,
+                           String message) {
+    }
 
     /** @param scenes the scenes whose shoot starts that day, in script order */
     public record ShootDay(LocalDate date, List<ScheduledScene> scenes) {
@@ -36,6 +67,8 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             String title,
             LocalDate shootDateStart,
             LocalDate shootDateEnd,
+            LocalTime callTime,
+            LocalTime wrapTime,
             String settingType,
             String timeOfDay,
             List<String> characters,
@@ -48,30 +81,53 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             return scene.getShootDateStart() != null ? scene.getShootDateStart() : scene.getShootDateEnd();
         }
 
-        public static ScheduledScene from(Scene scene, List<Location> confirmed, long candidates) {
+        /**
+         * @param holds what is known of a confirmed venue's state on the scene's (first) day, by venue id; may be
+         *              missing a venue
+         */
+        public static ScheduledScene from(Scene scene, List<Location> confirmed, long candidates, Map<UUID, VenueAvailability> holds) {
             var requirements = scene.requirements();
             return new ScheduledScene(scene.getId(), scene.getSceneNumber(), scene.getTitle(),
-                    scene.getShootDateStart(), scene.getShootDateEnd(),
+                    scene.getShootDateStart(), scene.getShootDateEnd(), scene.getCallTime(), scene.getWrapTime(),
                     requirements == null ? null : requirements.settingType(),
                     requirements == null ? null : requirements.timeOfDay(),
                     ScriptCharacters.in(scene.getSourceText()),
-                    confirmed.stream().map(location -> Venue.from(location, dayOf(scene))).toList(), candidates);
+                    confirmed.stream().map(location -> Venue.from(location, dayOf(scene), holds.get(location.getId()))).toList(), candidates);
+        }
+
+        public static ScheduledScene from(Scene scene, List<Location> confirmed, long candidates) {
+            return from(scene, confirmed, candidates, Map.of());
+        }
+
+        ScheduledScene withoutBookings() {
+            return new ScheduledScene(id, sceneNumber, title, shootDateStart, shootDateEnd, callTime, wrapTime, settingType, timeOfDay,
+                    characters, venues.stream().map(Venue::withoutBookings).toList(), candidates);
         }
     }
 
     /**
      * A confirmed location, with who to call there on the day when the user has recorded it.
      *
-     * @param day the light and weather at the venue on the scene's day, from its logistics report; null when the
-     *            report has not been worked out, or does not cover that day
+     * @param day     the light and weather at the venue on the scene's day, from its logistics report; null when the
+     *                report has not been worked out, or does not cover that day
+     * @param booking the venue's state on the scene's day (pencilled, held, confirmed, unavailable); null when not recorded
      */
     public record Venue(UUID id, String name, String address, BigDecimal latitude, BigDecimal longitude,
-                        String contactName, String contactPhone, DayConditions day) {
+                        String contactName, String contactPhone, DayConditions day, Booking booking) {
 
-        static Venue from(Location location, LocalDate date) {
+        static Venue from(Location location, LocalDate date, VenueAvailability hold) {
             return new Venue(location.getId(), location.getName(), location.getAddress(), location.getLatitude(), location.getLongitude(),
-                    location.getContactName(), location.getContactPhone(), DayConditions.of(location.getLogisticsJson(), date));
+                    location.getContactName(), location.getContactPhone(), DayConditions.of(location.getLogisticsJson(), date),
+                    hold == null ? null : new Booking(hold.getState(), hold.getHoldExpiresOn()));
         }
+
+        Venue withoutBookings() {
+            return new Venue(id, name, address, latitude, longitude, contactName, contactPhone, day, null);
+        }
+    }
+
+    /** @param holdExpiresOn when a pencil or hold lapses; null for none */
+    public record Booking(AvailabilityState state, LocalDate holdExpiresOn) {
     }
 
     /**

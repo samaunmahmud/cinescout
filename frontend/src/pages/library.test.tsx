@@ -84,6 +84,7 @@ describe('the library from a venue and a scene', () => {
       'GET /api/projects/p1': () => json(project()),
       'GET /api/locations/l1/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
       'GET /api/locations/l1/photos?page=0&size=30': () => json(pageOf([], { size: 30 })),
+      'GET /api/locations/l1/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
       'POST /api/library': () => json(saved(), 201),
     })
     renderApp('/locations/l1')
@@ -105,6 +106,7 @@ describe('the library from a venue and a scene', () => {
       'GET /api/projects/p1': () => json(project()),
       'GET /api/locations/l9/director-responses?page=0&size=100': () => json(pageOf([], { size: 100 })),
       'GET /api/locations/l9/photos?page=0&size=30': () => json(pageOf([], { size: 30 })),
+      'GET /api/locations/l9/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
     })
     const { router } = renderApp('/scenes/s1/locations/new')
     const user = await logIn()

@@ -47,6 +47,7 @@ import { looksLikeEmail } from '../lib/email'
 import { formatCoordinates, osmLink, parseCoordinates, roundCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { displayHost, safeHttpUrl } from '../lib/url'
+import { AvailabilitySection } from './AvailabilitySection'
 import { CommentsSection } from './CommentsSection'
 import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
@@ -222,7 +223,14 @@ function LocationDetails({ location }: { location: Location }) {
               <Contact location={location} />
               <Notes location={location} update={update} />
             </div>
-            <Position location={location} />
+            <div className="space-y-8">
+              <Position location={location} />
+              <AvailabilitySection
+                location={location}
+                shootStart={scene.data?.shootDateStart ?? null}
+                shootEnd={scene.data?.shootDateEnd ?? null}
+              />
+            </div>
             <div className="lg:col-span-2">
               <PhotosSection location={location} />
             </div>
