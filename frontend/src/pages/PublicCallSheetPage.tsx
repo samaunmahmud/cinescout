@@ -22,7 +22,7 @@ export function PublicCallSheetPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <div className="no-print flex flex-wrap items-center justify-between gap-4">
-        <Logo />
+        <Logo onDark={false} />
         {sheet.data && (
           <Button onClick={() => window.print()}>
             <Printer aria-hidden className="size-4" />

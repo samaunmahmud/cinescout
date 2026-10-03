@@ -65,7 +65,7 @@ export function PublicShortlistPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
-      <Logo />
+      <Logo onDark={false} />
       {shortlist.isPending ? (
         <Spinner label="Loading the shortlist" />
       ) : shortlist.isError ? (
