@@ -2,6 +2,8 @@ package com.cinescout.scouting;
 
 import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.ParseStatus;
 import com.cinescout.domain.ProjectRole;
@@ -17,6 +19,7 @@ import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.scouting.ScoutingException.Kind;
+import com.cinescout.service.ActivityLog;
 import com.cinescout.service.Conflicts;
 import com.cinescout.service.NotFoundException;
 import com.cinescout.service.ProjectAccess;
@@ -75,9 +78,12 @@ public class SceneScoutingService {
     private final ProjectAccess access;
     private final BlockingTransactions db;
     private final ObjectMapper mapper;
+    private final ActivityLog activity;
 
     public SceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes, ProjectRepository projects,
-                                LocationRepository locations, ProjectAccess access, BlockingTransactions db, ObjectMapper mapper) {
+                                LocationRepository locations, ProjectAccess access, BlockingTransactions db, ObjectMapper mapper,
+                                ActivityLog activity) {
+        this.activity = activity;
         this.pipeline = pipeline;
         this.placer = placer;
         this.scenes = scenes;
@@ -266,6 +272,8 @@ public class SceneScoutingService {
             }
         }
         List<LocationResponse> added = locations.saveAllAndFlush(toSave).stream().map(LocationResponse::from).toList();
+        activity.record(scene.getProject(), userId, ActivityVerb.SCOUTED, ActivityTarget.SCENE, scene.getId(),
+                ActivityLog.facts("scene", scene.getTitle(), "added", added.size()));
         return new ScoutingResult(added, outcome.venues().size() - added.size(), outcome.unassessed(), outcome.notVenues(), outcome.unsuitable());
     }
 

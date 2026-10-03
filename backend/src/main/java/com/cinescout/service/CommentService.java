@@ -1,5 +1,7 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.User;
@@ -40,9 +42,11 @@ public class CommentService {
     private final UserRepository users;
     private final ProjectAccess access;
     private final BlockingTransactions db;
+    private final ActivityLog activity;
 
     public CommentService(VenueCommentRepository comments, ProjectMemberRepository members, UserRepository users,
-                          ProjectAccess access, BlockingTransactions db) {
+                          ProjectAccess access, BlockingTransactions db, ActivityLog activity) {
+        this.activity = activity;
         this.comments = comments;
         this.members = members;
         this.users = users;
@@ -80,6 +84,8 @@ public class CommentService {
             List<UUID> mentions = crewOnly(location.getScene().getProject().getId(), request.mentionIds());
             VenueComment saved = comments.saveAndFlush(VenueComment.byMember(location, parent, users.getReferenceById(userId),
                     request.body().strip(), mentions));
+            activity.record(location.getScene().getProject(), userId, ActivityVerb.COMMENTED, ActivityTarget.LOCATION, location.getId(),
+                    ActivityLog.facts("venue", location.getName(), "reply", parent != null, "mentions", mentions.size()));
             return CommentResponse.from(saved, mentioned(List.of(saved)), List.of());
         });
     }

@@ -1,5 +1,7 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.DatabaseTime;
 import com.cinescout.domain.Project;
 import com.cinescout.domain.ProjectInvite;
@@ -42,9 +44,11 @@ public class CrewService {
     private final UserRepository users;
     private final ProjectAccess access;
     private final BlockingTransactions db;
+    private final ActivityLog activity;
 
     public CrewService(ProjectRepository projects, ProjectMemberRepository members, ProjectInviteRepository invites,
-                       UserRepository users, ProjectAccess access, BlockingTransactions db) {
+                       UserRepository users, ProjectAccess access, BlockingTransactions db, ActivityLog activity) {
+        this.activity = activity;
         this.projects = projects;
         this.members = members;
         this.invites = invites;
@@ -80,6 +84,8 @@ public class CrewService {
                     throw new ConflictException(existing.getDisplayName() + " is already on this project's crew");
                 }
                 ProjectMember member = members.saveAndFlush(new ProjectMember(project, existing, request.role(), inviter));
+                activity.record(project, userId, ActivityVerb.MEMBER_JOINED, ActivityTarget.MEMBER, existing.getId(),
+                        ActivityLog.facts("member", existing.getDisplayName(), "role", request.role().name()));
                 return new AddMemberResponse(MemberResponse.from(member), null);
             }
             Instant now = DatabaseTime.now();
@@ -112,6 +118,10 @@ public class CrewService {
             if (member.getRole() == ProjectRole.OWNER) {
                 throw new ConflictException("The owner's role changes only by handing ownership to someone else");
             }
+            if (member.getRole() != role) {
+                activity.record(member.getProject(), userId, ActivityVerb.ROLE_CHANGED, ActivityTarget.MEMBER, memberId,
+                        ActivityLog.facts("member", member.getUser().getDisplayName(), "from", member.getRole().name(), "to", role.name()));
+            }
             member.setRole(role);
             return MemberResponse.from(members.saveAndFlush(member));
         });
@@ -125,6 +135,9 @@ public class CrewService {
             if (member.getRole() == ProjectRole.OWNER) {
                 throw new ConflictException("The owner cannot leave; hand ownership to another member first");
             }
+            boolean leaving = userId.equals(memberId);
+            activity.record(member.getProject(), userId, leaving ? ActivityVerb.MEMBER_LEFT : ActivityVerb.MEMBER_REMOVED,
+                    ActivityTarget.MEMBER, memberId, ActivityLog.facts("member", member.getUser().getDisplayName()));
             members.delete(member);
         });
     }
@@ -144,6 +157,8 @@ public class CrewService {
             next.setRole(ProjectRole.OWNER);
             members.saveAndFlush(next);
             project.setOwner(next.getUser());
+            activity.record(project, userId, ActivityVerb.OWNERSHIP_TRANSFERRED, ActivityTarget.MEMBER, newOwnerId,
+                    ActivityLog.facts("member", next.getUser().getDisplayName()));
             projects.saveAndFlush(project);
             return new CrewResponse(members.findCrew(projectId).stream().map(MemberResponse::from).toList(), List.of());
         });
@@ -173,6 +188,8 @@ public class CrewService {
             Project project = invite.getProject();
             if (!members.existsByProjectIdAndUserId(project.getId(), userId)) {
                 members.saveAndFlush(new ProjectMember(project, user, invite.getRole(), invite.getInvitedBy()));
+                activity.record(project, userId, ActivityVerb.MEMBER_JOINED, ActivityTarget.MEMBER, userId,
+                        ActivityLog.facts("member", user.getDisplayName(), "role", invite.getRole().name(), "byInvite", true));
             }
             invite.accept(user, now);
             return preview(invites.saveAndFlush(invite));

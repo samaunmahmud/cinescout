@@ -21,6 +21,7 @@ export const queryKeys = {
   projectProgress: (projectId: string) => ['projects', 'progress', projectId] as const,
   projectSchedule: (projectId: string) => ['projects', 'schedule', projectId] as const,
   callSheetLink: (projectId: string) => ['projects', 'call-sheet-link', projectId] as const,
+  activity: (projectId: string, kind: string | null, page: number) => ['projects', 'activity', projectId, kind, page] as const,
   crew: (projectId: string) => ['projects', 'crew', projectId] as const,
   invite: (token: string) => ['invites', token] as const,
   publicCallSheet: (token: string) => ['public', 'call-sheet', token] as const,

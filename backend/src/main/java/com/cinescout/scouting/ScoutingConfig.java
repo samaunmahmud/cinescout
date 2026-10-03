@@ -8,6 +8,7 @@ import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.search.LocationSearchClient;
+import com.cinescout.service.ActivityLog;
 import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -40,7 +41,7 @@ class ScoutingConfig {
     @Bean
     SceneScoutingService sceneScoutingService(ScoutingPipeline pipeline, VenuePlacer placer, SceneRepository scenes,
                                               ProjectRepository projects, LocationRepository locations,
-                                              ProjectAccess access, BlockingTransactions db, ObjectMapper mapper) {
-        return new SceneScoutingService(pipeline, placer, scenes, projects, locations, access, db, mapper);
+                                              ProjectAccess access, BlockingTransactions db, ObjectMapper mapper, ActivityLog activity) {
+        return new SceneScoutingService(pipeline, placer, scenes, projects, locations, access, db, mapper, activity);
     }
 }

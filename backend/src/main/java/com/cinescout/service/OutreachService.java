@@ -1,5 +1,8 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
+import com.cinescout.domain.Location;
 import com.cinescout.domain.OutreachDraft;
 import com.cinescout.domain.OutreachStatus;
 import com.cinescout.domain.ProjectRole;
@@ -30,13 +33,16 @@ public class OutreachService {
     private final ProjectRepository projects;
     private final ProjectAccess access;
     private final BlockingTransactions db;
+    private final ActivityLog activity;
 
-    public OutreachService(OutreachDraftRepository drafts, LocationRepository locations, ProjectRepository projects, ProjectAccess access, BlockingTransactions db) {
+    public OutreachService(OutreachDraftRepository drafts, LocationRepository locations, ProjectRepository projects, ProjectAccess access,
+                           BlockingTransactions db, ActivityLog activity) {
         this.drafts = drafts;
         this.locations = locations;
         this.projects = projects;
         this.access = access;
         this.db = db;
+        this.activity = activity;
     }
 
     /** Every draft of a project, newest first, each with its venue and scene; {@code status} null means all. */
@@ -69,6 +75,13 @@ public class OutreachService {
     public Mono<OutreachDraftResponse> update(UUID userId, UUID draftId, UpdateOutreachRequest request) {
         return db.call(() -> {
             OutreachDraft draft = access.draft(userId, draftId, ProjectRole.EDITOR);
+            OutreachStatus before = draft.getStatus();
+            if (before != request.status()) {
+                Location venue = draft.getLocation();
+                activity.record(venue.getScene().getProject(), userId, ActivityVerb.OUTREACH_STATUS_CHANGED, ActivityTarget.OUTREACH_DRAFT,
+                        draft.getId(), ActivityLog.facts("venue", venue.getName(), "locationId", venue.getId().toString(),
+                                "from", before.name(), "to", request.status().name()));
+            }
             draft.setSubject(request.subject().strip());
             draft.setBody(request.body().strip());
             draft.setTone(request.tone());

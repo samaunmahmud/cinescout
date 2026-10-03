@@ -16,6 +16,7 @@ import com.cinescout.dto.SceneResponse;
 import com.cinescout.dto.UpdateLocationRequest;
 import com.cinescout.dto.UpdateProjectRequest;
 import com.cinescout.persistence.BlockingTransactions;
+import com.cinescout.repository.ActivityRepository;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.OutreachDraftRepository;
 import com.cinescout.repository.ProjectMemberRepository;
@@ -68,6 +69,7 @@ class ResourceServicesTest {
     @Autowired LocationRepository locations;
     @Autowired OutreachDraftRepository drafts;
     @Autowired ProjectMemberRepository members;
+    @Autowired ActivityRepository activity;
     @Autowired PlatformTransactionManager transactionManager;
 
     private TransactionTemplate setup;
@@ -84,8 +86,9 @@ class ResourceServicesTest {
         BlockingTransactions db = new BlockingTransactions(setup);
         ProjectAccess access = new ProjectAccess(projects, scenes, locations, drafts, members);
         projectService = new ProjectService(projects, users, scenes, locations, members, access, db);
-        sceneService = new SceneService(scenes, projects, access, db);
-        locationService = new LocationService(locations, scenes, projects, access, db);
+        ActivityLog log = new ActivityLog(activity, users);
+        sceneService = new SceneService(scenes, projects, access, db, log);
+        locationService = new LocationService(locations, scenes, projects, access, db, log);
         ada = newUser("Ada");
         grace = newUser("Grace");
     }

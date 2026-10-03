@@ -1,5 +1,7 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Project;
@@ -40,13 +42,16 @@ public class LocationService {
     private final ProjectRepository projects;
     private final ProjectAccess access;
     private final BlockingTransactions db;
+    private final ActivityLog activity;
 
-    public LocationService(LocationRepository locations, SceneRepository scenes, ProjectRepository projects, ProjectAccess access, BlockingTransactions db) {
+    public LocationService(LocationRepository locations, SceneRepository scenes, ProjectRepository projects, ProjectAccess access,
+                           BlockingTransactions db, ActivityLog activity) {
         this.locations = locations;
         this.scenes = scenes;
         this.projects = projects;
         this.access = access;
         this.db = db;
+        this.activity = activity;
     }
 
     /** Best fit first; venues without an assessment (added by hand) come last. */
@@ -105,8 +110,14 @@ public class LocationService {
     public Mono<LocationResponse> update(UUID userId, UUID locationId, UpdateLocationRequest request) {
         return db.call(() -> {
             Location location = access.location(userId, locationId, ProjectRole.EDITOR);
+            LocationStatus before = location.getStatus();
             location.setStatus(request.status());
             location.setNotes(blankToNull(request.notes()));
+            if (before != request.status()) {
+                activity.record(location.getScene().getProject(), userId, ActivityVerb.VENUE_STATUS_CHANGED, ActivityTarget.LOCATION,
+                        location.getId(), ActivityLog.facts("venue", location.getName(), "scene", location.getScene().getTitle(),
+                                "from", before.name(), "to", request.status().name()));
+            }
             return LocationResponse.from(locations.saveAndFlush(location));
         });
     }

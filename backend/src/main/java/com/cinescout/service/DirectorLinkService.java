@@ -1,5 +1,7 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.DirectorLink;
 import com.cinescout.domain.DirectorResponse;
 import com.cinescout.domain.Location;
@@ -54,9 +56,12 @@ public class DirectorLinkService {
     private final UserRepository users;
     private final ProjectAccess access;
     private final BlockingTransactions db;
+    private final ActivityLog activity;
 
     public DirectorLinkService(DirectorLinkRepository links, DirectorResponseRepository responses, VenueCommentRepository comments,
-                               LocationRepository locations, UserRepository users, ProjectAccess access, BlockingTransactions db) {
+                               LocationRepository locations, UserRepository users, ProjectAccess access, BlockingTransactions db,
+                               ActivityLog activity) {
+        this.activity = activity;
         this.links = links;
         this.responses = responses;
         this.comments = comments;
@@ -153,6 +158,8 @@ public class DirectorLinkService {
                     .findFirst()
                     .orElseThrow();
             followInThread(locations.getReferenceById(venue.getId()), saved, comment);
+            activity.recordGuest(link.getProject(), saved.getGuestName(), ActivityVerb.DIRECTOR_CALLED, ActivityTarget.LOCATION, venue.getId(),
+                    ActivityLog.facts("venue", venue.getName(), "verdict", saved.getVerdict().name(), "commented", comment != null));
             return DirectorResponseResponse.from(saved);
         });
     }

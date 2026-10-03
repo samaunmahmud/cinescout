@@ -7,6 +7,7 @@ import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.search.parallel.ParallelSearchClient;
+import com.cinescout.service.ActivityLog;
 import com.cinescout.service.ProjectAccess;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,7 @@ class ScoutingConfigTest {
             .withBean(ProjectRepository.class, () -> mock(ProjectRepository.class))
             .withBean(LocationRepository.class, () -> mock(LocationRepository.class))
             .withBean(ProjectAccess.class, () -> mock(ProjectAccess.class))
+            .withBean(ActivityLog.class, () -> mock(ActivityLog.class))
             .withBean(BlockingTransactions.class, () -> mock(BlockingTransactions.class))
             // Logistics owns the geocoder (it always exists); scouting only borrows it.
             .withBean(Geocoder.class, () -> mock(Geocoder.class));

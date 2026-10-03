@@ -519,6 +519,35 @@ export interface LocationVideos {
 }
 
 /** A call sheet as the crew sees it through a shared link. */
+export type ActivityKind = 'VENUE' | 'SCOUTING' | 'OUTREACH' | 'CREW' | 'SCHEDULE' | 'COMMENT'
+
+export type ActivityVerb =
+  | 'VENUE_STATUS_CHANGED'
+  | 'DIRECTOR_CALLED'
+  | 'SCOUTED'
+  | 'OUTREACH_STATUS_CHANGED'
+  | 'MEMBER_JOINED'
+  | 'MEMBER_LEFT'
+  | 'MEMBER_REMOVED'
+  | 'ROLE_CHANGED'
+  | 'OWNERSHIP_TRANSFERRED'
+  | 'SHOOT_DATES_CHANGED'
+  | 'COMMENTED'
+
+/** A line of a project's activity log; `payload` holds the facts the line needs, which differ by verb. */
+export interface Activity {
+  id: string
+  kind: ActivityKind
+  verb: ActivityVerb
+  targetType: 'PROJECT' | 'SCENE' | 'LOCATION' | 'OUTREACH_DRAFT' | 'MEMBER' | 'COMMENT'
+  targetId: string | null
+  actorId: string | null
+  /** As it was at the time; a guest's typed name when `payload.guest`. */
+  actorName: string | null
+  payload: Record<string, string | number | boolean | null>
+  createdAt: string
+}
+
 /** A comment on a venue; `guest` when it came through a director link, under the name the guest typed. */
 export interface VenueComment {
   id: string

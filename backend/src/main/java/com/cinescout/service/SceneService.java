@@ -1,5 +1,7 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.ActivityTarget;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.Project;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
@@ -15,7 +17,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -29,12 +33,29 @@ public class SceneService {
     private final ProjectRepository projects;
     private final ProjectAccess access;
     private final BlockingTransactions db;
+    private final ActivityLog activity;
 
-    public SceneService(SceneRepository scenes, ProjectRepository projects, ProjectAccess access, BlockingTransactions db) {
+    public SceneService(SceneRepository scenes, ProjectRepository projects, ProjectAccess access, BlockingTransactions db,
+                        ActivityLog activity) {
         this.scenes = scenes;
         this.projects = projects;
         this.access = access;
         this.db = db;
+        this.activity = activity;
+    }
+
+    /** Logs a change of the scene's shoot dates, if they changed. */
+    private void logDates(UUID userId, Scene scene, LocalDate start, LocalDate end) {
+        if (Objects.equals(scene.getShootDateStart(), start) && Objects.equals(scene.getShootDateEnd(), end)) {
+            return;
+        }
+        activity.record(scene.getProject(), userId, ActivityVerb.SHOOT_DATES_CHANGED, ActivityTarget.SCENE, scene.getId(),
+                ActivityLog.facts("scene", scene.getTitle(), "fromStart", text(scene.getShootDateStart()), "fromEnd", text(scene.getShootDateEnd()),
+                        "toStart", text(start), "toEnd", text(end)));
+    }
+
+    private static String text(LocalDate date) {
+        return date == null ? null : date.toString();
     }
 
     /** @throws ConflictException (as an error signal) if the project already has a scene with that number */
@@ -82,6 +103,7 @@ public class SceneService {
                     if (!scene.getSourceText().equals(request.sourceText().strip())) {
                         scene.resetRequirements();
                     }
+                    logDates(userId, scene, request.shootDateStart(), request.shootDateEnd());
                     scene.setTitle(request.title().strip());
                     scene.setSourceText(request.sourceText().strip());
                     apply(scene, request);
@@ -94,6 +116,7 @@ public class SceneService {
     public Mono<SceneResponse> reschedule(UUID userId, UUID sceneId, ShootDatesRequest request) {
         return db.call(() -> {
             Scene scene = access.scene(userId, sceneId, ProjectRole.EDITOR);
+            logDates(userId, scene, request.shootDateStart(), request.shootDateEnd());
             scene.setShootDateStart(request.shootDateStart());
             scene.setShootDateEnd(request.shootDateEnd());
             return SceneResponse.from(scenes.saveAndFlush(scene));

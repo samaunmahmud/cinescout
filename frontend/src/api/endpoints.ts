@@ -1,5 +1,7 @@
 import { ApiError, download, request } from './client'
 import type {
+  Activity,
+  ActivityKind,
   AddMemberResult,
   BatchLogisticsResult,
   BatchParseResult,
@@ -118,6 +120,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       stopSharingCallSheet: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`, { method: 'DELETE' }),
       /** The scenes by the day their shoot starts, each with its confirmed locations. */
       schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
+      /** The project's activity log, newest first; `kind` null means every kind. */
+      activity: (id: string, kind: ActivityKind | null, page = 0) =>
+        call<Page<Activity>>(`/api/projects/${encodeURIComponent(id)}/activity?${kind ? `kind=${kind}&` : ''}${pageQuery(page)}`),
       /** Everyone on the project; the owner also gets the open invites. */
       crew: (id: string) => call<Crew>(`/api/projects/${encodeURIComponent(id)}/members`),
       addMember: (id: string, email: string, role: ProjectRole) =>

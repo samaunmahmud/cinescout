@@ -3,6 +3,7 @@ package com.cinescout.scouting;
 import com.cinescout.ai.LocationAssessment;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.AcousticSensitivity;
+import com.cinescout.domain.ActivityVerb;
 import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
@@ -21,11 +22,14 @@ import com.cinescout.logistics.GeoPoint;
 import com.cinescout.logistics.LogisticsException;
 import com.cinescout.logistics.geocoding.Geocoder;
 import com.cinescout.persistence.BlockingTransactions;
+import com.cinescout.repository.ActivityRepository;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.OutreachDraftRepository;
 import com.cinescout.repository.ProjectMemberRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
+import com.cinescout.repository.UserRepository;
+import com.cinescout.service.ActivityLog;
 import com.cinescout.service.ProjectAccess;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
@@ -107,6 +111,8 @@ class SceneScoutingServiceTest {
     @Autowired LocationRepository locations;
     @Autowired OutreachDraftRepository drafts;
     @Autowired ProjectMemberRepository members;
+    @Autowired UserRepository users;
+    @Autowired ActivityRepository activity;
     @Autowired PlatformTransactionManager transactionManager;
 
     private final ScoutingPipeline pipeline = mock(ScoutingPipeline.class);
@@ -124,7 +130,7 @@ class SceneScoutingServiceTest {
         serviceTx = new RecordingTransactions(transactionManager);
         service = new SceneScoutingService(pipeline, new VenuePlacer(geocoder, Duration.ofSeconds(5)), scenes, projects, locations, access(),
                 new BlockingTransactions(serviceTx),
-                Jackson2ObjectMapperBuilder.json().build());
+                Jackson2ObjectMapperBuilder.json().build(), new ActivityLog(activity, users));
     }
 
     @AfterEach
@@ -297,6 +303,13 @@ class SceneScoutingServiceTest {
         assertThat(best.sourceExcerpt()).isEqualTo("Excerpt B");
         assertThat(best.createdAt()).isNotNull();
         assertThat(savedLocations(f)).hasSize(2);
+
+        // The run is in the project's log, with how many venues it added and nothing from the script.
+        assertThat(activity.findAll()).singleElement().satisfies(line -> {
+            assertThat(line.getVerb()).isEqualTo(ActivityVerb.SCOUTED);
+            assertThat(line.getTargetId()).isEqualTo(f.sceneId());
+            assertThat(line.getPayload()).containsEntry("added", 2).doesNotContainKey("sourceText");
+        });
     }
 
     @Test
@@ -367,7 +380,8 @@ class SceneScoutingServiceTest {
             public Mono<GeoPoint> locate(String query) {
                 return Mono.error(new LogisticsException(LogisticsException.Kind.UNAVAILABLE, "down"));
             }
-        }, Duration.ofSeconds(5)), scenes, projects, locations, access(), new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build());
+        }, Duration.ofSeconds(5)), scenes, projects, locations, access(), new BlockingTransactions(serviceTx), Jackson2ObjectMapperBuilder.json().build(),
+                new ActivityLog(activity, users));
         pipelineFinds(new ScoutingOutcome(List.of(venue("A", 60, "Alpha", "1 First St")), 0, 0, 0));
 
         ScoutingResult result = service.scout(f.ownerId(), f.sceneId(), 10).block();
