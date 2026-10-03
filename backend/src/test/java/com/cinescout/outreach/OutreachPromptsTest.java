@@ -90,4 +90,19 @@ class OutreachPromptsTest {
                 .contains("The sender's notes are their latest word", "use the notes and leave out the detail they replace")
                 .contains("an estimate", "Return the email in parts", "greeting:", "paragraphs:", "signOff:");
     }
+
+    /**
+     * What may reach the model that writes an email leaving the app: the production, the venue's public facts and
+     * the sender's own words. Never the script, the crew's private notes, fit scores, quotes, comments, recce answers
+     * or replies from the venue. A new field here must be checked against that list before this test is changed.
+     */
+    @Test
+    void theBriefCarriesNothingPrivate() {
+        java.util.List<String> fields = java.util.Arrays.stream(OutreachBrief.class.getRecordComponents())
+                .map(java.lang.reflect.RecordComponent::getName).toList();
+
+        assertThat(fields).containsExactly("senderName", "production", "shootStart", "shootEnd", "requirements", "venueName",
+                "venueAddress", "booking", "bookingNote", "venueNotes", "recipientName", "tone", "senderNotes");
+        assertThat(fields).noneMatch(name -> name.matches("(?i).*(fit|script|sourceText|reply|quote|comment|recce|rejection).*"));
+    }
 }

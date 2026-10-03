@@ -212,6 +212,7 @@ export function draft(overrides: Partial<OutreachDraft> = {}): OutreachDraft {
     generatedBy: 'ibm/granite-3-8b-instruct',
     status: 'DRAFT',
     sentAt: null,
+    replyTo: null,
     createdAt: '2026-09-20T10:00:00Z',
     updatedAt: '2026-09-20T10:00:00Z',
     ...overrides,

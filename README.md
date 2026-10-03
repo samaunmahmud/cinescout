@@ -174,6 +174,21 @@ costs 100 of the free 10,000 daily quota units, so results are cached on the loc
 (`cinescout.video.cache-ttl`), or until its name or address changes. Without a key the endpoint answers 503
 and the page links to a YouTube search instead.
 
+## Reply tracking
+
+Each outreach email can get its own reply address, `scout+<token>@<reply domain>`, which "Open in email app" puts
+in Cc. When an inbound-mail provider receives a reply there, it posts it to `POST /api/inbound/postmark`; the reply
+is filed against its email (sender, subject, time and up to 20 KB of plain text) and the email is marked replied.
+Reply text is never sent to the AI. Without a provider, replies are pasted in by hand ("Paste a reply or mark
+replied") and the webhook answers 404.
+
+| Variable | Default |
+|---|---|
+| `MAIL_REPLY_DOMAIN` | none: a domain whose mail the provider receives (Postmark: an inbound domain with its MX record) |
+| `MAIL_REPLY_LOCAL_PART` | `scout` |
+| `MAIL_INBOUND_PROVIDER` | none, or `postmark` |
+| `MAIL_INBOUND_USERNAME` / `MAIL_INBOUND_PASSWORD` | none: the HTTP Basic credentials put in the webhook URL set in Postmark, `https://<user>:<pass>@<host>/api/inbound/postmark` |
+
 ## Recce photos
 
 Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,

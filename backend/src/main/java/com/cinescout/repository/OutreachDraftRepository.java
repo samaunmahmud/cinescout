@@ -19,6 +19,9 @@ public interface OutreachDraftRepository extends JpaRepository<OutreachDraft, UU
             where d.id = :draftId and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)""")
     Optional<OutreachDraft> findVisible(@Param("draftId") UUID draftId, @Param("userId") UUID userId);
 
+    /** The draft a reply address belongs to. No user check: the token is what an inbound email carries. */
+    Optional<OutreachDraft> findByReplyToken(String replyToken);
+
     /** A location's drafts, newest first, if the location is one the user is a member of. */
     @Query(value = """
             select d from OutreachDraft d join fetch d.location l join l.scene s join s.project p

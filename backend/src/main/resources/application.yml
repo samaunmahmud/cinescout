@@ -19,6 +19,13 @@ spring:
       max-parts: 4
 
 cinescout:
+  mail:                        # reply tracking for outreach email; without these, replies are recorded by hand
+    reply-domain: ${MAIL_REPLY_DOMAIN:}               # replies come to scout+<token>@<this domain>
+    reply-local-part: ${MAIL_REPLY_LOCAL_PART:scout}
+    inbound:
+      provider: ${MAIL_INBOUND_PROVIDER:}             # postmark
+      username: ${MAIL_INBOUND_USERNAME:}             # the HTTP Basic credentials in the provider's webhook URL
+      password: ${MAIL_INBOUND_PASSWORD:}
   files:                       # uploaded files (recce photos). Render's disk is wiped on every deploy: set FILES_STORE=s3
     store: ${FILES_STORE:local}                       # local | s3 (Cloudflare R2 or any S3-compatible store)
     local-dir: ${FILES_DIR:${java.io.tmpdir}/cinescout-files}

@@ -40,5 +40,6 @@ export const queryKeys = {
   projectOutreachList: (projectId: string) => ['outreach', 'project', projectId] as const,
   projectOutreachPage: (projectId: string, status: OutreachStatus | null, page: number) =>
     ['outreach', 'project', projectId, status, page] as const,
+  replies: (draftId: string) => ['outreach', 'replies', draftId] as const,
   videos: (locationId: string) => ['videos', locationId] as const,
 }

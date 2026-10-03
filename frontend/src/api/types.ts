@@ -386,6 +386,8 @@ export interface OutreachDraft {
   status: OutreachStatus
   /** Set by the server when the status leaves DRAFT, cleared when it goes back. */
   sentAt: string | null
+  /** This email's own reply address, while reply tracking is set up; null otherwise. */
+  replyTo: string | null
   createdAt: string
   updatedAt: string
 }
@@ -420,6 +422,27 @@ export interface RecceEntry {
 
 /** Answers to change on a tech recce: a value per field name, null to clear one. */
 export type RecceAnswers = Record<string, string | number | boolean | null>
+
+/** A reply to an outreach email: one that came in by mail, or one a member pasted in. Never sent to the AI. */
+export interface OutreachReply {
+  id: string
+  draftId: string
+  source: 'INBOUND' | 'MANUAL'
+  fromAddress: string | null
+  fromName: string | null
+  subject: string | null
+  text: string | null
+  receivedAt: string
+  /** Who pasted it in. */
+  recordedBy: string | null
+}
+
+export interface ManualReplyRequest {
+  fromAddress?: string | null
+  fromName?: string | null
+  subject?: string | null
+  text?: string | null
+}
 
 /** A recce photo; `url` and `thumbUrl` are short-lived links (refetch the list for fresh ones). */
 export interface Photo {

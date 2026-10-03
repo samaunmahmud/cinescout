@@ -31,3 +31,11 @@ describe('emailText', () => {
     expect(emailText({ subject: 'Filming request', body: 'Hi,\nThanks' })).toBe('Subject: Filming request\n\nHi,\nThanks')
   })
 })
+
+describe('the reply address in an email link', () => {
+  it('goes in Cc', () => {
+    expect(mailtoLink({ recipientEmail: 'owner@diner.example', subject: 'Hi', body: 'x', replyTo: 'scout+abc@replies.example.com' })).toBe(
+      'mailto:owner@diner.example?cc=scout%2Babc@replies.example.com&subject=Hi&body=x',
+    )
+  })
+})

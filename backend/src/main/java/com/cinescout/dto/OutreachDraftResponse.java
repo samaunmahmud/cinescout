@@ -3,6 +3,7 @@ package com.cinescout.dto;
 import com.cinescout.domain.OutreachDraft;
 import com.cinescout.domain.OutreachStatus;
 import com.cinescout.domain.OutreachTone;
+import com.cinescout.mail.ReplyAddresses;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -18,6 +19,7 @@ public record OutreachDraftResponse(
         String generatedBy,
         OutreachStatus status,
         Instant sentAt,
+        String replyTo,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -26,6 +28,7 @@ public record OutreachDraftResponse(
         return new OutreachDraftResponse(draft.getId(), draft.getLocation().getId(),
                 draft.getRecipientName(), draft.getRecipientEmail(), draft.getSubject(), draft.getBody(),
                 draft.getTone(), draft.getGeneratedBy(), draft.getStatus(), draft.getSentAt(),
+                ReplyAddresses.current().address(draft.getReplyToken()),
                 draft.getCreatedAt(), draft.getUpdatedAt());
     }
 }

@@ -20,12 +20,14 @@ import type {
   Photo,
   PhotoUpload,
   LoginRequest,
+  ManualReplyRequest,
   Location,
   LocationStatus,
   LocationVideos,
   LogisticsReport,
   Member,
   OutreachDraft,
+  OutreachReply,
   OutreachStatus,
   Page,
   Project,
@@ -286,6 +288,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<LogisticsReport>(`/api/locations/${encodeURIComponent(id)}/logistics`, { method: 'POST' }),
     },
     outreach: {
+      /** The replies to an email, latest first. */
+      replies: (draftId: string) => call<Page<OutreachReply>>(`/api/outreach-drafts/${encodeURIComponent(draftId)}/replies?page=0&size=50`),
+      /** Records a reply by hand (every field optional) and marks the email replied. */
+      recordReply: (draftId: string, body: ManualReplyRequest) =>
+        call<OutreachReply>(`/api/outreach-drafts/${encodeURIComponent(draftId)}/replies`, { method: 'POST', body }),
       /** Every draft of the project, newest first, each with its venue and scene; `status` null means all. */
       listForProject: (projectId: string, status: OutreachStatus | null, page = 0) =>
         call<Page<ProjectOutreach>>(

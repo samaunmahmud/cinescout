@@ -12,6 +12,7 @@ import { Mail, Sparkles } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { emailText, looksLikeEmail, mailtoLink } from '../lib/email'
+import { RepliesPanel } from './RepliesPanel'
 import { blankToNull } from '../lib/text'
 import { outreachStatusLabels } from '../lib/status'
 import { useCanEdit } from '../components/projectRole'
@@ -309,6 +310,8 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
       <div className="rounded-sm bg-paper px-6 py-6 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-xl ring-1 ring-ink/20 sm:px-8">
         {draft.body}
       </div>
+
+      <RepliesPanel draft={draft} />
 
       <ErrorAlert error={update.error} />
 

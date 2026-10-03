@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import reactor.core.publisher.Mono;
 
 /**
@@ -81,6 +82,24 @@ class SecurityConfig {
     @Bean
     SessionCookies sessionCookies(SecurityProperties props) {
         return new SessionCookies(props.cookieSecure());
+    }
+
+    /**
+     * The inbound-mail webhook has a chain of its own, ahead of the main one: the provider sends its own HTTP Basic
+     * credentials, which are not a user's and must not be tried as one. The controller checks them.
+     */
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    SecurityWebFilterChain inboundMailChain(ServerHttpSecurity http) {
+        return http
+                .securityMatcher(ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/api/inbound/*"))
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .logout(ServerHttpSecurity.LogoutSpec::disable)
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+                .authorizeExchange(exchanges -> exchanges.anyExchange().permitAll())
+                .build();
     }
 
     @Bean

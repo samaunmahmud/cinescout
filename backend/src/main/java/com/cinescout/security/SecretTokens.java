@@ -27,6 +27,16 @@ public final class SecretTokens {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(secret);
     }
 
+    /**
+     * 192 random bits as lower-case hex: for a secret that travels in an email address, where case may not survive
+     * (some mail systems lower-case the part before the @).
+     */
+    public static String newHexToken() {
+        byte[] secret = new byte[24];
+        RANDOM.nextBytes(secret);
+        return HexFormat.of().formatHex(secret);
+    }
+
     /** Whether {@code token} could be one of ours: a cheap check before any database lookup. */
     public static boolean wellFormed(String token) {
         return token != null && SHAPE.matcher(token).matches();

@@ -8,11 +8,23 @@ export function looksLikeEmail(value: string): boolean {
 
 /**
  * Opens the user's email app with the draft filled in. Spaces are %20 rather than "+", which mail apps would
- * show literally; line breaks survive as %0D%0A.
+ * show literally; line breaks survive as %0D%0A. The draft's reply address goes in Cc, as mail apps ignore a
+ * Reply-To in a mailto link: the venue's "reply all" then reaches CineScout too.
  */
-export function mailtoLink({ recipientEmail, subject, body }: { recipientEmail: string | null; subject: string; body: string }): string {
+export function mailtoLink({
+  recipientEmail,
+  subject,
+  body,
+  replyTo,
+}: {
+  recipientEmail: string | null
+  subject: string
+  body: string
+  replyTo?: string | null
+}): string {
   const to = recipientEmail ? encodeURIComponent(recipientEmail).replace(/%40/g, '@') : ''
-  const query = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\r?\n/g, '\r\n'))}`
+  const cc = replyTo ? `cc=${encodeURIComponent(replyTo).replace(/%40/g, '@')}&` : ''
+  const query = `${cc}subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\r?\n/g, '\r\n'))}`
   return `mailto:${to}?${query}`
 }
 

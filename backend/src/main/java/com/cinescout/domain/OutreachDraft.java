@@ -1,5 +1,6 @@
 package com.cinescout.domain;
 
+import com.cinescout.security.SecretTokens;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,6 +51,10 @@ public class OutreachDraft extends BaseEntity {
     @Column(name = "sent_at")
     private Instant sentAt;
 
+    /** The secret part of this draft's own reply address; set when the draft is made, never changed. */
+    @Column(name = "reply_token", nullable = false, updatable = false)
+    private String replyToken = SecretTokens.newHexToken();
+
     protected OutreachDraft() {
     }
 
@@ -86,6 +91,8 @@ public class OutreachDraft extends BaseEntity {
      * draft first leaves {@code DRAFT}, cleared when it goes back. The user reports what happened;
      * nothing here sends an email.
      */
+    public String getReplyToken() { return replyToken; }
+
     public void changeStatus(OutreachStatus next) {
         this.status = next;
         if (next == OutreachStatus.DRAFT) {
