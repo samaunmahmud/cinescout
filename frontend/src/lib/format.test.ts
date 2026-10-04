@@ -58,12 +58,12 @@ describe('scoutingSummary', () => {
 
 describe('dayConditions', () => {
   it('puts the light and the weather in one line, leaving out what is not known', () => {
-    expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1, warnings: [] })).toBe(
+    expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: 'Clear sky', temperatureMinC: 12.4, temperatureMaxC: 23.1, warnings: [], sun: [] })).toBe(
       'Sun 07:04–18:20 · Clear sky, 12–23 °C',
     )
-    expect(dayConditions({ sunrise: null, sunset: null, weather: 'Rain', temperatureMinC: null, temperatureMaxC: null, warnings: [] })).toBe('Rain')
-    expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: null, temperatureMinC: null, temperatureMaxC: null, warnings: [] })).toBe('Sun 07:04–18:20')
-    expect(dayConditions({ sunrise: null, sunset: null, weather: null, temperatureMinC: null, temperatureMaxC: null, warnings: [] })).toBeNull()
+    expect(dayConditions({ sunrise: null, sunset: null, weather: 'Rain', temperatureMinC: null, temperatureMaxC: null, warnings: [], sun: [] })).toBe('Rain')
+    expect(dayConditions({ sunrise: '07:04', sunset: '18:20', weather: null, temperatureMinC: null, temperatureMaxC: null, warnings: [], sun: [] })).toBe('Sun 07:04–18:20')
+    expect(dayConditions({ sunrise: null, sunset: null, weather: null, temperatureMinC: null, temperatureMaxC: null, warnings: [], sun: [] })).toBeNull()
     expect(dayConditions(null)).toBeNull()
   })
 })

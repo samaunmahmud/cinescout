@@ -172,6 +172,7 @@ const windows = (list: SolarDay['goldenHours'], day: string) => (list.length ===
 
 function Light({ solar }: { solar: LogisticsReport['solar'] }) {
   const sceneLight = solar.sceneLight && sceneLightLabels[solar.sceneLight]
+  const withSun = solar.days.some((day) => (day.sunPath?.length ?? 0) > 0)
   return (
     <Panel title="Light">
       {solar.timeOfDay && (
@@ -190,7 +191,8 @@ function Light({ solar }: { solar: LogisticsReport['solar'] }) {
               <th scope="col" className="py-2 pr-4 font-medium">Daylight</th>
               <th scope="col" className="py-2 pr-4 font-medium">Golden hour</th>
               <th scope="col" className="py-2 pr-4 font-medium">Blue hour</th>
-              {sceneLight && <th scope="col" className="py-2 font-medium text-cue-ink">{sceneLight} (scene)</th>}
+              {sceneLight && <th scope="col" className="py-2 pr-4 font-medium text-cue-ink">{sceneLight} (scene)</th>}
+              {withSun && <th scope="col" className="py-2 font-medium">Sun during the scene</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-line-soft">
@@ -202,7 +204,16 @@ function Light({ solar }: { solar: LogisticsReport['solar'] }) {
                 <td className="py-2 pr-4 whitespace-nowrap">{formatDaylight(day.daylightMinutes)}</td>
                 <td className="py-2 pr-4">{windows(day.goldenHours, day.date)}</td>
                 <td className="py-2 pr-4">{windows(day.blueHours, day.date)}</td>
-                {sceneLight && <td className="py-2 text-cue-ink">{day.sceneWindows.length === 0 ? 'Does not occur' : windows(day.sceneWindows, day.date)}</td>}
+                {sceneLight && <td className="py-2 pr-4 text-cue-ink">{day.sceneWindows.length === 0 ? 'Does not occur' : windows(day.sceneWindows, day.date)}</td>}
+                {withSun && (
+                  <td className="py-2 text-xs text-graphite">
+                    {(day.sunPath ?? []).map((position) => (
+                      <span key={position.at} className="block whitespace-nowrap">
+                        {position.text}
+                      </span>
+                    ))}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

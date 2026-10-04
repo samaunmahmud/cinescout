@@ -3,8 +3,10 @@ package com.cinescout.logistics.solar;
 import com.cinescout.logistics.GeoPoint;
 import com.cinescout.logistics.solar.SceneLight.Period;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -41,6 +43,15 @@ public final class SolarCalculator {
      * @param light the scene's light, or null if unknown (no scene windows are computed)
      */
     public static SolarDay day(LocalDate date, GeoPoint point, ZoneId zone, SceneLight light) {
+        return day(date, point, zone, light, null, null);
+    }
+
+    /**
+     * As {@link #day(LocalDate, GeoPoint, ZoneId, SceneLight)}, with the sun's position at the start, middle and end of
+     * the scene's call-to-wrap time ({@code wrap} at or before {@code call} is the next morning); a call alone gives
+     * the call time only. Without a call time, the scene's first light window is used.
+     */
+    public static SolarDay day(LocalDate date, GeoPoint point, ZoneId zone, SceneLight light, LocalTime call, LocalTime wrap) {
         Day day = new Day(date, point, zone);
 
         List<Interval> up = day.intervals(e -> e >= HORIZON);
@@ -63,7 +74,37 @@ public final class SolarCalculator {
                 (int) Math.round(daylightSeconds / 60.0),
                 day.intervals(band(GOLDEN_LOW, GOLDEN_HIGH)).stream().map(day::window).toList(),
                 day.intervals(band(BLUE_LOW, GOLDEN_LOW)).stream().map(day::window).toList(),
-                sceneWindows);
+                sceneWindows,
+                sunPath(date, point, zone, call, wrap, sceneWindows));
+    }
+
+    private static List<SunPosition> sunPath(LocalDate date, GeoPoint point, ZoneId zone, LocalTime call, LocalTime wrap,
+                                             List<TimeWindow> sceneWindows) {
+        List<OffsetDateTime> moments = new ArrayList<>();
+        if (call != null) {
+            OffsetDateTime start = date.atTime(call).atZone(zone).toOffsetDateTime();
+            if (wrap == null) {
+                moments.add(start);
+            } else {
+                LocalDate wrapDay = wrap.isAfter(call) ? date : date.plusDays(1);
+                OffsetDateTime end = wrapDay.atTime(wrap).atZone(zone).toOffsetDateTime();
+                moments.add(start);
+                moments.add(start.plusSeconds(Duration.between(start, end).getSeconds() / 2).truncatedTo(ChronoUnit.MINUTES));
+                moments.add(end);
+            }
+        } else if (!sceneWindows.isEmpty()) {
+            TimeWindow window = sceneWindows.getFirst();
+            moments.add(window.start());
+            moments.add(window.start().plusSeconds(Duration.between(window.start(), window.end()).getSeconds() / 2).truncatedTo(ChronoUnit.MINUTES));
+            moments.add(window.end());
+        }
+        return moments.stream().map(moment -> position(moment, point)).toList();
+    }
+
+    /** Where the sun is at {@code at}, seen from {@code point}. */
+    public static SunPosition position(OffsetDateTime at, GeoPoint point) {
+        double[] sun = horizontal(at.toEpochSecond(), point);
+        return SunPosition.of(at, sun[0], sun[1]);
     }
 
     /** Elevations from {@code low} (inclusive) to {@code high} (exclusive, except at the zenith). */
@@ -76,6 +117,11 @@ public final class SolarCalculator {
      * after Meeus, "Astronomical Algorithms").
      */
     static double elevation(long epochSecond, GeoPoint point) {
+        return horizontal(epochSecond, point)[1];
+    }
+
+    /** The sun's azimuth (clockwise from true north) and geometric elevation, both in degrees. */
+    static double[] horizontal(long epochSecond, GeoPoint point) {
         double julianDay = epochSecond / 86_400.0 + 2_440_587.5;
         double t = (julianDay - 2_451_545.0) / 36_525.0; // Julian centuries since J2000.0
 
@@ -107,7 +153,21 @@ public final class SolarCalculator {
         double latitude = Math.toRadians(point.latitude());
         double cosZenith = Math.sin(latitude) * Math.sin(declination)
                 + Math.cos(latitude) * Math.cos(declination) * Math.cos(hourAngle);
-        return 90 - Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, cosZenith))));
+        double zenith = Math.acos(Math.max(-1, Math.min(1, cosZenith)));
+
+        // NOAA's azimuth: from the zenith, the latitude and the declination; west of the meridian when the hour angle is positive.
+        double azimuth;
+        double denominator = Math.cos(latitude) * Math.sin(zenith);
+        if (Math.abs(denominator) > 0.001) {
+            double cosine = (Math.sin(latitude) * Math.cos(zenith) - Math.sin(declination)) / denominator;
+            azimuth = 180 - Math.toDegrees(Math.acos(Math.max(-1, Math.min(1, cosine))));
+            if (hourAngle > 0) {
+                azimuth = -azimuth;
+            }
+        } else {
+            azimuth = point.latitude() > 0 ? 180 : 0;
+        }
+        return new double[] {normalize(azimuth), 90 - Math.toDegrees(zenith)};
     }
 
     private static double normalize(double degrees) {

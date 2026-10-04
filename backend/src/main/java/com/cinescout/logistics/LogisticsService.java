@@ -42,6 +42,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -149,7 +150,7 @@ public class LogisticsService {
      * @param venueName    the location's name, to tell the venue itself apart from the places around it
      */
     record Brief(GeoPoint point, String geocodeQuery, boolean byAddress, String venueName, LocalDate shootStart, LocalDate shootEnd,
-                 String timeOfDay, AcousticSensitivity sensitivity) {
+                 String timeOfDay, AcousticSensitivity sensitivity, LocalTime callTime, LocalTime wrapTime) {
     }
 
     private Brief brief(Location location) {
@@ -162,7 +163,8 @@ public class LogisticsService {
                 location.getName(),
                 scene.getShootDateStart(), scene.getShootDateEnd(),
                 requirements == null ? null : requirements.timeOfDay(),
-                requirements == null ? null : requirements.acousticSensitivity());
+                requirements == null ? null : requirements.acousticSensitivity(),
+                scene.getCallTime(), scene.getWrapTime());
     }
 
     /** The venue's address; failing that its name, in the project's area so a common name is found in the right city. */
@@ -276,7 +278,7 @@ public class LogisticsService {
 
         ZoneId localZone = zone;
         List<SolarDay> solarDays = plan.entries().stream()
-                .map(entry -> SolarCalculator.day(entry.date(), located.point(), localZone, light))
+                .map(entry -> SolarCalculator.day(entry.date(), located.point(), localZone, light, brief.callTime(), brief.wrapTime()))
                 .toList();
 
         return new LogisticsReport(LogisticsReport.VERSION, clock.instant(),

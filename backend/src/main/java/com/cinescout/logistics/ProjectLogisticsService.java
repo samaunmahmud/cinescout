@@ -88,7 +88,8 @@ public class ProjectLogisticsService {
 
     /**
      * No report yet, or one worked out before the scene was given (other) dates: its days do not include the one
-     * the scene is now shot on, so a call sheet would have nothing to say about it.
+     * the scene is now shot on, so a call sheet would have nothing to say about it. Likewise one whose sun path does
+     * not start at the scene's call time (made before the time was set or moved).
      */
     private static boolean needsLogistics(Location location) {
         if (location.getLogisticsJson() == null) {
@@ -96,7 +97,11 @@ public class ProjectLogisticsService {
         }
         Scene scene = location.getScene();
         LocalDate day = scene.getShootDateStart() != null ? scene.getShootDateStart() : scene.getShootDateEnd();
-        return day != null && ScheduleResponse.DayConditions.of(location.getLogisticsJson(), day) == null;
+        if (day == null) {
+            return false;
+        }
+        ScheduleResponse.DayConditions conditions = ScheduleResponse.DayConditions.of(location.getLogisticsJson(), day);
+        return conditions == null || !conditions.sunFrom(scene.getCallTime());
     }
 
     private record Attempt(Throwable error) {

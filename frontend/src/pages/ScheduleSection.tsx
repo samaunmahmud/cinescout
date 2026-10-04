@@ -32,8 +32,15 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectSchedule(projectId) }),
   })
   // Worth offering while a dated scene's confirmed venue has nothing to say about its day yet.
+  // Or the report's sun path does not start at the scene's call time (worked out before it was set or moved).
   const missingConditions =
-    schedule.data?.days.some((day) => day.scenes.some((scene) => scene.venues.some((venue) => venue.day === null))) ?? false
+    schedule.data?.days.some((day) =>
+      day.scenes.some((scene) =>
+        scene.venues.some(
+          (venue) => venue.day === null || (scene.callTime !== null && venue.day.sun[0]?.time !== clockTime(scene.callTime)),
+        ),
+      ),
+    ) ?? false
 
   return (
     <Section

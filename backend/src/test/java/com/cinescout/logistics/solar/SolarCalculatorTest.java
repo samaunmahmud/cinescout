@@ -155,4 +155,81 @@ class SolarCalculatorTest {
         // No real darkness under the midnight sun.
         assertThat(SolarCalculator.day(LocalDate.of(2026, 6, 21), TROMSO, TROMSO_ZONE, SceneLight.NIGHT).sceneWindows()).isEmpty();
     }
+
+    // --- where the sun is ------------------------------------------------------------------------------
+
+    private static final GeoPoint SYDNEY = new GeoPoint(-33.8688, 151.2093);
+
+    /**
+     * Published values (timeanddate.com, NOAA): London at midsummer rises at about 49° (NE), sets at about 311° (NW) and
+     * stands about 62° high at noon; New York rises at about 58°; Sydney's midwinter noon sun is due north, about 32.7°
+     * high; at an equinox the sun rises due east.
+     */
+    @Test
+    void azimuthAndElevationMatchPublishedReferenceValues() {
+        ZoneId london = ZoneId.of("Europe/London");
+        SolarDay midsummer = SolarCalculator.day(LocalDate.of(2026, 6, 21), LONDON, london, null);
+
+        SunPosition rise = SolarCalculator.position(midsummer.sunrise(), LONDON);
+        SunPosition noon = SolarCalculator.position(midsummer.solarNoon(), LONDON);
+        SunPosition set = SolarCalculator.position(midsummer.sunset(), LONDON);
+        assertThat(rise.azimuth()).isCloseTo(49.5, within(1.0));
+        assertThat(rise.elevation()).isCloseTo(-0.8, within(0.5));
+        assertThat(noon.azimuth()).isCloseTo(180, within(0.5));
+        assertThat(noon.elevation()).isCloseTo(62.0, within(0.3));
+        assertThat(set.azimuth()).isCloseTo(310.5, within(1.0));
+
+        SolarDay newYork = SolarCalculator.day(LocalDate.of(2026, 6, 21), NEW_YORK, NEW_YORK_ZONE, null);
+        assertThat(SolarCalculator.position(newYork.sunrise(), NEW_YORK).azimuth()).isCloseTo(57.9, within(1.0));
+        assertThat(SolarCalculator.position(newYork.solarNoon(), NEW_YORK).elevation()).isCloseTo(72.7, within(0.3));
+
+        SolarDay sydney = SolarCalculator.day(LocalDate.of(2026, 6, 21), SYDNEY, ZoneId.of("Australia/Sydney"), null);
+        SunPosition sydneyNoon = SolarCalculator.position(sydney.solarNoon(), SYDNEY);
+        assertThat(Math.min(sydneyNoon.azimuth(), 360 - sydneyNoon.azimuth())).isLessThan(0.5);
+        assertThat(sydneyNoon.elevation()).isCloseTo(32.7, within(0.3));
+
+        SolarDay equinox = SolarCalculator.day(LocalDate.of(2026, 3, 20), LONDON, london, null);
+        assertThat(SolarCalculator.position(equinox.sunrise(), LONDON).azimuth()).isCloseTo(89.5, within(1.5));
+        assertThat(SolarCalculator.position(equinox.solarNoon(), LONDON).elevation()).isCloseTo(38.5, within(0.5));
+    }
+
+    @Test
+    void theAfternoonSunIsInTheWestAndTheMorningSunInTheEast() {
+        ZoneId london = ZoneId.of("Europe/London");
+        SunPosition afternoon = SolarCalculator.position(LocalDate.of(2026, 10, 12).atTime(16, 0).atZone(london).toOffsetDateTime(), LONDON);
+        SunPosition morning = SolarCalculator.position(LocalDate.of(2026, 10, 12).atTime(9, 0).atZone(london).toOffsetDateTime(), LONDON);
+
+        assertThat(afternoon.azimuth()).isBetween(200.0, 260.0);
+        assertThat(afternoon.compass()).isIn("SW", "W");
+        assertThat(morning.azimuth()).isBetween(110.0, 160.0);
+    }
+
+    @Test
+    void positionsAreSaidInPlainWords() {
+        OffsetDateTime at = OffsetDateTime.of(2026, 10, 12, 16, 0, 0, 0, ZoneOffset.ofHours(1));
+
+        assertThat(SunPosition.of(at, 225.2, 18.4).text()).isEqualTo("Sun from SW (225°), 18° high at 16:00");
+        assertThat(SunPosition.of(at, 271, -5.4).text()).isEqualTo("Sun 5° below the horizon (W, 271°) at 16:00");
+        assertThat(SunPosition.compass(0)).isEqualTo("N");
+        assertThat(SunPosition.compass(359.9)).isEqualTo("N");
+        assertThat(SunPosition.compass(22.6)).isEqualTo("NE");
+        assertThat(SunPosition.compass(180)).isEqualTo("S");
+        assertThat(SunPosition.compass(337.4)).isEqualTo("NW");
+    }
+
+    @Test
+    void theSunPathFollowsTheScenesCallAndWrapTimesAcrossMidnight() {
+        ZoneId london = ZoneId.of("Europe/London");
+        SolarDay night = SolarCalculator.day(LocalDate.of(2026, 10, 12), LONDON, london, null, LocalTime.of(17, 0), LocalTime.of(2, 0));
+
+        assertThat(night.sunPath()).extracting(position -> position.at().toLocalDateTime().toString())
+                .containsExactly("2026-10-12T17:00", "2026-10-12T21:30", "2026-10-13T02:00");
+        assertThat(night.sunPath().getLast().elevation()).isNegative();
+
+        assertThat(SolarCalculator.day(LocalDate.of(2026, 10, 12), LONDON, london, null, LocalTime.of(7, 30), null).sunPath()).hasSize(1);
+        assertThat(SolarCalculator.day(LocalDate.of(2026, 10, 12), LONDON, london, null).sunPath()).isEmpty();
+        SolarDay dusk = SolarCalculator.day(LocalDate.of(2026, 10, 12), LONDON, london, SceneLight.fromTimeOfDay("dusk"));
+        assertThat(dusk.sunPath()).hasSize(3);
+        assertThat(dusk.sunPath().getFirst().at()).isEqualTo(dusk.sceneWindows().getFirst().start());
+    }
 }

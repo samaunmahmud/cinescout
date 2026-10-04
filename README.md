@@ -207,6 +207,14 @@ Running a job twice is harmless.
 | `JOBS_SCHEDULER` | `true`: also run the jobs on the app's own timer while it is awake |
 | `JOBS_FOLLOW_UPS_CRON` | `0 17 * * * *` (hourly) |
 
+## Sun direction
+
+The solar calculation (NOAA's equations, run locally) gives the sun's azimuth and elevation at any moment. Each shoot
+day of a logistics report carries the sun's position at the start, middle and end of the scene's call-to-wrap time (or
+its light window when no times are set), e.g. "Sun from SW (225°), 18° high at 16:00". The venue map shows them as a
+compass, and the Logistics tab and call sheet list them. Reports made before a call time was set or moved are redone by
+"Get light and weather".
+
 ## Holds and availability
 
 Each venue's Overview tab records its days: pencilled, held (optionally until a date the hold lapses), confirmed or

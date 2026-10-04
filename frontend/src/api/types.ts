@@ -241,6 +241,8 @@ export interface DayConditions {
   temperatureMaxC: number | null
   /** What the weather means for the shoot ("Rain likely: plan cover ..."). */
   warnings: string[]
+  /** The sun at the start, middle and end of the scene's time ("Sun from SW (225°), 18° high at 16:00"). */
+  sun: { time: string | null; azimuth: number | null; elevation: number | null; compass: string | null; text: string | null }[]
 }
 
 export interface ScheduledScene {
@@ -669,6 +671,21 @@ export interface SolarDay {
   blueHours: TimeWindow[]
   /** The windows matching the scene's time of day; empty if unknown or it never occurs. */
   sceneWindows: TimeWindow[]
+  /** Where the sun is at the start, middle and end of the scene's time that day; missing in older reports. */
+  sunPath?: SunPosition[] | null
+}
+
+/** The sun at one moment, seen from the venue. */
+export interface SunPosition {
+  /** Local time with offset. */
+  at: string
+  /** Degrees clockwise from true north. */
+  azimuth: number
+  /** Degrees above the horizon; negative below it. */
+  elevation: number
+  compass: string
+  /** "Sun from SW (225°), 18° high at 16:00". */
+  text: string
 }
 
 export interface WeatherDay {

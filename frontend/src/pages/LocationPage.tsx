@@ -8,6 +8,7 @@ import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { BookingRoute } from '../components/BookingRoute'
 import { DirectorsCall } from '../components/DirectorsCall'
+import { SunCompass } from '../components/SunCompass'
 import { SaveToLibrary } from '../components/SaveToLibrary'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
 import {
@@ -597,8 +598,9 @@ function Position({ location }: { location: Location }) {
           </div>
         </form>
       ) : current && pin ? (
-        <div className="space-y-2">
+        <div className="relative space-y-2">
           <VenueMap pins={[pin]} label={`Map of ${location.name}`} className="h-80" />
+          {location.logistics && <SunCompass days={location.logistics.solar.days} />}
           <p className="text-sm text-graphite">
             {formatCoordinates(current)} ·{' '}
             <a href={osmLink(current)} target="_blank" rel="noopener noreferrer" className="text-cue-ink underline hover:text-cue-deep">

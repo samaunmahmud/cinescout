@@ -128,6 +128,16 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
         }
     }
 
+    /**
+     * The sun at one moment of a shoot day, from the venue's logistics report.
+     *
+     * @param time    local "16:00"
+     * @param azimuth degrees clockwise from true north
+     * @param text    "Sun from SW (225°), 18° high at 16:00"
+     */
+    public record Sun(String time, Double azimuth, Double elevation, String compass, String text) {
+    }
+
     /** @param holdExpiresOn when a pencil or hold lapses; null for none */
     public record Booking(AvailabilityState state, LocalDate holdExpiresOn) {
     }
@@ -137,7 +147,12 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
      * stand in the report, which already speaks the venue's time zone.
      */
     public record DayConditions(String sunrise, String sunset, String weather, Double temperatureMinC, Double temperatureMaxC,
-                                List<String> warnings) {
+                                List<String> warnings, List<Sun> sun) {
+
+        /** Whether the sun's path in the report starts at {@code call}: false for a report made before the call time was set or moved. */
+        public boolean sunFrom(LocalTime call) {
+            return call == null || (!sun.isEmpty() && sun.getFirst().time().equals("%02d:%02d".formatted(call.getHour(), call.getMinute())));
+        }
 
         /** The conditions on {@code date} in a logistics report; null when there is no report, or it does not cover the date. */
         public static DayConditions of(JsonNode report, LocalDate date) {
@@ -154,8 +169,13 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             if (weather != null) {
                 weather.path("warnings").forEach(warning -> warnings.add(warning.asText()));
             }
+            List<Sun> sun = new ArrayList<>();
+            if (solar != null) {
+                solar.path("sunPath").forEach(at -> sun.add(new Sun(clock(at, "at"), number(at, "azimuth"), number(at, "elevation"),
+                        text(at, "compass"), text(at, "text"))));
+            }
             return new DayConditions(clock(solar, "sunrise"), clock(solar, "sunset"), text(weather, "summary"),
-                    number(weather, "temperatureMinC"), number(weather, "temperatureMaxC"), List.copyOf(warnings));
+                    number(weather, "temperatureMinC"), number(weather, "temperatureMaxC"), List.copyOf(warnings), List.copyOf(sun));
         }
 
         private static JsonNode find(JsonNode days, String date) {
