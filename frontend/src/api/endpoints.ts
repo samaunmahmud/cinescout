@@ -1,5 +1,7 @@
 import { ApiError, download, request } from './client'
 import type {
+  PermitGuidance,
+  BookingFriction,
   Activity,
   ActivityKind,
   AddMemberResult,
@@ -281,6 +283,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Videos of the venue, searched on first request and cached by the server; 503 when not configured. */
       videos: (id: string) => call<LocationVideos>(`/api/locations/${encodeURIComponent(id)}/videos`),
       /** Who to talk to at the venue: a full replacement of name, email and phone. */
+      /** The permit guide: the filming office for the venue's area, how far ahead to apply, what to have ready. */
+      permit: (id: string) => call<PermitGuidance>(`/api/locations/${encodeURIComponent(id)}/permit`),
+      /** Who has to say yes to filming there; null clears it. */
+      setBookingRoute: (id: string, bookingFriction: BookingFriction | null) =>
+        call<Location>(`/api/locations/${encodeURIComponent(id)}/booking-route`, { method: 'PUT', body: { bookingFriction } }),
       updateContact: (id: string, body: UpdateContactRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/contact`, { method: 'PUT', body }),
       /** Changes only the tech recce answers sent; null clears one. */

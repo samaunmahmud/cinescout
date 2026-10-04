@@ -1,5 +1,6 @@
 package com.cinescout.service;
 
+import com.cinescout.domain.DatabaseTime;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.ProjectRole;
@@ -8,6 +9,7 @@ import com.cinescout.domain.VenueAvailability;
 import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.dto.ScheduleResponse.ScheduledScene;
 import com.cinescout.dto.ScheduleResponse.ShootDay;
+import com.cinescout.permits.FilmingOffices;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +39,17 @@ public class ScheduleService {
     private final SceneRepository scenes;
     private final LocationRepository locations;
     private final VenueAvailabilityRepository availability;
+    private final FilmingOffices offices;
     private final ProjectAccess access;
     private final BlockingTransactions db;
 
     public ScheduleService(ProjectRepository projects, SceneRepository scenes, LocationRepository locations,
-                           VenueAvailabilityRepository availability, ProjectAccess access, BlockingTransactions db) {
+                           VenueAvailabilityRepository availability, FilmingOffices offices, ProjectAccess access, BlockingTransactions db) {
         this.projects = projects;
         this.scenes = scenes;
         this.locations = locations;
         this.availability = availability;
+        this.offices = offices;
         this.access = access;
         this.db = db;
     }
@@ -65,7 +70,8 @@ public class ScheduleService {
 
             // In script order, so each day's scenes and the unscheduled ones come out in script order too.
             List<Scene> all = scenes.findVisibleByProject(projectId, userId, Pageable.unpaged()).getContent();
-            ScheduleConflicts conflicts = new ScheduleConflicts(availability.findByProject(projectId));
+            ScheduleConflicts conflicts = new ScheduleConflicts(availability.findByProject(projectId), offices,
+                    LocalDate.ofInstant(DatabaseTime.now(), ZoneOffset.UTC));
             Map<UUID, VenueAvailability> holds = conflicts.firstDays(all, confirmed);
 
             Map<LocalDate, List<ScheduledScene>> byDay = new TreeMap<>();

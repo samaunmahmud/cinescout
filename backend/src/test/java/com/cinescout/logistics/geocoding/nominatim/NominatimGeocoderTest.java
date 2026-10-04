@@ -97,4 +97,35 @@ class NominatimGeocoderTest {
         stub(503, "<html>Service Unavailable</html>");
         assertThat(((LogisticsException) catchThrowable(() -> geocoder().locate("x").block())).kind()).isEqualTo(Kind.UNAVAILABLE);
     }
+
+    // --- the area of a position ------------------------------------------------------------------
+
+    /** A trimmed copy of a real answer for Camden Town at zoom 10 (captured 2026-10-04). */
+    private static final String CAMDEN = """
+            {"place_id":280603961,"osm_type":"relation","category":"boundary","type":"administrative","addresstype":"city_district",
+             "name":"London Borough of Camden","display_name":"London Borough of Camden, Greater London, England, United Kingdom",
+             "address":{"city_district":"London Borough of Camden","ISO3166-2-lvl8":"GB-CMD","city":"Greater London","state":"England",
+                        "ISO3166-2-lvl4":"GB-ENG","country":"United Kingdom","country_code":"gb"}}""";
+
+    @Test
+    void theAreaOfAPositionIsItsMostLocalNamedAreaWithItsCodesMostLocalFirst() {
+        api.stubFor(get(urlPathEqualTo("/reverse")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody(CAMDEN)));
+
+        var area = geocoder().areaAt(new GeoPoint(51.539, -0.1426)).block();
+
+        assertThat(area.name()).isEqualTo("London Borough of Camden");
+        assertThat(area.codes()).containsExactly("GB-CMD", "GB-ENG");
+        assertThat(area.countryCode()).isEqualTo("gb");
+        assertThat(area.isFor(51.539, -0.1426)).isTrue();
+        api.verify(getRequestedFor(urlPathEqualTo("/reverse")).withQueryParam("zoom", equalTo("10"))
+                .withQueryParam("addressdetails", equalTo("1")).withQueryParam("lat", equalTo("51.539")));
+    }
+
+    @Test
+    void aPositionNobodyKnowsHasNoArea() {
+        api.stubFor(get(urlPathEqualTo("/reverse")).willReturn(aResponse().withHeader("Content-Type", "application/json")
+                .withBody("{\"error\":\"Unable to geocode\"}")));
+
+        assertThat(geocoder().areaAt(new GeoPoint(0, 0)).block()).isNull();
+    }
 }

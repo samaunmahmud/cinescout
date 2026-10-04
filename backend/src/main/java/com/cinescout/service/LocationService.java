@@ -2,6 +2,7 @@ package com.cinescout.service;
 
 import com.cinescout.domain.ActivityTarget;
 import com.cinescout.domain.ActivityVerb;
+import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Project;
@@ -100,6 +101,15 @@ public class LocationService {
                     return LocationResponse.from(locations.saveAndFlush(location));
                 })
                 .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate);
+    }
+
+    /** Sets who has to say yes to filming there (null clears it), over what scouting assessed. */
+    public Mono<LocationResponse> setBookingRoute(UUID userId, UUID locationId, BookingFriction route) {
+        return db.call(() -> {
+            Location location = access.location(userId, locationId, ProjectRole.EDITOR);
+            location.setBookingFriction(route);
+            return LocationResponse.from(locations.saveAndFlush(location));
+        });
     }
 
     public Mono<LocationResponse> get(UUID userId, UUID locationId) {

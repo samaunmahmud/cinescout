@@ -1,0 +1,261 @@
+# Filming offices for permit guidance (feature: venues marked "Public space" show the office for their area).
+#
+# To correct an entry: edit it here, set lastReviewed to the day you checked, and open a pull request.
+# Each office is matched on the ISO 3166-2 code OpenStreetMap gives for the venue's position (e.g. GB-CMD), or on
+# one of its names. leadTime is in working days for filming on the street: smallCrew under 30 people, largeCrew 30
+# or more; null where the source gives no figure. leadTimeText is the source's own wording.
+# A venue outside every office listed here gets the fallback ("check with the local council").
+lastReviewed: 2026-10-04
+sources:
+  - name: Film London, Borough Film Services contacts
+    url: https://filmlondon.org.uk/resource/borough-film-services-contacts
+  - name: Film London, Borough lead-in times (October 2021)
+    url: https://film-london.files.svdcdn.com/production/Borough-Lead-in-times-Oct-2021.xlsx
+checklist:
+  - Dates, times, the number of cast and crew, and every vehicle you will bring
+  - Public liability insurance certificate
+  - Risk assessment for the shoot
+  - Parking and unit base plan, with any parking suspensions you need
+  - A letter to the residents and businesses nearby
+  - Flag anything unusual early (stunts, special effects, weapons, drones, road closures)
+fallback:
+  area: Elsewhere in the UK
+  office: The local council
+  contactUrl: https://www.gov.uk/find-local-council
+  note: CineScout's guide covers London's boroughs so far. Check with the local council's filming or events team.
+offices:
+  - area: "Barking and Dagenham"
+    codes: [GB-BDG]
+    names: ["London Borough of Barking and Dagenham", "Barking and Dagenham"]
+    office: "Film Barking and Dagenham"
+    contactUrl: https://filmbarkinganddagenham.com/
+    leadTime: { smallCrew: 7, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 2 - 7 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Barnet"
+    codes: [GB-BNE]
+    names: ["London Borough of Barnet", "Barnet"]
+    office: "Barnet Film Office (FilmFixer)"
+    contactUrl: https://barnetfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 10 working days"
+  - area: "Bexley"
+    codes: [GB-BEX]
+    names: ["London Borough of Bexley", "Bexley"]
+    office: "Bexley Film Office (FilmFixer)"
+    contactUrl: https://bexleyfilmoffice.co.uk/
+    leadTime: { smallCrew: 3, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 3 working days"
+  - area: "Brent"
+    codes: [GB-BEN]
+    names: ["London Borough of Brent", "Brent"]
+    office: "Brent Council film service"
+    contactUrl: https://www.brent.gov.uk/film
+    leadTime: { smallCrew: 3, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 3 working days"
+  - area: "Bromley"
+    codes: [GB-BRY]
+    names: ["London Borough of Bromley", "Bromley"]
+    office: "Bromley Film Office (FilmFixer)"
+    contactUrl: https://bromleyfilmoffice.co.uk/
+    leadTime: { smallCrew: 3, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 3 working days"
+  - area: "Camden"
+    codes: [GB-CMD]
+    names: ["London Borough of Camden", "Camden"]
+    office: "Camden Film Office (FilmFixer)"
+    contactUrl: https://camdenfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 5 working days dependent on location; over 30 crew 7+ working days dependent on location"
+  - area: "City of London"
+    codes: [GB-LND]
+    names: ["City of London"]
+    office: "City of London Corporation filming team"
+    contactUrl: https://www.cityoflondon.gov.uk/
+    leadTime: { smallCrew: 7, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 7 working days (crews over 10 generally only facilitated outside of 0700 -1900hrs Mon-Fri); over 30 crew 10 working days (crews over 10 generally only facilitated outside of 0700 -1900hrs Mon-Fri)"
+    checklist:
+      - "Crews of more than 10 are generally only allowed outside 07:00–19:00, Monday to Friday."
+  - area: "Croydon"
+    codes: [GB-CRY]
+    names: ["London Borough of Croydon", "Croydon"]
+    office: "Croydon Film Office (FilmFixer)"
+    contactUrl: https://croydonfilmoffice.co.uk/
+    leadTime: { smallCrew: 3, largeCrew: 5 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 5 working days"
+  - area: "Ealing"
+    codes: [GB-EAL]
+    names: ["London Borough of Ealing", "Ealing"]
+    office: "West London Film Office"
+    contactUrl: https://westlondonfilmoffice.co.uk/
+    leadTime: { smallCrew: 1, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 1 working day; over 30 crew 3 working days"
+  - area: "Enfield"
+    codes: [GB-ENF]
+    names: ["London Borough of Enfield", "Enfield"]
+    office: "The Film Office (Enfield)"
+    contactUrl: https://enfield.filmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 1 - 5 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Greenwich"
+    codes: [GB-GRE]
+    names: ["Royal Borough of Greenwich", "Greenwich"]
+    office: "FilmFixer (Royal Greenwich)"
+    contactUrl: https://filmfixer.co.uk/
+    leadTime: { smallCrew: 15, largeCrew: 20 }
+    leadTimeText: "Street filming: under 30 crew 8 working days on non-residential streets 10 - 15 working days on residential streets (depending on level of filming activity); over 30 crew 8 working days on non-residential streets 15 - 20 working days on residential streets (depending on level of filming activity)"
+  - area: "Hackney"
+    codes: [GB-HCK]
+    names: ["London Borough of Hackney", "Hackney"]
+    office: "Screen Hackney"
+    contactUrl: https://www.screenhackney.com/
+    leadTime: { smallCrew: 5, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 5 working days (depending on requirements); over 30 crew 7 - 10 working days"
+  - area: "Hammersmith and Fulham"
+    codes: [GB-HMF]
+    names: ["London Borough of Hammersmith and Fulham", "Hammersmith and Fulham", "Hammersmith & Fulham"]
+    office: "Hammersmith & Fulham Council film service"
+    contactUrl: https://filmlondon.org.uk/resource/borough-film-services-contacts
+    leadTime: { smallCrew: 10, largeCrew: 15 }
+    leadTimeText: "Street filming: under 30 crew 10 working days; over 30 crew 15 working days Depends on the complexity of the shoot"
+  - area: "Haringey"
+    codes: [GB-HRY]
+    names: ["London Borough of Haringey", "Haringey"]
+    office: "Haringey Film Office (FilmFixer)"
+    contactUrl: https://www.haringeyfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 5 }
+    leadTimeText: "Street filming: under 30 crew 3-5 working days; over 30 crew 5 working days"
+  - area: "Harrow"
+    codes: [GB-HRW]
+    names: ["London Borough of Harrow", "Harrow"]
+    office: "Harrow Film Service"
+    contactUrl: https://www.harrow.gov.uk/
+    leadTime: { smallCrew: 5, largeCrew: 5 }
+    leadTimeText: "Street filming: under 30 crew 3 - 5 working days; over 30 crew 5 working days"
+  - area: "Havering"
+    codes: [GB-HAV]
+    names: ["London Borough of Havering", "Havering"]
+    office: "Havering Film Office (FilmFixer)"
+    contactUrl: https://haveringfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 10 working days or more"
+  - area: "Hillingdon"
+    codes: [GB-HIL]
+    names: ["London Borough of Hillingdon", "Hillingdon"]
+    office: "Hillingdon Film Office (FilmFixer)"
+    contactUrl: https://www.hillingdonfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 10 working days"
+  - area: "Hounslow"
+    codes: [GB-HNS]
+    names: ["London Borough of Hounslow", "Hounslow"]
+    office: "Hounslow Film Office (FilmFixer)"
+    contactUrl: https://hounslowfilmoffice.co.uk/
+    leadTime: { smallCrew: 3, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 3 working days"
+  - area: "Islington"
+    codes: [GB-ISL]
+    names: ["London Borough of Islington", "Islington"]
+    office: "Islington Film Office (FilmFixer)"
+    contactUrl: https://www.islingtonfilmoffice.co.uk/
+    leadTime: { smallCrew: 3, largeCrew: 5 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 5 working days"
+  - area: "Kensington and Chelsea"
+    codes: [GB-KEC]
+    names: ["Royal Borough of Kensington and Chelsea", "Kensington and Chelsea", "Kensington & Chelsea"]
+    office: "RBKC Film Office (FilmFixer)"
+    contactUrl: https://rbkcfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 5 }
+    leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 5 working days"
+  - area: "Kingston upon Thames"
+    codes: [GB-KTT]
+    names: ["Royal Borough of Kingston upon Thames", "Kingston upon Thames"]
+    office: "Kingston Film Office (FilmFixer)"
+    contactUrl: https://www.kingstonfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 5 }
+    leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 5 working days"
+  - area: "Lambeth"
+    codes: [GB-LBH]
+    names: ["London Borough of Lambeth", "Lambeth"]
+    office: "Lambeth Council filming enquiries"
+    contactUrl: https://www.lambeth.gov.uk/about-council/contact-us/media-filming-enquiries
+    leadTime: { smallCrew: 3, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 3 working days"
+  - area: "Lewisham"
+    codes: [GB-LEW]
+    names: ["London Borough of Lewisham", "Lewisham"]
+    office: "The Film Office (Lewisham)"
+    contactUrl: https://lewisham.filmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 1 - 5 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Merton"
+    codes: [GB-MRT]
+    names: ["London Borough of Merton", "Merton"]
+    office: "The Film Office (Merton)"
+    contactUrl: https://merton.filmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 1 - 5 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Newham"
+    codes: [GB-NWM]
+    names: ["London Borough of Newham", "Newham"]
+    office: "The Film Office (Newham)"
+    contactUrl: https://newham.filmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 1 - 5 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Redbridge"
+    codes: [GB-RDB]
+    names: ["London Borough of Redbridge", "Redbridge"]
+    office: "Redbridge Film Office (FilmFixer)"
+    contactUrl: https://www.redbridgefilmoffice.co.uk/
+    leadTime: { smallCrew: 1, largeCrew: 1 }
+    leadTimeText: "Street filming: under 30 crew 1 working day; over 30 crew 1 working day"
+  - area: "Richmond upon Thames"
+    codes: [GB-RIC]
+    names: ["London Borough of Richmond upon Thames", "Richmond upon Thames"]
+    office: "Film Richmond"
+    contactUrl: https://www.richmond.gov.uk/filmrichmond
+    leadTime: { smallCrew: 7, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 7 working days but could be more depending on size and location; over 30 crew 10 working days but could be more depending on size and location"
+  - area: "Southwark"
+    codes: [GB-SWK]
+    names: ["London Borough of Southwark", "Southwark"]
+    office: "Southwark Film Office (FilmFixer)"
+    contactUrl: https://www.southwarkfilmoffice.co.uk/
+    leadTime: { smallCrew: 3, largeCrew: 3 }
+    leadTimeText: "Street filming: under 30 crew 3 working days; over 30 crew 3 working days"
+  - area: "Sutton"
+    codes: [GB-STN]
+    names: ["London Borough of Sutton", "Sutton"]
+    office: "Sutton Council communications team"
+    contactUrl: https://www.sutton.gov.uk/
+    leadTime: { smallCrew: null, largeCrew: null }
+    leadTimeText: "Street filming: under 30 crew TBC; over 30 crew TBC"
+  - area: "Tower Hamlets"
+    codes: [GB-TWH]
+    names: ["London Borough of Tower Hamlets", "Tower Hamlets"]
+    office: "Tower Hamlets Film Office (FilmFixer)"
+    contactUrl: https://towerhamletsfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 1 - 5 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Waltham Forest"
+    codes: [GB-WFT]
+    names: ["London Borough of Waltham Forest", "Waltham Forest"]
+    office: "Waltham Forest Film Office (FilmFixer)"
+    contactUrl: https://walthamforestfilmoffice.co.uk/
+    leadTime: { smallCrew: 5, largeCrew: 7 }
+    leadTimeText: "Street filming: under 30 crew 1 - 5 working days (depends on requirements); over 30 crew 7 working days"
+  - area: "Wandsworth"
+    codes: [GB-WND]
+    names: ["London Borough of Wandsworth", "Wandsworth"]
+    office: "Enable Leisure and Culture filming"
+    contactUrl: https://enablelc.org/filming/about/
+    leadTime: { smallCrew: 7, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 7 working days for residential streets; over 30 crew 10 working days for residential streets"
+  - area: "Westminster"
+    codes: [GB-WSM]
+    names: ["City of Westminster", "Westminster"]
+    office: "Westminster City Promotions, Events and Filming"
+    contactUrl: https://www.westminster.gov.uk/events-and-filming
+    leadTime: { smallCrew: 5, largeCrew: 10 }
+    leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 10 working days"
+    checklist:
+      - "Filming with a tripod needs a Notice of No Objection, applied for at least 3 working days ahead (handheld only needs none)."

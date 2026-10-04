@@ -223,6 +223,19 @@ and estimated crew size, with blanks for the rest and "Template only — not leg
 signing." on every page. Each one is a new version kept in the file store (30 a venue at most), downloaded by members
 only through `GET /api/agreements/{id}/file`.
 
+## Permit guidance
+
+A venue marked "Public space" (set on its page, or by scouting) shows the filming office for its area: the area is
+looked up once from its pin with Nominatim's reverse geocoding (zoom 10, which for London gives the borough and its
+ISO 3166-2 code) and kept until the venue moves. The offices live in
+`backend/src/main/resources/permits/filming-offices.yml`: all 33 London borough film services, from Film London's
+borough contacts and its borough lead-in times sheet (October 2021), with a common checklist; the rest of the UK gets
+"check with the local council". Each card shows when the file was last reviewed and links to editing it on GitHub
+(`cinescout.permits.edit-url`). To correct an entry, edit the file, set `lastReviewed`, and open a pull request; a
+broken file stops the app at start-up and fails `FilmingOfficesTest`. The schedule warns when to apply for a
+confirmed public-space venue (working days before its first shoot day, bank holidays not counted out), and flags it as
+a problem once that date has passed.
+
 ## Recce photos
 
 Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,

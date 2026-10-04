@@ -1,13 +1,17 @@
 package com.cinescout.service;
 
 import com.cinescout.domain.AvailabilityState;
+import com.cinescout.domain.BookingFriction;
+import com.cinescout.domain.SceneRequirements;
 import com.cinescout.domain.Location;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.VenueAvailability;
 import com.cinescout.domain.VenueNames;
 import com.cinescout.dto.ScheduleResponse.Conflict;
 import com.cinescout.dto.ScheduleResponse.ConflictKind;
+import com.cinescout.permits.FilmingOffices;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -39,9 +43,17 @@ final class ScheduleConflicts {
     private static final int MINUTES_A_DAY = 24 * 60;
 
     private final List<VenueAvailability> holds;
+    private final FilmingOffices offices;
+    private final LocalDate today;
+
+    ScheduleConflicts(List<VenueAvailability> holds, FilmingOffices offices, LocalDate today) {
+        this.holds = holds;
+        this.offices = offices;
+        this.today = today;
+    }
 
     ScheduleConflicts(List<VenueAvailability> holds) {
-        this.holds = holds;
+        this(holds, null, null);
     }
 
     /** What is known of the venue (or the same venue on another scene, if not of this one) on {@code day}. */
@@ -89,6 +101,15 @@ final class ScheduleConflicts {
             }
         }
         List<Conflict> found = new ArrayList<>(problems.values());
+        for (Scene scene : scenes) {
+            List<LocalDate> days = days(scene);
+            if (days.isEmpty()) {
+                continue;
+            }
+            for (Location venue : confirmed.getOrDefault(scene.getId(), List.of())) {
+                permit(scene, venue, days.getFirst()).ifPresent(found::add);
+            }
+        }
         for (int i = 0; i < scenes.size(); i++) {
             for (int j = i + 1; j < scenes.size(); j++) {
                 clash(scenes.get(i), scenes.get(j), confirmed).ifPresent(found::add);
@@ -96,6 +117,54 @@ final class ScheduleConflicts {
         }
         found.sort(Comparator.comparing(Conflict::date).thenComparing(conflict -> !conflict.problem()));
         return found;
+    }
+
+    /**
+     * For a confirmed venue marked as a public space whose area is known: when to apply to its filming office by, or
+     * that the notice period has run out. A venue whose area has not been looked up yet says nothing.
+     */
+    private Optional<Conflict> permit(Scene scene, Location venue, LocalDate firstDay) {
+        if (offices == null || venue.getBookingFriction() != BookingFriction.PUBLIC || venue.getAdminArea() == null) {
+            return Optional.empty();
+        }
+        Optional<FilmingOffices.Office> office = offices.officeFor(venue.getAdminArea());
+        if (office.isEmpty()) {
+            if (!"gb".equals(venue.getAdminArea().countryCode())) {
+                return Optional.empty();
+            }
+            return Optional.of(new Conflict(ConflictKind.PERMIT_LEAD_TIME, false, firstDay, List.of(scene.getId()), venue.getId(), venue.getName(),
+                    "%s is a public space: ask the local council about filming permission well before %s."
+                            .formatted(venue.getName(), DAY.format(firstDay))));
+        }
+        SceneRequirements needs = scene.requirements();
+        Integer lead = office.get().leadTimeFor(needs == null ? null : needs.estimatedCastAndCrewSize());
+        if (lead == null) {
+            return Optional.of(new Conflict(ConflictKind.PERMIT_LEAD_TIME, false, firstDay, List.of(scene.getId()), venue.getId(), venue.getName(),
+                    "%s is a public space in %s: ask %s about filming permission well before %s."
+                            .formatted(venue.getName(), office.get().area(), office.get().office(), DAY.format(firstDay))));
+        }
+        LocalDate applyBy = workingDaysBefore(firstDay, lead);
+        boolean late = today != null && applyBy.isBefore(today);
+        String message = late
+                ? "%s is a public space in %s, which asks for %d working days' notice: that ran out on %s. Call %s now."
+                        .formatted(venue.getName(), office.get().area(), lead, DAY.format(applyBy), office.get().office())
+                : "%s is a public space in %s: apply to %s by %s (%d working days ahead)."
+                        .formatted(venue.getName(), office.get().area(), office.get().office(), DAY.format(applyBy), lead);
+        return Optional.of(new Conflict(ConflictKind.PERMIT_LEAD_TIME, late, firstDay, List.of(scene.getId()), venue.getId(), venue.getName(),
+                message));
+    }
+
+    /** {@code days} working days (Monday to Friday; bank holidays not counted out) before {@code day}. */
+    static LocalDate workingDaysBefore(LocalDate day, int days) {
+        LocalDate date = day;
+        int left = days;
+        while (left > 0) {
+            date = date.minusDays(1);
+            if (date.getDayOfWeek() != DayOfWeek.SATURDAY && date.getDayOfWeek() != DayOfWeek.SUNDAY) {
+                left--;
+            }
+        }
+        return date;
     }
 
     private static Conflict bothScenes(Conflict first, Conflict again) {

@@ -6,6 +6,7 @@ import { queryKeys } from '../api/queryKeys'
 import type { Location } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
+import { BookingRoute } from '../components/BookingRoute'
 import { DirectorsCall } from '../components/DirectorsCall'
 import { SaveToLibrary } from '../components/SaveToLibrary'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
@@ -35,7 +36,6 @@ import {
 } from 'lucide-react'
 import { FitLabel, FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
 import { Stamp } from '../components/stickers'
-import { frictionLabel } from '../lib/fit'
 import { Eyebrow, Fact, Section, Tabs, type TabItem } from '../components/surfaces'
 import { locationPin } from '../components/map/locationPin'
 import type { MapPin } from '../components/map/types'
@@ -53,6 +53,7 @@ import { CommentsSection } from './CommentsSection'
 import { LogisticsSection } from './LogisticsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
+import { PermitSection } from './PermitSection'
 import { PhotosSection } from './PhotosSection'
 import { RecceSection } from './RecceSection'
 import { VideosSection } from './VideosSection'
@@ -186,7 +187,7 @@ function LocationDetails({ location }: { location: Location }) {
             {location.fitScore != null ? `${location.fitScore} / 100` : 'Not assessed'}
           </Fact>
           <Fact icon={KeyRound} label="Booking">
-            {location.bookingFriction ? frictionLabel(location.bookingFriction) : 'Unknown'}
+            <BookingRoute location={location} />
           </Fact>
           <Fact icon={Crosshair} label="Position">
             {pin ? 'On the map' : 'Not set yet'}
@@ -222,6 +223,7 @@ function LocationDetails({ location }: { location: Location }) {
               <Assessment location={location} />
               <DirectorsCallSection location={location} />
               <Contact location={location} />
+              {location.bookingFriction === 'PUBLIC' && <PermitSection location={location} />}
               <Notes location={location} update={update} />
             </div>
             <div className="space-y-8">

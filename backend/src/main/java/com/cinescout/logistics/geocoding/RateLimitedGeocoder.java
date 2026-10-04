@@ -1,5 +1,6 @@
 package com.cinescout.logistics.geocoding;
 
+import com.cinescout.domain.AdminArea;
 import com.cinescout.logistics.GeoPoint;
 import com.cinescout.logistics.LogisticsException;
 import com.cinescout.logistics.LogisticsException.Kind;
@@ -26,6 +27,12 @@ public class RateLimitedGeocoder implements Geocoder {
     @Override
     public Mono<GeoPoint> locate(String query) {
         return pacer.pace(() -> delegate.locate(query),
+                () -> new LogisticsException(Kind.RATE_LIMITED, "Too many geocoding requests are waiting; try again shortly"));
+    }
+
+    @Override
+    public Mono<AdminArea> areaAt(GeoPoint point) {
+        return pacer.pace(() -> delegate.areaAt(point),
                 () -> new LogisticsException(Kind.RATE_LIMITED, "Too many geocoding requests are waiting; try again shortly"));
     }
 

@@ -42,4 +42,12 @@ class ScheduleConflictsTest {
         assertThat(ScheduleConflicts.days(scene(null, null, null, null))).isEmpty();
         assertThat(ScheduleConflicts.days(scene("2026-01-01", "2026-12-31", null, null))).hasSize(31);
     }
+
+    @Test
+    void workingDaysBeforeSkipTheWeekend() {
+        // Monday 2 November 2026: five working days before is the Monday before.
+        assertThat(ScheduleConflicts.workingDaysBefore(LocalDate.parse("2026-11-02"), 5)).isEqualTo(LocalDate.parse("2026-10-26"));
+        assertThat(ScheduleConflicts.workingDaysBefore(LocalDate.parse("2026-11-02"), 1)).isEqualTo(LocalDate.parse("2026-10-30"));
+        assertThat(ScheduleConflicts.workingDaysBefore(LocalDate.parse("2026-11-02"), 0)).isEqualTo(LocalDate.parse("2026-11-02"));
+    }
 }

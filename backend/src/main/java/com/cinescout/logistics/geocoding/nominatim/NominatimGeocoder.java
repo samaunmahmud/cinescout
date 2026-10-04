@@ -1,5 +1,6 @@
 package com.cinescout.logistics.geocoding.nominatim;
 
+import com.cinescout.domain.AdminArea;
 import com.cinescout.logistics.GeoPoint;
 import com.cinescout.logistics.LogisticsException;
 import com.cinescout.logistics.ProviderHttp;
@@ -9,7 +10,11 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * {@link Geocoder} backed by Nominatim, OpenStreetMap's geocoder ({@code GET /search}), keyless. Only the
@@ -48,6 +53,53 @@ public class NominatimGeocoder implements Geocoder {
         return ProviderHttp.guardTransport(call, SERVICE, props.timeout());
     }
 
+    /**
+     * {@code GET /reverse} at zoom 10, the level of a city's districts: for London that is the borough, with its
+     * ISO 3166-2 code (e.g. GB-CMD) among the address parts.
+     */
+    @Override
+    public Mono<AdminArea> areaAt(GeoPoint point) {
+        Mono<AdminArea> call = nominatim.get()
+                .uri(uri -> uri.path("/reverse")
+                        .queryParam("lat", point.latitude())
+                        .queryParam("lon", point.longitude())
+                        .queryParam("format", "jsonv2")
+                        .queryParam("zoom", 10)
+                        .queryParam("addressdetails", 1)
+                        .build())
+                .retrieve()
+                .onStatus(HttpStatusCode::isError,
+                        response -> Mono.just(LogisticsException.forStatus(SERVICE, response.statusCode().value())))
+                .bodyToMono(Place.class)
+                .flatMap(place -> Mono.justOrEmpty(area(place, point)));
+        return ProviderHttp.guardTransport(call, SERVICE, props.timeout());
+    }
+
+    /** The most local named area and every ISO 3166-2 code given, most local (highest level) first. */
+    static AdminArea area(Place place, GeoPoint point) {
+        if (place == null || place.address() == null || place.address().isEmpty()) {
+            return null;
+        }
+        Map<String, String> address = place.address();
+        String name = Stream.of("city_district", "borough", "city", "county", "state_district", "state")
+                .map(address::get).filter(value -> value != null && !value.isBlank()).findFirst().orElse(place.name());
+        List<String> codes = address.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith("ISO3166-2-lvl"))
+                .sorted(Comparator.comparing((Map.Entry<String, String> entry) -> level(entry.getKey())).reversed())
+                .map(Map.Entry::getValue)
+                .toList();
+        String country = address.get("country_code");
+        return new AdminArea(name, codes, country == null ? null : country.toLowerCase(Locale.ROOT), point.latitude(), point.longitude());
+    }
+
+    private static int level(String key) {
+        try {
+            return Integer.parseInt(key.substring("ISO3166-2-lvl".length()));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     @Override
     public String attribution() {
         return "Geocoding by Nominatim, map data © OpenStreetMap contributors (ODbL)";
@@ -72,5 +124,9 @@ public class NominatimGeocoder implements Geocoder {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record Match(String lat, String lon) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Place(String name, Map<String, String> address) {
     }
 }

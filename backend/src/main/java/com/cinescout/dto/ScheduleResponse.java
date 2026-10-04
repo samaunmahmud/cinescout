@@ -37,7 +37,9 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
         /** A pencil or hold on a shoot day lapses before that day. */
         HOLD_EXPIRES,
         /** Two scenes are at the same venue on the same day, at times that overlap or are not set. A warning only. */
-        DOUBLE_BOOKED
+        DOUBLE_BOOKED,
+        /** A confirmed public-space venue needs a filming permit; when to apply by, or that the notice has run out. */
+        PERMIT_LEAD_TIME
     }
 
     /**

@@ -138,7 +138,7 @@ export interface Schedule {
   conflicts: ScheduleConflict[]
 }
 
-export type ConflictKind = 'UNAVAILABLE' | 'HOLD_EXPIRES' | 'DOUBLE_BOOKED'
+export type ConflictKind = 'UNAVAILABLE' | 'HOLD_EXPIRES' | 'DOUBLE_BOOKED' | 'PERMIT_LEAD_TIME'
 
 export interface ScheduleConflict {
   kind: ConflictKind
@@ -150,6 +150,36 @@ export interface ScheduleConflict {
   venueName: string
   /** The conflict in plain English. */
   message: string
+}
+
+/** Who to ask about filming at a venue in a public place, and how far ahead. */
+export interface PermitGuidance {
+  /** FOUND: a listed office; FALLBACK: the UK but no listed area; the rest say why there is no office. */
+  status: 'FOUND' | 'FALLBACK' | 'OUTSIDE_COVERAGE' | 'NEEDS_POSITION' | 'LOOKUP_FAILED'
+  /** Whether the venue is marked as a public space. */
+  applies: boolean
+  /** The local authority area of the venue's position, as the map names it. */
+  areaName: string | null
+  office: PermitOffice | null
+  /** When the guide's data was last checked (ISO date). */
+  lastReviewed: string
+  sources: { name: string; url: string }[]
+  /** Where to correct the guide's data. */
+  editUrl: string | null
+}
+
+export interface PermitOffice {
+  area: string
+  name: string
+  contactUrl: string
+  /** Working days ahead to apply, for the scene's crew size; null when not known. */
+  leadTimeWorkingDays: number | null
+  /** The source's own wording. */
+  leadTimeText: string | null
+  note: string | null
+  checklist: string[]
+  /** False for the fallback, "the local council". */
+  listed: boolean
 }
 
 /** One version of a venue's location release (a PDF template). */

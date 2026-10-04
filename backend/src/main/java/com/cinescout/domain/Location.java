@@ -96,6 +96,11 @@ public class Location extends BaseEntity {
     @Column(nullable = false)
     private Map<String, RecceEntry> recce = new LinkedHashMap<>();
 
+    /** The local authority area of its position, cached for the permit guide; null until looked up. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "admin_area")
+    private AdminArea adminArea;
+
     /** The recce photo its polaroid shows, over the picture from its web page; null for none. */
     @Column(name = "cover_photo_id")
     private UUID coverPhotoId;
@@ -168,6 +173,8 @@ public class Location extends BaseEntity {
     public String getFitReason() { return fitReason; }
     public Short getFitScore() { return fitScore; }
     public BookingFriction getBookingFriction() { return bookingFriction; }
+    public AdminArea getAdminArea() { return adminArea; }
+    public void setAdminArea(AdminArea adminArea) { this.adminArea = adminArea; }
     public String getFrictionNote() { return frictionNote; }
     public List<String> getFootprintWarnings() { return footprintWarnings; }
     public JsonNode getLogisticsJson() { return logisticsJson; }
