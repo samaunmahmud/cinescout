@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { CalendarClock, CalendarDays, CalendarOff, CircleAlert, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
-import type { Schedule, ScheduleConflict, ScheduledScene } from '../api/types'
+import type { Moves, Schedule, ScheduleConflict, ScheduledScene } from '../api/types'
 import { dayOutOfDays } from '../lib/dayOutOfDays'
 import { useSession } from '../auth/context'
 import { linkButton } from '../components/buttonStyles'
@@ -12,6 +12,8 @@ import { Badge, Button, ErrorAlert, Spinner, TextField } from '../components/ui'
 import { availabilityLabels, bookingText, clockTime, timeWindow } from '../lib/availability'
 import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
 import { useCanEdit } from '../components/projectRole'
+import { CompanyMoves } from '../components/CompanyMoves'
+import { movesOn } from '../lib/moves'
 
 /**
  * The shoot laid out by day: which scenes start when, and where each is shot. What is missing stands out: a
@@ -27,6 +29,14 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
     refetchOnMount: 'always',
   })
   const queryClient = useQueryClient()
+  // Drives between a day's venues; shown when they come, never holding up the schedule.
+  const moves = useQuery({
+    queryKey: queryKeys.projectMoves(projectId),
+    queryFn: () => api.projects.moves(projectId),
+    enabled: schedule.isSuccess,
+    retry: false,
+    refetchOnMount: 'always',
+  })
   const conditions = useMutation({
     mutationFn: () => api.projects.refreshLogistics(projectId),
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.projectSchedule(projectId) }),
@@ -88,8 +98,10 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
         <div className="space-y-6">
           {schedule.data.conflicts.length > 0 && <Conflicts conflicts={schedule.data.conflicts} />}
           {schedule.data.days.map((day) => (
-            <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated projectId={projectId} />
+            <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated projectId={projectId}
+              moves={moves.data} date={day.date} />
           ))}
+          <LaterMoves moves={moves.data} schedule={schedule.data} />
           {schedule.data.unscheduled.length > 0 && (
             <Day titleId="day-unscheduled" title="Not scheduled yet" scenes={schedule.data.unscheduled} dated={false} projectId={projectId} />
           )}
@@ -128,18 +140,44 @@ function Conflicts({ conflicts }: { conflicts: ScheduleConflict[] }) {
   )
 }
 
+/**
+ * Moves on the later days of scenes shot over several days: those days have no heading of their own (a scene is listed
+ * on its first day), so their moves are gathered here.
+ */
+function LaterMoves({ moves, schedule }: { moves?: Moves; schedule: Schedule }) {
+  if (!moves) return null
+  const listed = new Set(schedule.days.map((day) => day.date))
+  const later = moves.days.filter((day) => !listed.has(day.date) && day.moves.length > 0)
+  if (later.length === 0) return null
+  return (
+    <section aria-labelledby="later-moves" className="overflow-hidden board-card rounded-lg bg-white">
+      <h3 id="later-moves" className="border-b border-line px-4 py-3 font-semibold text-cue-ink">Company moves on later shoot days</h3>
+      {later.map((day) => (
+        <div key={day.date}>
+          <p className="px-4 pt-3 text-sm font-semibold text-ink">{formatDay(day.date)}</p>
+          <CompanyMoves moves={day.moves} warnAfterMinutes={moves.warnAfterMinutes} attribution={moves.attribution} />
+        </div>
+      ))}
+    </section>
+  )
+}
+
 function Day({
   titleId,
   title,
   scenes,
   dated,
   projectId,
+  moves,
+  date,
 }: {
   titleId: string
   title: string
   scenes: ScheduledScene[]
   dated: boolean
   projectId: string
+  moves?: Moves
+  date?: string
 }) {
   const Icon = dated ? CalendarDays : CalendarOff
   return (
@@ -155,6 +193,7 @@ function Day({
           </li>
         ))}
       </ul>
+      {moves && date && <CompanyMoves moves={movesOn(moves, date)} warnAfterMinutes={moves.warnAfterMinutes} attribution={moves.attribution} />}
     </section>
   )
 }

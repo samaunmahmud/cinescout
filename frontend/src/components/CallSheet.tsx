@@ -1,4 +1,6 @@
-import type { Schedule, ScheduledScene } from '../api/types'
+import type { Moves, Schedule, ScheduledScene } from '../api/types'
+import { CompanyMoves } from './CompanyMoves'
+import { movesOn } from '../lib/moves'
 import { dayConditions, formatDate, formatDay } from '../lib/format'
 import { timeWindow } from '../lib/availability'
 
@@ -7,7 +9,21 @@ import { timeWindow } from '../lib/availability'
  * location says so (TBC) rather than being left off, as the sheet is often what shows the gap. Printed on its
  * own (`print-sheet`), as ink on white.
  */
-export function CallSheet({ title, locationArea, preparedBy, schedule }: { title: string; locationArea: string | null; preparedBy: string; schedule: Schedule }) {
+export function CallSheet({
+  title,
+  locationArea,
+  preparedBy,
+  schedule,
+  moves,
+}: {
+  title: string
+  locationArea: string | null
+  preparedBy: string
+  schedule: Schedule
+  /** Company moves, when known; a day with several venues lists the drives between them. */
+  moves?: Moves
+}) {
+  const anyMoves = moves?.days.some((day) => day.moves.some((move) => move.status === 'OK')) ?? false
   return (
     <article
       aria-label="Call sheet"
@@ -32,6 +48,7 @@ export function CallSheet({ title, locationArea, preparedBy, schedule }: { title
             </span>
           </h3>
           <Scenes scenes={day.scenes} />
+          {moves && <CompanyMoves sheet moves={movesOn(moves, day.date)} warnAfterMinutes={moves.warnAfterMinutes} />}
         </section>
       ))}
 
@@ -45,7 +62,7 @@ export function CallSheet({ title, locationArea, preparedBy, schedule }: { title
       )}
 
       <footer className="border-t border-line pt-3 text-center text-xs text-subtle">
-        TBC: no location is confirmed for the scene yet. Made with CineScout.
+        TBC: no location is confirmed for the scene yet. {anyMoves && `Drive times without traffic. ${moves?.attribution}. `}Made with CineScout.
       </footer>
     </article>
   )

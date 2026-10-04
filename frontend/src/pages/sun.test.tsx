@@ -84,6 +84,7 @@ describe('the sun during the scene', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
+      'GET /api/projects/p1/moves': () => json({ days: [], warnAfterMinutes: 60, attribution: '' }),
       'GET /api/projects/p1/schedule': () => json(timed),
       'GET /api/projects/p1/call-sheet-link': () => problem(404, 'Not found', 'Not shared'),
     })

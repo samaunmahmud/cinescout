@@ -886,4 +886,30 @@ export interface PublicCallSheet {
   locationArea: string | null
   preparedBy: string
   schedule: Schedule
+  /** Only the moves already worked out; the rest PENDING. */
+  moves: Moves
+}
+
+/** Company moves: on days with several venues, the drive from each to the next. */
+export interface Moves {
+  days: { date: string; moves: Move[] }[]
+  /** Moves longer than this are flagged tooLong. */
+  warnAfterMinutes: number
+  attribution: string
+}
+
+export interface Move {
+  fromLocationId: string
+  fromName: string
+  fromSceneId: string
+  toLocationId: string
+  toName: string
+  toSceneId: string
+  status: 'OK' | 'UNPLACED' | 'NO_ROUTE' | 'PENDING' | 'UNAVAILABLE'
+  /** Without traffic, rounded up; null unless OK. */
+  minutes: number | null
+  kilometres: number | null
+  tooLong: boolean
+  /** "Starlite Diner to Neon Spoon Cafe: 21 min, 7.8 km by road". */
+  text: string
 }

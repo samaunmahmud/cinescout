@@ -215,6 +215,20 @@ its light window when no times are set), e.g. "Sun from SW (225°), 18° high at
 compass, and the Logistics tab and call sheet list them. Reports made before a call time was set or moved are redone by
 "Get light and weather".
 
+## Company moves
+
+On a shoot day with more than one confirmed venue, the Schedule tab and the call sheet show the drive from each venue to
+the next (scenes in call-time order, then script order), from the public OSRM demo server behind a `RoutingClient`
+interface: keyless, one request a second across the app, at most a few new pairs per request, and every answer kept for
+30 days (`route_cache`). Times are without traffic. A move over an hour is flagged. The shared call sheet only shows
+moves already worked out; it never calls the router.
+
+| Variable / property | Default |
+|---|---|
+| `cinescout.logistics.osrm.base-url` | `https://router.project-osrm.org` (point at an own OSRM for heavy use) |
+| `cinescout.moves.warn-after` | `60m` |
+| `cinescout.moves.max-lookups` | `8` new pairs a request |
+
 ## Holds and availability
 
 Each venue's Overview tab records its days: pencilled, held (optionally until a date the hold lapses), confirmed or

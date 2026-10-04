@@ -27,6 +27,13 @@ export function CallSheetPage() {
     enabled: project.isSuccess,
     refetchOnMount: 'always',
   })
+  // The sheet does not wait for the moves: they fill in when the drives are known.
+  const moves = useQuery({
+    queryKey: queryKeys.projectMoves(projectId),
+    queryFn: () => api.projects.moves(projectId),
+    enabled: project.isSuccess,
+    retry: false,
+  })
 
   if (project.isPending) return <Spinner label="Loading project" />
   if (project.isError) {
@@ -58,7 +65,7 @@ export function CallSheetPage() {
       ) : (
         <>
           {project.data.role !== 'VIEWER' && <SharePanel projectId={projectId} />}
-          <CallSheet title={project.data.title} locationArea={project.data.locationArea} preparedBy={user.displayName} schedule={schedule.data} />
+          <CallSheet title={project.data.title} locationArea={project.data.locationArea} preparedBy={user.displayName} schedule={schedule.data} moves={moves.data} />
         </>
       )}
     </div>

@@ -42,7 +42,7 @@ export function PublicCallSheetPage() {
           <ErrorAlert error={sheet.error} onRetry={() => sheet.refetch()} />
         )
       ) : (
-        <CallSheet title={sheet.data.projectTitle} locationArea={sheet.data.locationArea} preparedBy={sheet.data.preparedBy} schedule={sheet.data.schedule} />
+        <CallSheet title={sheet.data.projectTitle} locationArea={sheet.data.locationArea} preparedBy={sheet.data.preparedBy} schedule={sheet.data.schedule} moves={sheet.data.moves} />
       )}
     </div>
   )

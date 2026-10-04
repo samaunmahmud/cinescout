@@ -9,6 +9,7 @@ const base = {
   'GET /api/auth/me': () => json(ada),
   'GET /api/projects/p1': () => json(project()),
   'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
+  'GET /api/projects/p1/moves': () => json({ days: [], warnAfterMinutes: 60, attribution: '' }),
 }
 
 describe('the schedule of a project', () => {

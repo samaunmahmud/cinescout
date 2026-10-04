@@ -28,12 +28,15 @@ public class CallSheetShareService {
 
     private final ProjectRepository projects;
     private final ScheduleService schedules;
+    private final MovesService moves;
     private final ProjectAccess access;
     private final BlockingTransactions db;
 
-    public CallSheetShareService(ProjectRepository projects, ScheduleService schedules, ProjectAccess access, BlockingTransactions db) {
+    public CallSheetShareService(ProjectRepository projects, ScheduleService schedules, MovesService moves, ProjectAccess access,
+                                 BlockingTransactions db) {
         this.projects = projects;
         this.schedules = schedules;
+        this.moves = moves;
         this.access = access;
         this.db = db;
     }
@@ -78,9 +81,10 @@ public class CallSheetShareService {
                     }
                     return project;
                 })
-                .flatMap(project -> schedules.schedule(project.getOwner().getId(), project.getId())
-                        .map(schedule -> new PublicCallSheetResponse(project.getTitle(), project.getLocationArea(),
-                                project.getOwner().getDisplayName(), schedule.withoutBookings())));
+                .flatMap(project -> Mono.zip(schedules.schedule(project.getOwner().getId(), project.getId()),
+                                moves.cachedMoves(project.getOwner().getId(), project.getId()))
+                        .map(both -> new PublicCallSheetResponse(project.getTitle(), project.getLocationArea(),
+                                project.getOwner().getDisplayName(), both.getT1().withoutBookings(), both.getT2())));
     }
 
 }

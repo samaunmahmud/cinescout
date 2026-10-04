@@ -127,6 +127,7 @@ describe('the schedule’s clashes', () => {
     'GET /api/auth/me': () => json(ada),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
+    'GET /api/projects/p1/moves': () => json({ days: [], warnAfterMinutes: 60, attribution: '' }),
   }
 
   it('are listed above the days, problems marked apart from warnings, with each venue’s state and the scene’s times', async () => {

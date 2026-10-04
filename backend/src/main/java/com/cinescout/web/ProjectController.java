@@ -2,13 +2,17 @@ package com.cinescout.web;
 
 import com.cinescout.domain.ProjectStatus;
 import com.cinescout.dto.CreateProjectRequest;
+import com.cinescout.dto.MovesResponse;
 import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.ProjectProgressResponse;
 import com.cinescout.dto.ProjectResponse;
 import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.dto.UpdateProjectRequest;
+import com.cinescout.ratelimit.RateLimit;
+import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.security.AuthenticatedUser;
+import com.cinescout.service.MovesService;
 import com.cinescout.service.ProjectService;
 import com.cinescout.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,10 +45,14 @@ class ProjectController {
 
     private final ProjectService projects;
     private final ScheduleService schedules;
+    private final MovesService moves;
+    private final RateLimiter limits;
 
-    ProjectController(ProjectService projects, ScheduleService schedules) {
+    ProjectController(ProjectService projects, ScheduleService schedules, MovesService moves, RateLimiter limits) {
         this.projects = projects;
         this.schedules = schedules;
+        this.moves = moves;
+        this.limits = limits;
     }
 
     @Operation(summary = "Create a project")
@@ -87,6 +95,15 @@ class ProjectController {
     }
 
     /** The project's scenes by shoot day, each with its confirmed venue. */
+    @Operation(summary = "Get a project's company moves",
+            description = "For each shoot day with more than one confirmed venue, the drive from each to the next in the day's order "
+                    + "(call time, then script order), by OSRM without traffic. New pairs of places are looked up (a few a request, counted "
+                    + "as lookups) and kept; the rest show as PENDING until the next request. Moves longer than warnAfterMinutes are flagged.")
+    @GetMapping("/{projectId}/moves")
+    Mono<MovesResponse> moves(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID projectId) {
+        return moves.moves(user.id(), projectId, () -> limits.acquire(RateLimit.LOOKUPS, user.id()));
+    }
+
     @Operation(summary = "Get a project's shoot schedule",
             description = "The scenes grouped by the day their shoot starts, earliest first, each with its confirmed locations and how many "
                     + "candidates it has; scenes without shoot dates are listed separately. Shows what still needs a date or a venue.")

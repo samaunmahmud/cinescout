@@ -20,6 +20,7 @@ export const queryKeys = {
     ['locations', 'project', projectId, status, page] as const,
   projectProgress: (projectId: string) => ['projects', 'progress', projectId] as const,
   projectSchedule: (projectId: string) => ['projects', 'schedule', projectId] as const,
+  projectMoves: (projectId: string) => ['projects', 'moves', projectId] as const,
   callSheetLink: (projectId: string) => ['projects', 'call-sheet-link', projectId] as const,
   activity: (projectId: string, kind: string | null, page: number) => ['projects', 'activity', projectId, kind, page] as const,
   scoutFilters: (projectId: string) => ['projects', 'scout-filters', projectId] as const,

@@ -30,6 +30,7 @@ import type {
   LocationStatus,
   LocationVideos,
   LogisticsReport,
+  Moves,
   Member,
   OutreachDraft,
   OutreachReply,
@@ -132,6 +133,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** A new shared link, replacing any earlier one. */
       shareCallSheet: (id: string) => call<{ token: string }>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`, { method: 'POST' }),
       stopSharingCallSheet: (id: string) => call<void>(`/api/projects/${encodeURIComponent(id)}/call-sheet-link`, { method: 'DELETE' }),
+      /** Company moves between each shoot day's venues; new ones are looked up a few at a time (the rest PENDING). */
+      moves: (id: string) => call<Moves>(`/api/projects/${encodeURIComponent(id)}/moves`),
       /** The scenes by the day their shoot starts, each with its confirmed locations. */
       schedule: (id: string) => call<Schedule>(`/api/projects/${encodeURIComponent(id)}/schedule`),
       /** The project's activity log, newest first; `kind` null means every kind. */
