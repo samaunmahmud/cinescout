@@ -41,6 +41,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -149,8 +150,25 @@ public class LogisticsService {
      * @param byAddress    whether that query is the venue's address (rather than its name)
      * @param venueName    the location's name, to tell the venue itself apart from the places around it
      */
+    /** @param knownZone the venue's time zone from its last report, for when this one's weather does not say; null if none */
     record Brief(GeoPoint point, String geocodeQuery, boolean byAddress, String venueName, LocalDate shootStart, LocalDate shootEnd,
-                 String timeOfDay, AcousticSensitivity sensitivity, LocalTime callTime, LocalTime wrapTime) {
+                 String timeOfDay, AcousticSensitivity sensitivity, LocalTime callTime, LocalTime wrapTime, ZoneId knownZone) {
+    }
+
+    /**
+     * The time zone a cached report found for the venue; null when there is none or it was the UTC stand-in. A moved pin
+     * drops the cached report, so the zone is always the venue's own.
+     */
+    static ZoneId knownZone(JsonNode report) {
+        String zone = report == null ? null : report.path("timeZone").asText(null);
+        if (zone == null || zone.isBlank() || zone.equals("UTC")) {
+            return null;
+        }
+        try {
+            return ZoneId.of(zone);
+        } catch (DateTimeException e) {
+            return null;
+        }
     }
 
     private Brief brief(Location location) {
@@ -164,7 +182,7 @@ public class LogisticsService {
                 scene.getShootDateStart(), scene.getShootDateEnd(),
                 requirements == null ? null : requirements.timeOfDay(),
                 requirements == null ? null : requirements.acousticSensitivity(),
-                scene.getCallTime(), scene.getWrapTime());
+                scene.getCallTime(), scene.getWrapTime(), knownZone(location.getLogisticsJson()));
     }
 
     /** The venue's address; failing that its name, in the project's area so a common name is found in the right city. */
@@ -256,6 +274,9 @@ public class LogisticsService {
 
         ZoneId zone = forecast.series() != null ? forecast.series().zone()
                 : history.series() != null ? history.series().zone() : null;
+        if (zone == null) {
+            zone = brief.knownZone();
+        }
         if (zone == null) {
             zone = ZoneId.of("UTC");
             notes.add("Times are in UTC: the location's time zone could not be looked up.");

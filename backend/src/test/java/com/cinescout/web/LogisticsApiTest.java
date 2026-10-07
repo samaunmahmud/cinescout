@@ -386,6 +386,20 @@ class LogisticsApiTest extends ApiTest {
     }
 
     @Test
+    void aFallbackForecastKeepsTheTimeZoneTheVenuesLastReportFound() {
+        Account ada = register("Ada");
+        String venue = locatedVenue(ada);
+        assertThat(refreshed(ada, venue).path("timeZone").asText()).isEqualTo("America/New_York");
+
+        doAnswer(call -> Mono.just(new WeatherSeries(null, series(call.getArgument(1), call.getArgument(2)).days(),
+                "Weather from the fallback"))).when(weather).forecast(any(), any(), any());
+        JsonNode report = refreshed(ada, venue);
+
+        assertThat(report.path("timeZone").asText()).isEqualTo("America/New_York");
+        assertThat(texts(report.path("notes"))).noneMatch(note -> note.contains("UTC"));
+    }
+
+    @Test
     void withTheWeatherServiceDownTheRestOfTheReportStillComesBackInUtc() {
         doReturn(Mono.error(new LogisticsException(Kind.UNAVAILABLE, "down"))).when(weather).forecast(any(), any(), any());
         Account ada = register("Ada");
