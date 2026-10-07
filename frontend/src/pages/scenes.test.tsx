@@ -49,6 +49,7 @@ describe('the scenes of a project', () => {
       'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([])),
       'POST /api/projects/p1/scenes': () => json(created, 201),
       'GET /api/scenes/s9/locations?page=0&size=24': () => json(pageOf([])),
+      'GET /api/scenes/s9/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
     })
     const { router } = renderApp('/projects/p1')
     const user = await logIn()
@@ -216,6 +217,7 @@ describe('a scene', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/scenes/s1': () => json(current),
+      'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
       'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([])),
       ...extra,
     })
@@ -267,6 +269,7 @@ describe('a scene', () => {
     let current = scene()
     serverFor(scene(), {
       'GET /api/scenes/s1': () => json(current),
+      'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
       'POST /api/scenes/s1/parse': () => {
         current = scene({ parseStatus: 'FAILED' })
         return problem(502, 'Bad gateway', 'The AI service returned an unusable answer; try again', { retryable: true })

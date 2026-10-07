@@ -5,6 +5,7 @@ import com.cinescout.domain.Location;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.Scene;
+import com.cinescout.domain.SceneCover;
 import com.cinescout.domain.VenueAvailability;
 import com.cinescout.dto.ScheduleResponse;
 import com.cinescout.dto.ScheduleResponse.ScheduledScene;
@@ -13,6 +14,7 @@ import com.cinescout.permits.FilmingOffices;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
+import com.cinescout.repository.SceneCoverRepository;
 import com.cinescout.repository.SceneRepository;
 import com.cinescout.repository.VenueAvailabilityRepository;
 import org.springframework.data.domain.Pageable;
@@ -39,16 +41,19 @@ public class ScheduleService {
     private final SceneRepository scenes;
     private final LocationRepository locations;
     private final VenueAvailabilityRepository availability;
+    private final SceneCoverRepository covers;
     private final FilmingOffices offices;
     private final ProjectAccess access;
     private final BlockingTransactions db;
 
     public ScheduleService(ProjectRepository projects, SceneRepository scenes, LocationRepository locations,
-                           VenueAvailabilityRepository availability, FilmingOffices offices, ProjectAccess access, BlockingTransactions db) {
+                           VenueAvailabilityRepository availability, SceneCoverRepository covers, FilmingOffices offices, ProjectAccess access,
+                           BlockingTransactions db) {
         this.projects = projects;
         this.scenes = scenes;
         this.locations = locations;
         this.availability = availability;
+        this.covers = covers;
         this.offices = offices;
         this.access = access;
         this.db = db;
@@ -73,12 +78,14 @@ public class ScheduleService {
             ScheduleConflicts conflicts = new ScheduleConflicts(availability.findByProject(projectId), offices,
                     LocalDate.ofInstant(DatabaseTime.now(), ZoneOffset.UTC));
             Map<UUID, VenueAvailability> holds = conflicts.firstDays(all, confirmed);
+            Map<UUID, List<SceneCover>> coversByScene = covers.findByProject(projectId).stream()
+                    .collect(Collectors.groupingBy(cover -> cover.getScene().getId()));
 
             Map<LocalDate, List<ScheduledScene>> byDay = new TreeMap<>();
             List<ScheduledScene> unscheduled = new ArrayList<>();
             for (Scene scene : all) {
                 ScheduledScene entry = ScheduledScene.from(scene, confirmed.getOrDefault(scene.getId(), List.of()),
-                        candidates.getOrDefault(scene.getId(), 0L), holds);
+                        candidates.getOrDefault(scene.getId(), 0L), holds, coversByScene.getOrDefault(scene.getId(), List.of()));
                 LocalDate day = scene.getShootDateStart() != null ? scene.getShootDateStart() : scene.getShootDateEnd();
                 if (day == null) {
                     unscheduled.add(entry);

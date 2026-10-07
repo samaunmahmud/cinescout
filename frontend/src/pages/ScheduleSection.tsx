@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { CalendarClock, CalendarDays, CalendarOff, CircleAlert, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Users } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarOff, CircleAlert, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Umbrella, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Moves, Schedule, ScheduleConflict, ScheduledScene } from '../api/types'
@@ -356,11 +356,35 @@ function SceneRow({ scene, projectId, dated }: { scene: ScheduledScene; projectI
   )
 }
 
-/** Where the scene is shot, or what stands between it and a confirmed location. */
+/** Where the scene is shot, or what stands between it and a confirmed location; then its cover sets. */
 function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
+  return (
+    <div className="w-full space-y-2 sm:w-72">
+      <Confirmed scene={scene} urgent={urgent} />
+      {scene.covers.length > 0 && (
+        <ul aria-label={`Cover sets for ${scene.title}`} className="space-y-1 border-t border-dashed border-line pt-2">
+          {scene.covers.map((cover) => (
+            <li key={cover.id} className="flex items-start gap-1.5 text-sm">
+              <Umbrella aria-hidden className="mt-0.5 size-3.5 shrink-0 text-cue-ink" />
+              <span className="min-w-0">
+                <span className="text-xs font-semibold tracking-wide text-subtle uppercase">Cover </span>
+                <Link to={`/locations/${cover.locationId}`} className="font-semibold text-ink hover:underline">
+                  {cover.name}
+                </Link>
+                {cover.trigger && <span className="block text-xs text-cue-ink">{cover.trigger}</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function Confirmed({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
   if (scene.venues.length > 0) {
     return (
-      <ul aria-label={`Confirmed for ${scene.title}`} className="w-full space-y-1 sm:w-72">
+      <ul aria-label={`Confirmed for ${scene.title}`} className="w-full space-y-1">
         {scene.venues.map((venue) => (
           <li key={venue.id} className="flex items-start gap-1.5 text-sm">
             <PinIcon aria-hidden className="mt-0.5 size-3.5 shrink-0 text-go-ink" />
@@ -390,7 +414,7 @@ function Venues({ scene, urgent }: { scene: ScheduledScene; urgent: boolean }) {
   const next =
     scene.candidates === 0 ? 'Not scouted yet' : scene.candidates === 1 ? '1 candidate, none confirmed' : `${scene.candidates} candidates, none confirmed`
   return (
-    <p className={`flex w-full items-center gap-1.5 text-sm sm:w-72 ${urgent ? 'text-cue-ink' : 'text-muted'}`}>
+    <p className={`flex w-full items-center gap-1.5 text-sm ${urgent ? 'text-cue-ink' : 'text-muted'}`}>
       {urgent && <TriangleAlert aria-hidden className="size-3.5 shrink-0" />}
       {next}
     </p>

@@ -11,6 +11,7 @@ import { CalendarDays, ChevronLeft, Clapperboard, ScrollText, Users } from 'luci
 import { Eyebrow, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
+import { CoverSetsSection } from './CoverSetsSection'
 import { LocationsSection } from './LocationsSection'
 import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
@@ -157,6 +158,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
           <div className="min-w-0 space-y-10">
             <RequirementsPanel scene={scene} />
             <LocationsSection scene={scene} locationArea={project.data?.locationArea} />
+            <CoverSetsSection scene={scene} />
           </div>
           <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
             <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>

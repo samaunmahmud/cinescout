@@ -263,6 +263,35 @@ export interface ScheduledScene {
   venues: ScheduledVenue[]
   /** How many candidate locations the scene has in all. */
   candidates: number
+  /** The scene's backup venues, in the order they were added; one since confirmed is left out. */
+  covers: ScheduledCover[]
+}
+
+/** A backup venue for a scheduled scene, with who to call there. */
+export interface ScheduledCover {
+  /** The cover set's id. */
+  id: string
+  locationId: string
+  name: string
+  address: string | null
+  contactName: string | null
+  contactPhone: string | null
+  /** When to switch to it ("if rain > 60%"); null when not given. */
+  trigger: string | null
+}
+
+/** A cover set: one of the scene's candidates kept as its backup venue. */
+export interface CoverSet {
+  id: string
+  sceneId: string
+  locationId: string
+  venueName: string
+  address: string | null
+  status: LocationStatus
+  trigger: string | null
+  /** Null once that account is gone. */
+  addedByName: string | null
+  createdAt: string
 }
 
 /** What one run over a project's confirmed venues without logistics did. */
@@ -800,6 +829,7 @@ export type ActivityVerb =
   | 'OWNERSHIP_TRANSFERRED'
   | 'SHOOT_DATES_CHANGED'
   | 'AVAILABILITY_CHANGED'
+  | 'COVER_SET_CHANGED'
   | 'COMMENTED'
 
 /** A line of a project's activity log; `payload` holds the facts the line needs, which differ by verb. */

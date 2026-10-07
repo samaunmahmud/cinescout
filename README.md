@@ -248,6 +248,13 @@ next morning). The Schedule tab lists clashes: a confirmed venue unavailable on 
 before its day, and, as a warning, two scenes at the same venue on one day at overlapping or unset times. The same
 venue on several scenes is matched by name or street address. Shared call sheets show the times but no holds.
 
+## Cover sets
+
+A scene can keep up to five backup venues, each one of its own candidates (a venue from your library joins the scene
+first), with a free-text trigger for when to switch, such as "if rain > 60%". The scene page lists and edits them; the
+Schedule tab and the call sheet show them under the scene with the trigger and who to call. A cover that is later
+confirmed for the scene drops off the schedule as a cover.
+
 ## Location releases
 
 The venue's Outreach tab makes a location release as a PDF (Apache PDFBox, no external service): a clearly labelled

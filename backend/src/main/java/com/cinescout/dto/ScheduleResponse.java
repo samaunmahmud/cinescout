@@ -2,6 +2,8 @@ package com.cinescout.dto;
 
 import com.cinescout.domain.AvailabilityState;
 import com.cinescout.domain.Location;
+import com.cinescout.domain.LocationStatus;
+import com.cinescout.domain.SceneCover;
 import com.cinescout.domain.VenueAvailability;
 import com.cinescout.domain.Scene;
 import com.cinescout.script.ScriptCharacters;
@@ -62,6 +64,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
      * @param settingType    the kind of place the scene needs, once it has been analysed
      * @param venues         the scene's confirmed locations; empty while none is confirmed
      * @param candidates     how many candidate locations the scene has in all
+     * @param covers         the scene's backup venues, in the order they were added; a cover since confirmed is left out
      */
     public record ScheduledScene(
             UUID id,
@@ -75,7 +78,8 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             String timeOfDay,
             List<String> characters,
             List<Venue> venues,
-            long candidates
+            long candidates,
+            List<Cover> covers
     ) {
 
         /** The day the scene is listed under: its first shoot day, or its last if that is all it has. */
@@ -87,23 +91,40 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
          * @param holds what is known of a confirmed venue's state on the scene's (first) day, by venue id; may be
          *              missing a venue
          */
-        public static ScheduledScene from(Scene scene, List<Location> confirmed, long candidates, Map<UUID, VenueAvailability> holds) {
+        public static ScheduledScene from(Scene scene, List<Location> confirmed, long candidates, Map<UUID, VenueAvailability> holds,
+                                          List<SceneCover> covers) {
             var requirements = scene.requirements();
             return new ScheduledScene(scene.getId(), scene.getSceneNumber(), scene.getTitle(),
                     scene.getShootDateStart(), scene.getShootDateEnd(), scene.getCallTime(), scene.getWrapTime(),
                     requirements == null ? null : requirements.settingType(),
                     requirements == null ? null : requirements.timeOfDay(),
                     ScriptCharacters.in(scene.getSourceText()),
-                    confirmed.stream().map(location -> Venue.from(location, dayOf(scene), holds.get(location.getId()))).toList(), candidates);
+                    confirmed.stream().map(location -> Venue.from(location, dayOf(scene), holds.get(location.getId()))).toList(), candidates,
+                    covers.stream().filter(cover -> cover.getLocation().getStatus() != LocationStatus.CONFIRMED).map(Cover::from).toList());
         }
 
         public static ScheduledScene from(Scene scene, List<Location> confirmed, long candidates) {
-            return from(scene, confirmed, candidates, Map.of());
+            return from(scene, confirmed, candidates, Map.of(), List.of());
         }
 
         ScheduledScene withoutBookings() {
             return new ScheduledScene(id, sceneNumber, title, shootDateStart, shootDateEnd, callTime, wrapTime, settingType, timeOfDay,
-                    characters, venues.stream().map(Venue::withoutBookings).toList(), candidates);
+                    characters, venues.stream().map(Venue::withoutBookings).toList(), candidates, covers);
+        }
+    }
+
+    /**
+     * A backup venue for a scene, with who to call there.
+     *
+     * @param id      the cover set's id
+     * @param trigger when to switch to it ("if rain > 60%"); null when not given
+     */
+    public record Cover(UUID id, UUID locationId, String name, String address, String contactName, String contactPhone, String trigger) {
+
+        static Cover from(SceneCover cover) {
+            Location venue = cover.getLocation();
+            return new Cover(cover.getId(), venue.getId(), venue.getName(), venue.getAddress(), venue.getContactName(), venue.getContactPhone(),
+                    cover.getTrigger());
         }
     }
 

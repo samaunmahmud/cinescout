@@ -119,6 +119,7 @@ describe('the director link on a scene', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project({ role })),
       'GET /api/scenes/s1': () => json(scene()),
+      'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
       'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([location()])),
       ...extra,
     })
@@ -174,6 +175,7 @@ describe("the director's call", () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/locations/l1': () => json(location()),
       'GET /api/scenes/s1': () => json(scene()),
+      'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/locations/l1/director-responses?page=0&size=100': () =>
         json(pageOf([call(), call({ id: 'c2', guestName: 'Sofia', verdict: 'NO', comment: 'Too bright' })], { size: 100 })),
@@ -197,6 +199,7 @@ describe("the director's call", () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/scenes/s1': () => json(scene()),
+      'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
       'GET /api/scenes/s1/locations?page=0&size=100': () => json(pageOf(venues, { size: 100 })),
       'GET /api/scenes/s1/director-responses?page=0&size=100': () => json(pageOf([call({ locationId: 'l2', verdict: 'MAYBE' })], { size: 100 })),
     })

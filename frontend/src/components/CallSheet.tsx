@@ -118,6 +118,13 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                     </span>
                   ))
                 )}
+                {scene.covers.map((cover) => (
+                  <span key={cover.id} className="mt-1 block border-t border-dashed border-line pt-1">
+                    <span className="font-bold">Cover: {cover.name}</span>
+                    {cover.trigger && <span> ({cover.trigger})</span>}
+                    {cover.address && <span className="block">{cover.address}</span>}
+                  </span>
+                ))}
               </td>
               <td className="px-3 py-2">
                 {scene.venues.map((venue) => (
@@ -126,6 +133,14 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                     {venue.contactPhone && <span className="block">{venue.contactPhone}</span>}
                   </span>
                 ))}
+                {scene.covers
+                  .filter((cover) => cover.contactName || cover.contactPhone)
+                  .map((cover) => (
+                    <span key={cover.id} className="mt-1 block border-t border-dashed border-line pt-1">
+                      <span className="text-subtle">Cover: </span>
+                      {[cover.contactName, cover.contactPhone].filter(Boolean).join(', ')}
+                    </span>
+                  ))}
               </td>
             </tr>
           ))}

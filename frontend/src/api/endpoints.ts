@@ -7,6 +7,7 @@ import type {
   AddMemberResult,
   Agreement,
   Availability,
+  CoverSet,
   AvailabilityRequest,
   BatchLogisticsResult,
   BatchParseResult,
@@ -317,6 +318,18 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The PDF, to save. */
       download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
       remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    covers: {
+      /** A scene's cover sets, in the order they were added (at most 5). */
+      list: (sceneId: string) => call<Page<CoverSet>>(`/api/scenes/${encodeURIComponent(sceneId)}/covers?page=0&size=50`),
+      /** Makes one of the scene's candidates a cover; 409 for its confirmed venue, a repeat, or a sixth. */
+      add: (sceneId: string, locationId: string, trigger: string | null) =>
+        call<CoverSet>(`/api/scenes/${encodeURIComponent(sceneId)}/covers`, { method: 'POST', body: { locationId, trigger } }),
+      /** Null or blank clears it. */
+      setTrigger: (id: string, trigger: string | null) =>
+        call<CoverSet>(`/api/covers/${encodeURIComponent(id)}`, { method: 'PUT', body: { trigger } }),
+      /** The venue stays a candidate of the scene. */
+      remove: (id: string) => call<void>(`/api/covers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
     availability: {
       /** A venue's recorded days, earliest first. */

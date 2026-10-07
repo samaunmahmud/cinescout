@@ -1,4 +1,4 @@
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { errorMessage } from '../api/errors'
 import { buttonBase, variants, type Variant } from './buttonStyles'
 
@@ -81,6 +81,23 @@ export function TextField({ label, error, hint, className = '', ...props }: Fiel
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         {...props}
       />
+    </FieldShell>
+  )
+}
+
+export function SelectField({ label, error, hint, className = '', children, ...props }: FieldProps & SelectHTMLAttributes<HTMLSelectElement>) {
+  const id = useId()
+  return (
+    <FieldShell id={id} label={label} error={error} hint={hint}>
+      <select
+        id={id}
+        className={`${inputClass} ${className}`}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+        {...props}
+      >
+        {children}
+      </select>
     </FieldShell>
   )
 }

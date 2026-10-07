@@ -31,6 +31,11 @@ describe('activity lines', () => {
     expect(activityText(line({ verb: 'SHOOT_DATES_CHANGED', targetType: 'SCENE', targetId: 's1', payload: { scene: 'Diner', toStart: null, toEnd: null } })))
       .toBe('Grace cleared the dates of Diner')
     expect(activityText(line({ verb: 'COMMENTED', payload: { venue: 'Diner', reply: true } }))).toBe('Grace replied on Diner')
+    const cover = (change: string) =>
+      activityText(line({ verb: 'COVER_SET_CHANGED', targetType: 'SCENE', targetId: 's1', payload: { scene: 'Diner', venue: 'Warehouse', change } }))
+    expect(cover('ADDED')).toBe('Grace made Warehouse a cover set for Diner')
+    expect(cover('CHANGED')).toBe('Grace changed when to switch to Warehouse for Diner')
+    expect(cover('REMOVED')).toBe('Grace took Warehouse off as cover for Diner')
   })
 
   it('say who came and went on the crew', () => {

@@ -31,6 +31,7 @@ export const queryKeys = {
   publicShortlist: (token: string, page: number) => ['public', 'shortlist', token, page] as const,
   photos: (locationId: string) => ['photos', locationId] as const,
   availability: (locationId: string) => ['availability', locationId] as const,
+  covers: (sceneId: string) => ['covers', sceneId] as const,
   agreements: (locationId: string) => ['agreements', locationId] as const,
   permit: (locationId: string, latitude: number | null, longitude: number | null) => ['permit', locationId, latitude, longitude] as const,
   libraryList: ['library', 'list'] as const,

@@ -67,6 +67,12 @@ export function activityLine(line: Activity): LinePart[] {
         ? [actor, ' marked ', venueLink(line.targetId), ` ${state.label.toLowerCase()} for ${days}`]
         : [actor, ' cleared ', venueLink(line.targetId), ` for ${days}`]
     }
+    case 'COVER_SET_CHANGED': {
+      const venue = text(p.venue, 'a venue')
+      if (p.change === 'REMOVED') return [actor, ` took ${venue} off as cover for `, sceneLink]
+      if (p.change === 'CHANGED') return [actor, ` changed when to switch to ${venue} for `, sceneLink]
+      return [actor, ` made ${venue} a cover set for `, sceneLink]
+    }
     case 'COMMENTED':
       return [actor, p.reply ? ' replied on ' : ' commented on ', venueLink(line.targetId, '?tab=comments')]
   }
