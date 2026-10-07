@@ -117,6 +117,11 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       changePassword: (body: ChangePasswordRequest) => call<void>('/api/account/password', { method: 'PUT', body }),
       /** Deletes the account and everything it owns; 400 on `password` when it is wrong. */
       remove: (password: string) => call<void>('/api/account/delete', { method: 'POST', body: { password } }),
+      /** Your calendar feed's link; 404 while the feed is off. The feed is `/api/public/calendars/{token}.ics`. */
+      calendarLink: () => call<{ token: string }>('/api/account/calendar-link'),
+      /** Turns the feed on, or gives it a new link that replaces the old one. */
+      newCalendarLink: () => call<{ token: string }>('/api/account/calendar-link', { method: 'POST' }),
+      turnOffCalendar: () => call<void>('/api/account/calendar-link', { method: 'DELETE' }),
     },
     projects: {
       /** Newest first. */

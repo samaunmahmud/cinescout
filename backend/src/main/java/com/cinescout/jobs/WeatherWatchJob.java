@@ -3,6 +3,7 @@ package com.cinescout.jobs;
 import com.cinescout.domain.AlertKind;
 import com.cinescout.domain.DatabaseTime;
 import com.cinescout.domain.Location;
+import com.cinescout.domain.LocationStatus;
 import com.cinescout.domain.Scene;
 import com.cinescout.domain.SceneCover;
 import com.cinescout.logistics.GeoPoint;
@@ -105,7 +106,7 @@ class WeatherWatchJob implements Job {
         List<Location> venues = locations.findShootingBetween(today, last, PageRequest.of(0, props.weatherVenues()));
         Map<UUID, List<Map<String, Object>>> coversByScene = venues.isEmpty() ? Map.of()
                 : covers.findByScenes(venues.stream().map(venue -> venue.getScene().getId()).distinct().toList()).stream()
-                .filter(cover -> cover.getLocation().getStatus() != com.cinescout.domain.LocationStatus.CONFIRMED)
+                .filter(cover -> cover.getLocation().getStatus() != LocationStatus.CONFIRMED)
                 .collect(Collectors.groupingBy(cover -> cover.getScene().getId(), Collectors.mapping(WeatherWatchJob::coverFacts, Collectors.toList())));
         return venues.stream().map(venue -> {
             Scene scene = venue.getScene();

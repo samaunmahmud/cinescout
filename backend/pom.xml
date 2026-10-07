@@ -137,6 +137,13 @@
             <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Parses and validates the calendar feed in tests (RFC 5545). -->
+        <dependency>
+            <groupId>org.mnode.ical4j</groupId>
+            <artifactId>ical4j</artifactId>
+            <version>4.2.5</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-testcontainers</artifactId>

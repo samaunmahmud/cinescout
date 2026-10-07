@@ -72,4 +72,16 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
 
         long getTotal();
     }
+
+    /**
+     * The dated scenes of the active projects the person is on, each with its project, earliest first, at most a page:
+     * the calendar feed's events.
+     */
+    @Query("""
+            select s from Scene s join fetch s.project p
+            where p.status = com.cinescout.domain.ProjectStatus.ACTIVE
+              and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)
+              and (s.shootDateStart is not null or s.shootDateEnd is not null)
+            order by coalesce(s.shootDateStart, s.shootDateEnd) asc, s.id asc""")
+    List<Scene> findDatedForMember(@Param("userId") UUID userId, Pageable pageable);
 }

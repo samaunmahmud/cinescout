@@ -206,6 +206,15 @@ highest wind reaches the project's thresholds (60% and 40 km/h by default, set o
 alert names the scene's cover sets, or says it has none. Each venue and day alerts once; alerts older than 90 days are
 forgotten. Alerts, weather and follow-ups alike, are in the bell at the top of every page, with the unread count.
 
+## Calendar feed
+
+On the account page, "Turn on the calendar feed" makes a secret link (`/api/public/calendars/<token>.ics`) that a
+calendar app subscribes to. It lists the shoot days of every active project you are on: a scene with a call time is one
+event a day from call to wrap (floating local time, as the venue keeps it), one without is an all-day event over its
+dates. Each event names the confirmed venue and address, who to call there, the call and wrap, and links to the call
+sheet. A new link stops the old one; turning the feed off stops it at once. The feed is RFC 5545 iCalendar, checked
+in the tests by parsing and validating it with ical4j.
+
 ## Scheduled jobs
 
 Render's free tier sleeps when idle, so besides the app's own timer each job can be run through

@@ -167,4 +167,8 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
               and coalesce(s.shootDateStart, s.shootDateEnd) <= :last and coalesce(s.shootDateEnd, s.shootDateStart) >= :first
             order by coalesce(s.shootDateStart, s.shootDateEnd) asc, l.id asc""")
     List<Location> findShootingBetween(@Param("first") LocalDate first, @Param("last") LocalDate last, Pageable pageable);
+
+    /** The confirmed venues of these scenes, in the order they were added. */
+    @Query("select l from Location l where l.scene.id in :sceneIds and l.status = com.cinescout.domain.LocationStatus.CONFIRMED order by l.createdAt asc, l.id asc")
+    List<Location> findConfirmedByScenes(@Param("sceneIds") Collection<UUID> sceneIds);
 }

@@ -4,6 +4,7 @@ import com.cinescout.logistics.weather.DailyWeather;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ record WeatherBreach(LocalDate day, List<String> reasons, Integer rainChance, Do
                         day.windGustsMaxKmh()));
             }
         }
-        breaches.sort(java.util.Comparator.comparing(WeatherBreach::day));
+        breaches.sort(Comparator.comparing(WeatherBreach::day));
         return breaches;
     }
 }

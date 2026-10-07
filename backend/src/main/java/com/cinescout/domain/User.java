@@ -26,6 +26,10 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    /** The secret in the person's calendar feed link; null while the feed is off. */
+    @Column(name = "calendar_token")
+    private String calendarToken;
+
     protected User() {
     }
 
@@ -45,4 +49,6 @@ public class User extends BaseEntity {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void setRole(UserRole role) { this.role = role; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public String getCalendarToken() { return calendarToken; }
+    public void setCalendarToken(String calendarToken) { this.calendarToken = calendarToken; }
 }

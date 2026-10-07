@@ -124,6 +124,8 @@ class SecurityConfig {
                         // Photos by signed, short-lived link (an <img> sends no API headers).
                         .pathMatchers(HttpMethod.GET, "/api/public/photos/*").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/public/shortlists/*/venues/*/response").permitAll()
+                        // Calendar feeds: a calendar app sends no login; the token in the path is the permission.
+                        .pathMatchers(HttpMethod.GET, "/api/public/calendars/*").permitAll()
                         .pathMatchers("/api/**", "/actuator/**").authenticated()
                         // The web app's own files and pages, when the backend serves them (see WebAppConfig):
                         // nothing in them is private; everything the app shows comes from the API above.

@@ -1,7 +1,8 @@
-import { useMutation } from '@tanstack/react-query'
-import { KeyRound, Trash2, UserRound } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CalendarDays, KeyRound, Trash2, UserRound } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { fieldErrors } from '../api/errors'
+import { fieldErrors, isNotFound } from '../api/errors'
+import { queryKeys } from '../api/queryKeys'
 import { useAuth, useSession } from '../auth/context'
 import { Card, Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, TextField } from '../components/ui'
@@ -21,6 +22,7 @@ export function AccountPage() {
         <p className="text-muted">{user.email}</p>
       </header>
       <ProfileForm />
+      <CalendarFeed />
       <PasswordForm />
       <DeleteAccount />
     </div>
@@ -88,6 +90,87 @@ function ProfileForm() {
           </Button>
         </div>
       </form>
+    </Panel>
+  )
+}
+
+/**
+ * The calendar feed: a secret link a calendar app subscribes to, listing the shoot days of every project you are on.
+ * A new link replaces the old one; turning it off stops it at once.
+ */
+function CalendarFeed() {
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const [copied, setCopied] = useState(false)
+  const link = useQuery({
+    queryKey: queryKeys.calendarLink,
+    queryFn: () => api.account.calendarLink().catch((e) => (isNotFound(e) ? null : Promise.reject(e))),
+  })
+  const create = useMutation({
+    mutationFn: () => api.account.newCalendarLink(),
+    onSuccess: (created) => {
+      setCopied(false)
+      queryClient.setQueryData(queryKeys.calendarLink, created)
+    },
+  })
+  const turnOff = useMutation({
+    mutationFn: () => api.account.turnOffCalendar(),
+    onSuccess: () => queryClient.setQueryData(queryKeys.calendarLink, null),
+  })
+  const url = link.data ? `${window.location.origin}/api/public/calendars/${link.data.token}.ics` : null
+
+  return (
+    <Panel
+      titleId="calendar-heading"
+      title="Calendar feed"
+      icon={CalendarDays}
+      description="Your shoot days from every project you are on, in your own calendar app: venue, address, contact, call time and a link to the call sheet."
+    >
+      <ErrorAlert error={link.error ?? create.error ?? turnOff.error} />
+      {link.isPending ? null : url ? (
+        <div className="space-y-3">
+          <p className="text-sm text-graphite">Subscribe to this link in your calendar app. Anyone who has it can read your shoot days, so keep it to yourself.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              readOnly
+              aria-label="Calendar feed link"
+              value={url}
+              onFocus={(e) => e.target.select()}
+              className="min-w-0 flex-1 rounded-lg border-2 border-line bg-ground px-3 py-2 font-mono text-xs text-ink"
+            />
+            <Button
+              variant="secondary"
+              onClick={() =>
+                navigator.clipboard.writeText(url).then(
+                  () => setCopied(true),
+                  () => setCopied(false),
+                )
+              }
+            >
+              {copied ? 'Copied' : 'Copy link'}
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={url.replace(/^https?:/, 'webcal:')}
+              className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-semibold text-cue-ink underline-offset-2 hover:underline"
+            >
+              Open in your calendar app
+            </a>
+            <Button variant="ghost" busy={create.isPending} onClick={() => create.mutate()}>
+              Make a new link
+            </Button>
+            <Button variant="ghost" busy={turnOff.isPending} onClick={() => turnOff.mutate()}>
+              Turn off
+            </Button>
+          </div>
+          <p className="text-xs text-muted">A new link stops the old one working. Calendar apps check for changes every few hours.</p>
+        </div>
+      ) : (
+        <Button variant="secondary" busy={create.isPending} onClick={() => create.mutate()}>
+          Turn on the calendar feed
+        </Button>
+      )}
     </Panel>
   )
 }

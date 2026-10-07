@@ -4,7 +4,10 @@ import { fakeServer, json, problem } from '../test/fakeServer'
 import { ada, logIn, pageOf } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
-const base = { 'GET /api/auth/me': () => json(ada) }
+const base = {
+  'GET /api/auth/me': () => json(ada),
+  'GET /api/account/calendar-link': () => problem(404, 'Not Found', 'Your calendar feed is off'),
+}
 
 describe('the account page', () => {
   it('is reached from the header and renames the account everywhere at once', async () => {
@@ -102,5 +105,39 @@ describe('the account page', () => {
     expect(await screen.findByRole('heading', { name: /log in|welcome|sign in/i })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
     expect(requests.filter((r) => r.path === '/api/account/delete').map((r) => r.body)).toEqual([{ password: 'wrong' }, { password: 'right-password' }])
+  })
+
+  it('turns the calendar feed on, gives it a new link, and turns it off', async () => {
+    let token: string | null = null
+    const { requests } = fakeServer({
+      ...base,
+      'GET /api/account/calendar-link': () => (token ? json({ token }) : problem(404, 'Not Found', 'Your calendar feed is off')),
+      'POST /api/account/calendar-link': () => {
+        token = token === 'a'.repeat(43) ? 'b'.repeat(43) : 'a'.repeat(43)
+        return json({ token })
+      },
+      'DELETE /api/account/calendar-link': () => {
+        token = null
+        return new Response(null, { status: 204 })
+      },
+    })
+    renderApp('/account')
+    const user = await logIn()
+
+    const panel = await screen.findByRole('region', { name: 'Calendar feed' })
+    await user.click(await within(panel).findByRole('button', { name: 'Turn on the calendar feed' }))
+    const link = await within(panel).findByRole('textbox', { name: 'Calendar feed link' })
+    expect(link).toHaveValue(`${window.location.origin}/api/public/calendars/${'a'.repeat(43)}.ics`)
+    expect(within(panel).getByRole('link', { name: 'Open in your calendar app' })).toHaveAttribute(
+      'href',
+      `${window.location.origin.replace(/^https?:/, 'webcal:')}/api/public/calendars/${'a'.repeat(43)}.ics`,
+    )
+
+    await user.click(within(panel).getByRole('button', { name: 'Make a new link' }))
+    expect(await within(panel).findByDisplayValue(new RegExp(`${'b'.repeat(43)}\\.ics$`))).toBeInTheDocument()
+
+    await user.click(within(panel).getByRole('button', { name: 'Turn off' }))
+    expect(await within(panel).findByRole('button', { name: 'Turn on the calendar feed' })).toBeInTheDocument()
+    expect(requests.filter((r) => r.path === '/api/account/calendar-link').map((r) => r.method)).toEqual(['GET', 'POST', 'POST', 'DELETE'])
   })
 })
