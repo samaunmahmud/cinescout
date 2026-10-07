@@ -70,33 +70,33 @@ export function CallSheet({
 
 function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[36rem] table-fixed border-collapse text-left align-top">
-        <thead>
-          <tr className="border-b border-line text-[11px] tracking-widest uppercase">
-            <th scope="col" className="w-14 px-3 py-1.5 font-bold">Sc.</th>
-            <th scope="col" className="px-3 py-1.5 font-bold">Set</th>
-            <th scope="col" className="w-24 px-3 py-1.5 font-bold">D/N</th>
-            <th scope="col" className="w-[30%] px-3 py-1.5 font-bold">Location</th>
-            <th scope="col" className="w-[22%] px-3 py-1.5 font-bold">Contact</th>
+    <div className="sm:overflow-x-auto">
+      <table role="table" className="w-full border-collapse text-left align-top max-sm:block sm:min-w-[36rem] sm:table-fixed">
+        <thead role="rowgroup" className="max-sm:sr-only">
+          <tr role="row" className="border-b border-line text-[11px] tracking-widest uppercase">
+            <th role="columnheader" scope="col" className="w-14 px-3 py-1.5 font-bold">Sc.</th>
+            <th role="columnheader" scope="col" className="px-3 py-1.5 font-bold">Set</th>
+            <th role="columnheader" scope="col" className="w-24 px-3 py-1.5 font-bold">D/N</th>
+            <th role="columnheader" scope="col" className="w-[30%] px-3 py-1.5 font-bold">Location</th>
+            <th role="columnheader" scope="col" className="w-[22%] px-3 py-1.5 font-bold">Contact</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup" className="max-sm:block">
           {scenes.map((scene) => (
-            <tr key={scene.id} className="border-b border-line align-top">
-              <td className="px-3 py-2 font-bold">{scene.sceneNumber ?? '—'}</td>
-              <td className="px-3 py-2">
+            <tr key={scene.id} role="row" className="border-b border-line align-top max-sm:grid max-sm:grid-cols-[2.5rem_1fr] max-sm:gap-x-2 max-sm:py-2">
+              <td role="cell" className="px-3 py-2 font-bold max-sm:row-span-4 max-sm:px-0">{scene.sceneNumber ?? '—'}</td>
+              <td role="cell" className="px-3 py-2 max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5">
                 <span className="font-bold">{scene.title}</span>
                 {scene.characters.length > 0 && <span className="block">Cast: {scene.characters.join(', ')}</span>}
                 {scene.shootDateStart && scene.shootDateEnd && scene.shootDateEnd !== scene.shootDateStart && (
                   <span className="block text-subtle">until {formatDate(scene.shootDateEnd)}</span>
                 )}
               </td>
-              <td className="px-3 py-2 uppercase">
+              <td role="cell" className="px-3 py-2 uppercase max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:content-['D/N'] max-sm:empty:hidden">
                 {scene.timeOfDay ?? '—'}
                 {timeWindow(scene.callTime, scene.wrapTime) && <span className="block normal-case">{timeWindow(scene.callTime, scene.wrapTime)}</span>}
               </td>
-              <td className="px-3 py-2">
+              <td role="cell" className="px-3 py-2 max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:content-['Location'] max-sm:empty:hidden">
                 {scene.venues.length === 0 ? (
                   <span className="font-bold">TBC</span>
                 ) : (
@@ -126,7 +126,7 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                   </span>
                 ))}
               </td>
-              <td className="px-3 py-2">
+              <td role="cell" className="px-3 py-2 max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:content-['Contact'] max-sm:empty:hidden">
                 {scene.venues.map((venue) => (
                   <span key={venue.id} className="block">
                     {venue.contactName ?? (venue.contactPhone ? '' : '—')}
