@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { fakeServer, json, problem } from '../test/fakeServer'
-import { ada, logIn, pageOf, project, schedule } from '../test/fixtures'
+import { ada, logIn, pageOf, project, schedule, scheduled } from '../test/fixtures'
 import { renderApp } from '../test/renderApp'
 
 const base = {
@@ -123,5 +123,20 @@ describe('a shared call sheet', () => {
     renderApp('/call-sheet/old')
 
     expect(await screen.findByRole('heading', { name: 'Not shared' })).toBeInTheDocument()
+  })
+
+  it('names the sun only while it is up, and says TBC only when a scene has no location', async () => {
+    const sun = (time: string, elevation: number) => ({ time, azimuth: 250, elevation, compass: 'W', text: `Sun ${elevation}° at ${time}` })
+    const night = scheduled({
+      venues: [{ ...scheduled().venues[0], day: { ...scheduled().venues[0].day!, sun: [sun('18:00', 3), sun('23:00', -40)] } }],
+    })
+    fakeServer({ ...base, 'GET /api/projects/p1/schedule': () => json({ days: [{ date: '2026-10-12', scenes: [night] }], unscheduled: [], conflicts: [] }) })
+    renderApp('/projects/p1/call-sheet')
+    await logIn()
+
+    const sheet = await screen.findByRole('article', { name: 'Call sheet' })
+    expect(sheet).toHaveTextContent('Sun 3° at 18:00')
+    expect(sheet).not.toHaveTextContent('Sun -40° at 23:00')
+    expect(sheet).not.toHaveTextContent('TBC')
   })
 })

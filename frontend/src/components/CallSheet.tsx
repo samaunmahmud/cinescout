@@ -23,6 +23,7 @@ export function CallSheet({
   /** Company moves, when known; a day with several venues lists the drives between them. */
   moves?: Moves
 }) {
+  const anyTbc = [...schedule.days.flatMap((day) => day.scenes), ...schedule.unscheduled].some((scene) => scene.venues.length === 0)
   const anyMoves = moves?.days.some((day) => day.moves.some((move) => move.status === 'OK')) ?? false
   return (
     <article
@@ -62,7 +63,7 @@ export function CallSheet({
       )}
 
       <footer className="border-t border-line pt-3 text-center text-xs text-subtle">
-        TBC: no location is confirmed for the scene yet. {anyMoves && `Drive times without traffic. ${moves?.attribution}. `}Made with CineScout.
+        {anyTbc && 'TBC: no location is confirmed for the scene yet. '}{anyMoves && `Drive times without traffic. ${moves?.attribution}. `}Made with CineScout.
       </footer>
     </article>
   )
@@ -92,11 +93,11 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                   <span className="block text-subtle">until {formatDate(scene.shootDateEnd)}</span>
                 )}
               </td>
-              <td role="cell" className="px-3 py-2 uppercase max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:content-['D/N'] max-sm:empty:hidden">
+              <td role="cell" className="px-3 py-2 uppercase max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:uppercase max-sm:before:content-['D/N'] max-sm:empty:hidden">
                 {scene.timeOfDay ?? '—'}
                 {timeWindow(scene.callTime, scene.wrapTime) && <span className="block normal-case">{timeWindow(scene.callTime, scene.wrapTime)}</span>}
               </td>
-              <td role="cell" className="px-3 py-2 max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:content-['Location'] max-sm:empty:hidden">
+              <td role="cell" className="px-3 py-2 max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:uppercase max-sm:before:content-['Location'] max-sm:empty:hidden">
                 {scene.venues.length === 0 ? (
                   <span className="font-bold">TBC</span>
                 ) : (
@@ -105,7 +106,8 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                       <span className="font-bold">{venue.name}</span>
                       {venue.address && <span className="block">{venue.address}</span>}
                       {dayConditions(venue.day) && <span className="block text-subtle">{dayConditions(venue.day)}</span>}
-                      {venue.day?.sun.map((sun) => sun.text && (
+                      {/* Only while the sun is up: a night shoot's "7° below the horizon" lines are noise on paper. */}
+                      {venue.day?.sun.filter((sun) => sun.elevation == null || sun.elevation >= 0).map((sun) => sun.text && (
                         <span key={sun.text} className="block text-subtle">
                           {sun.text}
                         </span>
@@ -126,7 +128,7 @@ function Scenes({ scenes }: { scenes: ScheduledScene[] }) {
                   </span>
                 ))}
               </td>
-              <td role="cell" className="px-3 py-2 max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:content-['Contact'] max-sm:empty:hidden">
+              <td role="cell" className="px-3 py-2 max-sm:block max-sm:col-start-2 max-sm:px-0 max-sm:py-0.5 max-sm:before:block max-sm:before:text-[10px] max-sm:before:tracking-widest max-sm:before:text-subtle max-sm:before:uppercase max-sm:before:content-['Contact'] max-sm:empty:hidden">
                 {scene.venues.map((venue) => (
                   <span key={venue.id} className="block">
                     {venue.contactName ?? (venue.contactPhone ? '' : '—')}
