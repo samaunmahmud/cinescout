@@ -41,7 +41,7 @@ export function CallSheet({
 
       {schedule.days.map((day, index) => (
         <section key={day.date} aria-labelledby={`sheet-${day.date}`} className="space-y-2">
-          <h3 id={`sheet-${day.date}`} className="flex flex-wrap items-baseline justify-between gap-2 bg-white px-3 py-1.5 font-bold text-paper uppercase">
+          <h3 id={`sheet-${day.date}`} className="flex flex-wrap items-baseline justify-between gap-2 bg-ink px-3 py-1.5 font-bold text-paper uppercase [print-color-adjust:exact]">
             <span>{formatDay(day.date)}</span>
             <span className="text-xs font-normal tracking-widest">
               Day {index + 1} of {schedule.days.length}
