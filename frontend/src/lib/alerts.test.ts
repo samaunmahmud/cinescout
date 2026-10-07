@@ -30,6 +30,7 @@ describe('alert words', () => {
       'Rooftop chase has no cover set.',
     ])
     expect(alertWords(weather({ reasons: ['WIND'], windKmh: 52, gustKmh: null })).detail[0]).toBe('Wind 52 km/h (alert from 40 km/h).')
+    expect(alertWords(weather({ reasons: ['RAIN'], rainChance: null, rainMm: 7.5 })).detail[0]).toBe('7.5 mm of rain forecast.')
   })
 
   it('lead a follow-up to the venue’s outreach', () => {

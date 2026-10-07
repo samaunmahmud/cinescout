@@ -278,7 +278,14 @@ public class LogisticsService {
                     + " days ahead show the weather recorded on the same date in an earlier year, not a forecast.");
         }
         if (weatherSection.status() != SectionStatus.UNAVAILABLE) {
-            attribution.add(weather.attribution());
+            for (Fetch fetch : List.of(forecast, history)) {
+                if (fetch.series() != null) {
+                    attribution.add(fetch.series().attribution() != null ? fetch.series().attribution() : weather.attribution());
+                }
+            }
+            if (forecast.series() == null && history.series() == null) {
+                attribution.add(weather.attribution());
+            }
         }
         if (environment.status() != SectionStatus.UNAVAILABLE) {
             attribution.add(places.attribution());

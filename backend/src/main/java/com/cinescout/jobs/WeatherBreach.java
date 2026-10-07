@@ -9,11 +9,16 @@ import java.util.List;
 
 /**
  * A shoot day whose forecast crosses a project's thresholds: the chance of rain at or over the rain threshold, or the
- * day's highest wind speed at or over the wind threshold.
+ * day's highest wind speed at or over the wind threshold. A forecast that gives no chance of rain, only an amount (the
+ * fallback provider outside the Nordic countries), counts as rain from {@link #RAIN_MM_WITHOUT_CHANCE}.
  *
  * @param reasons RAIN, WIND or both, in that order
+ * @param rainMm  the day's forecast rain, where given
  */
-record WeatherBreach(LocalDate day, List<String> reasons, Integer rainChance, Double windKmh, Double gustKmh) {
+record WeatherBreach(LocalDate day, List<String> reasons, Integer rainChance, Double rainMm, Double windKmh, Double gustKmh) {
+
+    /** The same amount the logistics report calls "rain likely". */
+    static final double RAIN_MM_WITHOUT_CHANCE = 5;
 
     /** The days from {@code from} to {@code to} (inclusive) of a forecast that cross either threshold, in date order. */
     static List<WeatherBreach> find(List<DailyWeather> forecast, LocalDate from, LocalDate to, int rainThreshold, int windThreshold) {
@@ -23,14 +28,16 @@ record WeatherBreach(LocalDate day, List<String> reasons, Integer rainChance, Do
                 continue;
             }
             List<String> reasons = new ArrayList<>();
-            if (day.precipitationProbabilityPercent() != null && day.precipitationProbabilityPercent() >= rainThreshold) {
+            Integer chance = day.precipitationProbabilityPercent();
+            if (chance != null ? chance >= rainThreshold
+                    : day.precipitationMm() != null && day.precipitationMm() >= RAIN_MM_WITHOUT_CHANCE) {
                 reasons.add("RAIN");
             }
             if (day.windSpeedMaxKmh() != null && day.windSpeedMaxKmh() >= windThreshold) {
                 reasons.add("WIND");
             }
             if (!reasons.isEmpty()) {
-                breaches.add(new WeatherBreach(day.date(), List.copyOf(reasons), day.precipitationProbabilityPercent(), day.windSpeedMaxKmh(),
+                breaches.add(new WeatherBreach(day.date(), List.copyOf(reasons), chance, day.precipitationMm(), day.windSpeedMaxKmh(),
                         day.windGustsMaxKmh()));
             }
         }

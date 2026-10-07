@@ -32,6 +32,8 @@ export function alertWords(alert: Alert): AlertWords {
   const detail: string[] = []
   const facts = [
     rain && number(p.rainChance) != null && `${number(p.rainChance)}% chance of rain (alert from ${number(p.rainThreshold)}%)`,
+    // The fallback forecast gives an amount, not a chance.
+    rain && number(p.rainChance) == null && number(p.rainMm) != null && `${number(p.rainMm)} mm of rain forecast`,
     wind &&
       number(p.windKmh) != null &&
       `wind ${number(p.windKmh)} km/h${number(p.gustKmh) != null ? `, gusts ${number(p.gustKmh)}` : ''} (alert from ${number(p.windThreshold)} km/h)`,

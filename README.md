@@ -163,6 +163,7 @@ that should point the base URLs at a private or commercial instance:
 | `cinescout.logistics.max-days` | `14` shoot days per report |
 | `cinescout.logistics.open-meteo.forecast-url` / `archive-url` | `https://api.open-meteo.com` / `https://archive-api.open-meteo.com` (weather; free for non-commercial use) |
 | `cinescout.logistics.overpass.base-url` | `https://overpass-api.de` (OpenStreetMap places) |
+| `cinescout.logistics.met-norway.enabled` | `true`: forecasts Open-Meteo turns away (its free tier counts calls per IP address, which a free host shares) come from MET Norway's keyless Locationforecast instead; those days are UTC dates and give rain amounts, not chances |
 | `cinescout.logistics.nominatim.base-url` | `https://nominatim.openstreetmap.org` (geocoding, at most one request a second) |
 
 ## Venue videos

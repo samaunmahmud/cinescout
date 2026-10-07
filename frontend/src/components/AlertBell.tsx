@@ -73,7 +73,7 @@ export function AlertBell() {
         <section
           id={panelId}
           aria-labelledby={`${panelId}-heading`}
-          className="absolute right-0 z-40 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-lg border-2 border-ink bg-white text-ink shadow-[0_5px_0_var(--color-cue)]"
+          className="fixed inset-x-4 top-[76px] z-40 overflow-hidden sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-lg border-2 border-ink bg-white text-ink shadow-[0_5px_0_var(--color-cue)]"
         >
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <h2 id={`${panelId}-heading`} className="font-display text-xl leading-none">
@@ -90,7 +90,7 @@ export function AlertBell() {
               </button>
             )}
           </div>
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto sm:max-h-[70vh]">
             {list.isPending ? (
               <div className="p-4">
                 <Spinner label="Loading alerts" />

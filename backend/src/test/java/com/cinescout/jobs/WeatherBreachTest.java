@@ -36,4 +36,16 @@ class WeatherBreachTest {
         assertThat(WeatherBreach.find(List.of(day(MON, 90, 50.0)), MON, MON, 60, 40).getFirst().reasons()).containsExactly("RAIN", "WIND");
         assertThat(WeatherBreach.find(List.of(day(MON, null, null)), MON, MON, 1, 5)).isEmpty();
     }
+
+    @Test
+    void aForecastWithAnAmountButNoChanceOfRainCountsFromFiveMillimetres() {
+        DailyWeather wet = new DailyWeather(MON, 63, 14.0, 8.0, 5.0, null, 10.0, 20.0, 90);
+        DailyWeather damp = new DailyWeather(MON.plusDays(1), 61, 14.0, 8.0, 4.9, null, 10.0, 20.0, 90);
+
+        List<WeatherBreach> found = WeatherBreach.find(List.of(wet, damp), MON, MON.plusDays(1), 60, 40);
+
+        assertThat(found).extracting(WeatherBreach::day).containsExactly(MON);
+        assertThat(found.getFirst().rainChance()).isNull();
+        assertThat(found.getFirst().rainMm()).isEqualTo(5.0);
+    }
 }

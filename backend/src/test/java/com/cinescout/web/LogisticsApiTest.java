@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -370,6 +371,19 @@ class LogisticsApiTest extends ApiTest {
     }
 
     // --- a provider down does not sink the report ----------------------------------------------------------
+
+    @Test
+    void aForecastFromTheFallbackProviderIsCreditedToItAndHasNoTimeZone() {
+        doAnswer(call -> Mono.just(new WeatherSeries(null, series(call.getArgument(1), call.getArgument(2)).days(),
+                "Weather from the fallback"))).when(weather).forecast(any(), any(), any());
+        Account ada = register("Ada");
+
+        JsonNode report = refreshed(ada, locatedVenue(ada));
+
+        assertThat(texts(report.path("attribution"))).contains("Weather from the fallback").doesNotContain("Weather by Test");
+        assertThat(report.path("timeZone").asText()).isEqualTo("UTC");
+        assertThat(report.path("weather").path("status").asText()).isEqualTo("OK");
+    }
 
     @Test
     void withTheWeatherServiceDownTheRestOfTheReportStillComesBackInUtc() {

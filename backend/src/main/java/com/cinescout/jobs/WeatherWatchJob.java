@@ -139,6 +139,7 @@ class WeatherWatchJob implements Job {
                 payload.put("day", breach.day().toString());
                 payload.put("reasons", breach.reasons());
                 payload.put("rainChance", breach.rainChance());
+                payload.put("rainMm", breach.rainMm());
                 payload.put("rainThreshold", watch.rainThreshold());
                 payload.put("windKmh", breach.windKmh() == null ? null : Math.round(breach.windKmh()));
                 payload.put("gustKmh", breach.gustKmh() == null ? null : Math.round(breach.gustKmh()));
