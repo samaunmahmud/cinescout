@@ -9,11 +9,13 @@ import type {
   SceneLight,
   SectionStatus,
   SolarDay,
+  UnitBase,
+  UnitBaseSite,
   WeatherBasis,
   WeatherDay,
 } from '../api/types'
 import { useSession } from '../auth/context'
-import { CloudSun, Sun, Sunset, Trees, type LucideIcon } from 'lucide-react'
+import { CloudSun, Sun, Sunset, Trees, Truck, type LucideIcon } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatDate, formatShootWindow } from '../lib/format'
@@ -52,6 +54,7 @@ const placeLabels: Record<PlaceKind, string> = {
   SCHOOL: 'School',
   NIGHTLIFE: 'Nightlife',
   PLACE_OF_WORSHIP: 'Place of worship',
+  UNIT_BASE: 'Unit base',
 }
 
 const noiseTones: Record<NoiseLevel, 'green' | 'cue' | 'red'> = { LOW: 'green', MEDIUM: 'cue', HIGH: 'red' }
@@ -131,6 +134,7 @@ function Report({ report }: { report: LogisticsReport }) {
       <Light solar={report.solar} />
       <Weather weather={report.weather} />
       <Surroundings environment={report.environment} />
+      <UnitBaseSites unitBase={report.unitBase} />
       {report.attribution.length > 0 && (
         <footer className="text-xs text-subtle">
           {report.attribution.map((credit) => (
@@ -142,7 +146,7 @@ function Report({ report }: { report: LogisticsReport }) {
   )
 }
 
-const panelIcons: Record<string, LucideIcon> = { Light: Sunset, Weather: CloudSun, Surroundings: Trees }
+const panelIcons: Record<string, LucideIcon> = { Light: Sunset, Weather: CloudSun, Surroundings: Trees, 'Unit base': Truck }
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   const Icon = panelIcons[title]
@@ -322,6 +326,64 @@ function Surroundings({ environment }: { environment: LogisticsReport['environme
             </div>
           ))}
         </dl>
+      )}
+    </Panel>
+  )
+}
+
+const areaFormat = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 })
+
+/** How big a site is, where the map says: its spaces, else its outline rounded to 100 m². */
+function siteSize(site: UnitBaseSite): string | null {
+  if (site.capacity != null) return `${site.capacity} ${site.capacity === 1 ? 'space' : 'spaces'}`
+  if (site.areaSquareMeters != null) return `about ${areaFormat.format(Math.max(100, Math.round(site.areaSquareMeters / 100) * 100))} m²`
+  return null
+}
+
+/** Where the trucks, trailers and catering could park: the biggest sites first where the map says, then the nearest. */
+function UnitBaseSites({ unitBase }: { unitBase: UnitBase | null | undefined }) {
+  if (!unitBase) {
+    return (
+      <Panel title="Unit base">
+        <p className="text-sm text-muted">This report was made before CineScout looked for unit bases. Refresh it to see sites nearby.</p>
+      </Panel>
+    )
+  }
+  return (
+    <Panel title="Unit base">
+      <p className="text-sm text-muted">
+        Open car parks, lay-bys and rest areas within {formatDistance(unitBase.radiusMeters)} that could take the trucks. The map
+        does not say whether trucks are allowed: ask the owner before you plan on one.
+      </p>
+      <SectionMessage status={unitBase.status} message={unitBase.message} />
+      {unitBase.status === 'OK' && unitBase.sites.length === 0 && unitBase.message && (
+        <p className="text-sm text-muted">{unitBase.message}</p>
+      )}
+      {unitBase.sites.length > 0 && (
+        <ol aria-label="Unit base sites" className="divide-y divide-line-soft text-sm">
+          {unitBase.sites.map((site, i) => {
+            const size = siteSize(site)
+            return (
+              <li key={`${site.name}-${site.distanceMeters}-${i}`} className="flex flex-wrap items-baseline gap-x-2 py-2 first:pt-0 last:pb-0">
+                <span className="font-medium text-ink">{site.name ?? site.kind}</span>
+                <span className="text-muted">
+                  {[site.name ? site.kind : null, size, formatDistance(site.distanceMeters)].filter(Boolean).join(' · ')}
+                </span>
+                {site.latitude != null && site.longitude != null && (
+                  <a
+                    className="text-cue-ink underline underline-offset-2"
+                    href={`https://www.openstreetmap.org/?mlat=${site.latitude}&mlon=${site.longitude}#map=18/${site.latitude}/${site.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Map of ${site.name ?? site.kind} (opens in a new tab)`}
+                  >
+                    Map
+                  </a>
+                )}
+              </li>
+            )
+          })}
+        </ol>
       )}
     </Panel>
   )

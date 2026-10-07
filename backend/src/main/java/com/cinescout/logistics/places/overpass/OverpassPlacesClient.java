@@ -65,14 +65,19 @@ public class OverpassPlacesClient implements PlacesClient {
         Mono<List<Place>> call = Mono.defer(() -> overpass.post()
                         .uri("/api/interpreter")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .body(BodyInserters.fromFormData("data", OverpassQuery.around(point, props.serverTimeoutSeconds())))
+                        .body(BodyInserters.fromFormData("data", OverpassQuery.around(point, props.serverTimeoutSeconds(), props.unitBaseRadius())))
                         .retrieve()
                         .onStatus(HttpStatusCode::isError,
                                 response -> Mono.just(LogisticsException.forStatus(SERVICE, response.statusCode().value())))
                         .bodyToMono(Response.class))
                 .switchIfEmpty(Mono.error(() -> new LogisticsException(Kind.UNAVAILABLE, SERVICE + " returned an empty response")))
-                .map(response -> toPlaces(response, point));
+                .map(response -> toPlaces(response, point, props.unitBaseRadius()));
         return ProviderHttp.guardTransport(call, SERVICE, props.timeout());
+    }
+
+    @Override
+    public int unitBaseRadiusMeters() {
+        return props.unitBaseRadius();
     }
 
     @Override
@@ -80,7 +85,7 @@ public class OverpassPlacesClient implements PlacesClient {
         return "Map data © OpenStreetMap contributors (ODbL)";
     }
 
-    private static List<Place> toPlaces(Response response, GeoPoint origin) {
+    private static List<Place> toPlaces(Response response, GeoPoint origin, int unitBaseRadius) {
         if (response.remark() != null && response.remark().toLowerCase(Locale.ROOT).contains("error")) {
             // e.g. "runtime error: Query timed out in "query" at line 3 after 21 seconds."
             throw new LogisticsException(Kind.UNAVAILABLE, SERVICE + " could not finish the query: " + response.remark());
@@ -96,7 +101,8 @@ public class OverpassPlacesClient implements PlacesClient {
                 // Overpass measured the radius to the element's outline, so an element of one kind is in range
                 // even if its centre is not (a large airport). One that is several kinds may have been found by
                 // the widest of their radii, so it only counts as the kinds whose radius its centre is within.
-                if (place != null && (kinds.size() == 1 || place.distanceMeters() <= kind.radiusMeters())) {
+                int radius = kind == PlaceKind.UNIT_BASE ? unitBaseRadius : kind.radiusMeters();
+                if (place != null && (kinds.size() == 1 || place.distanceMeters() <= radius)) {
                     places.add(place);
                 }
             }
@@ -113,8 +119,26 @@ public class OverpassPlacesClient implements PlacesClient {
         }
         GeoPoint position = element.lat() != null && element.lon() != null
                 ? point(element.lat(), element.lon())
-                : element.center() == null ? null : point(element.center().lat(), element.center().lon());
-        return position == null ? null : new Place(kind, name, position, origin.distanceTo(position));
+                : element.center() != null ? point(element.center().lat(), element.center().lon())
+                : element.bounds() != null ? element.bounds().middle() : null;
+        if (position == null) {
+            return null;
+        }
+        Place.Size size = kind == PlaceKind.UNIT_BASE ? size(element) : null;
+        return new Place(kind, name, position, origin.distanceTo(position), size);
+    }
+
+    /** What the map says of a car park's or lay-by's size: its capacity tag and its bounding box. */
+    private static Place.Size size(Element element) {
+        Map<String, String> tags = element.tags();
+        Integer capacity = null;
+        String tagged = tags.get("capacity");
+        if (tagged != null && tagged.strip().matches("\\d{1,5}")) {
+            capacity = Integer.parseInt(tagged.strip());
+        }
+        Double area = element.bounds() == null ? null : element.bounds().squareMeters();
+        String type = "rest_area".equals(tags.get("highway")) ? "rest_area" : tags.get("parking");
+        return new Place.Size(capacity, area, type);
     }
 
     /** The distance to the nearest stretch of a line; null if it has no valid vertex at all. */
@@ -162,7 +186,24 @@ public class OverpassPlacesClient implements PlacesClient {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Element(String type, Double lat, Double lon, LatLon center, List<LatLon> geometry, Map<String, String> tags) {
+    record Element(String type, Double lat, Double lon, LatLon center, Bounds bounds, List<LatLon> geometry, Map<String, String> tags) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record Bounds(Double minlat, Double minlon, Double maxlat, Double maxlon) {
+
+        GeoPoint middle() {
+            return minlat == null || minlon == null || maxlat == null || maxlon == null ? null
+                    : point((minlat + maxlat) / 2, (minlon + maxlon) / 2);
+        }
+
+        /** The box's area: east-west by north-south, as the crow flies. Null when a corner is missing. */
+        Double squareMeters() {
+            GeoPoint south = point(minlat, minlon);
+            GeoPoint east = point(minlat, maxlon);
+            GeoPoint north = point(maxlat, minlon);
+            return south == null || east == null || north == null ? null : south.distanceTo(east) * south.distanceTo(north);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

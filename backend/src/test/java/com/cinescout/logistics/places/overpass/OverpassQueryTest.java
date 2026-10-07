@@ -26,7 +26,7 @@ class OverpassQueryTest {
                 .contains("nwr[\"aeroway\"=\"aerodrome\"](around:5000,40.712800,-74.006000);")
                 .contains("way[\"railway\"=\"subway\"][\"tunnel\"!=\"yes\"](around:500,40.712800,-74.006000);")
                 .contains("way[\"highway\"=\"trunk\"][\"tunnel\"!=\"yes\"](around:300,40.712800,-74.006000);");
-        assertThat(QUERY.indexOf("out tags center qt;")).isLessThan(QUERY.indexOf("way[\"railway\""));
+        assertThat(QUERY.indexOf("out tags center bb qt;")).isLessThan(QUERY.indexOf("way[\"railway\""));
         assertThat(QUERY).endsWith("out tags geom qt;\n");
     }
 
@@ -49,5 +49,16 @@ class OverpassQueryTest {
     @Test
     void theQueryIsTheSameEveryTime() {
         assertThat(OverpassQuery.around(new GeoPoint(40.7128, -74.006), 25)).isEqualTo(QUERY);
+    }
+
+    @Test
+    void aClauseTwoKindsShareIsAskedOnceAtTheWiderRadiusAndTheUnitBaseRadiusCanBeSet() {
+        // Parking for the crew looks 800 m out, a unit base 1 km by default.
+        assertThat(QUERY).contains("nwr[\"amenity\"=\"parking\"](around:1000,40.712800,-74.006000);")
+                .contains("nwr[\"highway\"=\"rest_area\"](around:1000,40.712800,-74.006000);")
+                .doesNotContain("(around:800,40.712800,-74.006000);\n  nwr[\"amenity\"=\"parking\"]");
+        String wider = OverpassQuery.around(new GeoPoint(40.7128, -74.006), 25, 2000);
+        assertThat(wider).contains("nwr[\"amenity\"=\"parking\"](around:2000,40.712800,-74.006000);")
+                .contains("nwr[\"highway\"=\"rest_area\"](around:2000,40.712800,-74.006000);");
     }
 }

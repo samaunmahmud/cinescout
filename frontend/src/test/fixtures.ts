@@ -197,6 +197,15 @@ export function logisticsReport(overrides: Partial<LogisticsReport> = {}): Logis
         { kind: 'PARKING', name: null, distanceMeters: 240, latitude: null, longitude: null },
       ],
     },
+    unitBase: {
+      status: 'OK',
+      message: null,
+      radiusMeters: 1000,
+      sites: [
+        { name: 'Pier 5 Lot', kind: 'Open car park', capacity: 120, areaSquareMeters: 3820, distanceMeters: 640, latitude: 40.6931, longitude: -73.9995 },
+        { name: null, kind: 'Roadside bays (lay-by)', capacity: null, areaSquareMeters: null, distanceMeters: 210, latitude: 40.6751, longitude: -73.9633 },
+      ],
+    },
     notes: ["The coordinates were looked up from the venue's address; check the pin on a map and correct it if it is wrong."],
     attribution: ['Geocoding by Nominatim, map data © OpenStreetMap contributors (ODbL)', 'Weather data by Open-Meteo.com (CC BY 4.0)'],
     ...overrides,

@@ -202,16 +202,24 @@ public class LogisticsService {
 
         Mono<Fetch> forecast = fetch(plan.forecastRange(), range -> weather.forecast(located.point(), range.from(), range.to()));
         Mono<Fetch> history = fetch(plan.historyRange(), range -> weather.history(located.point(), range.from(), range.to()));
-        Mono<Environment> environment = placesGuard.call(() -> places.around(located.point()))
-                .map(found -> EnvironmentAssessor.assess(found, brief.sensitivity(), brief.venueName()))
+        int unitBaseRadius = places.unitBaseRadiusMeters();
+        Mono<Surroundings> surroundings = placesGuard.call(() -> places.around(located.point()))
+                .map(found -> new Surroundings(EnvironmentAssessor.assess(found, brief.sensitivity(), brief.venueName()),
+                        UnitBaseFinder.find(found, unitBaseRadius)))
                 .onErrorResume(LogisticsException.class, e -> {
                     log.warn("Places lookup failed ({}): {}", e.kind(), e.getMessage());
-                    return Mono.just(EnvironmentAssessor.unavailable(
-                            "The map service could not be reached; try again later", brief.sensitivity()));
+                    String message = "The map service could not be reached; try again later";
+                    return Mono.just(new Surroundings(EnvironmentAssessor.unavailable(message, brief.sensitivity()),
+                            UnitBaseFinder.unavailable(message, unitBaseRadius)));
                 });
 
-        return Mono.zip(forecast, history, environment)
-                .map(results -> assemble(located, window, plan, light, results.getT1(), results.getT2(), results.getT3()));
+        return Mono.zip(forecast, history, surroundings)
+                .map(results -> assemble(located, window, plan, light, results.getT1(), results.getT2(),
+                        results.getT3().environment(), results.getT3().unitBase()));
+    }
+
+    /** What the one map lookup around the venue gives: its environment and its unit base. */
+    private record Surroundings(Environment environment, LogisticsReport.UnitBase unitBase) {
     }
 
     static ShootWindow window(LocalDate start, LocalDate end, LocalDate today, int maxDays) {
@@ -241,7 +249,7 @@ public class LogisticsService {
     }
 
     private LogisticsReport assemble(Located located, ShootWindow window, WeatherPlan plan, SceneLight light,
-                                     Fetch forecast, Fetch history, Environment environment) {
+                                     Fetch forecast, Fetch history, Environment environment, LogisticsReport.UnitBase unitBase) {
         Brief brief = located.brief();
         List<String> notes = new ArrayList<>();
         Set<String> attribution = new LinkedHashSet<>();
@@ -285,7 +293,7 @@ public class LogisticsService {
                 new Position(degrees(located.point().latitude()), degrees(located.point().longitude()), located.geocoded()),
                 zone.getId(), window,
                 new Solar(brief.timeOfDay(), light, solarDays),
-                weatherSection, environment, List.copyOf(notes), List.copyOf(attribution));
+                weatherSection, environment, unitBase, List.copyOf(notes), List.copyOf(attribution));
     }
 
     private static Weather weatherSection(WeatherPlan plan, Fetch forecast, Fetch history, SceneLight light,

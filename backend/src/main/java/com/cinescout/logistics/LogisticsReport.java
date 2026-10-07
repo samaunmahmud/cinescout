@@ -31,6 +31,7 @@ public record LogisticsReport(
         Solar solar,
         Weather weather,
         Environment environment,
+        UnitBase unitBase,
         List<String> notes,
         List<String> attribution
 ) {
@@ -106,6 +107,22 @@ public record LogisticsReport(
     }
 
     public enum NoiseLevel { LOW, MEDIUM, HIGH }
+
+    /**
+     * Where the trucks could park: open car parks, roadside bays and rest areas within {@code radiusMeters}, the
+     * biggest first where the map says how big, then the nearest. Null in reports made before it was added.
+     */
+    public record UnitBase(SectionStatus status, String message, int radiusMeters, List<UnitBaseSite> sites) {
+    }
+
+    /**
+     * @param kind             "Open car park", "Roadside bays (lay-by)", "Rest area" or "Car park"
+     * @param capacity         spaces, where tagged
+     * @param areaSquareMeters roughly, from its outline; null for a point
+     */
+    public record UnitBaseSite(String name, String kind, Integer capacity, Integer areaSquareMeters, int distanceMeters,
+                               Double latitude, Double longitude) {
+    }
 
     /** @param name null when the map has none */
     public record NoiseSource(PlaceKind kind, String name, int distanceMeters, NoiseLevel level, String advice) {

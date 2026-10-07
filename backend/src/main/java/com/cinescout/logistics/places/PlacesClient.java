@@ -15,6 +15,11 @@ public interface PlacesClient {
     /** Every place of every {@link PlaceKind} within that kind's radius of {@code point}, in no particular order. */
     Mono<List<Place>> around(GeoPoint point);
 
+    /** How far {@link #around} looks for a unit base, in metres. */
+    default int unitBaseRadiusMeters() {
+        return PlaceKind.UNIT_BASE.radiusMeters();
+    }
+
     /** The credit the data's licence requires wherever it is shown. */
     String attribution();
 }

@@ -229,6 +229,17 @@ moves already worked out; it never calls the router.
 | `cinescout.moves.warn-after` | `60m` |
 | `cinescout.moves.max-lookups` | `8` new pairs a request |
 
+## Unit base
+
+The Logistics tab lists somewhere to park the trucks: open car parks, roadside bays (lay-bys) and rest areas from
+OpenStreetMap, found by the same single Overpass query as the noise and services. Multi-storey, underground and private
+car parks are left out. Sites are ranked by size where the map says (tagged capacity, else the outline's area), then
+by distance, and kept with the report. The map does not say whether trucks are allowed, so the tab says to ask.
+
+| Property | Default |
+|---|---|
+| `cinescout.logistics.overpass.unit-base-radius` | `1000` metres (200-3000) |
+
 ## Holds and availability
 
 Each venue's Overview tab records its days: pencilled, held (optionally until a date the hold lapses), confirmed or

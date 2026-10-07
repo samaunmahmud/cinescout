@@ -653,7 +653,7 @@ export type WeatherBasis = 'FORECAST' | 'RECORDED' | 'PAST_YEAR'
 export type PlaceKind =
   | 'HOSPITAL' | 'PHARMACY' | 'PARKING' | 'FOOD' | 'TOILETS' | 'FUEL' | 'LODGING' | 'HARDWARE' | 'GROCERY'
   | 'AIRPORT' | 'HELIPORT' | 'STADIUM' | 'RAILWAY' | 'EMERGENCY_STATION' | 'CONSTRUCTION' | 'MAJOR_ROAD'
-  | 'SCHOOL' | 'NIGHTLIFE' | 'PLACE_OF_WORSHIP'
+  | 'SCHOOL' | 'NIGHTLIFE' | 'PLACE_OF_WORSHIP' | 'UNIT_BASE'
 
 export interface TimeWindow {
   start: string
@@ -720,6 +720,28 @@ export interface NearbyService {
   longitude: number | null
 }
 
+/** Somewhere the trucks could park near a venue. */
+export interface UnitBaseSite {
+  name: string | null
+  /** "Open car park", "Roadside bays (lay-by)", "Rest area" or "Car park". */
+  kind: string
+  /** Spaces, where the map says. */
+  capacity: number | null
+  /** Roughly, from its outline; null for a point. */
+  areaSquareMeters: number | null
+  distanceMeters: number
+  latitude: number | null
+  longitude: number | null
+}
+
+export interface UnitBase {
+  status: SectionStatus
+  message: string | null
+  radiusMeters: number
+  /** The biggest first where the map says how big, then the nearest. */
+  sites: UnitBaseSite[]
+}
+
 export interface LogisticsReport {
   version: number
   generatedAt: string
@@ -740,6 +762,8 @@ export interface LogisticsReport {
     /** The nearest few of each kind, grouped by kind. */
     nearbyServices: NearbyService[]
   }
+  /** Missing in reports made before unit bases were looked up. */
+  unitBase?: UnitBase | null
   notes: string[]
   /** Credits the data licences require to be shown with the data. */
   attribution: string[]

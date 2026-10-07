@@ -38,7 +38,7 @@ class OverpassPlacesClientTest {
     private OverpassPlacesClient client() {
         Duration timeout = Duration.ofSeconds(5);
         return new OverpassPlacesClient(ProviderHttp.webClient(WebClient.builder(), api.baseUrl(), timeout, "CineScout-test"),
-                new OverpassProperties(api.baseUrl(), 25, timeout, Duration.ofMillis(10)));
+                new OverpassProperties(api.baseUrl(), 25, timeout, Duration.ofMillis(10), 1000));
     }
 
     private void stub(int status, String body) {
@@ -60,13 +60,14 @@ class OverpassPlacesClientTest {
 
         List<Place> places = client().around(ORIGIN).block();
 
-        assertThat(places).hasSize(2);
+        // The car park is parking for the crew and a possible unit base.
+        assertThat(places).extracting(Place::kind).containsExactly(PlaceKind.FOOD, PlaceKind.PARKING, PlaceKind.UNIT_BASE);
         Place cafe = places.getFirst();
         assertThat(cafe.kind()).isEqualTo(PlaceKind.FOOD);
         assertThat(cafe.name()).isEqualTo("Starbucks");
         assertThat(cafe.position()).isEqualTo(new GeoPoint(40.7138, -74.0060));
         assertThat(cafe.distanceMeters()).isCloseTo(111.2, within(1.0));
-        Place parking = places.getLast();
+        Place parking = places.get(1);
         assertThat(parking.kind()).isEqualTo(PlaceKind.PARKING);
         assertThat(parking.name()).isNull();
         assertThat(parking.distanceMeters()).isCloseTo(222.4, within(1.0));
@@ -194,5 +195,44 @@ class OverpassPlacesClientTest {
 
         assertThat(catchThrowable(() -> client().around(ORIGIN).block())).isInstanceOf(LogisticsException.class);
         api.verify(1, postRequestedFor(urlEqualTo(INTERPRETER)));
+    }
+
+    // --- unit bases ---------------------------------------------------------------------------------
+
+    @Test
+    void aCarParksSizeComesFromItsCapacityAndItsBoundsAndItsCentreFromTheBounds() {
+        // 0.002° north-south by 0.002° east-west at this latitude: about 222 m by 169 m.
+        stub(200, elements("""
+                {"type":"way","id":6,"bounds":{"minlat":40.7140,"minlon":-74.0070,"maxlat":40.7160,"maxlon":-74.0050},
+                 "tags":{"amenity":"parking","parking":"surface","capacity":"120","name":"Pier Lot"}}"""));
+
+        Place base = client().around(ORIGIN).block().stream().filter(place -> place.kind() == PlaceKind.UNIT_BASE).findFirst().orElseThrow();
+
+        assertThat(base.position().latitude()).isCloseTo(40.7150, within(0.00001));
+        assertThat(base.size().capacity()).isEqualTo(120);
+        assertThat(base.size().areaSquareMeters()).isCloseTo(222.4 * 168.6, within(500.0));
+        assertThat(base.size().type()).isEqualTo("surface");
+        assertThat(base.name()).isEqualTo("Pier Lot");
+    }
+
+    @Test
+    void underCoverPrivateOrInTheRoadIsNoUnitBaseButARestAreaIs() {
+        stub(200, elements(
+                """
+                {"type":"node","id":7,"lat":40.7138,"lon":-74.0060,"tags":{"amenity":"parking","parking":"multi-storey"}}""",
+                """
+                {"type":"node","id":8,"lat":40.7138,"lon":-74.0061,"tags":{"amenity":"parking","access":"private"}}""",
+                """
+                {"type":"node","id":9,"lat":40.7138,"lon":-74.0062,"tags":{"amenity":"parking","parking":"lane"}}""",
+                """
+                {"type":"node","id":10,"lat":40.7138,"lon":-74.0063,"tags":{"highway":"rest_area","name":"Hudson Rest Area"}}""",
+                """
+                {"type":"node","id":11,"lat":40.7138,"lon":-74.0064,"tags":{"amenity":"parking","parking":"street_side","capacity":"lots"}}"""));
+
+        List<Place> bases = client().around(ORIGIN).block().stream().filter(place -> place.kind() == PlaceKind.UNIT_BASE).toList();
+
+        assertThat(bases).extracting(Place::name).containsExactly("Hudson Rest Area", null);
+        assertThat(bases).extracting(place -> place.size().type()).containsExactly("rest_area", "street_side");
+        assertThat(bases.getLast().size().capacity()).isNull();
     }
 }

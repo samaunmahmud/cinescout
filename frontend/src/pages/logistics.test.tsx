@@ -78,6 +78,16 @@ describe("a location's logistics", () => {
     expect(services).toHaveTextContent('HospitalInterfaith Medical Center · 1.9 km')
     expect(services).toHaveTextContent('ParkingUnnamed · 240 m')
 
+    const unitBase = screen.getByRole('region', { name: 'Unit base' })
+    expect(unitBase).toHaveTextContent('within 1 km')
+    const sites = within(unitBase).getAllByRole('listitem')
+    expect(sites[0]).toHaveTextContent('Pier 5 LotOpen car park · 120 spaces · 640 m')
+    expect(sites[1]).toHaveTextContent('Roadside bays (lay-by)210 m')
+    expect(within(sites[0]).getByRole('link', { name: /Map of Pier 5 Lot/ })).toHaveAttribute(
+      'href',
+      'https://www.openstreetmap.org/?mlat=40.6931&mlon=-73.9995#map=18/40.6931/-73.9995',
+    )
+
     expect(screen.getByText('Weather data by Open-Meteo.com (CC BY 4.0)')).toBeInTheDocument()
   })
 
@@ -116,6 +126,27 @@ describe("a location's logistics", () => {
     const surroundings = screen.getByRole('region', { name: 'Surroundings' })
     expect(surroundings).toHaveTextContent('The map service could not be reached; try again later')
     expect(surroundings).not.toHaveTextContent('No known noise sources')
+  })
+
+  it('say when there is nowhere for the trucks', async () => {
+    const empty = logisticsReport({
+      unitBase: { status: 'OK', message: 'Nothing on the map within 1000 m: ask the location about parking', radiusMeters: 1000, sites: [] },
+    })
+    serverFor(() => location({ logistics: empty }))
+    renderApp('/locations/l1?tab=logistics')
+    await logIn()
+
+    const unitBase = await screen.findByRole('region', { name: 'Unit base' })
+    expect(unitBase).toHaveTextContent('Nothing on the map within 1000 m: ask the location about parking')
+    expect(within(unitBase).queryByRole('list')).not.toBeInTheDocument()
+  })
+
+  it('ask for a refresh of a report made before unit bases were looked up', async () => {
+    serverFor(() => location({ logistics: logisticsReport({ unitBase: undefined }) }))
+    renderApp('/locations/l1?tab=logistics')
+    await logIn()
+
+    expect(await screen.findByRole('region', { name: 'Unit base' })).toHaveTextContent('Refresh it to see sites nearby')
   })
 
   it('explain a venue that cannot be found on the map', async () => {

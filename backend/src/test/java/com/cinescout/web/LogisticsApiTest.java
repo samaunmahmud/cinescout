@@ -68,13 +68,16 @@ class LogisticsApiTest extends ApiTest {
         when(weather.forecastDaysBack()).thenReturn(30);
         when(weather.attribution()).thenReturn("Weather by Test");
         when(places.attribution()).thenReturn("Map by Test");
+        when(places.unitBaseRadiusMeters()).thenReturn(1_000);
         when(geocoder.attribution()).thenReturn("Geocoding by Test");
         when(weather.forecast(any(), any(), any())).thenAnswer(call -> Mono.just(series(call.getArgument(1), call.getArgument(2))));
         when(weather.history(any(), any(), any())).thenAnswer(call -> Mono.just(series(call.getArgument(1), call.getArgument(2))));
         when(places.around(any())).thenReturn(Mono.just(List.of(
                 new Place(PlaceKind.RAILWAY, "Main Line", null, 100),
                 new Place(PlaceKind.NIGHTLIFE, "Sky Bar", new GeoPoint(40.7128, -74.006), 0), // the venue itself
-                new Place(PlaceKind.HOSPITAL, "General Hospital", new GeoPoint(40.72, -74.0), 2_000))));
+                new Place(PlaceKind.HOSPITAL, "General Hospital", new GeoPoint(40.72, -74.0), 2_000),
+                new Place(PlaceKind.UNIT_BASE, "Pier Lot", new GeoPoint(40.714, -74.0), 600, new Place.Size(120, null, "surface")),
+                new Place(PlaceKind.UNIT_BASE, null, new GeoPoint(40.713, -74.0), 200, null))));
         when(geocoder.locate(any())).thenReturn(Mono.just(BROOKLYN));
     }
 
@@ -211,6 +214,22 @@ class LogisticsApiTest extends ApiTest {
         assertThat(environment.path("noiseSources").get(0).path("advice").asText()).contains("timetable");
         assertThat(environment.path("nearbyServices").get(0).path("kind").asText()).isEqualTo("HOSPITAL");
         assertThat(environment.path("nearbyServices").get(0).path("distanceMeters").asInt()).isEqualTo(2_000);
+    }
+
+    @Test
+    void theUnitBaseListsTheBiggestSitesFirstWhereTheMapSaysHowBig() {
+        Account ada = register("Ada");
+        String locationId = locatedVenue(ada);
+
+        JsonNode unitBase = refreshed(ada, locationId).path("unitBase");
+
+        assertThat(unitBase.path("status").asText()).isEqualTo("OK");
+        assertThat(unitBase.path("radiusMeters").asInt()).isEqualTo(1_000);
+        assertThat(unitBase.path("sites")).hasSize(2);
+        assertThat(unitBase.path("sites").get(0).path("name").asText()).isEqualTo("Pier Lot");
+        assertThat(unitBase.path("sites").get(0).path("kind").asText()).isEqualTo("Open car park");
+        assertThat(unitBase.path("sites").get(0).path("capacity").asInt()).isEqualTo(120);
+        assertThat(unitBase.path("sites").get(1).path("distanceMeters").asInt()).isEqualTo(200);
     }
 
     @Test
@@ -380,6 +399,8 @@ class LogisticsApiTest extends ApiTest {
         assertThat(environment.path("status").asText()).isEqualTo("UNAVAILABLE");
         assertThat(environment.path("noiseRisk").isNull()).isTrue();
         assertThat(environment.path("noiseSources")).isEmpty();
+        assertThat(report.path("unitBase").path("status").asText()).isEqualTo("UNAVAILABLE");
+        assertThat(report.path("unitBase").path("sites")).isEmpty();
         assertThat(report.path("weather").path("status").asText()).isEqualTo("OK");
         verify(places).around(any()); // tried once: retrying a busy map server only adds to its load
     }

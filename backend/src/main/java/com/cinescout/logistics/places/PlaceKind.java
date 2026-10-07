@@ -34,9 +34,13 @@ public enum PlaceKind {
     MAJOR_ROAD(Group.NOISE, 300, 3),
     SCHOOL(Group.NOISE, 300, 2),
     NIGHTLIFE(Group.NOISE, 250, 2),
-    PLACE_OF_WORSHIP(Group.NOISE, 250, 1);
+    PLACE_OF_WORSHIP(Group.NOISE, 250, 1),
 
-    public enum Group { SERVICE, NOISE }
+    // Somewhere to park the trucks: open car parks, roadside bays and lay-bys, rest areas. The radius is the
+    // default; the Overpass client may be configured to look further.
+    UNIT_BASE(Group.UNIT_BASE, 1_000, 0);
+
+    public enum Group { SERVICE, NOISE, UNIT_BASE }
 
     private final Group group;
     private final int radiusMeters;
