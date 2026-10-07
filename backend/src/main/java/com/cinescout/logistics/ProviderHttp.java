@@ -62,6 +62,14 @@ public final class ProviderHttp {
                                 || e instanceof UnsupportedMediaTypeException
                                 || e instanceof DataBufferLimitException
                                 || e instanceof WebClientResponseException,
-                        e -> new LogisticsException(Kind.UNAVAILABLE, service + " is unreachable or returned an unreadable response", e));
+                        e -> new LogisticsException(Kind.UNAVAILABLE, service + " is unreachable or returned an unreadable response ("
+                                + cause(e) + ")", e));
+    }
+
+    /** The failure's type and first words, for the log (never shown to users): which of the transport failures it was. */
+    static String cause(Throwable e) {
+        String message = e.getMessage() == null ? "" : ": " + e.getMessage().replaceAll("\\s+", " ");
+        String text = e.getClass().getSimpleName() + message;
+        return text.length() > 200 ? text.substring(0, 200) + "…" : text;
     }
 }
