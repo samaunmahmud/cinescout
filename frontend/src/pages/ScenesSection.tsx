@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { CalendarDays, ChevronRight, FileText, Film, Plus, Search, Sparkles } from 'lucide-react'
+import { CalendarClock, CalendarDays, ChevronRight, Columns3, FileText, Film, Plus, Search, Sparkles, Trash2 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import { useSession } from '../auth/context'
 import type { Page, Scene } from '../api/types'
+import { ActionMenu } from '../components/ActionMenu'
+import { ConfirmDelete } from '../components/ConfirmDelete'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
@@ -109,34 +111,11 @@ export function ScenesSection({ projectId }: { projectId: string }) {
       ) : (
         <>
           <ul className="space-y-3">
-            {scenes.data.items.map((scene) => {
-              const shootWindow = formatShootWindow(scene.shootDateStart, scene.shootDateEnd)
-              return (
-                <li key={scene.id}>
-                  <Link
-                    to={`/scenes/${scene.id}`}
-                    className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 board-card rounded-lg bg-white p-3 transition hover:border-ink hover:bg-ground focus-visible:outline-2 focus-visible:outline-ink sm:flex sm:pr-5"
-                  >
-                    <Slate number={scene.sceneNumber} />
-                    <span className="min-w-0 flex-1 space-y-1">
-                      <span className="line-clamp-2 text-lg leading-snug font-semibold text-ink group-hover:text-cue-ink sm:line-clamp-1">{sceneLabel(scene)}</span>
-                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-                        {scene.requirements?.settingType && <span className="text-graphite">{scene.requirements.settingType}</span>}
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarDays aria-hidden className="size-3.5" />
-                          {shootWindow ?? 'Not scheduled'}
-                        </span>
-                      </span>
-                    </span>
-                    {/* On a phone the badge sits under the title instead of squeezing it. */}
-                    <span className="col-start-2 sm:col-auto">
-                      <ParseStatusBadge status={scene.parseStatus} />
-                    </span>
-                    <ChevronRight aria-hidden className="hidden size-5 text-subtle transition group-hover:translate-x-0.5 group-hover:text-cue-ink sm:block" />
-                  </Link>
-                </li>
-              )
-            })}
+            {scenes.data.items.map((scene) => (
+              <li key={scene.id}>
+                <SceneRow scene={scene} projectId={projectId} />
+              </li>
+            ))}
           </ul>
           <Pager data={scenes.data} onChange={setPage} label="Scene pages" />
         </>
@@ -179,3 +158,82 @@ function SceneSearch({ current, onSearch }: { current: string; onSearch: (search
     </form>
   )
 }
+
+/** One scene as a slate that opens it, with a ⋯ menu of quick actions beside it (outside the link). */
+function SceneRow({ scene, projectId }: { scene: Scene; projectId: string }) {
+  const canEdit = useCanEdit()
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const shootWindow = formatShootWindow(scene.shootDateStart, scene.shootDateEnd)
+  const analyse = useMutation({
+    mutationFn: () => api.scenes.parse(scene.id),
+    onSuccess: (parsed) => {
+      queryClient.setQueryData(queryKeys.scene(parsed.id), parsed)
+      return queryClient.invalidateQueries({ queryKey: queryKeys.sceneList(projectId) })
+    },
+  })
+  const remove = useMutation({
+    mutationFn: () => api.scenes.remove(scene.id),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: queryKeys.scene(scene.id) })
+      return queryClient.invalidateQueries({ queryKey: queryKeys.sceneList(projectId) })
+    },
+  })
+  const label = sceneLabel(scene)
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Link
+          to={`/scenes/${scene.id}`}
+          className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 board-card rounded-lg bg-white p-3 pr-14 transition hover:border-ink hover:bg-ground focus-visible:outline-2 focus-visible:outline-ink sm:flex sm:pr-16"
+        >
+          <Slate number={scene.sceneNumber} />
+          <span className="min-w-0 flex-1 space-y-1">
+            <span className="line-clamp-2 text-lg leading-snug font-semibold text-ink group-hover:text-cue-ink sm:line-clamp-1">{label}</span>
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+              {scene.requirements?.settingType && <span className="text-graphite">{scene.requirements.settingType}</span>}
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays aria-hidden className="size-3.5" />
+                {shootWindow ?? 'Not scheduled'}
+              </span>
+            </span>
+          </span>
+          {/* On a phone the badge sits under the title instead of squeezing it. */}
+          <span className="col-start-2 sm:col-auto">
+            <ParseStatusBadge status={scene.parseStatus} />
+          </span>
+          <ChevronRight aria-hidden className="hidden size-5 text-subtle transition group-hover:translate-x-0.5 group-hover:text-cue-ink sm:block" />
+        </Link>
+        <ActionMenu
+          label={`Quick actions for ${label}`}
+          className="!absolute top-2.5 right-2.5 sm:top-1/2 sm:right-3 sm:-translate-y-1/2"
+          actions={[
+            { label: 'Open scene', icon: ChevronRight, to: `/scenes/${scene.id}` },
+            { label: 'Analyse with AI', icon: Sparkles, onSelect: () => analyse.mutate(), hidden: !canEdit || scene.parseStatus === 'PARSED' },
+            { label: 'Add a venue by hand', icon: Plus, to: `/scenes/${scene.id}/locations/new`, hidden: !canEdit },
+            { label: 'Compare venues', icon: Columns3, to: `/scenes/${scene.id}/compare` },
+            { label: 'Set shoot dates', icon: CalendarClock, to: `/projects/${projectId}?tab=schedule` },
+            { label: 'Delete scene…', icon: Trash2, danger: true, onSelect: () => setConfirmingDelete(true), hidden: !canEdit },
+          ]}
+        />
+      </div>
+      {analyse.isPending && <Spinner label={`Analysing ${label}`} />}
+      <ErrorAlert error={analyse.error} />
+      {confirmingDelete && (
+        <ConfirmDelete
+          title={`Delete “${scene.title}”?`}
+          confirmLabel="Delete scene"
+          busy={remove.isPending}
+          error={remove.error}
+          onConfirm={() => remove.mutate()}
+          onCancel={() => setConfirmingDelete(false)}
+        >
+          This also deletes the locations scouted for it and their outreach drafts. It cannot be undone.
+        </ConfirmDelete>
+      )}
+    </div>
+  )
+}
+

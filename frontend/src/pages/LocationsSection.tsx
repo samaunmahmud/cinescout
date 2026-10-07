@@ -26,6 +26,8 @@ import { displayHost, safeHttpUrl } from '../lib/url'
 import { VenuePicture } from '../components/VenuePicture'
 import { MapSnapshot } from '../components/MapSnapshot'
 import { useCanEdit } from '../components/projectRole'
+import { ActionMenu } from '../components/ActionMenu'
+import { venueActions } from '../components/venueActions'
 
 /**
  * The scene's candidate venues and the button that scouts for more. `locationArea` is the project's search
@@ -176,6 +178,8 @@ function LocationCard({ location }: { location: Location }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const update = useUpdateLocation(location)
   const sourceUrl = safeHttpUrl(location.sourceUrl)
+  // What a quick action from the ⋯ menu did, or why it could not.
+  const quick = useMutation({ mutationFn: (action: () => Promise<string>) => action() })
 
   const remove = useMutation({
     mutationFn: () => api.locations.remove(location.id),
@@ -229,7 +233,27 @@ function LocationCard({ location }: { location: Location }) {
               <FitLabel score={location.fitScore} />
             </>
           )}
-          <StatusSelect location={location} update={update} />
+          <div className="flex items-center gap-1">
+            <StatusSelect location={location} update={update} />
+            <ActionMenu
+              label={`Quick actions for ${location.name}`}
+              actions={venueActions(location, {
+                canEdit,
+                setStatus: (status) => update.mutate({ status, notes: location.notes }),
+                run: (action) => quick.mutate(action),
+                makeCover: async () => {
+                  await api.covers.add(location.sceneId, location.id, null)
+                  queryClient.invalidateQueries({ queryKey: queryKeys.covers(location.sceneId) })
+                  return `${location.name} is now a cover set for this scene.`
+                },
+                saveToLibrary: async () => {
+                  await api.library.save(location.id)
+                  queryClient.invalidateQueries({ queryKey: queryKeys.libraryList })
+                  return `${location.name} is in your library.`
+                },
+              })}
+            />
+          </div>
         </div>
       </div>
 
@@ -250,7 +274,12 @@ function LocationCard({ location }: { location: Location }) {
       )}
       {location.notes && <p className="border-l-2 border-cue pl-3 font-marker text-[15px] whitespace-pre-line text-graphite">{location.notes}</p>}
 
-      <ErrorAlert error={update.error} />
+      <ErrorAlert error={update.error ?? quick.error} />
+      {quick.isSuccess && (
+        <p role="status" className="text-sm font-semibold text-go-ink">
+          {quick.data}
+        </p>
+      )}
 
       {confirmingDelete ? (
         <ConfirmDelete
