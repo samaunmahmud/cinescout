@@ -196,8 +196,20 @@ settings page) is flagged "Follow up" on its venue's Outreach tab, in the projec
 poster. "Draft follow-up" has the AI write a short chaser as a new draft, from the first email's subject and the day it
 went only (never its text, notes or replies).
 
-The flagging is a scheduled job. Render's free tier sleeps when idle, so besides the app's own hourly timer the job can
-be run through `POST /api/internal/jobs/follow-ups` with the header `X-Job-Secret`, which the daily
+The flagging is a scheduled job, which also alerts the project's owner and editors to each flagged email once.
+
+## Weather watch and alerts
+
+Every morning the weather watch fetches the Open-Meteo forecast at each confirmed venue (with a map position) whose
+scene shoots in the next seven days, and alerts the whole crew to each shoot day where the chance of rain or the day's
+highest wind reaches the project's thresholds (60% and 40 km/h by default, set on the settings page's Weather tab). The
+alert names the scene's cover sets, or says it has none. Each venue and day alerts once; alerts older than 90 days are
+forgotten. Alerts, weather and follow-ups alike, are in the bell at the top of every page, with the unread count.
+
+## Scheduled jobs
+
+Render's free tier sleeps when idle, so besides the app's own timer each job can be run through
+`POST /api/internal/jobs/<name>` (`follow-ups`, `weather-watch`) with the header `X-Job-Secret`, which the daily
 `.github/workflows/jobs.yml` workflow does when the repository has the secrets `CINESCOUT_URL` and `JOBS_SECRET`.
 Running a job twice is harmless.
 
@@ -206,6 +218,8 @@ Running a job twice is harmless.
 | `JOBS_SECRET` | none: the job endpoint answers 404 and only the app's own timer runs the jobs |
 | `JOBS_SCHEDULER` | `true`: also run the jobs on the app's own timer while it is awake |
 | `JOBS_FOLLOW_UPS_CRON` | `0 17 * * * *` (hourly) |
+| `JOBS_WEATHER_WATCH_CRON` | `0 23 6 * * *` (daily, 06:23 UTC) |
+| `JOBS_WEATHER_VENUES` | `40` forecasts a run, the earliest shoot first |
 
 ## Sun direction
 

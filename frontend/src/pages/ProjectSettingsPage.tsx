@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, Copy, Crown, Link2, Mail, Radar, UserPlus, Users } from 'lucide-react'
+import { ChevronLeft, CloudRain, Copy, Crown, Link2, Mail, Radar, UserPlus, Users } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { fieldErrors, isNotFound } from '../api/errors'
@@ -38,12 +38,13 @@ export function ProjectSettingsPage() {
   return <Settings project={project.data} />
 }
 
-type TabKey = 'members' | 'scouting' | 'outreach'
+type TabKey = 'members' | 'scouting' | 'outreach' | 'weather'
 
 const tabs: TabItem<TabKey>[] = [
   { key: 'members', label: 'Members', icon: Users },
   { key: 'scouting', label: 'Scouting', icon: Radar },
   { key: 'outreach', label: 'Outreach', icon: Mail },
+  { key: 'weather', label: 'Weather', icon: CloudRain },
 ]
 
 function Settings({ project }: { project: Project }) {
@@ -69,6 +70,7 @@ function Settings({ project }: { project: Project }) {
         {tab === 'members' && <MembersPanel project={project} />}
         {tab === 'scouting' && <ScoutingPanel project={project} />}
         {tab === 'outreach' && <OutreachPanel project={project} />}
+        {tab === 'weather' && <WeatherPanel project={project} />}
       </Tabs>
     </div>
   )
@@ -163,6 +165,119 @@ function OutreachPanel({ project }: { project: Project }) {
         <p className="text-[15px] text-graphite">{followUpSentence(settings.data.followUpDays)}</p>
       )}
     </Section>
+  )
+}
+
+/** The weather watch's thresholds: from what chance of rain and what wind a shoot day raises an alert. */
+function WeatherPanel({ project }: { project: Project }) {
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const editable = project.role !== 'VIEWER'
+  const settings = useQuery({ queryKey: queryKeys.projectSettings(project.id), queryFn: () => api.projects.settings(project.id) })
+  const save = useMutation({
+    mutationFn: (next: ProjectSettings) => api.projects.setSettings(project.id, next),
+    onSuccess: (stored) => queryClient.setQueryData(queryKeys.projectSettings(project.id), stored),
+  })
+  return (
+    <Section
+      titleId="weather-heading"
+      title="Weather watch"
+      eyebrow="Alerts before a shoot day"
+      icon={CloudRain}
+      description="Every morning CineScout checks the forecast at each confirmed venue shooting in the next seven days, and alerts the crew when rain or wind crosses these thresholds, naming the scene’s cover sets."
+    >
+      {settings.isPending ? (
+        <Spinner label="Loading the settings" />
+      ) : settings.isError ? (
+        <ErrorAlert error={settings.error} onRetry={() => settings.refetch()} />
+      ) : editable ? (
+        <Card className="p-5">
+          <WeatherForm
+            key={`${settings.data.rainAlertPercent}-${settings.data.windAlertKmh}`}
+            initial={settings.data}
+            busy={save.isPending}
+            saved={save.isSuccess}
+            error={save.error}
+            onSubmit={(rainAlertPercent, windAlertKmh) => save.mutate({ ...settings.data, rainAlertPercent, windAlertKmh })}
+          />
+        </Card>
+      ) : (
+        <p className="text-[15px] text-graphite">{weatherSentence(settings.data)}</p>
+      )}
+    </Section>
+  )
+}
+
+function weatherSentence(settings: ProjectSettings): string {
+  return `A shoot day raises an alert from a ${settings.rainAlertPercent}% chance of rain, or wind of ${settings.windAlertKmh} km/h.`
+}
+
+function WeatherForm({
+  initial,
+  busy,
+  saved,
+  error,
+  onSubmit,
+}: {
+  initial: ProjectSettings
+  busy: boolean
+  saved: boolean
+  error: unknown
+  onSubmit: (rainAlertPercent: number, windAlertKmh: number) => void
+}) {
+  const [rain, setRain] = useState(String(initial.rainAlertPercent))
+  const [wind, setWind] = useState(String(initial.windAlertKmh))
+  const rainValue = Number(rain)
+  const windValue = Number(wind)
+  const rainValid = Number.isInteger(rainValue) && rainValue >= 1 && rainValue <= 100
+  const windValid = Number.isInteger(windValue) && windValue >= 5 && windValue <= 200
+  const server = fieldErrors(error)
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    if (rainValid && windValid) onSubmit(rainValue, windValue)
+  }
+
+  return (
+    <form onSubmit={submit} aria-label="Weather watch settings" className="space-y-3" noValidate>
+      {saved && !busy && (
+        <p role="status" className="rounded-lg border-2 border-go-mid bg-go-wash px-3 py-2 text-sm text-go-ink">
+          Saved. {weatherSentence(initial)}
+        </p>
+      )}
+      <ErrorAlert error={error} />
+      <div className="flex flex-wrap gap-4">
+        <TextField
+          label="Chance of rain (%)"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={100}
+          className="max-w-40"
+          value={rain}
+          onChange={(e) => setRain(e.target.value)}
+          hint="From 1 to 100. The default is 60."
+          error={rainValid ? server.rainAlertPercent : 'Enter a whole percentage from 1 to 100.'}
+        />
+        <TextField
+          label="Wind (km/h)"
+          type="number"
+          inputMode="numeric"
+          min={5}
+          max={200}
+          className="max-w-40"
+          value={wind}
+          onChange={(e) => setWind(e.target.value)}
+          hint="From 5 to 200. The default is 40."
+          error={windValid ? server.windAlertKmh : 'Enter a whole speed from 5 to 200 km/h.'}
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button type="submit" busy={busy} disabled={!rainValid || !windValid}>
+          Save
+        </Button>
+      </div>
+    </form>
   )
 }
 

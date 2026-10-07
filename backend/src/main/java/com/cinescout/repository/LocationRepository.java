@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -154,4 +155,16 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
 
         long getScenes();
     }
+
+    /**
+     * The confirmed venues with a position whose scene shoots on any day from {@code first} to {@code last}, in active
+     * projects, each with its scene and project, the earliest shoot first: what the weather watch looks at.
+     */
+    @Query("""
+            select l from Location l join fetch l.scene s join fetch s.project p
+            where p.status = com.cinescout.domain.ProjectStatus.ACTIVE and l.status = com.cinescout.domain.LocationStatus.CONFIRMED
+              and l.latitude is not null and l.longitude is not null
+              and coalesce(s.shootDateStart, s.shootDateEnd) <= :last and coalesce(s.shootDateEnd, s.shootDateStart) >= :first
+            order by coalesce(s.shootDateStart, s.shootDateEnd) asc, l.id asc""")
+    List<Location> findShootingBetween(@Param("first") LocalDate first, @Param("last") LocalDate last, Pageable pageable);
 }

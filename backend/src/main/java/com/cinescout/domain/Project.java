@@ -46,6 +46,14 @@ public class Project extends BaseEntity {
     @Column(name = "follow_up_days", nullable = false)
     private int followUpDays = 5;
 
+    /** The chance of rain, in percent, from which the weather watch raises an alert on a shoot day. */
+    @Column(name = "rain_alert_percent", nullable = false)
+    private int rainAlertPercent = 60;
+
+    /** The highest wind speed, in km/h, from which the weather watch raises an alert on a shoot day. */
+    @Column(name = "wind_alert_kmh", nullable = false)
+    private int windAlertKmh = 40;
+
     protected Project() {
     }
 
@@ -68,6 +76,10 @@ public class Project extends BaseEntity {
     public void setCallSheetToken(String callSheetToken) { this.callSheetToken = callSheetToken; }
     public void setScoutFilters(ScoutFilters scoutFilters) { this.scoutFilters = scoutFilters; }
     public void setFollowUpDays(int followUpDays) { this.followUpDays = followUpDays; }
+    public int getRainAlertPercent() { return rainAlertPercent; }
+    public void setRainAlertPercent(int rainAlertPercent) { this.rainAlertPercent = rainAlertPercent; }
+    public int getWindAlertKmh() { return windAlertKmh; }
+    public void setWindAlertKmh(int windAlertKmh) { this.windAlertKmh = windAlertKmh; }
     public void setDescription(String description) { this.description = description; }
 
     /** Blank means "not set": it is stored as null, which the database constraint requires. */

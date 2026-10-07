@@ -30,7 +30,8 @@ export const problem = (status: number, title: string, detail?: string, extra: R
 
 /**
  * Replaces fetch with routes keyed by "METHOD /path" (query string included). Every request is recorded, in
- * `authRequests` for `/api/auth/*` and in `requests` for everything else; an unrouted one fails the test.
+ * `authRequests` for `/api/auth/*`, `alertRequests` for `/api/alerts*` (the header's bell) and in `requests` for
+ * everything else; an unrouted one fails the test.
  *
  * It also plays the session cookie: `GET /api/auth/me` answers 401 until a login succeeds (or from the start
  * with `loggedIn`), and then the test's own `GET /api/auth/me` route. Unless a test routes them itself,
@@ -43,6 +44,8 @@ export function fakeServer(testRoutes: Record<string, Handler>, { loggedIn = fal
   const routes: Record<string, Handler> = {
     'POST /api/auth/login': (req) => (testRoutes['GET /api/auth/me'] ?? noSession)(req),
     'POST /api/auth/logout': () => new Response(null, { status: 204 }),
+    // The header's alert bell asks on every page; no alerts unless a test says otherwise.
+    'GET /api/alerts/unread-count': () => json({ unread: 0 }),
     ...testRoutes,
   }
   const sessionRoutes: Record<string, Handler> = {
@@ -59,6 +62,7 @@ export function fakeServer(testRoutes: Record<string, Handler>, { loggedIn = fal
   }
   const requests: RecordedRequest[] = []
   const authRequests: RecordedRequest[] = []
+  const alertRequests: RecordedRequest[] = []
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const url = new URL(String(input), 'http://localhost')
     const req: RecordedRequest = {
@@ -67,7 +71,7 @@ export function fakeServer(testRoutes: Record<string, Handler>, { loggedIn = fal
       headers: Object.fromEntries(Object.entries((init.headers ?? {}) as Record<string, string>)),
       body: typeof init.body === 'string' ? JSON.parse(init.body) : undefined,
     }
-    ;(req.path.startsWith('/api/auth/') ? authRequests : requests).push(req)
+    ;(req.path.startsWith('/api/auth/') ? authRequests : req.path.startsWith('/api/alerts') ? alertRequests : requests).push(req)
     const key = `${req.method} ${req.path}`
     const handler = sessionRoutes[key] ?? routes[key]
     if (!handler) {
@@ -77,5 +81,5 @@ export function fakeServer(testRoutes: Record<string, Handler>, { loggedIn = fal
     return handler(req)
   })
   vi.stubGlobal('fetch', fetchMock)
-  return { requests, authRequests, fetchMock }
+  return { requests, authRequests, alertRequests, fetchMock }
 }

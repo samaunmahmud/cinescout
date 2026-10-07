@@ -38,6 +38,12 @@ class JobsConfig {
             run("follow-ups");
         }
 
+        /** Daily: the forecast changes slowly, and each run asks the weather service once a venue. */
+        @Scheduled(cron = "${cinescout.jobs.weather-watch:0 23 6 * * *}", zone = "UTC")
+        void weatherWatch() {
+            run("weather-watch");
+        }
+
         private void run(String name) {
             jobs.stream().filter(job -> job.name().equals(name)).findFirst().ifPresent(job -> {
                 try {

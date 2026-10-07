@@ -6,6 +6,7 @@ import type {
   ActivityKind,
   AddMemberResult,
   Agreement,
+  Alert,
   Availability,
   CoverSet,
   AvailabilityRequest,
@@ -318,6 +319,13 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The PDF, to save. */
       download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
       remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    alerts: {
+      /** Your newest alerts first. */
+      list: (page = 0, size = 10) => call<Page<Alert>>(`/api/alerts?page=${page}&size=${size}`),
+      unreadCount: () => call<{ unread: number }>('/api/alerts/unread-count'),
+      markRead: (id: string) => call<void>(`/api/alerts/${encodeURIComponent(id)}/read`, { method: 'POST' }),
+      markAllRead: () => call<void>('/api/alerts/read-all', { method: 'POST' }),
     },
     covers: {
       /** A scene's cover sets, in the order they were added (at most 5). */

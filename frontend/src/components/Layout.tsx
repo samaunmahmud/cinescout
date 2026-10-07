@@ -1,6 +1,7 @@
 import { BookMarked, Clapperboard, LogOut } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useAuth, useSession } from '../auth/context'
+import { AlertBell } from './AlertBell'
 import { ClapperMark } from './stickers'
 
 /** The name on the office door: a clapperboard and the word, in heavy type. */
@@ -58,6 +59,7 @@ export function Layout() {
             </nav>
           </div>
           <div className="flex items-center gap-2 text-sm">
+            <AlertBell />
             <Link
               to="/account"
               aria-label={`Account: ${user.displayName}`}
@@ -74,7 +76,7 @@ export function Layout() {
               className="inline-flex items-center gap-2 rounded-[10px] border-[1.5px] border-ink-line px-3 py-1.5 font-semibold text-white transition hover:border-fog focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cue"
             >
               <LogOut aria-hidden className="size-4" />
-              Log out
+              <span className="sr-only sm:not-sr-only">Log out</span>
             </button>
           </div>
         </div>

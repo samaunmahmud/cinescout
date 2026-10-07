@@ -506,6 +506,36 @@ export type OutreachFilter = OutreachStatus | 'FOLLOW_UP'
 export interface ProjectSettings {
   /** Days a sent email may go unanswered before it is flagged for a follow-up (1 to 60, default 5). */
   followUpDays: number
+  /** The chance of rain on a shoot day, in percent, from which the weather watch alerts the crew (1 to 100, default 60). */
+  rainAlertPercent: number
+  /** The day's highest wind speed, in km/h, from which the weather watch alerts the crew (5 to 200, default 40). */
+  windAlertKmh: number
+}
+
+export type AlertKind = 'WEATHER' | 'FOLLOW_UP'
+
+/** A cover set named by a weather alert. */
+export interface AlertCover {
+  locationId: string
+  name: string
+  trigger: string | null
+}
+
+/**
+ * An alert for the signed-in person. `payload` holds its facts. WEATHER: scene, venue, day, reasons (RAIN, WIND),
+ * rainChance, rainThreshold, windKmh, gustKmh, windThreshold, covers. FOLLOW_UP: venue, scene, subject, sentAt.
+ */
+export interface Alert {
+  id: string
+  kind: AlertKind
+  projectId: string
+  projectTitle: string
+  sceneId: string | null
+  locationId: string | null
+  draftId: string | null
+  payload: Record<string, unknown>
+  read: boolean
+  createdAt: string
 }
 
 export interface OutreachDraft {

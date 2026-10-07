@@ -29,13 +29,19 @@ public class ProjectSettingsService {
     }
 
     /**
-     * Replaces them as a whole. A new follow-up period counts from the next run of the follow-up job; emails already
-     * flagged stay flagged.
+     * Replaces them, except that a weather threshold left out (null) keeps its value. A new follow-up period counts from
+     * the next run of the follow-up job; emails already flagged stay flagged. New thresholds apply from the next weather watch.
      */
     public Mono<ProjectSettings> set(UUID userId, UUID projectId, ProjectSettings settings) {
         return db.call(() -> {
             Project project = access.project(userId, projectId, ProjectRole.EDITOR);
             project.setFollowUpDays(settings.followUpDays());
+            if (settings.rainAlertPercent() != null) {
+                project.setRainAlertPercent(settings.rainAlertPercent());
+            }
+            if (settings.windAlertKmh() != null) {
+                project.setWindAlertKmh(settings.windAlertKmh());
+            }
             return ProjectSettings.from(projects.saveAndFlush(project));
         });
     }

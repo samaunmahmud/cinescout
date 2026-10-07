@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,4 +32,8 @@ public interface SceneCoverRepository extends JpaRepository<SceneCover, UUID> {
     /** Every cover of a project's scenes, each with its venue, in the order they were added, for the schedule. */
     @Query("select c from SceneCover c join fetch c.location where c.scene.project.id = :projectId order by c.createdAt asc, c.id asc")
     List<SceneCover> findByProject(@Param("projectId") UUID projectId);
+
+    /** The covers of these scenes, each with its venue, in the order they were added. */
+    @Query("select c from SceneCover c join fetch c.location where c.scene.id in :sceneIds order by c.createdAt asc, c.id asc")
+    List<SceneCover> findByScenes(@Param("sceneIds") Collection<UUID> sceneIds);
 }

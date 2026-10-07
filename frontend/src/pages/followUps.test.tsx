@@ -132,7 +132,7 @@ describe('follow-ups', () => {
   })
 
   it('come after the number of days set on the project’s settings page', async () => {
-    let stored: ProjectSettings = { followUpDays: 5 }
+    let stored: ProjectSettings = { followUpDays: 5, rainAlertPercent: 60, windAlertKmh: 40 }
     const { requests } = fakeServer({
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project()),
@@ -156,7 +156,7 @@ describe('follow-ups', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(await screen.findByRole('status')).toHaveTextContent('Saved. An email is flagged for a follow-up after 3 days without an answer.')
-    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ followUpDays: 3 })
+    expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ followUpDays: 3, rainAlertPercent: 60, windAlertKmh: 40 })
   })
 
   it('show a viewer the setting without a form', async () => {
@@ -164,7 +164,7 @@ describe('follow-ups', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/projects/p1': () => json(project({ role: 'VIEWER' })),
       'GET /api/projects/p1/members': () => json({ members: [], invites: [] }),
-      'GET /api/projects/p1/settings': () => json({ followUpDays: 1 }),
+      'GET /api/projects/p1/settings': () => json({ followUpDays: 1, rainAlertPercent: 60, windAlertKmh: 40 }),
     })
     renderApp('/projects/p1/settings?tab=outreach')
     await logIn()
