@@ -22,6 +22,8 @@ import java.time.Duration;
  * @param retryPause           how long to wait before the one second try after the server turned a query away at
  *                             once; see {@code OverpassPlacesClient}
  * @param unitBaseRadius       how far from a venue to look for somewhere to park the trucks, in metres
+ * @param fallbackUrl          a second Overpass server, asked when the first turns a query away at once (a free host's
+ *                             shared address can be refused outright); blank for none
  */
 @Validated
 @ConfigurationProperties("cinescout.logistics.overpass")
@@ -30,6 +32,7 @@ public record OverpassProperties(
         @DefaultValue("25") @Min(5) @Max(180) int serverTimeoutSeconds,
         @DefaultValue("30s") @NotNull Duration timeout,
         @DefaultValue("2s") @NotNull Duration retryPause,
-        @DefaultValue("1000") @Min(200) @Max(3000) int unitBaseRadius
+        @DefaultValue("1000") @Min(200) @Max(3000) int unitBaseRadius,
+        @DefaultValue("https://overpass.openstreetmap.fr") String fallbackUrl
 ) {
 }

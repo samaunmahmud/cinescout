@@ -38,7 +38,7 @@ class OverpassPlacesClientTest {
     private OverpassPlacesClient client() {
         Duration timeout = Duration.ofSeconds(5);
         return new OverpassPlacesClient(ProviderHttp.webClient(WebClient.builder(), api.baseUrl(), timeout, "CineScout-test"),
-                new OverpassProperties(api.baseUrl(), 25, timeout, Duration.ofMillis(10), 1000));
+                new OverpassProperties(api.baseUrl(), 25, timeout, Duration.ofMillis(10), 1000, ""));
     }
 
     private void stub(int status, String body) {
