@@ -1,5 +1,6 @@
 import { ApiError, download, request } from './client'
 import type {
+  PlaceName,
   PermitGuidance,
   BookingFriction,
   Activity,
@@ -331,6 +332,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
     },
     /** Projects, scenes and venues by name across the projects you are on; under 2 characters finds nothing. */
     search: (q: string) => call<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`),
+    /** The neighbourhood, town and country of a spot ("Shoreditch, London, United Kingdom"); 404 when the map has no name. */
+    placeHere: (latitude: number, longitude: number) => call<PlaceName>(`/api/places/here?lat=${latitude}&lng=${longitude}`),
     alerts: {
       /** Your newest alerts first. */
       list: (page = 0, size = 10) => call<Page<Alert>>(`/api/alerts?page=${page}&size=${size}`),

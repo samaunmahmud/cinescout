@@ -128,4 +128,22 @@ class NominatimGeocoderTest {
 
         assertThat(geocoder().areaAt(new GeoPoint(0, 0)).block()).isNull();
     }
+
+    @Test
+    void aSpotIsNamedByItsNeighbourhoodTownAndCountryEachOnce() {
+        api.stubFor(get(urlPathEqualTo("/reverse")).willReturn(aResponse().withHeader("Content-Type", "application/json").withBody("""
+                {"name":"Rivington Street","address":{"road":"Rivington Street","suburb":"Shoreditch","city_district":"London Borough of Hackney",
+                 "city":"London","state":"England","postcode":"EC2A 3QQ","country":"United Kingdom","country_code":"gb"}}""")));
+
+        assertThat(geocoder().placeAt(new GeoPoint(51.526, -0.078)).block()).isEqualTo("Shoreditch, London, United Kingdom");
+        api.verify(getRequestedFor(urlPathEqualTo("/reverse")).withQueryParam("zoom", equalTo("14")));
+    }
+
+    @Test
+    void aTownWithoutNeighbourhoodsIsNamedByItselfAndASpotNobodyKnowsHasNoName() {
+        assertThat(NominatimGeocoder.placeName(new NominatimGeocoder.Place("Hay-on-Wye",
+                java.util.Map.of("town", "Hay-on-Wye", "county", "Powys", "country", "United Kingdom")))).isEqualTo("Hay-on-Wye, United Kingdom");
+        assertThat(NominatimGeocoder.placeName(new NominatimGeocoder.Place(null, java.util.Map.of()))).isNull();
+        assertThat(NominatimGeocoder.placeName(null)).isNull();
+    }
 }

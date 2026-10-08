@@ -6,6 +6,7 @@ import { roundCoordinates } from '../lib/geo'
 import { baseText, parseBase } from '../lib/scoutFilters'
 import type { MapPin } from './map/types'
 import { VenueMap } from './map/VenueMap'
+import { UseMyLocation } from './UseMyLocation'
 import { Button, ErrorAlert, TextField } from './ui'
 
 /**
@@ -97,9 +98,12 @@ export function ScoutFiltersForm({
         />
       </div>
       <div className="space-y-2">
-        <Button variant="ghost" aria-expanded={picking} onClick={() => setPicking(!picking)}>
-          {picking ? 'Hide the map' : 'Pick the base point on a map'}
-        </Button>
+        <div className="flex flex-wrap items-start gap-2">
+          <UseMyLocation label="Search around where I am" onLocate={(here) => setBase(`${here.latitude}, ${here.longitude}`)} />
+          <Button variant="ghost" aria-expanded={picking} onClick={() => setPicking(!picking)}>
+            {picking ? 'Hide the map' : 'Pick the base point on a map'}
+          </Button>
+        </div>
         {picking && (
           <VenueMap
             pins={pin ? [pin] : []}

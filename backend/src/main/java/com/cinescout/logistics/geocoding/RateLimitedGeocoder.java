@@ -37,6 +37,12 @@ public class RateLimitedGeocoder implements Geocoder {
     }
 
     @Override
+    public Mono<String> placeAt(GeoPoint point) {
+        return pacer.pace(() -> delegate.placeAt(point),
+                () -> new LogisticsException(Kind.RATE_LIMITED, "Too many geocoding requests are waiting; try again shortly"));
+    }
+
+    @Override
     public String attribution() {
         return delegate.attribution();
     }

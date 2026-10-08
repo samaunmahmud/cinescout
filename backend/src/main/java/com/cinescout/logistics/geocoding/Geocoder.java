@@ -21,6 +21,14 @@ public interface Geocoder {
         return Mono.empty();
     }
 
+    /**
+     * A short name for where {@code point} is, for a person to read and to use as a project's location area, e.g.
+     * "Shoreditch, London, United Kingdom"; an empty {@code Mono} when the provider does not know the spot.
+     */
+    default Mono<String> placeAt(GeoPoint point) {
+        return Mono.empty();
+    }
+
     /** The credit the data's licence requires wherever a result is shown. */
     String attribution();
 }

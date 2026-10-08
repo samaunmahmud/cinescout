@@ -8,8 +8,9 @@ import { queryKeys } from '../api/queryKeys'
 import type { CreateLocationRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
+import { UseMyLocation } from '../components/UseMyLocation'
 import { sceneLabel } from '../lib/format'
-import { parseCoordinates } from '../lib/geo'
+import { formatCoordinates, parseCoordinates } from '../lib/geo'
 import { blankToNull } from '../lib/text'
 import { safeHttpUrl } from '../lib/url'
 import { NotFoundPage } from './NotFoundPage'
@@ -99,6 +100,10 @@ export function NewLocationPage() {
               error={coordinatesError || undefined}
             />
           </div>
+          <UseMyLocation
+            label="I’m at the venue: use my location"
+            onLocate={(here) => setValues((current) => ({ ...current, coordinates: formatCoordinates(here) }))}
+          />
           <TextArea label="Notes" maxLength={4000} value={values.notes} onChange={set('notes')} error={server.notes} />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => navigate(scenePath)} disabled={create.isPending}>

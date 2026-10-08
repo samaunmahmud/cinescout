@@ -43,6 +43,7 @@ import type { MapPin } from '../components/map/types'
 import { VenueMap } from '../components/map/VenueMap'
 import { VenuePicture } from '../components/VenuePicture'
 import { Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
+import { UseMyLocation } from '../components/UseMyLocation'
 import { sceneLabel } from '../lib/format'
 import { looksLikeEmail } from '../lib/email'
 import { formatCoordinates, osmLink, parseCoordinates, roundCoordinates } from '../lib/geo'
@@ -577,6 +578,7 @@ function Position({ location }: { location: Location }) {
             error={(!parsed.ok ? parsed.error : (server.latitude ?? server.longitude)) || undefined}
             autoFocus
           />
+          <UseMyLocation label="I’m at the venue: use my location" onLocate={(here) => setText(formatCoordinates(here))} />
           <VenueMap
             pins={editedPin ? [editedPin] : []}
             label="Map: click to place the pin"

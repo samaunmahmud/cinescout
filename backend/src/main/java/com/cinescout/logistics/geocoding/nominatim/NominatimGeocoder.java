@@ -100,6 +100,46 @@ public class NominatimGeocoder implements Geocoder {
         }
     }
 
+    /** {@code GET /reverse} at zoom 14, the level of neighbourhoods and small towns. */
+    @Override
+    public Mono<String> placeAt(GeoPoint point) {
+        Mono<String> call = nominatim.get()
+                .uri(uri -> uri.path("/reverse")
+                        .queryParam("lat", point.latitude())
+                        .queryParam("lon", point.longitude())
+                        .queryParam("format", "jsonv2")
+                        .queryParam("zoom", 14)
+                        .queryParam("addressdetails", 1)
+                        .build())
+                .retrieve()
+                .onStatus(HttpStatusCode::isError,
+                        response -> Mono.just(LogisticsException.forStatus(SERVICE, response.statusCode().value())))
+                .bodyToMono(Place.class)
+                .flatMap(place -> Mono.justOrEmpty(placeName(place)));
+        return ProviderHttp.guardTransport(call, SERVICE, props.timeout());
+    }
+
+    /** The neighbourhood, the town or city, and the country, each once: "Shoreditch, London, United Kingdom". */
+    static String placeName(Place place) {
+        if (place == null || place.address() == null || place.address().isEmpty()) {
+            return null;
+        }
+        Map<String, String> address = place.address();
+        List<String> parts = Stream.of(
+                        first(address, "suburb", "neighbourhood", "quarter", "city_district", "borough"),
+                        first(address, "city", "town", "village", "municipality", "county"),
+                        first(address, "country"))
+                .filter(part -> part != null)
+                .distinct()
+                .toList();
+        return parts.isEmpty() ? null : String.join(", ", parts);
+    }
+
+    private static String first(Map<String, String> address, String... keys) {
+        return Stream.of(keys).map(address::get).filter(value -> value != null && !value.isBlank()).map(String::strip)
+                .findFirst().orElse(null);
+    }
+
     @Override
     public String attribution() {
         return "Geocoding by Nominatim, map data © OpenStreetMap contributors (ODbL)";

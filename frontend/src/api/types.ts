@@ -1001,6 +1001,14 @@ export interface Move {
   text: string
 }
 
+/** Where a spot is, in words. */
+export interface PlaceName {
+  name: string
+  latitude: number
+  longitude: number
+  attribution: string
+}
+
 /** What the command palette's search found, a few of each kind. */
 export interface SearchResults {
   projects: { id: string; title: string; locationArea: string | null }[]
