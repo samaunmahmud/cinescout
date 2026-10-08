@@ -11,6 +11,7 @@ import com.cinescout.dto.PageQuery;
 import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.TagCountResponse;
 import com.cinescout.dto.UpdateLibraryVenueRequest;
+import com.cinescout.logistics.GeoPoint;
 import com.cinescout.persistence.BlockingTransactions;
 import com.cinescout.repository.LibraryVenueRepository;
 import com.cinescout.repository.LocationRepository;
@@ -53,9 +54,18 @@ public class LibraryService {
 
     /** Newest first; {@code search} matches the name, address, notes or a tag, {@code tag} keeps one tag. */
     public Mono<PageResponse<LibraryVenueResponse>> list(UUID userId, String search, String tag, PageQuery page) {
+        return list(userId, search, tag, null, page);
+    }
+
+    /** As {@link #list(UUID, String, String, PageQuery)}, but nearest to {@code near} first when it is given. */
+    public Mono<PageResponse<LibraryVenueResponse>> list(UUID userId, String search, String tag, GeoPoint near, PageQuery page) {
         String pattern = search == null || search.isBlank() ? "%" : "%" + likeEscaped(search.strip().toLowerCase(Locale.ROOT)) + "%";
         String wanted = tag == null || tag.isBlank() ? null : tag.strip().toLowerCase(Locale.ROOT);
-        return db.call(() -> PageResponse.from(library.search(userId, pattern, wanted, page.pageable()), LibraryVenueResponse::from));
+        if (near == null) {
+            return db.call(() -> PageResponse.from(library.search(userId, pattern, wanted, page.pageable()), LibraryVenueResponse::from));
+        }
+        return db.call(() -> PageResponse.from(library.searchNear(userId, pattern, wanted, near.latitude(), near.longitude(), page.pageable()),
+                venue -> LibraryVenueResponse.from(venue, near)));
     }
 
     public Mono<List<TagCountResponse>> tags(UUID userId) {

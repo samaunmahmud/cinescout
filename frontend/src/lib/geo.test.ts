@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { osmLink, parseCoordinates } from './geo'
+import { distanceText, osmLink, parseCoordinates } from './geo'
 
 describe('parseCoordinates', () => {
   it('reads the pair as map apps copy it, with a comma or a space', () => {
@@ -29,5 +29,11 @@ describe('osmLink', () => {
     expect(osmLink({ latitude: 40.67447, longitude: -73.963316 })).toBe(
       'https://www.openstreetmap.org/?mlat=40.67447&mlon=-73.963316#map=17/40.67447/-73.963316',
     )
+  })
+})
+
+describe('distanceText', () => {
+  it('reads in metres under a kilometre, to a tenth under ten, whole kilometres beyond', () => {
+    expect([0, 0.04, 0.35, 1, 4.23, 9.96, 38.4].map(distanceText)).toEqual(['10 m', '40 m', '350 m', '1.0 km', '4.2 km', '10 km', '38 km'])
   })
 })

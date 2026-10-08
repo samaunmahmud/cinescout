@@ -62,6 +62,38 @@ describe('my locations', () => {
     await vi.waitFor(() => expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ name: 'Moonlight Diner', tags: ['diner', 'neon'], notes: 'Owner loves film crews' }))
   })
 
+  it('puts the nearest venues first, with how far each is, and goes back to newest first', async () => {
+    vi.stubGlobal('isSecureContext', true)
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: { getCurrentPosition: (ok: PositionCallback) => ok({ coords: { latitude: 40.7, longitude: -73.9 } } as GeolocationPosition) },
+    })
+    const near = saved({ id: 'v2', name: 'Next Door Diner', latitude: 40.701, longitude: -73.9, distanceKm: 0.1 })
+    const far = saved({ id: 'v3', name: 'Far Hall', latitude: 40.8, longitude: -73.95, distanceKm: 12.4 })
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/library?page=0&size=24': () => json(pageOf([far, saved(), near])),
+      'GET /api/library?nearLat=40.7&nearLng=-73.9&page=0&size=24': () => json(pageOf([near, far, saved()])),
+      'GET /api/library/tags': () => json([]),
+    })
+    renderApp('/library')
+    const user = await logIn()
+    await screen.findByRole('list', { name: 'Your locations' })
+
+    await user.click(screen.getByRole('button', { name: 'Nearest to me first' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Nearest to you first')
+    const list = screen.getByRole('list', { name: 'Your locations' })
+    expect(within(list).getAllByRole('heading').map((h) => h.textContent)).toEqual(['Next Door Diner', 'Far Hall', 'Moonlight Diner'])
+    expect(within(list).getByText('100 m from you')).toBeInTheDocument()
+    expect(within(list).getByText('12 km from you')).toBeInTheDocument()
+    expect(requests.some((r) => r.path === '/api/library?nearLat=40.7&nearLng=-73.9&page=0&size=24')).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Newest first instead' }))
+    expect(await screen.findByRole('button', { name: 'Nearest to me first' })).toBeInTheDocument()
+    vi.unstubAllGlobals()
+  })
+
   it('says how to fill an empty library', async () => {
     fakeServer({
       'GET /api/auth/me': () => json(ada),

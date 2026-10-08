@@ -1,3 +1,4 @@
+import type { Coordinates } from '../lib/geo'
 import { ApiError, download, request } from './client'
 import type {
   PlaceName,
@@ -210,11 +211,18 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<Location>(`/api/locations/${encodeURIComponent(locationId)}/cover`, { method: 'PUT', body: { photoId } }),
     },
     library: {
-      /** Newest first; `search` matches the name, address, notes or a tag; `tag` keeps one tag. */
-      list: (search: string, tag: string | null, page = 0) => {
+      /**
+       * Newest first, or nearest to `near` first (each then carries `distanceKm`); `search` matches the name, address,
+       * notes or a tag; `tag` keeps one tag.
+       */
+      list: (search: string, tag: string | null, page = 0, near: Coordinates | null = null) => {
         const query = new URLSearchParams()
         if (search.trim()) query.set('q', search.trim())
         if (tag) query.set('tag', tag)
+        if (near) {
+          query.set('nearLat', String(near.latitude))
+          query.set('nearLng', String(near.longitude))
+        }
         query.set('page', String(page))
         query.set('size', String(PAGE_SIZE))
         return call<Page<LibraryVenue>>(`/api/library?${query.toString().replace(/\+/g, '%20')}`)

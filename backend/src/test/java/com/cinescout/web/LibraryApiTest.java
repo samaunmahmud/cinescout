@@ -145,4 +145,35 @@ class LibraryApiTest extends ApiTest {
         outsider.client().post().uri("/api/library").bodyValue(Map.of("locationId", diner)).exchange().expectStatus().isNotFound();
         outsider.client().post().uri("/api/library").bodyValue(Map.of("locationId", UUID.randomUUID())).exchange().expectStatus().isNotFound();
     }
+
+    @Test
+    void nearMeListsTheNearestFirstWithItsDistanceAndUnplacedVenuesLast() {
+        Account ada = register("Ada");
+        String project = project(ada);
+        Map<String, double[]> spots = new java.util.LinkedHashMap<>();
+        spots.put("Far Hall", new double[] {40.80, -73.95});    // about 11 km north
+        spots.put("Next Door Diner", new double[] {40.701, -73.9});
+        spots.put("Somewhere Bar", null);
+        spots.put("Mid Loft", new double[] {40.73, -73.9});     // about 3.3 km
+        spots.forEach((name, spot) -> {
+            String saved = json(ada.client().post().uri("/api/library").bodyValue(Map.of("locationId", venue(ada, scene(ada, project), name, "https://x.example/")))
+                    .exchange().expectStatus().isCreated()).path("id").asText();
+            jdbc.update("UPDATE library_venues SET latitude = ?, longitude = ? WHERE id = ?::uuid",
+                    spot == null ? null : spot[0], spot == null ? null : spot[1], saved);
+        });
+
+        JsonNode near = json(ada.client().get().uri("/api/library?nearLat=40.7&nearLng=-73.9").exchange().expectStatus().isOk());
+
+        assertThat(names(near)).containsExactly("Next Door Diner", "Mid Loft", "Far Hall", "Somewhere Bar");
+        assertThat(near.path("items").get(0).path("distanceKm").asDouble()).isEqualTo(0.1);
+        assertThat(near.path("items").get(1).path("distanceKm").asDouble()).isBetween(3.2, 3.5);
+        assertThat(near.path("items").get(3).path("distanceKm").isNull()).isTrue();
+        assertThat(names(json(ada.client().get().uri("/api/library?nearLat=40.7&nearLng=-73.9&q=loft").exchange().expectStatus().isOk())))
+                .containsExactly("Mid Loft");
+        assertThat(json(ada.client().get().uri("/api/library").exchange().expectStatus().isOk()).path("items").get(0).path("distanceKm").isNull())
+                .isTrue();
+
+        ada.client().get().uri("/api/library?nearLat=40.7").exchange().expectStatus().isBadRequest();
+        ada.client().get().uri("/api/library?nearLat=95&nearLng=0").exchange().expectStatus().isBadRequest();
+    }
 }

@@ -660,6 +660,8 @@ export interface LibraryVenue {
   notes: string | null
   createdAt: string
   updatedAt: string
+  /** How far from the point the list was sorted by, when it was and the venue has a position. */
+  distanceKm?: number | null
 }
 
 export interface TagCount {

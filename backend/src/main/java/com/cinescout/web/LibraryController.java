@@ -8,15 +8,20 @@ import com.cinescout.dto.PageResponse;
 import com.cinescout.dto.SaveToLibraryRequest;
 import com.cinescout.dto.TagCountResponse;
 import com.cinescout.dto.UpdateLibraryVenueRequest;
+import com.cinescout.logistics.GeoPoint;
 import com.cinescout.security.AuthenticatedUser;
+import com.cinescout.service.InvalidRequestException;
 import com.cinescout.service.LibraryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +37,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@Validated
 @Tag(name = "Location library", description = "Each user's own saved venues, to reuse in any scene without scouting again.")
 class LibraryController {
 
@@ -42,12 +48,19 @@ class LibraryController {
     }
 
     @Operation(summary = "List the user's library",
-            description = "Newest first. `q` matches the name, address, notes or a tag; `tag` keeps the venues with that tag.")
+            description = "Newest first, or nearest first when `nearLat` and `nearLng` are given (each venue then carries "
+                    + "`distanceKm`; venues without a position come last). `q` matches the name, address, notes or a tag; "
+                    + "`tag` keeps the venues with that tag.")
     @GetMapping("/api/library")
     Mono<PageResponse<LibraryVenueResponse>> list(@AuthenticationPrincipal AuthenticatedUser user,
                                                   @RequestParam(required = false) String q, @RequestParam(required = false) String tag,
+                                                  @RequestParam(required = false) @DecimalMin("-90") @DecimalMax("90") Double nearLat,
+                                                  @RequestParam(required = false) @DecimalMin("-180") @DecimalMax("180") Double nearLng,
                                                   @Valid @ParameterObject PageQuery page) {
-        return library.list(user.id(), q, tag, page);
+        if ((nearLat == null) != (nearLng == null)) {
+            throw new InvalidRequestException("nearLat", "nearLat and nearLng must be given together");
+        }
+        return library.list(user.id(), q, tag, nearLat == null ? null : new GeoPoint(nearLat, nearLng), page);
     }
 
     @Operation(summary = "List the tags in the user's library", description = "Most used first, with how many venues carry each; at most 100.")

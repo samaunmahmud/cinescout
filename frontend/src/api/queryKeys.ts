@@ -40,7 +40,7 @@ export const queryKeys = {
   agreements: (locationId: string) => ['agreements', locationId] as const,
   permit: (locationId: string, latitude: number | null, longitude: number | null) => ['permit', locationId, latitude, longitude] as const,
   libraryList: ['library', 'list'] as const,
-  libraryPage: (search: string, tag: string | null, page: number) => ['library', 'list', search, tag, page] as const,
+  libraryPage: (search: string, tag: string | null, page: number, near: string | null = null) => ['library', 'list', search, tag, page, near] as const,
   libraryTags: ['library', 'tags'] as const,
   commentList: (locationId: string) => ['comments', locationId] as const,
   commentPage: (locationId: string, page: number) => ['comments', locationId, page] as const,

@@ -39,3 +39,19 @@ export function formatCoordinates({ latitude, longitude }: Coordinates): string 
 export function osmLink({ latitude, longitude }: Coordinates): string {
   return `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=17/${latitude}/${longitude}`
 }
+
+/** "350 m", "4.2 km", "38 km". */
+export function distanceText(km: number): string {
+  if (km < 1) return `${Math.max(10, Math.round((km * 1000) / 10) * 10)} m`
+  const tenths = Math.round(km * 10) / 10
+  return tenths < 10 ? `${tenths.toFixed(1)} km` : `${Math.round(km)} km`
+}
+
+/** Great-circle distance between two spots, in kilometres. */
+export function distanceKm(a: Coordinates, b: Coordinates): number {
+  const rad = Math.PI / 180
+  const dLat = (b.latitude - a.latitude) * rad
+  const dLng = (b.longitude - a.longitude) * rad
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.latitude * rad) * Math.cos(b.latitude * rad) * Math.sin(dLng / 2) ** 2
+  return 2 * 6371.0088 * Math.asin(Math.min(1, Math.sqrt(h)))
+}

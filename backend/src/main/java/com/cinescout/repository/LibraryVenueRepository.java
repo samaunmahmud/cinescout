@@ -37,6 +37,30 @@ public interface LibraryVenueRepository extends JpaRepository<LibraryVenue, UUID
             nativeQuery = true)
     Page<LibraryVenue> search(@Param("ownerId") UUID ownerId, @Param("search") String search, @Param("tag") String tag, Pageable pageable);
 
+    /**
+     * As {@link #search}, nearest to ({@code lat}, {@code lng}) first by great-circle distance; venues without a
+     * position come last, newest first.
+     */
+    @Query(value = """
+            select * from library_venues v
+            where v.owner_id = :ownerId
+              and (lower(v.name) like :search or lower(coalesce(v.address, '')) like :search or lower(coalesce(v.notes, '')) like :search
+                   or exists (select 1 from jsonb_array_elements_text(v.tags) t where lower(t) like :search))
+              and (cast(:tag as text) is null or exists (select 1 from jsonb_array_elements_text(v.tags) t where lower(t) = cast(:tag as text)))
+            order by (v.latitude is null), 2 * 6371008.8 * asin(least(1, sqrt(
+                       power(sin(radians(v.latitude - :lat) / 2), 2)
+                       + cos(radians(:lat)) * cos(radians(v.latitude)) * power(sin(radians(v.longitude - :lng) / 2), 2)))),
+                     v.created_at desc, v.id desc""",
+            countQuery = """
+            select count(*) from library_venues v
+            where v.owner_id = :ownerId
+              and (lower(v.name) like :search or lower(coalesce(v.address, '')) like :search or lower(coalesce(v.notes, '')) like :search
+                   or exists (select 1 from jsonb_array_elements_text(v.tags) t where lower(t) like :search))
+              and (cast(:tag as text) is null or exists (select 1 from jsonb_array_elements_text(v.tags) t where lower(t) = cast(:tag as text)))""",
+            nativeQuery = true)
+    Page<LibraryVenue> searchNear(@Param("ownerId") UUID ownerId, @Param("search") String search, @Param("tag") String tag,
+                                  @Param("lat") double lat, @Param("lng") double lng, Pageable pageable);
+
     /** Each tag the owner uses (as first written), with how many venues carry it, most used first. */
     @Query(value = """
             select min(t) as tag, count(*) as venues from library_venues v, jsonb_array_elements_text(v.tags) t

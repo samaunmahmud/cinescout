@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, MapPin as PinIcon, Search, Tag, X } from 'lucide-react'
+import { BookMarked, Navigation, MapPin as PinIcon, Search, Tag, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { queryKeys } from '../api/queryKeys'
 import type { LibraryVenue } from '../api/types'
@@ -11,6 +11,8 @@ import { Pager } from '../components/Pager'
 import { EmptyState, Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner, TextArea, TextField } from '../components/ui'
 import { VenuePicture } from '../components/VenuePicture'
+import { UseMyLocation } from '../components/UseMyLocation'
+import { distanceText, formatCoordinates, type Coordinates } from '../lib/geo'
 import { usePageTitle } from '../lib/usePageTitle'
 
 /** The user's own library of venues: search it, filter it by tag, tag and annotate each one. */
@@ -21,6 +23,7 @@ export function LibraryPage() {
   const [search, setSearch] = useState('')
   const [tag, setTag] = useState<string | null>(null)
   const [page, setPage] = useState(0)
+  const [near, setNear] = useState<Coordinates | null>(null)
   // Search as the user pauses typing, not on every key.
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,7 +32,10 @@ export function LibraryPage() {
     }, 300)
     return () => clearTimeout(timer)
   }, [typed])
-  const venues = useQuery({ queryKey: queryKeys.libraryPage(search, tag, page), queryFn: () => api.library.list(search, tag, page) })
+  const venues = useQuery({
+    queryKey: queryKeys.libraryPage(search, tag, page, near && formatCoordinates(near)),
+    queryFn: () => api.library.list(search, tag, page, near),
+  })
   const tags = useQuery({ queryKey: queryKeys.libraryTags, queryFn: () => api.library.tags() })
 
   return (
@@ -46,6 +52,33 @@ export function LibraryPage() {
         <div className="relative max-w-md">
           <Search aria-hidden className="pointer-events-none absolute top-[2.6rem] left-3 size-4 text-muted" />
           <TextField label="Search your locations" type="search" value={typed} onChange={(e) => setTyped(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {near ? (
+            <>
+              <p role="status" className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                <Navigation aria-hidden className="size-4 text-cue-ink" />
+                Nearest to you first
+              </p>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setNear(null)
+                  setPage(0)
+                }}
+              >
+                Newest first instead
+              </Button>
+            </>
+          ) : (
+            <UseMyLocation
+              label="Nearest to me first"
+              onLocate={(here) => {
+                setNear(here)
+                setPage(0)
+              }}
+            />
+          )}
         </div>
         {tags.data && tags.data.length > 0 && (
           <div role="group" aria-label="Filter by tag" className="flex flex-wrap gap-2">
@@ -129,6 +162,7 @@ function LibraryCard({ venue }: { venue: LibraryVenue }) {
             {venue.name}
           </h2>
           {venue.address && <p className="text-sm text-muted">{venue.address}</p>}
+          {venue.distanceKm != null && <p className="text-sm font-semibold text-cue-ink">{distanceText(venue.distanceKm)} from you</p>}
         </div>
         <div className="flex flex-wrap gap-2">
           <LocationBadges location={{ bookingFriction: venue.bookingFriction, fitScore: 0 }} />
