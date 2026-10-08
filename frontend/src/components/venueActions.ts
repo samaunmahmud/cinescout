@@ -1,4 +1,4 @@
-import { BookmarkPlus, CheckCircle2, Columns3, Copy, ExternalLink, Mail, Star, Umbrella, XCircle } from 'lucide-react'
+import { BookmarkPlus, CheckCircle2, Columns3, Copy, ExternalLink, Mail, Smartphone, Star, Umbrella, XCircle } from 'lucide-react'
 import type { Location, LocationStatus } from '../api/types'
 import type { MenuAction } from './ActionMenu'
 
@@ -40,6 +40,7 @@ export function venueActions(
     { label: 'Pass on it', icon: XCircle, onSelect: () => setStatus('REJECTED'), hidden: !canEdit || location.status === 'REJECTED' },
     { label: 'Make it a cover set', icon: Umbrella, onSelect: () => run(makeCover), hidden: !canEdit || location.status === 'CONFIRMED' },
     { label: 'Draft an email', icon: Mail, to: `/locations/${location.id}?tab=outreach`, hidden: !canEdit },
+    { label: 'Recce mode', icon: Smartphone, to: `/locations/${location.id}/recce`, hidden: !canEdit },
     { label: 'Save to my library', icon: BookmarkPlus, onSelect: () => run(saveToLibrary) },
     {
       label: 'Copy address',

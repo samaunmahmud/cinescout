@@ -35,6 +35,7 @@ describe('quick actions on a venue card', () => {
       'Pass on it',
       'Make it a cover set',
       'Draft an email',
+      'Recce mode',
       'Save to my library',
       'Copy address',
       'Open in Google Maps (opens in a new tab)',

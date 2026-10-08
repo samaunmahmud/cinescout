@@ -46,6 +46,7 @@ export const routes: RouteObject[] = [
           { path: '/scenes/:sceneId/locations/new', lazy: lazyPage(() => import('./pages/NewLocationPage').then((m) => ({ default: m.NewLocationPage }))) },
           { path: '/scenes/:sceneId/compare', lazy: lazyPage(() => import('./pages/ComparePage').then((m) => ({ default: m.ComparePage }))) },
           { path: '/locations/:locationId', lazy: lazyPage(() => import('./pages/LocationPage').then((m) => ({ default: m.LocationPage }))) },
+          { path: '/locations/:locationId/recce', lazy: lazyPage(() => import('./pages/RecceModePage').then((m) => ({ default: m.RecceModePage }))) },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

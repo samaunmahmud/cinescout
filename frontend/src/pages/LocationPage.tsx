@@ -11,30 +11,7 @@ import { DirectorsCall } from '../components/DirectorsCall'
 import { SunCompass } from '../components/SunCompass'
 import { SaveToLibrary } from '../components/SaveToLibrary'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
-import {
-  Banknote,
-  ChevronLeft,
-  Clapperboard,
-  ClipboardCheck,
-  Contact as Contact2,
-  Crosshair,
-  ExternalLink,
-  Gauge,
-  Gavel,
-  KeyRound,
-  LayoutGrid,
-  Mail,
-  MapPin as PinIcon,
-  MapPinned,
-  MessagesSquare,
-  NotebookPen,
-  Phone,
-  Quote,
-  Sparkles,
-  Sun,
-  TriangleAlert,
-  UserRound,
-} from 'lucide-react'
+import { Banknote, ChevronLeft, Clapperboard, ClipboardCheck, Contact as Contact2, Crosshair, ExternalLink, Gauge, Gavel, KeyRound, LayoutGrid, Mail, MapPin as PinIcon, MapPinned, MessagesSquare, NotebookPen, Phone, Quote, Smartphone, Sparkles, Sun, TriangleAlert, UserRound } from 'lucide-react'
 import { FitLabel, FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
 import { Stamp } from '../components/stickers'
 import { Eyebrow, Fact, Section, Tabs, type TabItem } from '../components/surfaces'
@@ -174,6 +151,15 @@ function LocationDetails({ location }: { location: Location }) {
             <StatusSelect location={location} update={update} />
             {location.status === 'REJECTED' && location.rejectionReason && (
               <span className="font-marker text-[15px] text-stop-ink">Passed: {location.rejectionReason}</span>
+            )}
+            {canEdit && (
+              <Link
+                to={`/locations/${location.id}/recce`}
+                className="inline-flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-4 py-2 text-sm font-bold text-ink shadow-[0_3px_0_var(--color-ink)] hover:bg-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                <Smartphone aria-hidden className="size-4" />
+                Recce mode
+              </Link>
             )}
             <SaveToLibrary locationId={location.id} />
             {canEdit && (

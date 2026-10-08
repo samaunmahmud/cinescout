@@ -21,14 +21,16 @@ interface PinSuggestion {
 
 /**
  * Photos from the recce: added by the crew (HEIC as JPEG, see `preparePhoto`), shown as a gallery, one picked
- * for the venue's polaroid. A photo that says where it was taken can place a venue that has no pin yet.
+ * for the venue's polaroid. A photo that says where it was taken can place a venue that has no pin yet. With
+ * `camera`, a "Take a photo" button opens the phone's camera straight away (recce mode).
  */
-export function PhotosSection({ location }: { location: Location }) {
+export function PhotosSection({ location, camera = false }: { location: Location; camera?: boolean }) {
   const { api } = useSession()
   const queryClient = useQueryClient()
   const store = useStoreLocation()
   const canEdit = useCanEdit()
   const inputId = useId()
+  const cameraId = useId()
   const photos = useQuery({ queryKey: queryKeys.photos(location.id), queryFn: () => api.photos.list(location.id) })
   const [progress, setProgress] = useState<string | null>(null)
   const [failures, setFailures] = useState<string[]>([])
@@ -88,6 +90,26 @@ export function PhotosSection({ location }: { location: Location }) {
               disabled={progress !== null}
               className="peer sr-only"
             />
+            {camera && (
+              <>
+                <input
+                  id={cameraId}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  capture="environment"
+                  onChange={upload}
+                  disabled={progress !== null}
+                  className="peer/camera sr-only"
+                />
+                <label
+                  htmlFor={cameraId}
+                  className="btn-cue inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold peer-focus-visible/camera:ring-4 peer-focus-visible/camera:ring-cue/40 peer-disabled/camera:cursor-wait peer-disabled/camera:opacity-60"
+                >
+                  <Camera aria-hidden className="size-4" />
+                  Take a photo
+                </label>
+              </>
+            )}
             <label
               htmlFor={inputId}
               className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-ink bg-white px-4 py-2 text-sm font-bold text-ink shadow-[0_3px_0_var(--color-ink)] peer-focus-visible:ring-4 peer-focus-visible:ring-cue/40 peer-disabled:cursor-wait peer-disabled:opacity-60"
