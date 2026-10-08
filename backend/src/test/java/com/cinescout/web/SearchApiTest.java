@@ -43,6 +43,8 @@ class SearchApiTest extends ApiTest {
 
         assertThat(search(ada, "d").path("venues")).isEmpty(); // too short
         assertThat(search(ada, "50%").path("venues")).isEmpty(); // % is not a wildcard
+        ada.client().get().uri(uri -> uri.path("/api/search").queryParam("q", "x".repeat(101)).build()).exchange()
+                .expectStatus().isBadRequest().expectBody().jsonPath("$.errors[0].field").isEqualTo("q");
         web.get().uri("/api/search?q=dock").exchange().expectStatus().isUnauthorized();
     }
 }

@@ -30,6 +30,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
+
 import java.util.List;
 import java.util.Map;
 
@@ -100,6 +103,30 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Validation failed");
         problem.setProperty("errors", List.of(Map.of("field", e.field(), "message", e.getMessage())));
         return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+    }
+
+    /**
+     * A query or path parameter outside its constraints ({@code ?lat=91}, a search over 100 characters), caught by
+     * method validation on a {@code @Validated} controller. Shaped like any other validation failure, named by the
+     * parameter, never with the rejected value.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    ResponseEntity<ProblemDetail> constraintViolated(ConstraintViolationException e) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request is invalid");
+        problem.setTitle("Validation failed");
+        problem.setProperty("errors", e.getConstraintViolations().stream()
+                .map(violation -> Map.of("field", parameterName(violation.getPropertyPath()), "message", violation.getMessage()))
+                .toList());
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+    }
+
+    /** The last node of "here.lat": the parameter itself. */
+    private static String parameterName(Path path) {
+        String name = "";
+        for (Path.Node node : path) {
+            name = node.getName() == null ? name : node.getName();
+        }
+        return name;
     }
 
     /** A body or an uploaded part over its limit (a photo over 10 MB). */
