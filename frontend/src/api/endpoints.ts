@@ -29,6 +29,7 @@ import type {
   LoginRequest,
   ManualReplyRequest,
   Location,
+  LocationSort,
   LocationStatus,
   LocationVideos,
   LogisticsReport,
@@ -271,8 +272,10 @@ export function createApi(onUnauthorized: () => void = () => {}) {
     },
     locations: {
       /** Best fit first; venues added by hand (no score) last. */
-      list: (sceneId: string, page = 0) =>
-        call<Page<Location>>(`/api/scenes/${encodeURIComponent(sceneId)}/locations?${pageQuery(page)}`),
+      list: (sceneId: string, page = 0, sort: LocationSort = 'FIT', status: LocationStatus | null = null) =>
+        call<Page<Location>>(
+          `/api/scenes/${encodeURIComponent(sceneId)}/locations?${sort !== 'FIT' ? `sort=${sort}&` : ''}${status ? `status=${status}&` : ''}${pageQuery(page)}`,
+        ),
       /** The scene's best 100 candidates in one go, best fit first, for comparing them side by side. */
       listTop: (sceneId: string) => call<Page<Location>>(`/api/scenes/${encodeURIComponent(sceneId)}/locations?page=0&size=100`),
       /** Across the project's scenes, in script order and best fit first within a scene; `status` null means all. */

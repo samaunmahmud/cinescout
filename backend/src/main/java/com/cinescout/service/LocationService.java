@@ -24,6 +24,10 @@ import com.cinescout.repository.SceneRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.cinescout.domain.LocationSort;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -57,10 +61,38 @@ public class LocationService {
 
     /** Best fit first; venues without an assessment (added by hand) come last. */
     public Mono<PageResponse<LocationResponse>> list(UUID userId, UUID sceneId, PageQuery page) {
+        return list(userId, sceneId, page, null, null);
+    }
+
+    /**
+     * A scene's locations in the order asked for (null: best fit first), perhaps only those in one status (null: all).
+     * Ties fall back to the oldest first, then the id, so a page boundary never shuffles.
+     */
+    public Mono<PageResponse<LocationResponse>> list(UUID userId, UUID sceneId, PageQuery page, LocationSort sort, LocationStatus status) {
         return db.call(() -> {
             access.scene(userId, sceneId, ProjectRole.VIEWER);
-            return PageResponse.from(locations.findVisibleByScene(sceneId, userId, page.pageable()), LocationResponse::from);
+            if ((sort == null || sort == LocationSort.FIT) && status == null) {
+                return PageResponse.from(locations.findVisibleByScene(sceneId, userId, page.pageable()), LocationResponse::from);
+            }
+            Pageable sorted = PageRequest.of(page.pageable().getPageNumber(), page.pageable().getPageSize(), order(sort));
+            return PageResponse.from(locations.findVisibleBySceneSorted(sceneId, userId, status, sorted), LocationResponse::from);
         });
+    }
+
+    static Sort order(LocationSort sort) {
+        Sort ties = JpaSort.unsafe(Sort.Direction.ASC, "l.createdAt", "l.id");
+        return switch (sort == null ? LocationSort.FIT : sort) {
+            case FIT -> JpaSort.unsafe(Sort.Direction.DESC, "coalesce(l.fitScore, -1)").and(ties);
+            case NAME -> JpaSort.unsafe(Sort.Direction.ASC, "lower(l.name)").and(ties);
+            case NEWEST -> JpaSort.unsafe(Sort.Direction.DESC, "l.createdAt", "l.id");
+            // Wrapped in coalesce: Spring Data prefixes the alias to a bare expression, not to a function call.
+            case STATUS -> JpaSort.unsafe(Sort.Direction.ASC, """
+                    coalesce(case l.status when com.cinescout.domain.LocationStatus.CONFIRMED then 0
+                                  when com.cinescout.domain.LocationStatus.CONTACTED then 1
+                                  when com.cinescout.domain.LocationStatus.SHORTLISTED then 2
+                                  when com.cinescout.domain.LocationStatus.SUGGESTED then 3 else 4 end, 4)""")
+                    .and(JpaSort.unsafe(Sort.Direction.DESC, "coalesce(l.fitScore, -1)")).and(ties);
+        };
     }
 
     /**

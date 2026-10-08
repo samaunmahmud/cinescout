@@ -32,6 +32,21 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     Page<Location> findVisibleByScene(@Param("sceneId") UUID sceneId, @Param("userId") UUID userId, Pageable pageable);
 
     /**
+     * A scene's locations, perhaps only those in one status ({@code status} null for all), in the order the pageable's
+     * sort gives (see {@code LocationService.order}).
+     */
+    @Query(value = """
+            select l from Location l join l.scene s
+            where s.id = :sceneId and exists (select m.id from ProjectMember m where m.project = s.project and m.user.id = :userId)
+              and (:status is null or l.status = :status)""",
+            countQuery = """
+            select count(l) from Location l where l.scene.id = :sceneId
+              and exists (select m.id from ProjectMember m where m.project = l.scene.project and m.user.id = :userId)
+              and (:status is null or l.status = :status)""")
+    Page<Location> findVisibleBySceneSorted(@Param("sceneId") UUID sceneId, @Param("userId") UUID userId,
+                                            @Param("status") LocationStatus status, Pageable pageable);
+
+    /**
      * The venues a director link to a whole project shows: those in {@code statuses} (the shortlist and beyond),
      * scene by scene in script order and best fit first. No user check: the link's token is the permission, so
      * callers check that first.

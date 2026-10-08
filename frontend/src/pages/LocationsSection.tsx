@@ -28,6 +28,9 @@ import { MapSnapshot } from '../components/MapSnapshot'
 import { useCanEdit } from '../components/projectRole'
 import { ActionMenu } from '../components/ActionMenu'
 import { venueActions } from '../components/venueActions'
+import { ListControls } from '../components/ListControls'
+import { useVenueListView } from '../components/venueListView'
+import { statusLabels } from '../lib/status'
 
 /**
  * The scene's candidate venues and the button that scouts for more. `locationArea` is the project's search
@@ -38,9 +41,10 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
   const { api } = useSession()
   const queryClient = useQueryClient()
   const [page, setPage] = usePageParam()
+  const listView = useVenueListView()
   const locations = useQuery({
-    queryKey: queryKeys.locationPage(scene.id, page),
-    queryFn: () => api.locations.list(scene.id, page),
+    queryKey: queryKeys.locationPage(scene.id, page, listView.sort, listView.status),
+    queryFn: () => api.locations.list(scene.id, page, listView.sort, listView.status),
     placeholderData: previousPageOf<Page<Location>>(queryKeys.locationList(scene.id)),
   })
   useStayInRange(locations.data, setPage)
@@ -129,7 +133,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         <Spinner label="Loading locations" />
       ) : locations.isError ? (
         <ErrorAlert error={locations.error} onRetry={() => locations.refetch()} />
-      ) : locations.data.items.length === 0 ? (
+      ) : locations.data.items.length === 0 && listView.status === null ? (
         !scout.isPending && (
           <EmptyState icon={Radar}>
             No locations yet. Scouting searches the web for real venues that suit the scene and rates how well each one fits.
@@ -137,14 +141,34 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         )
       ) : (
         <>
-          <LocationsMap locations={locations.data.items} paged={locations.data.totalPages > 1} />
-          <ul aria-label="Candidate locations" className="space-y-3">
-            {locations.data.items.map((location) => (
-              <li key={location.id}>
-                <LocationCard location={location} />
-              </li>
-            ))}
-          </ul>
+          <ListControls state={listView} />
+          {locations.data.items.length === 0 ? (
+            <p className="rounded-lg border-2 border-dashed border-line px-4 py-6 text-center text-sm text-muted">
+              No venue here is {listView.status === 'REJECTED' ? 'passed on' : statusLabels[listView.status!].toLowerCase()}.{' '}
+              <button type="button" onClick={() => listView.setStatus(null)} className="font-semibold text-cue-ink underline">
+                Show all
+              </button>
+            </p>
+          ) : (
+            <LocationsMap locations={locations.data.items} paged={locations.data.totalPages > 1} />
+          )}
+          {listView.view === 'list' ? (
+            <ul aria-label="Candidate locations" className="divide-y divide-line-soft overflow-visible board-card rounded-lg bg-white">
+              {locations.data.items.map((location) => (
+                <li key={location.id}>
+                  <LocationRow location={location} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul aria-label="Candidate locations" className="space-y-3">
+              {locations.data.items.map((location) => (
+                <li key={location.id}>
+                  <LocationCard location={location} />
+                </li>
+              ))}
+            </ul>
+          )}
           <Pager data={locations.data} onChange={setPage} label="Location pages" />
           <DirectorLinkPanel scope={{ kind: 'scene', id: scene.id }} />
         </>
@@ -171,15 +195,77 @@ function LocationsMap({ locations, paged }: { locations: Location[]; paged: bool
   )
 }
 
+/** A venue's status control and its ⋯ quick actions, with what the last quick action did (or why it could not). */
+function useVenueMenu(location: Location) {
+  const canEdit = useCanEdit()
+  const { api } = useSession()
+  const queryClient = useQueryClient()
+  const update = useUpdateLocation(location)
+  const quick = useMutation({ mutationFn: (action: () => Promise<string>) => action() })
+  const actions = venueActions(location, {
+    canEdit,
+    setStatus: (status) => update.mutate({ status, notes: location.notes }),
+    run: (action) => quick.mutate(action),
+    makeCover: async () => {
+      await api.covers.add(location.sceneId, location.id, null)
+      queryClient.invalidateQueries({ queryKey: queryKeys.covers(location.sceneId) })
+      return `${location.name} is now a cover set for this scene.`
+    },
+    saveToLibrary: async () => {
+      await api.library.save(location.id)
+      queryClient.invalidateQueries({ queryKey: queryKeys.libraryList })
+      return `${location.name} is in your library.`
+    },
+  })
+  return { update, quick, actions }
+}
+
+function MenuOutcome({ menu }: { menu: ReturnType<typeof useVenueMenu> }) {
+  return (
+    <>
+      <ErrorAlert error={menu.update.error ?? menu.quick.error} />
+      {menu.quick.isSuccess && (
+        <p role="status" className="text-sm font-semibold text-go-ink">
+          {menu.quick.data}
+        </p>
+      )}
+    </>
+  )
+}
+
+/** A venue as one line of the compact list: fit, name and address, status, quick actions. */
+function LocationRow({ location }: { location: Location }) {
+  const menu = useVenueMenu(location)
+  return (
+    <article aria-label={location.name} className={`space-y-2 px-4 py-3 ${location.status === 'REJECTED' ? 'opacity-60' : ''}`}>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="flex w-12 shrink-0 justify-center">
+          {location.fitScore != null ? <FitScore score={location.fitScore} /> : <span className="text-sm text-subtle">—</span>}
+        </span>
+        <div className="min-w-0 flex-1 basis-40">
+          <Link to={`/locations/${location.id}`} className="block truncate font-semibold text-ink decoration-cue decoration-2 underline-offset-4 hover:underline">
+            {location.name}
+          </Link>
+          {location.address && <p className="truncate font-script text-xs text-muted">{location.address}</p>}
+        </div>
+        <div className="flex items-center gap-1">
+          <StatusSelect location={location} update={menu.update} />
+          <ActionMenu label={`Quick actions for ${location.name}`} actions={menu.actions} />
+        </div>
+      </div>
+      <MenuOutcome menu={menu} />
+    </article>
+  )
+}
+
 function LocationCard({ location }: { location: Location }) {
   const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const update = useUpdateLocation(location)
+  const menu = useVenueMenu(location)
+  const update = menu.update
   const sourceUrl = safeHttpUrl(location.sourceUrl)
-  // What a quick action from the ⋯ menu did, or why it could not.
-  const quick = useMutation({ mutationFn: (action: () => Promise<string>) => action() })
 
   const remove = useMutation({
     mutationFn: () => api.locations.remove(location.id),
@@ -235,24 +321,7 @@ function LocationCard({ location }: { location: Location }) {
           )}
           <div className="flex items-center gap-1">
             <StatusSelect location={location} update={update} />
-            <ActionMenu
-              label={`Quick actions for ${location.name}`}
-              actions={venueActions(location, {
-                canEdit,
-                setStatus: (status) => update.mutate({ status, notes: location.notes }),
-                run: (action) => quick.mutate(action),
-                makeCover: async () => {
-                  await api.covers.add(location.sceneId, location.id, null)
-                  queryClient.invalidateQueries({ queryKey: queryKeys.covers(location.sceneId) })
-                  return `${location.name} is now a cover set for this scene.`
-                },
-                saveToLibrary: async () => {
-                  await api.library.save(location.id)
-                  queryClient.invalidateQueries({ queryKey: queryKeys.libraryList })
-                  return `${location.name} is in your library.`
-                },
-              })}
-            />
+            <ActionMenu label={`Quick actions for ${location.name}`} actions={menu.actions} />
           </div>
         </div>
       </div>
@@ -274,12 +343,7 @@ function LocationCard({ location }: { location: Location }) {
       )}
       {location.notes && <p className="border-l-2 border-cue pl-3 font-marker text-[15px] whitespace-pre-line text-graphite">{location.notes}</p>}
 
-      <ErrorAlert error={update.error ?? quick.error} />
-      {quick.isSuccess && (
-        <p role="status" className="text-sm font-semibold text-go-ink">
-          {quick.data}
-        </p>
-      )}
+      <MenuOutcome menu={menu} />
 
       {confirmingDelete ? (
         <ConfirmDelete

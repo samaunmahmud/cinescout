@@ -12,7 +12,8 @@ export const queryKeys = {
   scenePage: (projectId: string, page: number, search = '') => ['scenes', 'list', projectId, page, search] as const,
   scene: (id: string) => ['scenes', 'detail', id] as const,
   locationList: (sceneId: string) => ['locations', 'list', sceneId] as const,
-  locationPage: (sceneId: string, page: number) => ['locations', 'list', sceneId, page] as const,
+  locationPage: (sceneId: string, page: number, sort = 'FIT', status: string | null = null) =>
+    ['locations', 'list', sceneId, page, sort, status] as const,
   locationTop: (sceneId: string) => ['locations', 'top', sceneId] as const,
   location: (id: string) => ['locations', 'detail', id] as const,
   projectLocationList: (projectId: string) => ['locations', 'project', projectId] as const,

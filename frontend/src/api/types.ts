@@ -416,6 +416,9 @@ export interface UpdateContactRequest {
 }
 
 /** The user's own workflow fields (PUT, full replacement): a null note clears it. */
+/** How a scene's venues are listed (LocationSort on the server). */
+export type LocationSort = 'FIT' | 'NAME' | 'NEWEST' | 'STATUS'
+
 export interface UpdateLocationRequest {
   status: LocationStatus
   notes: string | null

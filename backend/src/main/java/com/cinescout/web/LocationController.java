@@ -1,5 +1,6 @@
 package com.cinescout.web;
 
+import com.cinescout.domain.LocationSort;
 import com.cinescout.domain.LocationStatus;
 import com.cinescout.dto.CreateLocationRequest;
 import com.cinescout.dto.LocationResponse;
@@ -64,12 +65,15 @@ class LocationController {
         this.limits = limits;
     }
 
-    /** The scene's candidate locations, best fit first; venues added by hand (no score) come last. */
-    @Operation(summary = "List a scene's candidate locations, best fit first")
+    /** The scene's candidate locations, best fit first unless asked otherwise; venues added by hand (no score) come last. */
+    @Operation(summary = "List a scene's candidate locations, best fit first",
+            description = "`sort`: FIT (default), NAME, NEWEST or STATUS (furthest along first). `status` keeps one status only.")
     @GetMapping("/scenes/{sceneId}/locations")
     Mono<PageResponse<LocationResponse>> list(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
-                                              @Valid @ParameterObject PageQuery page) {
-        return locations.list(user.id(), sceneId, page);
+                                              @Valid @ParameterObject PageQuery page,
+                                              @RequestParam(required = false) LocationSort sort,
+                                              @RequestParam(required = false) LocationStatus status) {
+        return locations.list(user.id(), sceneId, page, sort, status);
     }
 
     /** The shortlist view: every scene's candidates in one list, optionally only those in one status. */
