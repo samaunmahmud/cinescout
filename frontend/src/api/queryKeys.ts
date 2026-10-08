@@ -8,6 +8,7 @@ export const queryKeys = {
   projects: ['projects'] as const,
   projectPage: (status: ProjectStatus, page: number) => ['projects', 'list', status, page] as const,
   project: (id: string) => ['projects', 'detail', id] as const,
+  budget: (projectId: string) => ['budget', projectId] as const,
   sceneList: (projectId: string) => ['scenes', 'list', projectId] as const,
   scenePage: (projectId: string, page: number, search = '') => ['scenes', 'list', projectId, page, search] as const,
   scene: (id: string) => ['scenes', 'detail', id] as const,

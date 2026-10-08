@@ -1,6 +1,8 @@
 import type { Coordinates } from '../lib/geo'
 import { ApiError, download, request } from './client'
 import type {
+  Budget,
+  BudgetItemRequest,
   PlaceName,
   PermitGuidance,
   BookingFriction,
@@ -339,6 +341,15 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The PDF, to save. */
       download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
       remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    budget: {
+      get: (projectId: string) => call<Budget>(`/api/projects/${encodeURIComponent(projectId)}/budget`),
+      settings: (projectId: string, body: { total: number | null; currency: string }) =>
+        call<Budget>(`/api/projects/${encodeURIComponent(projectId)}/budget`, { method: 'PUT', body }),
+      add: (projectId: string, body: BudgetItemRequest) =>
+        call<Budget>(`/api/projects/${encodeURIComponent(projectId)}/budget/items`, { method: 'POST', body }),
+      update: (id: string, body: BudgetItemRequest) => call<Budget>(`/api/budget-items/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      remove: (id: string) => call<Budget>(`/api/budget-items/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
     /** Projects, scenes and venues by name across the projects you are on; under 2 characters finds nothing. */
     search: (q: string) => call<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`),

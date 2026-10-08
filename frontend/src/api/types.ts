@@ -1017,3 +1017,40 @@ export interface SearchResults {
   scenes: { id: string; sceneNumber: number | null; title: string; projectId: string; projectTitle: string }[]
   venues: { id: string; name: string; address: string | null; status: LocationStatus; sceneId: string; sceneTitle: string; projectTitle: string }[]
 }
+
+export type BudgetCategory = 'VENUE' | 'PERMIT' | 'DEPOSIT' | 'CREW' | 'EQUIPMENT' | 'TRAVEL' | 'CATERING' | 'OTHER'
+export type BudgetStatus = 'ESTIMATE' | 'COMMITTED' | 'PAID'
+
+export interface BudgetItem {
+  id: string
+  category: BudgetCategory
+  label: string
+  amount: number
+  status: BudgetStatus
+  note: string | null
+  locationId: string | null
+  venueName: string | null
+  sceneId: string | null
+  addedByName: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BudgetItemRequest {
+  category: BudgetCategory
+  label: string
+  amount: number
+  status: BudgetStatus
+  note: string | null
+  locationId: string | null
+}
+
+/** A production's budget, with its sums and the confirmed venues no line is for yet. */
+export interface Budget {
+  currency: string
+  total: number | null
+  totals: { planned: number; committed: number; paid: number; remaining: number | null }
+  byCategory: { category: BudgetCategory; amount: number }[]
+  items: BudgetItem[]
+  unbudgetedVenues: { locationId: string; name: string; sceneId: string; sceneTitle: string; quote: string | null; shootDays: number | null }[]
+}

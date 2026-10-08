@@ -11,6 +11,8 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "projects")
 public class Project extends BaseEntity {
@@ -54,6 +56,14 @@ public class Project extends BaseEntity {
     @Column(name = "wind_alert_kmh", nullable = false)
     private int windAlertKmh = 40;
 
+    /** What the production may spend, in {@code budgetCurrency}; null until set. */
+    @Column(name = "budget_total", precision = 12, scale = 2)
+    private BigDecimal budgetTotal;
+
+    /** ISO 4217, upper case. */
+    @Column(name = "budget_currency", nullable = false)
+    private String budgetCurrency = "GBP";
+
     protected Project() {
     }
 
@@ -71,8 +81,12 @@ public class Project extends BaseEntity {
     public String getCallSheetToken() { return callSheetToken; }
     public ScoutFilters getScoutFilters() { return scoutFilters; }
     public int getFollowUpDays() { return followUpDays; }
+    public BigDecimal getBudgetTotal() { return budgetTotal; }
+    public String getBudgetCurrency() { return budgetCurrency; }
 
     public void setTitle(String title) { this.title = title; }
+    public void setBudgetTotal(BigDecimal budgetTotal) { this.budgetTotal = budgetTotal; }
+    public void setBudgetCurrency(String budgetCurrency) { this.budgetCurrency = budgetCurrency; }
     public void setCallSheetToken(String callSheetToken) { this.callSheetToken = callSheetToken; }
     public void setScoutFilters(ScoutFilters scoutFilters) { this.scoutFilters = scoutFilters; }
     public void setFollowUpDays(int followUpDays) { this.followUpDays = followUpDays; }

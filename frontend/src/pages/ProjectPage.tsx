@@ -6,7 +6,7 @@ import { queryKeys } from '../api/queryKeys'
 import type { Project, UpdateProjectRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
-import { Activity as ActivityIcon, CalendarDays, ChevronLeft, Clapperboard, Film, Mail, MapPin, MapPinned, Users } from 'lucide-react'
+import { Activity as ActivityIcon, CalendarDays, ChevronLeft, Clapperboard, Film, Mail, MapPin, MapPinned, Users, Wallet } from 'lucide-react'
 import { linkButton } from '../components/buttonStyles'
 import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
 import { Card, Eyebrow, Tabs, type TabItem } from '../components/surfaces'
@@ -16,6 +16,7 @@ import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { NotFoundPage } from './NotFoundPage'
 import { ActivitySection } from './ActivitySection'
+import { BudgetSection } from './BudgetSection'
 import { ProjectLocationsSection } from './ProjectLocationsSection'
 import { ProjectOutreachSection } from './ProjectOutreachSection'
 import { ScenesSection } from './ScenesSection'
@@ -36,13 +37,14 @@ export function ProjectPage() {
   return <ProjectDetails project={project.data} />
 }
 
-type TabKey = 'scenes' | 'locations' | 'outreach' | 'schedule' | 'activity'
+type TabKey = 'scenes' | 'locations' | 'outreach' | 'schedule' | 'budget' | 'activity'
 
 const tabs: TabItem<TabKey>[] = [
   { key: 'scenes', label: 'Scenes', icon: Film },
   { key: 'locations', label: 'Locations', icon: MapPinned },
   { key: 'outreach', label: 'Outreach', icon: Mail },
   { key: 'schedule', label: 'Schedule', icon: CalendarDays },
+  { key: 'budget', label: 'Budget', icon: Wallet },
   { key: 'activity', label: 'Activity', icon: ActivityIcon },
 ]
 
@@ -190,6 +192,7 @@ function ProjectDetails({ project }: { project: Project }) {
           {tab === 'locations' && <ProjectLocationsSection projectId={project.id} />}
           {tab === 'outreach' && <ProjectOutreachSection projectId={project.id} />}
           {tab === 'schedule' && <ScheduleSection projectId={project.id} />}
+          {tab === 'budget' && <BudgetSection projectId={project.id} />}
           {tab === 'activity' && <ActivitySection projectId={project.id} />}
         </Tabs>
       )}
