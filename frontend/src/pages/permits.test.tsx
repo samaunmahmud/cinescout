@@ -74,9 +74,9 @@ describe('the permit guide', () => {
     expect(await screen.findByText(/Put the venue on the map/)).toBeInTheDocument()
     unmount()
 
-    guide = { ...camden, status: 'OUTSIDE_COVERAGE', areaName: 'Kings County', office: null }
+    guide = { ...camden, status: 'OUTSIDE_COVERAGE', areaName: 'Munich', office: null }
     renderApp('/locations/l1')
-    expect(await screen.findByText(/covers the UK so far, and this venue is in Kings County/)).toBeInTheDocument()
+    expect(await screen.findByText(/covers London, New York City, Los Angeles and Paris so far, and this venue is in Munich/)).toBeInTheDocument()
   })
 
   it('shows a viewer the booking route as words', async () => {

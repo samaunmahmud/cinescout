@@ -40,8 +40,8 @@ function Guide({ guide }: { guide: PermitGuidance }) {
       )}
       {guide.status === 'OUTSIDE_COVERAGE' && (
         <p className="text-[15px] text-graphite">
-          The permit guide covers the UK so far{guide.areaName ? `, and this venue is in ${guide.areaName}` : ''}. Ask the local authority’s
-          filming or events office.
+          The permit guide covers London, New York City, Los Angeles and Paris so far
+          {guide.areaName ? `, and this venue is in ${guide.areaName}` : ''}. Ask the local authority’s filming or events office.
         </p>
       )}
       {guide.status === 'LOOKUP_FAILED' && (

@@ -122,10 +122,15 @@ class PermitApiTest extends ApiTest {
         assertThat(manchester.path("office").path("contactUrl").asText()).isEqualTo("https://www.gov.uk/find-local-council");
         assertThat(manchester.path("office").path("listed").asBoolean()).isFalse();
 
+        when(geocoder.areaAt(any())).thenReturn(Mono.just(new AdminArea("Munich", List.of("DE-BY"), "de", 48.14, 11.58)));
+        JsonNode munich = permit(ada, venue(ada, null, 48.14, 11.58)[2]);
+        assertThat(munich.path("status").asText()).isEqualTo("OUTSIDE_COVERAGE");
+        assertThat(munich.path("office").isNull()).isTrue();
+
         when(geocoder.areaAt(any())).thenReturn(Mono.just(new AdminArea("Kings County", List.of("US-NY"), "us", 40.7, -73.99)));
         JsonNode brooklyn = permit(ada, venue(ada, null, 40.7, -73.99)[2]);
-        assertThat(brooklyn.path("status").asText()).isEqualTo("OUTSIDE_COVERAGE");
-        assertThat(brooklyn.path("office").isNull()).isTrue();
+        assertThat(brooklyn.path("status").asText()).isEqualTo("FOUND");
+        assertThat(brooklyn.path("office").path("contactUrl").asText()).startsWith("https://www.nyc.gov/");
 
         when(geocoder.areaAt(any())).thenReturn(Mono.error(new LogisticsException(LogisticsException.Kind.UNAVAILABLE, "down")));
         JsonNode failed = permit(ada, venue(ada, null, 51.5, -0.12)[2]);

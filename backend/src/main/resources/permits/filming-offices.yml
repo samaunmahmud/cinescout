@@ -3,14 +3,21 @@
 # To correct an entry: edit it here, set lastReviewed to the day you checked, and open a pull request.
 # Each office is matched on the ISO 3166-2 code OpenStreetMap gives for the venue's position (e.g. GB-CMD), or on
 # one of its names. leadTime is in working days for filming on the street: smallCrew under 30 people, largeCrew 30
-# or more; null where the source gives no figure. leadTimeText is the source's own wording.
+# or more (or from largeCrewFrom, where the office draws the line elsewhere); null where the source gives no figure.
+# leadTimeText is the source's own wording.
 # A venue outside every office listed here gets the fallback ("check with the local council").
-lastReviewed: 2026-10-04
+lastReviewed: 2026-10-08
 sources:
   - name: Film London, Borough Film Services contacts
     url: https://filmlondon.org.uk/resource/borough-film-services-contacts
   - name: Film London, Borough lead-in times (October 2021)
     url: https://film-london.files.svdcdn.com/production/Borough-Lead-in-times-Oct-2021.xlsx
+  - name: NYC Mayor's Office of Media and Entertainment, film permits
+    url: https://www.nyc.gov/site/mome/permits/permits.page
+  - name: FilmLA Knowledge Base, City of Los Angeles area requirements
+    url: https://info.filmla.com/area-requirements-city-of-los-angeles
+  - name: Ville de Paris, préparer son tournage à Paris
+    url: https://www.paris.fr/pages/preparer-son-tournage-a-paris-16197
 checklist:
   - Dates, times, the number of cast and crew, and every vehicle you will bring
   - Public liability insurance certificate
@@ -259,3 +266,38 @@ offices:
     leadTimeText: "Street filming: under 30 crew 5 working days; over 30 crew 10 working days"
     checklist:
       - "Filming with a tripod needs a Notice of No Objection, applied for at least 3 working days ahead (handheld only needs none)."
+  # --- beyond London ----------------------------------------------------------------------------------------------
+  - area: "New York City"
+    codes: []
+    names: ["Kings County", "New York County", "Queens County", "Bronx County", "Richmond County",
+            "Brooklyn", "Manhattan", "Queens", "The Bronx", "Bronx", "Staten Island", "City of New York", "New York City"]
+    office: "NYC Mayor's Office of Media and Entertainment (Film Office)"
+    contactUrl: https://www.nyc.gov/site/mome/permits/permits.page
+    leadTime: { smallCrew: 2, largeCrew: 4 }
+    leadTimeText: "Apply at least 2 business days before the shoot; complex productions (NYPD Movie & TV Unit) 3 to 4 days. Permits are free."
+    checklist:
+      - "Send the certificate of insurance to the Film Office 48 business hours before applying."
+      - "Features, TV series and specials need a pre-production meeting, no later than 5 business days before the shoot."
+      - "Parks: ask NYC Parks first through its own form, allowing at least 48 hours."
+  - area: "Los Angeles"
+    codes: []
+    names: ["Los Angeles", "City of Los Angeles", "Los Angeles County"]
+    office: "FilmLA (City and County of Los Angeles)"
+    contactUrl: https://www.filmla.com/
+    leadTime: { smallCrew: 3, largeCrew: 5 }
+    leadTimeText: "City of Los Angeles: at least 3 full business days before the first activity date, not counting the day of submission (applications by 10 a.m.); high-impact work (stunts, effects, gunfire, closures) and city parks need longer. Other cities in the county set their own times."
+    checklist:
+      - "Apply through MyFilmLA by 10 a.m.; late applications are not processed and processing cannot be expedited."
+      - "High-impact activity (stunts, special effects, gunfire, aerial work, street closures) needs extra lead time."
+      - "Notify residents and businesses as FilmLA directs for the location."
+  - area: "Paris"
+    codes: [FR-75C, FR-75]
+    names: ["Paris"]
+    office: "Paris Film (Mission Cinéma, Ville de Paris)"
+    contactUrl: https://www.paris.fr/pages/deposer-une-demande-d-autorisation-de-tournage-a-paris-16204
+    leadTime: { smallCrew: 5, largeCrew: 15, largeCrewFrom: 11 }
+    leadTimeText: "Up to 10 people with light kit, streets and bridges only: a prior declaration 5 working days ahead. Larger crews, parks, canals, monuments, parking or traffic requests: an authorisation (AGATE) 15 working days ahead."
+    checklist:
+      - "Insurance is required for every shoot."
+      - "Some landmarks (the Eiffel Tower, the Louvre, the Opéra Garnier) are handled by the sites themselves, not Paris Film."
+      - "Parks and gardens also need the Direction des espaces verts."

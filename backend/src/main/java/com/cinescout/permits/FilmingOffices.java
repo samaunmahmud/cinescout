@@ -42,8 +42,19 @@ public record FilmingOffices(LocalDate lastReviewed, List<Source> sources, List<
     public record Fallback(String area, String office, String contactUrl, String note) {
     }
 
-    /** Working days ahead to apply for street filming; either may be null where the source gives no figure. */
-    public record LeadTime(Integer smallCrew, Integer largeCrew) {
+    /**
+     * Working days ahead to apply for street filming; either may be null where the source gives no figure.
+     * {@code largeCrewFrom} is the crew size from which the large figure applies (30 when not given, as in London).
+     */
+    public record LeadTime(Integer smallCrew, Integer largeCrew, Integer largeCrewFrom) {
+
+        public LeadTime(Integer smallCrew, Integer largeCrew) {
+            this(smallCrew, largeCrew, null);
+        }
+
+        int largeFrom() {
+            return largeCrewFrom == null ? 30 : largeCrewFrom;
+        }
     }
 
     /**
@@ -61,14 +72,15 @@ public record FilmingOffices(LocalDate lastReviewed, List<Source> sources, List<
         }
 
         /**
-         * Working days ahead for a crew of {@code crewSize} (30 or more counts as large; unknown counts as small),
+         * Working days ahead for a crew of {@code crewSize} (from the office's large-crew size, 30 unless it says;
+         * unknown counts as small),
          * the other figure when that one is not given; null when neither is.
          */
         public Integer leadTimeFor(Integer crewSize) {
             if (leadTime == null) {
                 return null;
             }
-            boolean large = crewSize != null && crewSize >= 30;
+            boolean large = crewSize != null && crewSize >= leadTime.largeFrom();
             Integer chosen = large ? leadTime.largeCrew() : leadTime.smallCrew();
             return chosen != null ? chosen : large ? leadTime.smallCrew() : leadTime.largeCrew();
         }

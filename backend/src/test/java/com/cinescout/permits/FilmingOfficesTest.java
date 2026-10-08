@@ -23,15 +23,34 @@ class FilmingOfficesTest {
 
     @Test
     void theRepositorysFileListsEveryLondonBoroughOnceWithAnHttpsContact() {
-        assertThat(OFFICES.offices()).hasSize(33);
+        assertThat(OFFICES.offices().stream().filter(office -> office.codes().stream().anyMatch(code -> code.startsWith("GB-")))).hasSize(33);
+        assertThat(OFFICES.offices()).extracting(FilmingOffices.Office::area).contains("New York City", "Los Angeles", "Paris");
         assertThat(OFFICES.lastReviewed()).isNotNull();
         assertThat(OFFICES.sources()).isNotEmpty();
         assertThat(OFFICES.fallback().contactUrl()).startsWith("https://");
         Set<String> codes = new HashSet<>();
         OFFICES.offices().forEach(office -> {
             assertThat(office.contactUrl()).startsWith("https://");
-            assertThat(office.codes()).hasSize(1).allSatisfy(code -> assertThat(codes.add(code)).as(code).isTrue());
+            assertThat(office.codes().isEmpty() && office.names().isEmpty()).as(office.area() + " can be matched").isFalse();
+            office.codes().forEach(code -> assertThat(codes.add(code)).as(code).isTrue());
         });
+    }
+
+    @Test
+    void newYorkLosAngelesAndParisAreMatchedAsOpenStreetMapNamesThemAndParisDrawsTheLargeCrewAtEleven() {
+        assertThat(OFFICES.officeFor(new AdminArea("Kings County", List.of("US-NY"), "us", 40.69, -73.92)).orElseThrow().area())
+                .isEqualTo("New York City");
+        assertThat(OFFICES.officeFor(new AdminArea("New York County", List.of("US-NY"), "us", 40.76, -73.99)).orElseThrow().office())
+                .contains("Media and Entertainment");
+        assertThat(OFFICES.officeFor(new AdminArea("Los Angeles", List.of("US-CA"), "us", 34.04, -118.23)).orElseThrow().office())
+                .startsWith("FilmLA");
+        assertThat(OFFICES.officeFor(new AdminArea("Los Angeles County", List.of("US-CA"), "us", 34.02, -118.40))).isPresent();
+        assertThat(OFFICES.officeFor(new AdminArea("Erie County", List.of("US-NY"), "us", 42.9, -78.8))).isEmpty();
+
+        FilmingOffices.Office paris = OFFICES.officeFor(new AdminArea("Paris", List.of("FR-75C", "FR-IDF"), "fr", 48.87, 2.38)).orElseThrow();
+        assertThat(paris.leadTimeFor(10)).isEqualTo(5);
+        assertThat(paris.leadTimeFor(11)).isEqualTo(15);
+        assertThat(OFFICES.checklistFor(paris)).anyMatch(item -> item.contains("Eiffel Tower"));
     }
 
     @Test
