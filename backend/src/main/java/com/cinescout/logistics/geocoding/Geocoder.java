@@ -24,8 +24,11 @@ public interface Geocoder {
     /**
      * A short name for where {@code point} is, for a person to read and to use as a project's location area, e.g.
      * "Shoreditch, London, United Kingdom"; an empty {@code Mono} when the provider does not know the spot.
+     *
+     * @param languages the reader's languages as an HTTP Accept-Language value ("en-GB,en;q=0.9"); null for the
+     *                  provider's default, which is often the local language
      */
-    default Mono<String> placeAt(GeoPoint point) {
+    default Mono<String> placeAt(GeoPoint point, String languages) {
         return Mono.empty();
     }
 

@@ -12,9 +12,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -33,7 +35,7 @@ class PlaceController {
     }
 
     @Operation(summary = "Name a spot",
-            description = "The neighbourhood, town and country a position is in, e.g. to fill a project's location area from the "
+            description = "The neighbourhood, town and country a position is in, named in the languages of the Accept-Language header, e.g. to fill a project's location area from the "
                     + "browser's current position. Counts as a lookup.")
     @ApiResponse(responseCode = "404", description = "The map service has no name for the spot (out at sea, say)")
     @ApiResponse(responseCode = "429", description = "The user's hourly allowance of lookups is used up; see Retry-After")
@@ -41,9 +43,10 @@ class PlaceController {
     @GetMapping("/api/places/here")
     Mono<PlaceResponse> here(@AuthenticationPrincipal AuthenticatedUser user,
                              @RequestParam @DecimalMin("-90") @DecimalMax("90") double lat,
-                             @RequestParam @DecimalMin("-180") @DecimalMax("180") double lng) {
+                             @RequestParam @DecimalMin("-180") @DecimalMax("180") double lng,
+                             @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false) String languages) {
         return limits.acquire(RateLimit.LOOKUPS, user.id())
-                .then(Mono.defer(() -> geocoder.placeAt(new GeoPoint(lat, lng))))
+                .then(Mono.defer(() -> geocoder.placeAt(new GeoPoint(lat, lng), languages)))
                 .map(name -> new PlaceResponse(name, lat, lng, geocoder.attribution()))
                 .switchIfEmpty(Mono.error(() -> new NotFoundException("The map has no name for that spot")));
     }

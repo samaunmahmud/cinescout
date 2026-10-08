@@ -135,8 +135,12 @@ class NominatimGeocoderTest {
                 {"name":"Rivington Street","address":{"road":"Rivington Street","suburb":"Shoreditch","city_district":"London Borough of Hackney",
                  "city":"London","state":"England","postcode":"EC2A 3QQ","country":"United Kingdom","country_code":"gb"}}""")));
 
-        assertThat(geocoder().placeAt(new GeoPoint(51.526, -0.078)).block()).isEqualTo("Shoreditch, London, United Kingdom");
-        api.verify(getRequestedFor(urlPathEqualTo("/reverse")).withQueryParam("zoom", equalTo("14")));
+        assertThat(geocoder().placeAt(new GeoPoint(51.526, -0.078), "en-GB,en;q=0.9").block()).isEqualTo("Shoreditch, London, United Kingdom");
+        api.verify(getRequestedFor(urlPathEqualTo("/reverse")).withQueryParam("zoom", equalTo("14"))
+                .withQueryParam("accept-language", equalTo("en-GB,en;q=0.9")));
+
+        geocoder().placeAt(new GeoPoint(51.526, -0.078), null).block();
+        api.verify(getRequestedFor(urlPathEqualTo("/reverse")).withQueryParam("accept-language", equalTo("en")));
     }
 
     @Test

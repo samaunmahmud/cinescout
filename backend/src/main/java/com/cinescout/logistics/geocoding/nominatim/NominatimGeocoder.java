@@ -100,9 +100,13 @@ public class NominatimGeocoder implements Geocoder {
         }
     }
 
-    /** {@code GET /reverse} at zoom 14, the level of neighbourhoods and small towns. */
+    /**
+     * {@code GET /reverse} at zoom 14, the level of neighbourhoods and small towns, in the reader's languages
+     * (Nominatim's {@code accept-language}; English when none are given, rather than the local script).
+     */
     @Override
-    public Mono<String> placeAt(GeoPoint point) {
+    public Mono<String> placeAt(GeoPoint point, String languages) {
+        String accept = languages == null || languages.isBlank() || languages.length() > 200 ? "en" : languages;
         Mono<String> call = nominatim.get()
                 .uri(uri -> uri.path("/reverse")
                         .queryParam("lat", point.latitude())
@@ -110,7 +114,8 @@ public class NominatimGeocoder implements Geocoder {
                         .queryParam("format", "jsonv2")
                         .queryParam("zoom", 14)
                         .queryParam("addressdetails", 1)
-                        .build())
+                        .queryParam("accept-language", "{languages}")
+                        .build(accept))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
                         response -> Mono.just(LogisticsException.forStatus(SERVICE, response.statusCode().value())))
