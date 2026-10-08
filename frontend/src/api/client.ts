@@ -49,8 +49,11 @@ export interface DownloadedFile {
 /** Fetches a file as `request` fetches JSON: with the session, and failures as ApiError. */
 export async function download(path: string, accept: string): Promise<DownloadedFile> {
   const response = await send(path, `${accept}, application/problem+json`)
-  const named = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')
-  return { blob: await response.blob(), filename: named ? named[1] : null }
+  const disposition = response.headers.get('Content-Disposition') ?? ''
+  // The exact name (RFC 6266 filename*) when the server gives one, else the plain ASCII one.
+  const exact = /filename\*=UTF-8''([^;]+)/i.exec(disposition)
+  const named = /filename="([^"]+)"/.exec(disposition)
+  return { blob: await response.blob(), filename: exact ? decodeURIComponent(exact[1]) : named ? named[1] : null }
 }
 
 async function send(path: string, accept: string, options: RequestOptions = {}): Promise<Response> {

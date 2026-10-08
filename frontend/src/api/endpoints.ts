@@ -301,6 +301,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The whole project-wide list (or one status of it) as a CSV file. */
       exportForProject: (projectId: string, status: LocationStatus | null) =>
         guarded(() => download(`/api/projects/${encodeURIComponent(projectId)}/locations/export${status ? `?status=${status}` : ''}`, 'text/csv')),
+      /** The production's location pack: each scene's confirmed venue, or its best shortlisted ones, as a PDF to save. */
+      packForProject: (projectId: string) =>
+        guarded(() => download(`/api/projects/${encodeURIComponent(projectId)}/location-pack`, 'application/pdf')),
       get: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}`),
       /** Adds a venue by hand; 409 when the same source URL is already saved for the scene. */
       create: (sceneId: string, body: CreateLocationRequest) =>

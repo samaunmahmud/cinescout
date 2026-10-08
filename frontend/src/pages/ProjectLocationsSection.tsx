@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Download, MapPin as PinIcon, MapPinned } from 'lucide-react'
+import { Download, FileText, MapPin as PinIcon, MapPinned } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Location, LocationStatus, Page, ProjectLocation, ProjectProgress } from '../api/types'
@@ -49,6 +49,10 @@ export function ProjectLocationsSection({ projectId }: { projectId: string }) {
     mutationFn: () => api.locations.exportForProject(projectId, status),
     onSuccess: (file) => saveFile(file.blob, file.filename ?? 'locations.csv'),
   })
+  const pack = useMutation({
+    mutationFn: () => api.locations.packForProject(projectId),
+    onSuccess: (file) => saveFile(file.blob, file.filename ?? 'location-pack.pdf'),
+  })
 
   const selectStatus = (next: LocationStatus | null) =>
     setParams((current) => {
@@ -77,14 +81,20 @@ export function ProjectLocationsSection({ projectId }: { projectId: string }) {
       description={progress.data && progressSummary(progress.data)}
       actions={
         (locations.data?.totalItems ?? 0) > 0 && (
-          <Button variant="secondary" busy={exportCsv.isPending} onClick={() => exportCsv.mutate()}>
-            {!exportCsv.isPending && <Download aria-hidden className="size-4" />}
-            {status ? `Export ${statusLabels[status].toLowerCase()} as CSV` : 'Export as CSV'}
-          </Button>
+          <>
+            <Button variant="secondary" busy={pack.isPending} onClick={() => pack.mutate()}>
+              {!pack.isPending && <FileText aria-hidden className="size-4" />}
+              Location pack (PDF)
+            </Button>
+            <Button variant="secondary" busy={exportCsv.isPending} onClick={() => exportCsv.mutate()}>
+              {!exportCsv.isPending && <Download aria-hidden className="size-4" />}
+              {status ? `Export ${statusLabels[status].toLowerCase()} as CSV` : 'Export as CSV'}
+            </Button>
+          </>
         )
       }
     >
-      <ErrorAlert error={exportCsv.error} />
+      <ErrorAlert error={exportCsv.error ?? pack.error} />
       {progress.data && progress.data.locations > 0 && <StatusFilter progress={progress.data} selected={status} onSelect={selectStatus} />}
 
       {locations.isPending ? (

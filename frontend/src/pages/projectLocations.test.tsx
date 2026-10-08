@@ -142,6 +142,33 @@ describe('the locations of a project', () => {
     click.mockRestore()
   })
 
+  it('download the location pack as a PDF under its exact name', async () => {
+    const { requests } = fakeServer({
+      ...base,
+      'GET /api/projects/p1/locations?page=0&size=24': () => json(pageOf([diner])),
+      'GET /api/projects/p1/location-pack': () =>
+        new Response('%PDF-1.7', {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="Am_lie location pack.pdf"; filename*=UTF-8''${encodeURIComponent('Amélie location pack.pdf')}`,
+          },
+        }),
+    })
+    const saved: string[] = []
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:pdf'), revokeObjectURL: vi.fn() }))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      saved.push(this.download)
+    })
+    renderApp('/projects/p1?tab=locations')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Location pack (PDF)' }))
+
+    await vi.waitFor(() => expect(saved).toEqual(['Amélie location pack.pdf']))
+    expect(requests.find((r) => r.path === '/api/projects/p1/location-pack')?.headers).toMatchObject({ Accept: 'application/pdf, application/problem+json' })
+    click.mockRestore()
+  })
+
   it('say why an export failed', async () => {
     fakeServer({
       ...base,

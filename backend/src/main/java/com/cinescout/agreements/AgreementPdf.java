@@ -314,7 +314,7 @@ public final class AgreementPdf {
         return out.toString();
     }
 
-    static String dates(LocalDate start, LocalDate end) {
+    public static String dates(LocalDate start, LocalDate end) {
         if (start == null && end == null) {
             return null;
         }
@@ -324,7 +324,7 @@ public final class AgreementPdf {
         return DAY.format(start) + " to " + DAY.format(end);
     }
 
-    static String access(LocalTime call, LocalTime wrap) {
+    public static String access(LocalTime call, LocalTime wrap) {
         if (call == null && wrap == null) {
             return null;
         }
