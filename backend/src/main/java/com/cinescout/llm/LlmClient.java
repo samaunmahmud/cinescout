@@ -27,4 +27,12 @@ public interface LlmClient {
      * @return the parsed answer, or an error signal carrying an {@link LlmException}
      */
     <T> Mono<T> generate(String systemPrompt, String userPrompt, Class<T> responseType);
+
+    /**
+     * As {@link #generate}, with a picture for the model to look at alongside the prompt. A client whose model cannot
+     * see answers {@link LlmException.Kind#INVALID_REQUEST}.
+     */
+    default <T> Mono<T> generateWithImage(String systemPrompt, String userPrompt, LlmImage image, Class<T> responseType) {
+        return Mono.error(new LlmException(LlmException.Kind.INVALID_REQUEST, "This model cannot read pictures"));
+    }
 }

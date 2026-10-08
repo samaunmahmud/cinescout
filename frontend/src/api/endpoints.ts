@@ -1,6 +1,7 @@
 import type { Coordinates } from '../lib/geo'
 import { ApiError, download, request } from './client'
 import type {
+  PhotoScoutingResult,
   PlanBResult,
   Shot,
   ShotRequest,
@@ -284,6 +285,12 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** Keeps to the project's scouting filters, or to `filters` for this run. */
       scout: (id: string, filters?: ScoutFilters) =>
         call<ScoutingResult>(`/api/scenes/${encodeURIComponent(id)}/scout`, { method: 'POST', ...(filters ? { body: { filters } } : {}) }),
+      /** Scouts for places like a reference photo (JPEG or PNG); the photo is not kept. */
+      scoutFromPhoto: (id: string, file: Blob, filename: string) => {
+        const form = new FormData()
+        form.append('file', file, filename)
+        return call<PhotoScoutingResult>(`/api/scenes/${encodeURIComponent(id)}/scout-from-photo`, { method: 'POST', body: form })
+      },
     },
     locations: {
       /** Best fit first; venues added by hand (no score) last. */

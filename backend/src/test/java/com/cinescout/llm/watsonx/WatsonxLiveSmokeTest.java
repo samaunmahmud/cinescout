@@ -33,7 +33,7 @@ class WatsonxLiveSmokeTest {
         String baseUrl = System.getenv().getOrDefault("WATSONX_URL", "https://us-south.ml.cloud.ibm.com");
         WatsonxProperties props = new WatsonxProperties(
                 System.getenv("WATSONX_API_KEY"), System.getenv("WATSONX_PROJECT_ID"), System.getenv("WATSONX_MODEL_ID"),
-                baseUrl, "https://iam.cloud.ibm.com", "2024-03-14", 0, 1024, true, Duration.ofSeconds(60), 2, Duration.ofSeconds(30));
+                baseUrl, "https://iam.cloud.ibm.com", "2024-03-14", 0, 1024, true, Duration.ofSeconds(60), 2, Duration.ofSeconds(30), "ibm/test-vision-model");
         ObjectMapper json = Jackson2ObjectMapperBuilder.json().build();
 
         try (ValidatorFactory validators = Validation.buildDefaultValidatorFactory()) {

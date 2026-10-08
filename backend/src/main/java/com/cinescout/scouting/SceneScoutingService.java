@@ -1,6 +1,7 @@
 package com.cinescout.scouting;
 
 import com.cinescout.ai.LocationAssessment;
+import com.cinescout.ai.PhotoLook;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.ActivityTarget;
 import com.cinescout.domain.ActivityVerb;
@@ -14,8 +15,11 @@ import com.cinescout.domain.VenueNames;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.llm.LlmException;
+import com.cinescout.llm.LlmImage;
 import com.cinescout.logistics.GeoPoint;
 import com.cinescout.persistence.BlockingTransactions;
+import com.cinescout.photos.ImageProcessor;
+import com.cinescout.photos.UnreadableImageException;
 import com.cinescout.repository.LocationRepository;
 import com.cinescout.repository.ProjectRepository;
 import com.cinescout.repository.SceneRepository;
@@ -23,6 +27,7 @@ import com.cinescout.scouting.ScoutingException.Kind;
 import com.cinescout.search.SearchHints;
 import com.cinescout.service.ActivityLog;
 import com.cinescout.service.Conflicts;
+import com.cinescout.service.InvalidRequestException;
 import com.cinescout.service.NotFoundException;
 import com.cinescout.service.ProjectAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +37,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,7 +50,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Scouting for a persisted scene: runs the {@link ScoutingPipeline} and stores what it finds.
@@ -160,11 +169,43 @@ public class SceneScoutingService {
      * as nothing says they are far.
      */
     public Mono<ScoutingResult> scout(UUID userId, UUID sceneId, int maxResults, ScoutFilters filters) {
+        return scoutFor(userId, sceneId, maxResults, filters, target -> requirementsFor(userId, sceneId, target));
+    }
+
+    /**
+     * Scouts for real places like a reference photo: the vision model reads what kind of place it shows, and that
+     * look stands in for the scene's setting and mood (its time of day, sound and crew size still count). The photo
+     * goes to the model as a small re-encoded copy, without its metadata, and is not kept.
+     *
+     * @throws com.cinescout.service.InvalidRequestException (as an error signal) when the upload is not a JPEG or PNG
+     */
+    public Mono<PhotoScoutingResult> scoutLikePhoto(UUID userId, UUID sceneId, byte[] upload, int maxResults, ScoutFilters filters) {
+        return db.call(() -> load(userId, sceneId).getTitle())
+                .flatMap(title -> Mono.fromCallable(() -> new LlmImage(ImageProcessor.process(upload).thumb(), "image/jpeg"))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .onErrorMap(UnreadableImageException.class, e -> new InvalidRequestException("file", e.getMessage()))
+                        .flatMap(photo -> pipeline.readPhoto(photo, title)))
+                .flatMap(look -> scoutFor(userId, sceneId, maxResults, filters, target -> Mono.just(likePhoto(target.requirements(), look)))
+                        .map(result -> new PhotoScoutingResult(look, result)));
+    }
+
+    /** The scene's requirements with the photo's place and look in place of its own; null requirements give the photo's alone. */
+    static SceneRequirements likePhoto(SceneRequirements scene, PhotoLook look) {
+        String mood = Stream.concat(Stream.ofNullable(look.visualMood()), look.features().stream())
+                .filter(part -> part != null && !part.isBlank())
+                .collect(Collectors.joining("; "));
+        return new SceneRequirements(look.settingType(), mood.isBlank() ? null : mood,
+                scene == null ? null : scene.lightingNeeds(), scene == null ? null : scene.timeOfDay(),
+                scene == null ? null : scene.acousticSensitivity(), scene == null ? null : scene.estimatedCastAndCrewSize());
+    }
+
+    private Mono<ScoutingResult> scoutFor(UUID userId, UUID sceneId, int maxResults, ScoutFilters filters,
+                                          Function<Target, Mono<SceneRequirements>> requirementsOf) {
         return db.call(() -> prepare(userId, sceneId, filters))
                 .flatMap(target -> basePoint(target.filters())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
-                        .flatMap(base -> requirementsFor(userId, sceneId, target)
+                        .flatMap(base -> requirementsOf.apply(target)
                                 .flatMap(requirements -> pipeline.scout(requirements, target.area(), maxResults,
                                         hints(target.filters(), target.known(), target.avoid()), target.filters()))
                                 .flatMap(outcome -> db.call(() -> unsaved(userId, sceneId, outcome))

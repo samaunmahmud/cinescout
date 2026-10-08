@@ -1,6 +1,7 @@
 package com.cinescout.scouting;
 
 import com.cinescout.ai.LocationAssessment;
+import com.cinescout.ai.PhotoLook;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.domain.AcousticSensitivity;
 import com.cinescout.domain.ActivityVerb;
@@ -610,5 +611,18 @@ class SceneScoutingServiceTest {
 
         assertThat(result.added()).extracting(LocationResponse::name).containsExactly("New Place");
         assertThat(result.alreadySaved()).isEqualTo(2);
+    }
+
+    @Test
+    void aPhotosLookTakesTheSceneSettingAndMoodAndKeepsItsTimeSoundAndCrew() {
+        var look = new PhotoLook("Victorian railway station", "smoky, cast iron", List.of("glass roof"), "old station");
+        var scene = new SceneRequirements("cafe", "bright", "daylight", "dawn", AcousticSensitivity.HIGH, 20);
+
+        var merged = SceneScoutingService.likePhoto(scene, look);
+
+        assertThat(merged).isEqualTo(new SceneRequirements("Victorian railway station", "smoky, cast iron; glass roof", "daylight", "dawn",
+                AcousticSensitivity.HIGH, 20));
+        assertThat(SceneScoutingService.likePhoto(null, new PhotoLook("pier", null, List.of(), "pier")))
+                .isEqualTo(new SceneRequirements("pier", null, null, null, null, null));
     }
 }

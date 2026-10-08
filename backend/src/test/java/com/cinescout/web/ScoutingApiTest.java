@@ -1,5 +1,6 @@
 package com.cinescout.web;
 
+import com.cinescout.ai.PhotoLook;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.ai.VenueVerdict;
 import com.cinescout.ai.VenueVerdict.SettingMatch;
@@ -9,6 +10,8 @@ import com.cinescout.domain.SceneRequirements;
 import com.cinescout.llm.LlmClient;
 import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmException.Kind;
+import com.cinescout.llm.LlmImage;
+import com.cinescout.photos.TestPhotos;
 import com.cinescout.search.LocationSearchClient;
 import com.cinescout.search.LocationSearchRequest;
 import com.cinescout.search.SearchException;
@@ -17,8 +20,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -112,6 +118,50 @@ class ScoutingApiTest extends ApiTest {
 
         ada.client().post().uri("/api/locations/00000000-0000-0000-0000-000000000000/assess").exchange().expectStatus().isNotFound();
         register("Mal").client().post().uri("/api/locations/" + venue + "/assess").exchange().expectStatus().isNotFound();
+    }
+
+    // --- scout from a photo ----------------------------------------------------------------------
+
+    @Test
+    void aReferencePhotoIsReadAndItsLookIsWhatTheRunSearchesFor() {
+        when(llm.generateWithImage(any(), any(), any(), eq(PhotoLook.class)))
+                .thenReturn(Mono.just(new PhotoLook("1950s American diner", "pastel and chrome", List.of("pink vinyl booths", "a jukebox"),
+                        "retro diner with booths")));
+        Account ada = register("Ada");
+        String scene = sceneWithArea(ada);
+        MultipartBodyBuilder body = new MultipartBodyBuilder();
+        body.part("file", new ByteArrayResource(TestPhotos.jpeg(640, 480)) {
+            @Override
+            public String getFilename() {
+                return "reference.jpg";
+            }
+        }).contentType(MediaType.IMAGE_JPEG);
+
+        JsonNode scouted = json(ada.client().post().uri("/api/scenes/" + scene + "/scout-from-photo")
+                .contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(body.build()))
+                .exchange().expectStatus().isOk());
+
+        assertThat(scouted.path("look").path("settingType").asText()).isEqualTo("1950s American diner");
+        assertThat(scouted.path("result").path("added")).hasSize(3);
+        ArgumentCaptor<LocationSearchRequest> searched = ArgumentCaptor.forClass(LocationSearchRequest.class);
+        verify(search).search(searched.capture());
+        assertThat(searched.getValue().requirements().settingType()).isEqualTo("1950s American diner");
+        assertThat(searched.getValue().requirements().visualMood()).isEqualTo("pastel and chrome; pink vinyl booths; a jukebox");
+        ArgumentCaptor<LlmImage> photo = ArgumentCaptor.forClass(LlmImage.class);
+        verify(llm).generateWithImage(any(), any(), photo.capture(), eq(PhotoLook.class));
+        assertThat(photo.getValue().mediaType()).isEqualTo("image/jpeg");
+        assertThat(photo.getValue().bytes().length).isLessThan(TestPhotos.jpeg(640, 480).length + 1); // the small copy
+
+        MultipartBodyBuilder notAPhoto = new MultipartBodyBuilder();
+        notAPhoto.part("file", new ByteArrayResource("not a picture".getBytes()) {
+            @Override
+            public String getFilename() {
+                return "notes.txt";
+            }
+        }).contentType(MediaType.TEXT_PLAIN);
+        ada.client().post().uri("/api/scenes/" + scene + "/scout-from-photo").contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(notAPhoto.build())).exchange().expectStatus().isBadRequest()
+                .expectBody().jsonPath("$.errors[0].field").isEqualTo("file");
     }
 
     // --- parse ----------------------------------------------------------------------------------

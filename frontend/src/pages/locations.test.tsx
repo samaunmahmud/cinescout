@@ -115,6 +115,30 @@ describe("a scene's locations", () => {
     expect(requests.filter((r) => r.method === 'POST').map((r) => r.path)).toEqual(['/api/scenes/s1/scout'])
   })
 
+  it('can be scouted from a reference photo, saying how the photo was read', async () => {
+    let saved: Location[] = []
+    const { requests } = serverFor([], {
+      'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(saved)),
+      'POST /api/scenes/s1/scout-from-photo': () => {
+        saved = [location()]
+        return json({
+          look: { settingType: '1950s American diner', visualMood: 'pastel and chrome', features: ['pink vinyl booths', 'a jukebox'], searchPhrase: 'retro diner' },
+          result: { added: saved, alreadySaved: 0, unassessed: 0, notVenues: 0, unsuitable: 0 },
+        })
+      },
+    })
+    renderApp('/scenes/s1')
+    const user = await logIn()
+
+    await user.upload(await screen.findByLabelText('From a photo'), new File([new Uint8Array([0xff, 0xd8, 0xff])], 'reference.jpg', { type: 'image/jpeg' }))
+
+    const status = await screen.findByText(/Your photo reads as/)
+    expect(status).toHaveTextContent('Your photo reads as 1950s American diner (pastel and chrome): pink vinyl booths, a jukebox.')
+    expect(screen.getByText('Found 1 new venue.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Tom’s Diner' })).toBeInTheDocument()
+    expect(requests.filter((r) => r.method === 'POST').map((r) => r.path)).toEqual(['/api/scenes/s1/scout-from-photo'])
+  })
+
   it('cannot be scouted until the project has a location area', async () => {
     const { requests } = serverFor([], { 'GET /api/projects/p1': () => json(project({ locationArea: null })) })
     renderApp('/scenes/s1')

@@ -6,6 +6,7 @@ import com.cinescout.domain.BookingFriction;
 import com.cinescout.domain.SceneRequirements;
 import com.cinescout.llm.JsonSchemas;
 import com.cinescout.llm.LlmException;
+import com.cinescout.llm.LlmImage;
 import com.cinescout.llm.LlmException.Kind;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -86,7 +87,7 @@ class WatsonxLlmClientTest {
 
     private WatsonxLlmClient client(Duration timeout, String baseUrl) {
         WatsonxProperties props = new WatsonxProperties("test-key", "proj-1", "ibm/test-model",
-                baseUrl, api.baseUrl(), "2024-03-14", 0, 1024, true, timeout, 2, Duration.ofSeconds(30));
+                baseUrl, api.baseUrl(), "2024-03-14", 0, 1024, true, timeout, 2, Duration.ofSeconds(30), "ibm/test-vision-model");
         IamTokenProvider tokens = new IamTokenProvider(WebClient.create(api.baseUrl()), props.apiKey());
         return new WatsonxLlmClient(WebClient.create(baseUrl), tokens, props, new JsonSchemas(), json, validator);
     }
@@ -162,6 +163,21 @@ class WatsonxLlmClientTest {
                 .withRequestBody(matchingJsonPath("$.response_format.json_schema.schema.properties.fitScore.maximum", equalTo("100")))
                 .withRequestBody(matchingJsonPath("$.temperature", equalTo("0.0")))
                 .withRequestBody(matchingJsonPath("$.max_tokens", equalTo("1024"))));
+    }
+
+    @Test
+    void aPictureGoesToTheVisionModelAsADataUrlBesideThePrompt() {
+        stubAnswer(VALID_ASSESSMENT);
+
+        client().generateWithImage("You assess venues.", USER_PROMPT, new LlmImage(new byte[] {1, 2, 3}, "image/jpeg"), LocationAssessment.class).block();
+
+        api.verify(postRequestedFor(urlPathEqualTo(CHAT))
+                .withRequestBody(matchingJsonPath("$.model_id", equalTo("ibm/test-vision-model")))
+                .withRequestBody(matchingJsonPath("$.messages[1].content[0].type", equalTo("text")))
+                .withRequestBody(matchingJsonPath("$.messages[1].content[0].text", equalTo(USER_PROMPT)))
+                .withRequestBody(matchingJsonPath("$.messages[1].content[1].type", equalTo("image_url")))
+                .withRequestBody(matchingJsonPath("$.messages[1].content[1].image_url.url", equalTo("data:image/jpeg;base64,AQID")))
+                .withRequestBody(matchingJsonPath("$.response_format.json_schema.name", equalTo("LocationAssessment"))));
     }
 
     @Test

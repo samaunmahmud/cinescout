@@ -3,13 +3,16 @@ package com.cinescout.web;
 import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.dto.ScoutRequest;
+import com.cinescout.photos.PhotoService;
 import com.cinescout.ratelimit.RateLimit;
 import com.cinescout.ratelimit.RateLimiter;
 import com.cinescout.scouting.BatchParseResult;
+import com.cinescout.scouting.PhotoScoutingResult;
 import com.cinescout.scouting.SceneScoutingService;
 import com.cinescout.scouting.ScoutingResult;
 import com.cinescout.search.LocationSearchRequest;
 import com.cinescout.security.AuthenticatedUser;
+import com.cinescout.service.InvalidRequestException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,12 +20,16 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -115,6 +122,37 @@ class ScoutingController {
     @PostMapping("/locations/{locationId}/assess")
     Mono<LocationResponse> assess(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {
         return service(RateLimit.AI, user).flatMap(s -> s.assessVenue(user.id(), locationId));
+    }
+
+    /**
+     * Scouts for real places like a reference photo: the AI reads what kind of place it shows, and the run searches
+     * for that, keeping to the scene's other needs and the project's filters. The photo is not kept.
+     */
+    @Operation(summary = "Scout venues like a reference photo",
+            description = "Multipart `file` (JPEG or PNG, up to 10 MB). The AI reads the kind of place and its look from the photo; "
+                    + "that stands in for the scene's setting and mood, and the run then searches, assesses and saves as a scouting "
+                    + "run does. Answers how the photo was read (`look`) and the run's result. The photo is not stored.")
+    @ApiResponse(responseCode = "400", description = "The file is not a JPEG or PNG picture")
+    @ApiResponse(responseCode = "409", description = "The scene's project has no location area yet")
+    @ApiResponse(responseCode = "413", description = "The file is larger than 10 MB")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of scouting runs is used up; see Retry-After")
+    @ApiResponse(responseCode = "503", description = "A provider is unavailable, or scouting is not configured on this server; see Retry-After")
+    @PostMapping(value = "/scenes/{sceneId}/scout-from-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    Mono<PhotoScoutingResult> scoutFromPhoto(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID sceneId,
+                                             @RequestPart("file") Mono<FilePart> file) {
+        Mono<byte[]> bytes = file.flatMap(part -> DataBufferUtils.join(part.content(), PhotoService.MAX_BYTES))
+                .map(buffer -> {
+                    try {
+                        byte[] read = new byte[buffer.readableByteCount()];
+                        buffer.read(read);
+                        return read;
+                    } finally {
+                        DataBufferUtils.release(buffer);
+                    }
+                })
+                .switchIfEmpty(Mono.error(new InvalidRequestException("file", "Choose a photo")));
+        return bytes.flatMap(upload -> service(RateLimit.SCOUTING, user)
+                .flatMap(s -> s.scoutLikePhoto(user.id(), sceneId, upload, LocationSearchRequest.DEFAULT_MAX_RESULTS, null)));
     }
 
     /** The service, once the call is within the user's limit; an unconfigured server does not count the call. */

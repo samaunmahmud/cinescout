@@ -47,6 +47,7 @@ cinescout:
       api-key: ${WATSONX_API_KEY:}
       project-id: ${WATSONX_PROJECT_ID:}
       model-id: ${WATSONX_MODEL_ID:}
+      vision-model-id: ${WATSONX_VISION_MODEL_ID:meta-llama/llama-4-maverick-17b-128e-instruct-fp8}   # reads reference photos
       base-url: ${WATSONX_URL:https://us-south.ml.cloud.ibm.com}
       max-requests-per-second: ${WATSONX_MAX_REQUESTS_PER_SECOND:2}   # the free (Lite) plan's limit
   search:

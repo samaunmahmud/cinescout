@@ -1091,3 +1091,16 @@ export interface PlanBResult {
   draft: OutreachDraft | null
   draftProblem: string | null
 }
+
+/** How the AI read a reference photo: the kind of place, its look, and what to search for. */
+export interface PhotoLook {
+  settingType: string
+  visualMood: string | null
+  features: string[]
+  searchPhrase: string
+}
+
+export interface PhotoScoutingResult {
+  look: PhotoLook
+  result: ScoutingResult
+}

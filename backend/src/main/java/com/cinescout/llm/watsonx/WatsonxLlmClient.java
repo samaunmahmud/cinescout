@@ -2,6 +2,7 @@ package com.cinescout.llm.watsonx;
 
 import com.cinescout.llm.JsonSchemas;
 import com.cinescout.llm.LlmClient;
+import com.cinescout.llm.LlmImage;
 import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmException.Kind;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +24,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 
+import java.util.Base64;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -77,11 +79,24 @@ public class WatsonxLlmClient implements LlmClient {
 
     @Override
     public <T> Mono<T> generate(String systemPrompt, String userPrompt, Class<T> responseType) {
+        return call(systemPrompt, userPrompt, null, responseType);
+    }
+
+    /** With the picture as a data URL beside the prompt, asked of {@link WatsonxProperties#visionModelId()}. */
+    @Override
+    public <T> Mono<T> generateWithImage(String systemPrompt, String userPrompt, LlmImage image, Class<T> responseType) {
+        if (image == null || image.bytes() == null || image.bytes().length == 0) {
+            return Mono.error(new IllegalArgumentException("image must not be empty"));
+        }
+        return call(systemPrompt, userPrompt, image, responseType);
+    }
+
+    private <T> Mono<T> call(String systemPrompt, String userPrompt, LlmImage image, Class<T> responseType) {
         return Mono.defer(() -> {
                     if (userPrompt == null || userPrompt.isBlank()) {
                         return Mono.error(new IllegalArgumentException("userPrompt must not be blank"));
                     }
-                    ObjectNode body = requestBody(systemPrompt, userPrompt, responseType);
+                    ObjectNode body = requestBody(systemPrompt, userPrompt, image, responseType);
                     return tokens.token().flatMap(token -> post(token, body));
                 })
                 .timeout(props.timeout())
@@ -95,16 +110,23 @@ public class WatsonxLlmClient implements LlmClient {
                 .doOnSuccess(result -> log.debug("{} answered a {} request", SERVICE, responseType.getSimpleName()));
     }
 
-    private ObjectNode requestBody(String systemPrompt, String userPrompt, Class<?> responseType) {
+    private ObjectNode requestBody(String systemPrompt, String userPrompt, LlmImage image, Class<?> responseType) {
         ObjectNode body = mapper.createObjectNode();
-        body.put("model_id", props.modelId());
+        body.put("model_id", image == null ? props.modelId() : props.visionModelId());
         body.put("project_id", props.projectId());
 
         ArrayNode messages = body.putArray("messages");
         if (systemPrompt != null && !systemPrompt.isBlank()) {
             messages.addObject().put("role", "system").put("content", systemPrompt);
         }
-        messages.addObject().put("role", "user").put("content", userPrompt);
+        if (image == null) {
+            messages.addObject().put("role", "user").put("content", userPrompt);
+        } else {
+            ArrayNode content = messages.addObject().put("role", "user").putArray("content");
+            content.addObject().put("type", "text").put("text", userPrompt);
+            content.addObject().put("type", "image_url").putObject("image_url")
+                    .put("url", "data:" + image.mediaType() + ";base64," + Base64.getEncoder().encodeToString(image.bytes()));
+        }
 
         ObjectNode jsonSchema = body.putObject("response_format")
                 .put("type", "json_schema")

@@ -44,13 +44,15 @@ public record WatsonxProperties(
         @DefaultValue("true") boolean strictSchema,
         @DefaultValue("60s") @NotNull Duration timeout,
         @DefaultValue("2") @Min(1) int maxRequestsPerSecond,
-        @DefaultValue("30s") @NotNull Duration maxWait
+        @DefaultValue("30s") @NotNull Duration maxWait,
+        // A model that can read pictures (scouting from a reference photo); offered in the London and Dallas regions.
+        @DefaultValue("meta-llama/llama-4-maverick-17b-128e-instruct-fp8") @NotBlank String visionModelId
 ) {
 
     /** Redacts the API key so an accidental log line or failed-binding message cannot leak it. */
     @Override
     public String toString() {
-        return "WatsonxProperties[projectId=" + projectId + ", modelId=" + modelId + ", baseUrl=" + baseUrl
+        return "WatsonxProperties[projectId=" + projectId + ", modelId=" + modelId + ", visionModelId=" + visionModelId + ", baseUrl=" + baseUrl
                 + ", apiVersion=" + apiVersion + ", apiKey=****]";
     }
 }

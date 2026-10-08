@@ -1,6 +1,7 @@
 package com.cinescout.scouting;
 
 import com.cinescout.ai.LocationAssessment;
+import com.cinescout.ai.PhotoLook;
 import com.cinescout.ai.SearchResult;
 import com.cinescout.ai.VenueVerdict;
 import com.cinescout.domain.BookingFriction;
@@ -10,6 +11,7 @@ import com.cinescout.domain.VenueNames;
 import com.cinescout.llm.LlmClient;
 import com.cinescout.llm.LlmException;
 import com.cinescout.llm.LlmGuards;
+import com.cinescout.llm.LlmImage;
 import com.cinescout.resilience.Guard;
 import com.cinescout.resilience.GuardFactory;
 import com.cinescout.search.LocationSearchClient;
@@ -84,6 +86,12 @@ public class ScoutingPipeline {
     public Mono<SceneRequirements> extractRequirements(String sceneText, List<String> avoid) {
         return llmGuard.call(() -> llm.generate(
                 ScoutingPrompts.EXTRACTION_SYSTEM, ScoutingPrompts.extractionUser(sceneText, avoid), SceneRequirements.class));
+    }
+
+    /** Reads a reference photo: what kind of place it shows and how to search for places like it. Guarded like any LLM call. */
+    public Mono<PhotoLook> readPhoto(LlmImage photo, String sceneTitle) {
+        return llmGuard.call(() -> llm.generateWithImage(
+                ScoutingPrompts.PHOTO_SYSTEM, ScoutingPrompts.photoUser(sceneTitle), photo, PhotoLook.class));
     }
 
     /**

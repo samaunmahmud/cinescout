@@ -61,7 +61,7 @@ class WatsonxConfigTest {
     @Test
     void theApiKeyNeverAppearsInToString() {
         WatsonxProperties props = new WatsonxProperties("secret-key", "proj-1", "ibm/test-model",
-                "https://x", "https://y", "2024-03-14", 0, 1024, true, Duration.ofSeconds(1), 2, Duration.ofSeconds(30));
+                "https://x", "https://y", "2024-03-14", 0, 1024, true, Duration.ofSeconds(1), 2, Duration.ofSeconds(30), "ibm/test-vision-model");
 
         assertThat(props.toString()).doesNotContain("secret-key").contains("proj-1");
     }

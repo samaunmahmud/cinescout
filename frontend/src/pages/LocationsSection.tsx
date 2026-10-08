@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useId, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Location, LocationStatus, Page, Scene, ScoutFilters } from '../api/types'
@@ -16,9 +16,10 @@ import { linkButton } from '../components/buttonStyles'
 import { DirectorLinkPanel } from '../components/DirectorLinkPanel'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
-import { ChevronDown, Columns3, MapPin as PinIcon, MapPinned, Plus, Radar, SlidersHorizontal, TriangleAlert } from 'lucide-react'
+import { ChevronDown, Columns3, Image as ImageIcon, MapPin as PinIcon, MapPinned, Plus, Radar, SlidersHorizontal, TriangleAlert } from 'lucide-react'
 import { EmptyState, Section } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
+import { preparePhoto } from '../lib/photoPrep'
 import { scoutingSummary } from '../lib/format'
 import { describeFilters } from '../lib/scoutFilters'
 import { ScoutFiltersForm } from '../components/ScoutFiltersForm'
@@ -62,6 +63,25 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
     },
   })
 
+  const photoInput = useId()
+  const fromPhoto = useMutation({
+    mutationFn: async (file: File) => {
+      const prepared = await preparePhoto(file)
+      return api.scenes.scoutFromPhoto(scene.id, prepared.blob, prepared.filename)
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.locationList(scene.id) }),
+  })
+  const scouting = scout.isPending || fromPhoto.isPending
+
+  function pickPhoto(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) {
+      scout.reset()
+      fromPhoto.mutate(file)
+    }
+  }
+
   const noArea = locationArea === null
   const hasLocations = (locations.data?.totalItems ?? 0) > 0
 
@@ -86,7 +106,28 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
                 <Plus aria-hidden className="size-4" />
                 Add venue
               </Link>
-              <Button variant={hasLocations ? 'secondary' : 'primary'} busy={scout.isPending} disabled={noArea} onClick={() => scout.mutate(undefined)}>
+              {!noArea && (
+                <>
+                  <input id={photoInput} type="file" accept="image/jpeg,image/png,image/heic,image/heif" onChange={pickPhoto} disabled={scouting} className="peer sr-only" />
+                  <label
+                    htmlFor={photoInput}
+                    title="Scout for places that look like a reference photo"
+                    className={`${linkButton('ghost')} cursor-pointer peer-focus-visible:ring-4 peer-focus-visible:ring-cue/40 peer-disabled:cursor-wait peer-disabled:opacity-60`}
+                  >
+                    <ImageIcon aria-hidden className="size-4" />
+                    From a photo
+                  </label>
+                </>
+              )}
+              <Button
+                variant={hasLocations ? 'secondary' : 'primary'}
+                busy={scout.isPending}
+                disabled={noArea || fromPhoto.isPending}
+                onClick={() => {
+                  fromPhoto.reset()
+                  scout.mutate(undefined)
+                }}
+              >
                 {!scout.isPending && <Radar aria-hidden className="size-4" />}
                 {hasLocations ? 'Scout again' : 'Scout locations'}
               </Button>
@@ -117,6 +158,22 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
         </p>
       )}
 
+      {fromPhoto.isPending ? (
+        <Spinner label="Reading your photo, then searching for places like it. This can take a few minutes." />
+      ) : fromPhoto.isError ? (
+        <ErrorAlert error={fromPhoto.error} />
+      ) : (
+        fromPhoto.data && (
+          <div role="status" className="space-y-1 rounded-lg border border-go-mid bg-go-wash px-4 py-3 text-sm text-go-ink">
+            <p>
+              Your photo reads as <strong>{fromPhoto.data.look.settingType}</strong>
+              {fromPhoto.data.look.visualMood ? ` (${fromPhoto.data.look.visualMood})` : ''}
+              {fromPhoto.data.look.features.length > 0 ? `: ${fromPhoto.data.look.features.join(', ')}` : ''}.
+            </p>
+            <p>{scoutingSummary(fromPhoto.data.result)}</p>
+          </div>
+        )
+      )}
       {scout.isPending ? (
         <Spinner label="Searching for venues and assessing each one. This can take a few minutes." />
       ) : scout.isError ? (
@@ -134,7 +191,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
       ) : locations.isError ? (
         <ErrorAlert error={locations.error} onRetry={() => locations.refetch()} />
       ) : locations.data.items.length === 0 && listView.status === null ? (
-        !scout.isPending && (
+        !scouting && (
           <EmptyState icon={Radar}>
             No locations yet. Scouting searches the web for real venues that suit the scene and rates how well each one fits.
           </EmptyState>

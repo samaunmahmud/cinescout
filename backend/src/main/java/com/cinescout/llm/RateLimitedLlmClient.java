@@ -34,4 +34,10 @@ public class RateLimitedLlmClient implements LlmClient {
         return pacer.pace(() -> delegate.generate(systemPrompt, userPrompt, responseType),
                 () -> new LlmException(LlmException.Kind.RATE_LIMITED, "Too many model requests are waiting; try again shortly"));
     }
+
+    @Override
+    public <T> Mono<T> generateWithImage(String systemPrompt, String userPrompt, LlmImage image, Class<T> responseType) {
+        return pacer.pace(() -> delegate.generateWithImage(systemPrompt, userPrompt, image, responseType),
+                () -> new LlmException(LlmException.Kind.RATE_LIMITED, "Too many model requests are waiting; try again shortly"));
+    }
 }
