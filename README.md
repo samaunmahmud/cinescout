@@ -101,7 +101,7 @@ still starts without IBM credentials. When it is set, the other two are required
 | `WATSONX_API_KEY` | none, IBM Cloud API key |
 | `WATSONX_PROJECT_ID` | none, must be set with the key |
 | `WATSONX_MODEL_ID` | none, must be set with the key |
-| `WATSONX_VISION_MODEL_ID` | `meta-llama/llama-4-maverick-17b-128e-instruct-fp8`: reads reference photos for "scout from a photo"; must offer image chat in your region |
+| `WATSONX_VISION_MODEL_ID` | `mistralai/mistral-small-3-1-24b-instruct-2503`: reads reference photos for "scout from a photo"; must offer image chat in your region |
 | `WATSONX_URL` | `https://us-south.ml.cloud.ibm.com` (the region your watsonx project is in, e.g. `https://eu-gb.ml.cloud.ibm.com` for London) |
 | `WATSONX_MAX_REQUESTS_PER_SECOND` | `2`, the free (Lite) plan's limit; raise it on a paid plan |
 

@@ -625,4 +625,12 @@ class SceneScoutingServiceTest {
         assertThat(SceneScoutingService.likePhoto(null, new PhotoLook("pier", null, List.of(), "pier")))
                 .isEqualTo(new SceneRequirements("pier", null, null, null, null, null));
     }
+
+    @Test
+    void aPhotoLookKeepsItsFirstEightFeaturesTrimmedRatherThanFailingTheRun() {
+        var look = new PhotoLook("diner", null, List.of(" a ", "", "b", "c", "d", "e", "f", "g", "h", "i", "x".repeat(200)), "diner");
+
+        assertThat(look.features()).containsExactly("a", "b", "c", "d", "e", "f", "g", "h");
+        assertThat(new PhotoLook("diner", null, List.of("y".repeat(200)), "diner").features().getFirst()).hasSize(120);
+    }
 }

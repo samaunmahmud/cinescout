@@ -46,7 +46,7 @@ public record WatsonxProperties(
         @DefaultValue("2") @Min(1) int maxRequestsPerSecond,
         @DefaultValue("30s") @NotNull Duration maxWait,
         // A model that can read pictures (scouting from a reference photo); offered in the London and Dallas regions.
-        @DefaultValue("meta-llama/llama-4-maverick-17b-128e-instruct-fp8") @NotBlank String visionModelId
+        @DefaultValue("mistralai/mistral-small-3-1-24b-instruct-2503") @NotBlank String visionModelId
 ) {
 
     /** Redacts the API key so an accidental log line or failed-binding message cannot leak it. */
