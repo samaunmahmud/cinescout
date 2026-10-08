@@ -167,8 +167,9 @@ public class LocationPackService {
     private PackFacts.Venue venue(Location venue, Scene scene, List<VenueAvailability> days) {
         boolean placed = venue.getLatitude() != null && venue.getLongitude() != null;
         String position = placed ? venue.getLatitude().stripTrailingZeros().toPlainString() + ", " + venue.getLongitude().stripTrailingZeros().toPlainString() : null;
-        String mapUrl = placed ? "https://www.openstreetmap.org/?mlat=" + venue.getLatitude().toPlainString() + "&mlon="
-                + venue.getLongitude().toPlainString() + "#map=17/" + venue.getLatitude().toPlainString() + "/" + venue.getLongitude().toPlainString() : null;
+        // Short enough for one line; OpenStreetMap centres on the marker.
+        String mapUrl = placed ? "https://www.openstreetmap.org/?mlat=" + venue.getLatitude().stripTrailingZeros().toPlainString() + "&mlon="
+                + venue.getLongitude().stripTrailingZeros().toPlainString() : null;
         String contact = joined(", ", venue.getContactName(), venue.getContactEmail(), venue.getContactPhone());
         List<String> dayLines = days.stream()
                 .sorted(Comparator.comparing(VenueAvailability::getDay))
