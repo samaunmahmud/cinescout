@@ -214,4 +214,25 @@ describe('cover sets on the schedule and call sheet', () => {
     expect(sheet).toHaveTextContent('(if rain > 60%)9 Dock St, Brooklyn')
     expect(sheet).toHaveTextContent('Cover: Rae, 555 0199')
   })
+
+  it('asks a cover set as plan B for a day: pencils it and drafts the email', async () => {
+    const { requests } = serverFor(() => [cover()], {
+      'POST /api/locations/l2/plan-b': () => json({ availability: [], draft: null, draftProblem: 'Your hourly allowance of AI calls is used up; draft the email from the venue’s Outreach tab later.' }),
+    })
+    renderApp('/scenes/s1')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Plan B with Dock Street Warehouse' }))
+    const form = screen.getByRole('form', { name: 'Plan B with Dock Street Warehouse' })
+    const day = within(form).getByLabelText(/Day/)
+    await user.clear(day)
+    await user.type(day, '2026-11-02')
+    await user.clear(within(form).getByLabelText('Why'))
+    await user.type(within(form).getByLabelText('Why'), 'Storm warning')
+    await user.click(within(form).getByRole('button', { name: 'Pencil it and draft the email' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Dock Street Warehouse pencilled for')
+    expect(screen.getByRole('status')).toHaveTextContent('allowance of AI calls is used up')
+    expect(requests.find((r) => r.path === '/api/locations/l2/plan-b')?.body).toEqual({ day: '2026-11-02', reason: 'Storm warning' })
+  })
 })

@@ -6,6 +6,7 @@ import { queryKeys } from '../api/queryKeys'
 import type { Alert } from '../api/types'
 import { useSession } from '../auth/context'
 import { alertWords } from '../lib/alerts'
+import { PlanB } from './PlanB'
 import { ErrorAlert, Spinner } from './ui'
 
 /** How often the unread count is asked for while a page stays open. */
@@ -129,26 +130,35 @@ function AlertItem({ alert, onOpen }: { alert: Alert; onOpen: () => void }) {
   const words = alertWords(alert)
   const Icon = alert.kind === 'WEATHER' ? CloudRain : Mail
   return (
-    <Link
-      to={words.to}
-      onClick={onOpen}
-      className={`flex gap-3 px-4 py-3 text-sm transition hover:bg-ground focus-visible:bg-ground focus-visible:outline-none ${alert.read ? '' : 'bg-cue-wash/60'}`}
-    >
-      <Icon aria-hidden className={`mt-0.5 size-4 shrink-0 ${alert.read ? 'text-subtle' : 'text-cue-ink'}`} />
-      <span className="min-w-0 space-y-0.5">
-        <span className={`block ${alert.read ? 'text-graphite' : 'font-semibold text-ink'}`}>
-          {!alert.read && <span className="sr-only">Unread: </span>}
-          {words.title}
-        </span>
-        {words.detail.map((line) => (
-          <span key={line} className="block text-muted">
-            {line}
+    <div className={alert.read ? '' : 'bg-cue-wash/60'}>
+      <Link
+        to={words.to}
+        onClick={onOpen}
+        className="flex gap-3 px-4 py-3 text-sm transition hover:bg-ground focus-visible:bg-ground focus-visible:outline-none"
+      >
+        <Icon aria-hidden className={`mt-0.5 size-4 shrink-0 ${alert.read ? 'text-subtle' : 'text-cue-ink'}`} />
+        <span className="min-w-0 space-y-0.5">
+          <span className={`block ${alert.read ? 'text-graphite' : 'font-semibold text-ink'}`}>
+            {!alert.read && <span className="sr-only">Unread: </span>}
+            {words.title}
           </span>
-        ))}
-        <span className="block text-xs text-subtle">
-          {alert.projectTitle} · {whenFormat.format(new Date(alert.createdAt))}
+          {words.detail.map((line) => (
+            <span key={line} className="block text-muted">
+              {line}
+            </span>
+          ))}
+          <span className="block text-xs text-subtle">
+            {alert.projectTitle} · {whenFormat.format(new Date(alert.createdAt))}
+          </span>
         </span>
-      </span>
-    </Link>
+      </Link>
+      {words.planB.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-4 pb-3 pl-11">
+          {words.planB.map((cover) => (
+            <PlanB key={cover.locationId} locationId={cover.locationId} venueName={cover.name} day={cover.day} reason={cover.reason} />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

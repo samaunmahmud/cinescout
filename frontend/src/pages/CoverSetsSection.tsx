@@ -7,6 +7,7 @@ import type { CoverSet, Scene } from '../api/types'
 import { useSession } from '../auth/context'
 import { useCanEdit } from '../components/projectRole'
 import { EmptyState, Section } from '../components/surfaces'
+import { PlanB } from '../components/PlanB'
 import { Button, ErrorAlert, SelectField, Spinner, TextField } from '../components/ui'
 
 /** How many cover sets a scene may have (CoverService.MAX_COVERS). */
@@ -55,7 +56,7 @@ export function CoverSetsSection({ scene }: { scene: Scene }) {
         <ul aria-label="Cover sets" className="divide-y divide-line-soft board-card rounded-lg bg-white">
           {covers.data.items.map((cover) => (
             <li key={cover.id}>
-              <CoverRow cover={cover} />
+              <CoverRow cover={cover} defaultDay={scene.shootDateStart} />
             </li>
           ))}
         </ul>
@@ -65,7 +66,7 @@ export function CoverSetsSection({ scene }: { scene: Scene }) {
   )
 }
 
-function CoverRow({ cover }: { cover: CoverSet }) {
+function CoverRow({ cover, defaultDay }: { cover: CoverSet; defaultDay: string | null }) {
   const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
@@ -119,6 +120,9 @@ function CoverRow({ cover }: { cover: CoverSet }) {
         )}
       </div>
       <ErrorAlert error={remove.error} />
+      {canEdit && !editing && cover.status !== 'CONFIRMED' && cover.status !== 'REJECTED' && (
+        <PlanB locationId={cover.locationId} venueName={cover.venueName} defaultDay={defaultDay} />
+      )}
       {editing && (
         <form onSubmit={submit} aria-label={`When to switch to ${cover.venueName}`} className="flex flex-wrap items-end gap-3 rounded-lg bg-ground p-3 ring-1 ring-line">
           <ErrorAlert error={save.error} />

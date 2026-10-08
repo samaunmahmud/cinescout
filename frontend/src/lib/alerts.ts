@@ -6,6 +6,8 @@ export interface AlertWords {
   title: string
   detail: string[]
   to: string
+  /** For a weather alert: the scene's cover sets, to ask one as plan B for the day. */
+  planB: { locationId: string; name: string; day: string; reason: string }[]
 }
 
 const text = (value: unknown, fallback = '') => (typeof value === 'string' && value ? value : fallback)
@@ -21,6 +23,7 @@ export function alertWords(alert: Alert): AlertWords {
       title: `Follow up with ${venue}`,
       detail: [`“${text(p.subject, 'Your email')}”${sent ? ` sent ${formatDate(sent.slice(0, 10))}` : ''}, no reply yet.`],
       to: alert.locationId ? `/locations/${alert.locationId}?tab=outreach` : `/projects/${alert.projectId}?tab=outreach`,
+      planB: [],
     }
   }
 
@@ -52,5 +55,6 @@ export function alertWords(alert: Alert): AlertWords {
     title: `${what} at ${venue}${day ? ` on ${formatDate(day)}` : ''}`,
     detail,
     to: alert.sceneId ? `/scenes/${alert.sceneId}` : `/projects/${alert.projectId}?tab=schedule`,
+    planB: day ? covers.map((cover) => ({ locationId: cover.locationId, name: cover.name, day, reason: `${what}: ${detail[0] ?? 'see the forecast'}` })) : [],
   }
 }

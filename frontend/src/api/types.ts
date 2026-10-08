@@ -1084,3 +1084,10 @@ export interface ShotRequest {
   done: boolean
   locationId: string | null
 }
+
+/** What weather plan B did: the backup venue pencilled for the day, and the email drafted to its owner, or why not. */
+export interface PlanBResult {
+  availability: Availability[]
+  draft: OutreachDraft | null
+  draftProblem: string | null
+}

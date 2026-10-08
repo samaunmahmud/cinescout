@@ -138,4 +138,32 @@ describe('the weather watch settings', () => {
     expect(await screen.findByText('A shoot day raises an alert from a 60% chance of rain, or wind of 40 km/h.')).toBeInTheDocument()
     expect(screen.queryByRole('form')).not.toBeInTheDocument()
   })
+
+  it('asks a cover set as plan B for the rainy day straight from the alert', async () => {
+    const withCover = alert({
+      payload: { ...alert().payload, covers: [{ locationId: 'l2', name: 'Tannery Hall', trigger: 'if rain > 60%' }] },
+    })
+    const { requests } = fakeServer({
+      'GET /api/auth/me': () => json(ada),
+      'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([project()])),
+      'GET /api/alerts/unread-count': () => json({ unread: 1 }),
+      'GET /api/alerts?page=0&size=10': () => json(pageOf([withCover], { size: 10 })),
+      'POST /api/locations/l2/plan-b': () =>
+        json({
+          availability: [{ id: 'av1', locationId: 'l2', day: '2026-10-12', state: 'PENCILLED', holdExpiresOn: null, note: 'Weather plan B', setByName: 'Ada', updatedAt: '2026-10-11T07:00:00Z' }],
+          draft: { id: 'd9' },
+          draftProblem: null,
+        }),
+    })
+    renderApp('/projects')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Alerts, 1 unread' }))
+    const panel = await screen.findByRole('region', { name: 'Alerts' })
+    await user.click(await within(panel).findByRole('button', { name: 'Plan B: ask Tannery Hall' }))
+
+    expect(await within(panel).findByRole('status')).toHaveTextContent('Tannery Hall pencilled for')
+    expect(within(panel).getByRole('link', { name: 'Read the email to send' })).toHaveAttribute('href', '/locations/l2?tab=outreach')
+    expect(requests.find((r) => r.path === '/api/locations/l2/plan-b')?.body).toEqual({ day: '2026-10-12', reason: 'Rain likely: 75% chance of rain (alert from 60%).' })
+  })
 })
