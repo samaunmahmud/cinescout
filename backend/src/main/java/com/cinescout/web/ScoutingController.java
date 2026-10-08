@@ -1,5 +1,6 @@
 package com.cinescout.web;
 
+import com.cinescout.dto.LocationResponse;
 import com.cinescout.dto.SceneResponse;
 import com.cinescout.dto.ScoutRequest;
 import com.cinescout.ratelimit.RateLimit;
@@ -98,6 +99,22 @@ class ScoutingController {
                                @Min(1) @Max(LocationSearchRequest.MAX_RESULTS) int maxResults,
                                @Valid @RequestBody(required = false) ScoutRequest request) {
         return service(RateLimit.SCOUTING, user).flatMap(s -> s.scout(user.id(), sceneId, maxResults, request == null ? null : request.filters()));
+    }
+
+    /**
+     * Has the AI assess a venue already on a scene, e.g. one added by hand or from the library, as scouting assesses
+     * what it finds. Counts as one AI call (two when the scene has not been analysed yet and is analysed first).
+     */
+    @Operation(summary = "Assess a venue with AI",
+            description = "Scores the venue against its scene's requirements from what is known of it (name, address, notes, "
+                    + "its web page's excerpt) and stores the fit score, booking route and warnings. Name, pin, status and notes "
+                    + "are kept. A scene not analysed yet is analysed first.")
+    @ApiResponse(responseCode = "429", description = "The user's hourly allowance of AI calls is used up; see Retry-After")
+    @ApiResponse(responseCode = "502", description = "The model returned an unusable answer or a provider key is misconfigured")
+    @ApiResponse(responseCode = "503", description = "The AI service is unavailable, or scouting is not configured on this server; see Retry-After")
+    @PostMapping("/locations/{locationId}/assess")
+    Mono<LocationResponse> assess(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID locationId) {
+        return service(RateLimit.AI, user).flatMap(s -> s.assessVenue(user.id(), locationId));
     }
 
     /** The service, once the call is within the user's limit; an unconfigured server does not count the call. */

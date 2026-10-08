@@ -86,6 +86,34 @@ class ScoutingApiTest extends ApiTest {
         return scene(owner, project(owner, "Brooklyn, New York"));
     }
 
+    // --- assess one venue -----------------------------------------------------------------------
+
+    @Test
+    void aVenueAddedByHandIsAssessedFromWhatIsKnownOfItAndKeepsItsOwnDetails() {
+        Account ada = register("Ada");
+        String scene = sceneWithArea(ada);
+        String venue = json(ada.client().post().uri("/api/scenes/" + scene + "/locations")
+                .bodyValue(Map.of("name", "Venue Best", "address", "1 Roof Rd", "notes", "Neon sign, skyline view, quiet after 10pm"))
+                .exchange().expectStatus().isCreated()).path("id").asText();
+
+        JsonNode assessed = json(ada.client().post().uri("/api/locations/" + venue + "/assess").exchange().expectStatus().isOk());
+
+        assertThat(assessed.path("fitScore").asInt()).isGreaterThan(0);
+        assertThat(assessed.path("fitReason").asText()).isNotBlank();
+        assertThat(assessed.path("name").asText()).isEqualTo("Venue Best");
+        assertThat(assessed.path("notes").asText()).isEqualTo("Neon sign, skyline view, quiet after 10pm");
+        assertThat(assessed.path("status").asText()).isEqualTo("SUGGESTED");
+        ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+        verify(llm).generate(any(), prompt.capture(), eq(VenueVerdict.class));
+        assertThat(prompt.getValue()).contains("Venue Best", "1 Roof Rd", "skyline view", "added this venue by hand");
+        // The scene had not been analysed: it was, first.
+        ada.client().get().uri("/api/scenes/" + scene).exchange().expectBody().jsonPath("$.parseStatus").isEqualTo("PARSED");
+        verifyNoInteractions(search);
+
+        ada.client().post().uri("/api/locations/00000000-0000-0000-0000-000000000000/assess").exchange().expectStatus().isNotFound();
+        register("Mal").client().post().uri("/api/locations/" + venue + "/assess").exchange().expectStatus().isNotFound();
+    }
+
     // --- parse ----------------------------------------------------------------------------------
 
     @Test

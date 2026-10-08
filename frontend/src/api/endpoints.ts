@@ -318,6 +318,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
         call<Location>(`/api/locations/${encodeURIComponent(id)}/recce`, { method: 'PATCH', body: answers }),
       /** Looks up the picture the venue's page offers, once; later calls return the location as it is. */
       lookUpImage: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}/image`, { method: 'POST' }),
+      /** The AI scores the venue against its scene from what is known of it; one AI call (two if the scene is not analysed). */
+      assess: (id: string) => call<Location>(`/api/locations/${encodeURIComponent(id)}/assess`, { method: 'POST' }),
       /** Moves the pin; the server drops the cached logistics, which were for the old spot. */
       updateCoordinates: (id: string, body: UpdateCoordinatesRequest) =>
         call<Location>(`/api/locations/${encodeURIComponent(id)}/coordinates`, { method: 'PUT', body }),

@@ -260,7 +260,30 @@ function tabOf(value: string | null): TabKey {
 
 /** What the AI made of the venue, in the order a producer asks: does it fit, who says yes, what could go wrong. */
 function Assessment({ location }: { location: Location }) {
-  if (location.fitScore == null) return null
+  const { api } = useSession()
+  const store = useStoreLocation()
+  const canEdit = useCanEdit()
+  const assess = useMutation({ mutationFn: () => api.locations.assess(location.id), onSuccess: store })
+  if (location.fitScore == null) {
+    if (!canEdit) return null
+    return (
+      <section aria-labelledby="assessment-heading" className="board-card space-y-3 rounded-lg bg-white p-5">
+        <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
+        <h2 id="assessment-heading" className="font-display text-2xl leading-none font-extrabold">
+          Not assessed yet
+        </h2>
+        <p className="text-[15px] text-muted">
+          Added by hand or from your library? The AI can score it against this scene from its name, address, notes and web page, as it
+          scores the venues scouting finds.
+        </p>
+        <ErrorAlert error={assess.error} />
+        <Button busy={assess.isPending} onClick={() => assess.mutate()}>
+          {!assess.isPending && <Sparkles aria-hidden className="size-4" />}
+          {assess.isPending ? 'Assessing…' : 'Assess with AI'}
+        </Button>
+      </section>
+    )
+  }
   return (
     // A scout's report on ruled paper, the score circled in marker.
     <section aria-labelledby="assessment-heading" className="lined-paper relative space-y-5 rounded-md border-2 border-ink py-6 pr-6 pl-14">
@@ -271,6 +294,17 @@ function Assessment({ location }: { location: Location }) {
           <h2 id="assessment-heading" className="font-display text-3xl leading-none font-extrabold">
             Scout’s report
           </h2>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => assess.mutate()}
+              disabled={assess.isPending}
+              className="font-script text-xs font-bold tracking-[0.06em] text-cue-ink uppercase underline hover:text-ink disabled:cursor-wait disabled:opacity-60"
+            >
+              {assess.isPending ? 'Assessing…' : 'Assess again'}
+            </button>
+          )}
+          <ErrorAlert error={assess.error} />
         </div>
         <span aria-hidden className="relative flex h-16 w-20 shrink-0 items-center justify-center">
           <span className="absolute inset-0 -rotate-6 rounded-[50%] border-[3px] border-go-mid" />

@@ -174,6 +174,14 @@ public class ScoutingPipeline {
         return names;
     }
 
+    /**
+     * Assesses one venue on its own, e.g. one the crew added by hand: {@code venue} carries what is known of it in
+     * place of a search hit (its notes and address as the excerpt). Guarded like every assessment.
+     */
+    public Mono<LocationAssessment> assessOne(SceneRequirements requirements, String area, SearchResult venue, List<String> avoid) {
+        return assess(requirements, area, venue, avoid).map(ScoutedVenue::assessment);
+    }
+
     private Mono<ScoutedVenue> assess(SceneRequirements requirements, String area, SearchResult hit, List<String> avoid) {
         return llmGuard.call(() -> llm.generate(ScoutingPrompts.ASSESSMENT_SYSTEM,
                         ScoutingPrompts.assessmentUser(requirements, area, hit, avoid), VenueVerdict.class))

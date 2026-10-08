@@ -174,6 +174,57 @@ public class SceneScoutingService {
                                         .onErrorMap(DataIntegrityViolationException.class, Conflicts::translate))));
     }
 
+    /**
+     * Has the model assess a venue already on the scene (one added by hand or from the library, say) against the
+     * scene's requirements, as scouting assesses what it finds, and stores the fit score, booking route and
+     * warnings on it. Name, address, pin, status and notes stay as they are. A scene not analysed yet is analysed
+     * first.
+     */
+    public Mono<LocationResponse> assessVenue(UUID userId, UUID locationId) {
+        return db.call(() -> {
+                    Location location = access.location(userId, locationId, ProjectRole.EDITOR);
+                    Scene scene = location.getScene();
+                    return new Assessing(scene.getId(), scene.getSourceText(), scene.requirements(),
+                            Objects.requireNonNullElse(scene.getProject().getLocationArea(), "not given"),
+                            venueFacts(location), avoidFor(scene.getId()));
+                })
+                .flatMap(target -> (target.requirements() != null
+                        ? Mono.just(target.requirements())
+                        : extractAndStore(userId, target.sceneId(), target.sourceText(), target.avoid()).map(SceneResponse::requirements))
+                        .flatMap(requirements -> pipeline.assessOne(requirements, target.area(), target.venue(), target.avoid())))
+                .flatMap(assessment -> db.call(() -> {
+                    Location location = access.location(userId, locationId, ProjectRole.EDITOR);
+                    location.setFitScore(assessment.fitScore().shortValue());
+                    location.setFitReason(assessment.fitReason());
+                    location.setBookingFriction(assessment.bookingFriction());
+                    location.setFrictionNote(assessment.frictionNote());
+                    location.setFootprintWarnings(new ArrayList<>(assessment.footprintWarnings()));
+                    return LocationResponse.from(locations.saveAndFlush(location));
+                }));
+    }
+
+    private record Assessing(UUID sceneId, String sourceText, SceneRequirements requirements, String area, SearchResult venue,
+                             List<String> avoid) {
+    }
+
+    /** What is known of a saved venue, shaped as a search hit for the assessment prompt. */
+    static SearchResult venueFacts(Location location) {
+        StringBuilder facts = new StringBuilder();
+        append(facts, "Address", location.getAddress());
+        append(facts, "The crew's notes", location.getNotes());
+        append(facts, "From its web page", location.getSourceExcerpt());
+        append(facts, "Quoted price", location.getQuote());
+        String url = location.getSourceUrl() != null ? location.getSourceUrl() : "none: the crew added this venue by hand";
+        String provider = location.getSourceProvider() != null ? location.getSourceProvider() : "manual";
+        return new SearchResult(location.getName(), url, facts.isEmpty() ? null : facts.toString().strip(), provider);
+    }
+
+    private static void append(StringBuilder out, String label, String value) {
+        if (value != null && !value.isBlank()) {
+            out.append(label).append(": ").append(value.strip()).append('\n');
+        }
+    }
+
     /** The base point a radius is measured from: the spot picked on the map, or the address found on it. */
     private Mono<GeoPoint> basePoint(ScoutFilters filters) {
         if (filters.radiusKm() == null) {
