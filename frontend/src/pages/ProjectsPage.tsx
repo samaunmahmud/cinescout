@@ -24,7 +24,8 @@ export function ProjectsPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const status: ProjectStatus = params.get('status') === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE'
-  const [creating, setCreating] = useState(false)
+  // `?new` opens the form at once: the command palette's "New production" lands here.
+  const [creating, setCreating] = useState(() => params.has('new'))
   usePageTitle('Projects')
 
   const [page, setPage] = usePageParam()

@@ -1,7 +1,10 @@
-import { BookMarked, Clapperboard, LogOut } from 'lucide-react'
+import { BookMarked, Clapperboard, LogOut, Search } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useAuth, useSession } from '../auth/context'
 import { AlertBell } from './AlertBell'
+import { CommandPalette } from './CommandPalette'
+import { useCommandPaletteShortcut } from './useCommandPaletteShortcut'
 import { ClapperMark } from './stickers'
 
 /** The name on the office door: a clapperboard and the word, in heavy type. */
@@ -18,6 +21,9 @@ export function Logo({ size = 'md', onDark = true }: { size?: 'md' | 'lg'; onDar
 export function Layout() {
   const { user } = useSession()
   const { logOut } = useAuth()
+  const [searching, setSearching] = useState(false)
+  const openSearch = useCallback(() => setSearching(true), [])
+  useCommandPaletteShortcut(openSearch)
   return (
     <div className="flex min-h-dvh flex-col">
       {/* For keyboard and screen reader users: past the header, straight to the page. */}
@@ -59,6 +65,16 @@ export function Layout() {
             </nav>
           </div>
           <div className="flex items-center gap-2 text-sm">
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-label="Search (Ctrl+K)"
+              aria-keyshortcuts="Control+K Meta+K"
+              className="flex h-10 items-center gap-2 rounded-lg px-2.5 text-fog transition hover:bg-ink-soft hover:text-white focus-visible:outline-2 focus-visible:outline-cue"
+            >
+              <Search aria-hidden className="size-5" />
+              <kbd aria-hidden className="hidden rounded border border-ink-line px-1.5 py-0.5 font-script text-xs lg:inline">⌘K</kbd>
+            </button>
             <AlertBell />
             <Link
               to="/account"
@@ -82,6 +98,7 @@ export function Layout() {
         </div>
         <div aria-hidden className="sprockets" />
       </header>
+      {searching && <CommandPalette onClose={() => setSearching(false)} />}
       <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 focus:outline-none">
         <Outlet />
       </main>

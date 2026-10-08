@@ -1000,3 +1000,10 @@ export interface Move {
   /** "Starlite Diner to Neon Spoon Cafe: 21 min, 7.8 km by road". */
   text: string
 }
+
+/** What the command palette's search found, a few of each kind. */
+export interface SearchResults {
+  projects: { id: string; title: string; locationArea: string | null }[]
+  scenes: { id: string; sceneNumber: number | null; title: string; projectId: string; projectTitle: string }[]
+  venues: { id: string; name: string; address: string | null; status: LocationStatus; sceneId: string; sceneTitle: string; projectTitle: string }[]
+}

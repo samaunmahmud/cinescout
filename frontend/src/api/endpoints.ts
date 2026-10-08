@@ -51,6 +51,7 @@ import type {
   RecceAnswers,
   RegisterRequest,
   Scene,
+  SearchResults,
   Schedule,
   SceneRequest,
   ScoutFilters,
@@ -328,6 +329,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
       remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
+    /** Projects, scenes and venues by name across the projects you are on; under 2 characters finds nothing. */
+    search: (q: string) => call<SearchResults>(`/api/search?q=${encodeURIComponent(q)}`),
     alerts: {
       /** Your newest alerts first. */
       list: (page = 0, size = 10) => call<Page<Alert>>(`/api/alerts?page=${page}&size=${size}`),
