@@ -14,6 +14,7 @@ function serverFor(current: Location, extra: Parameters<typeof fakeServer>[0] = 
     'GET /api/locations/l1/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+    'GET /api/scenes/s1/shots': () => json([]),
     'GET /api/projects/p1': () => json(project()),
     'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
     'GET /api/locations/l1/agreements?page=0&size=50': () => json(pageOf([], { size: 50 })),
@@ -206,6 +207,7 @@ describe('adding a venue by hand', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/scenes/s1': () => json(scene()),
       'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+      'GET /api/scenes/s1/shots': () => json([]),
       'GET /api/projects/p1': () => json(project()),
       ...extra,
     })
@@ -279,6 +281,7 @@ describe('adding a venue by hand, server-side checks', () => {
       'GET /api/auth/me': () => json(ada),
       'GET /api/scenes/s1': () => json(scene()),
       'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+      'GET /api/scenes/s1/shots': () => json([]),
       'GET /api/projects/p1': () => json(project()),
       'POST /api/scenes/s1/locations': () =>
         problem(400, 'Validation failed', 'The request is invalid', {

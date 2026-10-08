@@ -34,6 +34,7 @@ export const queryKeys = {
   photos: (locationId: string) => ['photos', locationId] as const,
   availability: (locationId: string) => ['availability', locationId] as const,
   covers: (sceneId: string) => ['covers', sceneId] as const,
+  shots: (sceneId: string) => ['shots', sceneId] as const,
   alertList: ['alerts', 'list'] as const,
   search: (q: string) => ['search', q] as const,
   calendarLink: ['account', 'calendar-link'] as const,

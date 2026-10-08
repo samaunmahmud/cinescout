@@ -1,6 +1,8 @@
 import type { Coordinates } from '../lib/geo'
 import { ApiError, download, request } from './client'
 import type {
+  Shot,
+  ShotRequest,
   Budget,
   BudgetItemRequest,
   PlaceName,
@@ -341,6 +343,14 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The PDF, to save. */
       download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
       remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    },
+    shots: {
+      list: (sceneId: string) => call<Shot[]>(`/api/scenes/${encodeURIComponent(sceneId)}/shots`),
+      add: (sceneId: string, body: ShotRequest) => call<Shot[]>(`/api/scenes/${encodeURIComponent(sceneId)}/shots`, { method: 'POST', body }),
+      update: (id: string, body: ShotRequest) => call<Shot[]>(`/api/shots/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+      move: (id: string, direction: 'EARLIER' | 'LATER') =>
+        call<Shot[]>(`/api/shots/${encodeURIComponent(id)}/position`, { method: 'PUT', body: { direction } }),
+      remove: (id: string) => call<Shot[]>(`/api/shots/${encodeURIComponent(id)}`, { method: 'DELETE' }),
     },
     budget: {
       get: (projectId: string) => call<Budget>(`/api/projects/${encodeURIComponent(projectId)}/budget`),

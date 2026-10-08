@@ -18,6 +18,7 @@ function sceneServer(locations: Location[]) {
     'GET /api/projects/p1': () => json(project()),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+    'GET /api/scenes/s1/shots': () => json([]),
     'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(locations)),
   })
 }
@@ -70,6 +71,7 @@ describe('the location map', () => {
       'GET /api/locations/l1/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
       'GET /api/scenes/s1': () => json(scene()),
       'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+      'GET /api/scenes/s1/shots': () => json([]),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/locations/l1/outreach-drafts?page=0&size=24': () => json(pageOf([])),
       'GET /api/locations/l1/agreements?page=0&size=50': () => json(pageOf([], { size: 50 })),

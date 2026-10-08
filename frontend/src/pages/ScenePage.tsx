@@ -13,6 +13,7 @@ import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
 import { CoverSetsSection } from './CoverSetsSection'
 import { LocationsSection } from './LocationsSection'
+import { ShotListSection } from './ShotListSection'
 import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
 import { SceneForm } from './SceneForm'
@@ -159,6 +160,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
             <RequirementsPanel scene={scene} />
             <LocationsSection scene={scene} locationArea={project.data?.locationArea} />
             <CoverSetsSection scene={scene} />
+            <ShotListSection scene={scene} />
           </div>
           <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
             <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>

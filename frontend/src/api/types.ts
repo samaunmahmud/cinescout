@@ -1054,3 +1054,33 @@ export interface Budget {
   items: BudgetItem[]
   unbudgetedVenues: { locationId: string; name: string; sceneId: string; sceneTitle: string; quote: string | null; shootDays: number | null }[]
 }
+
+export type ShotSize = 'WIDE' | 'FULL' | 'MEDIUM' | 'CLOSE_UP' | 'EXTREME_CLOSE_UP' | 'INSERT' | 'AERIAL' | 'OTHER'
+export type ShotLightKind = 'BACKLIT' | 'SIDE_LIT' | 'FRONT_LIT' | 'SUN_DOWN'
+export type ShotSunMissing = 'NO_VENUE' | 'NO_PIN' | 'NO_DATE' | 'NO_TIME' | 'NO_ZONE'
+
+/** A shot, numbered in shooting order, with how the sun lights it at its planned time (or what is missing to tell). */
+export interface Shot {
+  id: string
+  sceneId: string
+  number: number
+  description: string
+  size: ShotSize | null
+  cameraBearing: number | null
+  plannedTime: string | null
+  done: boolean
+  locationId: string | null
+  venueName: string | null
+  venueConfirmed: boolean
+  sun: { sun: { azimuth: number; elevation: number; compass: string; text: string }; light: ShotLightKind | null; golden: boolean; text: string } | null
+  sunMissing: ShotSunMissing | null
+}
+
+export interface ShotRequest {
+  description: string
+  size: ShotSize | null
+  cameraBearing: number | null
+  plannedTime: string | null
+  done: boolean
+  locationId: string | null
+}

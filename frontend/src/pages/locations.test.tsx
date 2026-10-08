@@ -11,6 +11,7 @@ function serverFor(locations: Location[], extra: Parameters<typeof fakeServer>[0
     'GET /api/projects/p1': () => json(project()),
     'GET /api/scenes/s1': () => json(current),
     'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+    'GET /api/scenes/s1/shots': () => json([]),
     'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(locations)),
     ...extra,
   })
@@ -89,6 +90,7 @@ describe("a scene's locations", () => {
       {
         'GET /api/scenes/s1': () => json(current),
         'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+        'GET /api/scenes/s1/shots': () => json([]),
         'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(saved)),
         'GET /api/projects/p1/scenes?page=0&size=24': () => json(pageOf([current])),
         'POST /api/scenes/s1/scout': () => {

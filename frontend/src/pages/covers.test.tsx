@@ -46,6 +46,7 @@ function serverFor(covers: () => CoverSet[], extra: Parameters<typeof fakeServer
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([])),
     'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf(covers(), { size: 50 })),
+    'GET /api/scenes/s1/shots': () => json([]),
     ...extra,
   })
 }

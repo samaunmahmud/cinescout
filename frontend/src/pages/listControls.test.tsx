@@ -12,6 +12,7 @@ function server() {
     'GET /api/projects/p1': () => json(project()),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+    'GET /api/scenes/s1/shots': () => json([]),
     'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(venues)),
     'GET /api/scenes/s1/locations?sort=NAME&page=0&size=24': () => json(pageOf([venues[1], venues[0]])),
     'GET /api/scenes/s1/locations?sort=NAME&status=SHORTLISTED&page=0&size=24': () => json(pageOf([venues[1]])),

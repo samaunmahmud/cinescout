@@ -159,7 +159,7 @@ public class LogisticsService {
      * The time zone a cached report found for the venue; null when there is none or it was the UTC stand-in. A moved pin
      * drops the cached report, so the zone is always the venue's own.
      */
-    static ZoneId knownZone(JsonNode report) {
+    public static ZoneId knownZone(JsonNode report) {
         String zone = report == null ? null : report.path("timeZone").asText(null);
         if (zone == null || zone.isBlank() || zone.equals("UTC")) {
             return null;

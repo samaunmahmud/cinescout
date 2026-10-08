@@ -83,6 +83,7 @@ describe('long lists', () => {
       'GET /api/locations/l1/availability?page=0&size=100': () => json(pageOf([], { size: 100 })),
       'GET /api/scenes/s1': () => json(scene()),
       'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+      'GET /api/scenes/s1/shots': () => json([]),
       'GET /api/projects/p1': () => json(project()),
       'GET /api/locations/l1/videos': () => json(locationVideos({ videos: [] })),
       'GET /api/locations/l1/agreements?page=0&size=50': () => json(pageOf([], { size: 50 })),
@@ -109,6 +110,7 @@ describe('long lists', () => {
       'GET /api/projects/p1': () => json(project()),
       'GET /api/scenes/s1': () => json(scene()),
       'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+      'GET /api/scenes/s1/shots': () => json([]),
       'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([placed], { totalItems: 30, totalPages: 2 })),
     })
     renderApp('/scenes/s1')

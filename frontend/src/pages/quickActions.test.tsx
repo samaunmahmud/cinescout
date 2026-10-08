@@ -12,6 +12,7 @@ function sceneServer(locations: Location[], extra: Parameters<typeof fakeServer>
     'GET /api/projects/p1': () => json(project({ role })),
     'GET /api/scenes/s1': () => json(scene()),
     'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+    'GET /api/scenes/s1/shots': () => json([]),
     'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf(locations)),
     ...extra,
   })

@@ -63,6 +63,7 @@ describe('scouting filters', () => {
       'GET /api/projects/p1': () => json(project()),
       'GET /api/scenes/s1': () => json(scene()),
       'GET /api/scenes/s1/covers?page=0&size=50': () => json(pageOf([], { size: 50 })),
+      'GET /api/scenes/s1/shots': () => json([]),
       'GET /api/scenes/s1/locations?page=0&size=24': () => json(pageOf([location()])),
       'GET /api/projects/p1/scout-filters': () => json({ ...noFilters, maxBudget: 900 }),
       'POST /api/scenes/s1/scout': () =>
