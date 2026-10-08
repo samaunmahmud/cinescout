@@ -15,7 +15,7 @@ interface Entry {
   to: string
 }
 
-/** Pages anyone can jump to, matched by their words. */
+/** Pages anyone can jump to, matched where their words start. */
 const commands: Omit<Entry, 'id'>[] = [
   { group: 'Go to', label: 'Productions', icon: Clapperboard, to: '/projects' },
   { group: 'Go to', label: 'Archived productions', icon: FolderArchive, to: '/projects?status=ARCHIVED' },
@@ -23,6 +23,12 @@ const commands: Omit<Entry, 'id'>[] = [
   { group: 'Go to', label: 'Account', detail: 'Name, password, calendar feed', icon: UserRound, to: '/account' },
   { group: 'Create', label: 'New production', icon: Plus, to: '/projects?new' },
 ]
+
+/** Whether every typed word starts one of the words of `text` ("cal" finds "calendar feed", "ed" does not). */
+function startsWords(text: string, typed: string): boolean {
+  const words = text.toLowerCase().split(/[^\p{L}\p{N}]+/u)
+  return typed.split(/\s+/).every((part) => words.some((word) => word.startsWith(part)))
+}
 
 /** How long typing has to pause before the server is asked. */
 const DEBOUNCE_MS = 200
@@ -59,9 +65,11 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
 
   const entries = useMemo<Entry[]>(() => {
     const words = text.trim().toLowerCase()
-    const list: Entry[] = commands
-      .filter((command) => !words || `${command.label} ${command.detail ?? ''}`.toLowerCase().includes(words))
+    const pages: Entry[] = commands
+      .filter((command) => !words || startsWords(`${command.label} ${command.detail ?? ''}`, words))
       .map((command) => ({ ...command, id: `command-${command.label}` }))
+    // Once something is typed, the person's own productions, scenes and venues come before the page jumps.
+    const list: Entry[] = []
     if (words.length >= 2 && results.data) {
       for (const project of results.data.projects) {
         list.push({ id: `project-${project.id}`, group: 'Productions', label: project.title, detail: project.locationArea ?? undefined, icon: Clapperboard, to: `/projects/${project.id}` })
@@ -87,7 +95,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
         })
       }
     }
-    return list
+    return [...list, ...pages]
   }, [text, results.data])
 
   const current = Math.min(active, Math.max(0, entries.length - 1))
@@ -125,7 +133,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             aria-activedescendant={entries[current] ? optionId(entries[current]) : undefined}
             aria-autocomplete="list"
             aria-label="Search productions, scenes and venues"
-            placeholder="Search productions, scenes and venues…"
+            placeholder="Search scenes, venues…"
             value={text}
             onChange={(e) => {
               setText(e.target.value)
@@ -157,7 +165,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
                 >
                   <Icon aria-hidden className={`size-4 shrink-0 ${index === current ? 'text-cue' : 'text-cue-ink'}`} />
                   <span className="min-w-0 flex-1 truncate font-semibold">{entry.label}</span>
-                  {entry.detail && <span className={`truncate text-sm ${index === current ? 'text-fog' : 'text-muted'}`}>{entry.detail}</span>}
+                  {entry.detail && <span className={`max-w-[45%] truncate text-sm ${index === current ? 'text-fog' : 'text-muted'}`}>{entry.detail}</span>}
                 </div>
               </li>
             )

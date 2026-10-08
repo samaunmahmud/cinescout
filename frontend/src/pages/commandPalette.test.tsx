@@ -16,6 +16,8 @@ function server() {
     'GET /api/auth/me': () => json(ada),
     'GET /api/projects?status=ACTIVE&page=0&size=24': () => json(pageOf([project()])),
     'GET /api/search?q=di': () => json(found),
+    'GET /api/search?q=lo': () => json(found),
+    'GET /api/search?q=ed': () => json({ projects: [], scenes: [], venues: [] }),
     'GET /api/locations/l1': () => json({ type: 'about:blank', title: 'Not Found', status: 404 }, 404),
   })
 }
@@ -66,5 +68,27 @@ describe('the command palette', () => {
     await user.click(button)
     await user.type(screen.getByRole('combobox'), 'new prod{Enter}')
     expect(router.state.location.pathname + router.state.location.search).toBe('/projects?new')
+  })
+
+  it('lists matching productions, scenes and venues before page jumps, and matches pages where their words start', async () => {
+    server()
+    renderApp('/projects')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Search (Ctrl+K)' }))
+    const box = screen.getByRole('combobox')
+    await user.type(box, 'lo')
+    await screen.findByRole('option', { name: /Tom’s Diner/ })
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Night ShiftBrooklyn',
+      '12. INT. DINER - NIGHTNight Shift',
+      'Tom’s DinerConfirmed · Night Shift',
+      'My locationsYour venue library',
+    ])
+
+    // "ed" is inside "calendar feed" but starts no word there.
+    await user.clear(box)
+    await user.type(box, 'ed')
+    expect(await screen.findByText('Nothing matches.')).toBeInTheDocument()
   })
 })
