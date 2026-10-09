@@ -6,6 +6,7 @@ import { queryKeys } from '../api/queryKeys'
 import type { Dashboard } from '../api/types'
 import { useSession } from '../auth/context'
 import { Avatar } from '../components/Avatar'
+import { StudioLight } from '../components/StudioLight'
 import { FitScore } from '../components/locationParts'
 import { VenuePicture } from '../components/VenuePicture'
 import { activityLine } from '../lib/activity'
@@ -39,6 +40,7 @@ export function DashboardHero({ greeting, actions }: { greeting: string; actions
   ]
   return (
     <header className="hero rounded-3xl px-6 pt-10 pb-6 sm:px-10" style={{ background: posterBackdrop('your productions') }}>
+      <StudioLight />
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div className="max-w-2xl space-y-3">
           <p className="text-sm font-semibold tracking-[0.14em] text-cue uppercase">{greeting}</p>

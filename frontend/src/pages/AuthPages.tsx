@@ -11,6 +11,7 @@ import { Button, ErrorAlert, TextField } from '../components/ui'
 import { AvatarStack } from '../components/Avatar'
 import { posterBackdrop } from '../lib/poster'
 import { Mail, MapPinned, ScrollText } from 'lucide-react'
+import { StudioLight } from '../components/StudioLight'
 
 /** The slate on the login page: one scene, scouted, as an example of what the app does. */
 const exampleSlate = [
@@ -69,6 +70,7 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
         className="theme-dark hero flex items-center justify-center px-4 py-12 text-ink"
         style={{ background: 'radial-gradient(90% 70% at 100% 100%, hsl(8 82% 52% / 0.7), transparent 65%), radial-gradient(60% 50% at 0% 0%, hsl(36 90% 50% / 0.18), transparent 60%), #08090c' }}
       >
+        <StudioLight />
         <div className="w-full max-w-sm animate-fade-in space-y-6">
           <span className="flex justify-center lg:hidden">
             <Logo size="lg" onDark />

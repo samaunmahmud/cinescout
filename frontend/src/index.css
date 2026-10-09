@@ -328,6 +328,31 @@ h1, h2, h3 {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* The studio lamp's light (components/StudioLight): a warm yellow cone, the pool where it lands, the lit lens. */
+.studio-beam-soft {
+  /* Blurring the shaped cone (rather than shaping a blurred one) gives it the soft edge real light has. */
+  filter: blur(16px);
+  mix-blend-mode: screen;
+  animation: studio-breathe 7s ease-in-out infinite alternate;
+}
+.studio-beam {
+  clip-path: polygon(86% 0%, 100% 5%, 64% 100%, 0% 100%, 0% 78%);
+  background: linear-gradient(218deg, rgb(255 230 150 / 0.62) 0%, rgb(255 205 100 / 0.26) 38%, rgb(255 190 80 / 0.08) 66%, transparent 85%);
+}
+.studio-pool {
+  background: radial-gradient(closest-side, rgb(255 214 110 / 0.34), rgb(255 190 80 / 0.12) 55%, transparent);
+  filter: blur(14px);
+  mix-blend-mode: screen;
+  animation: studio-breathe 7s ease-in-out infinite alternate;
+}
+.studio-lamp {
+  filter: drop-shadow(0 0 22px rgb(255 214 102 / 0.75)) drop-shadow(0 0 6px rgb(255 240 200 / 0.6));
+}
+@keyframes studio-breathe {
+  from { opacity: 0.82; }
+  to { opacity: 1; }
+}
+
 /* Something that can be opened: lifts a little under the pointer. */
 .lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
