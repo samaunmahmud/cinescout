@@ -37,10 +37,12 @@ class RateLimitedLlmClientTest {
         assertThat(answers).hasSize(5);
         List<Long> sorted = calledAt.stream().sorted().toList();
         // Four a second is one every 250 ms. Never two close together, which a vendor counting over a sliding
-        // second would refuse; a little slack for the timer's own precision.
+        // second would refuse. A call that starts a few ms late shortens the gap after it, so each gap gets slack
+        // for the scheduler, and the run as a whole must keep to the full rate.
         for (int i = 1; i < sorted.size(); i++) {
-            assertThat(Duration.ofNanos(sorted.get(i) - sorted.get(i - 1))).as("gap before call " + i).isGreaterThanOrEqualTo(Duration.ofMillis(240));
+            assertThat(Duration.ofNanos(sorted.get(i) - sorted.get(i - 1))).as("gap before call " + i).isGreaterThanOrEqualTo(Duration.ofMillis(200));
         }
+        assertThat(Duration.ofNanos(sorted.getLast() - sorted.getFirst())).as("four gaps in all").isGreaterThanOrEqualTo(Duration.ofMillis(4 * 245));
     }
 
     @Test
