@@ -16,6 +16,13 @@ export function formatDay(isoDate: string): string {
   return dayFormat.format(new Date(`${isoDate}T00:00:00Z`))
 }
 
+const shortDayFormat = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+
+/** "Mon 12 Oct", for a column heading or a short list. */
+export function shortDay(isoDate: string): string {
+  return shortDayFormat.format(new Date(`${isoDate}T00:00:00Z`))
+}
+
 /** "12 Oct 2026", "12 Oct 2026 – 14 Oct 2026", "From 12 Oct 2026", "Until ...", or null when unscheduled. */
 export function formatShootWindow(start: string | null, end: string | null): string | null {
   if (start && end) return start === end ? formatDate(start) : `${formatDate(start)} – ${formatDate(end)}`

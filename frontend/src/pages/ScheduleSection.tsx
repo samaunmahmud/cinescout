@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { CalendarClock, CalendarDays, CalendarOff, CircleAlert, MapPin as PinIcon, Printer, SunMedium, TriangleAlert, Umbrella, Users } from 'lucide-react'
+import { CalendarClock, CalendarDays, CalendarOff, CircleAlert, List, MapPin as PinIcon, Printer, Rows3, SunMedium, TriangleAlert, Umbrella, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Moves, Schedule, ScheduleConflict, ScheduledScene } from '../api/types'
@@ -10,10 +10,11 @@ import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { Badge, Button, ErrorAlert, Spinner, TextField } from '../components/ui'
 import { availabilityLabels, bookingText, clockTime, timeWindow } from '../lib/availability'
-import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSummary } from '../lib/format'
+import { batchLogisticsSummary, dayConditions, formatDate, formatDay, scheduleSummary, shortDay } from '../lib/format'
 import { useCanEdit } from '../components/projectRole'
 import { CompanyMoves } from '../components/CompanyMoves'
 import { movesOn } from '../lib/moves'
+import { Stripboard } from './Stripboard'
 
 /**
  * The shoot laid out by day: which scenes start when, and where each is shot. What is missing stands out: a
@@ -29,6 +30,7 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
     refetchOnMount: 'always',
   })
   const queryClient = useQueryClient()
+  const [view, setView] = useScheduleView()
   // Drives between a day's venues; shown when they come, never holding up the schedule.
   const moves = useQuery({
     queryKey: queryKeys.projectMoves(projectId),
@@ -96,19 +98,74 @@ export function ScheduleSection({ projectId }: { projectId: string }) {
         <EmptyState icon={CalendarDays}>No scenes yet. Add scenes with their shoot dates and the schedule builds itself.</EmptyState>
       ) : (
         <div className="space-y-6">
+          <ViewSwitch view={view} onChange={setView} />
           {schedule.data.conflicts.length > 0 && <Conflicts conflicts={schedule.data.conflicts} />}
-          {schedule.data.days.map((day) => (
-            <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated projectId={projectId}
-              moves={moves.data} date={day.date} />
-          ))}
-          <LaterMoves moves={moves.data} schedule={schedule.data} />
-          {schedule.data.unscheduled.length > 0 && (
-            <Day titleId="day-unscheduled" title="Not scheduled yet" scenes={schedule.data.unscheduled} dated={false} projectId={projectId} />
+          {view === 'board' ? (
+            <Stripboard projectId={projectId} schedule={schedule.data} />
+          ) : (
+            <>
+              {schedule.data.days.map((day) => (
+                <Day key={day.date} titleId={`day-${day.date}`} title={formatDay(day.date)} scenes={day.scenes} dated projectId={projectId}
+                  moves={moves.data} date={day.date} />
+              ))}
+              <LaterMoves moves={moves.data} schedule={schedule.data} />
+              {schedule.data.unscheduled.length > 0 && (
+                <Day titleId="day-unscheduled" title="Not scheduled yet" scenes={schedule.data.unscheduled} dated={false} projectId={projectId} />
+              )}
+              <CastDays schedule={schedule.data} />
+            </>
           )}
-          <CastDays schedule={schedule.data} />
         </div>
       )}
     </Section>
+  )
+}
+
+type ScheduleView = 'days' | 'board'
+const VIEW_KEY = 'cinescout.scheduleView'
+
+/** Day by day or as a stripboard; the choice is remembered on this browser. */
+function useScheduleView(): [ScheduleView, (view: ScheduleView) => void] {
+  const [view, setViewState] = useState<ScheduleView>(() => {
+    try {
+      return localStorage.getItem(VIEW_KEY) === 'board' ? 'board' : 'days'
+    } catch {
+      return 'days'
+    }
+  })
+  const setView = (next: ScheduleView) => {
+    setViewState(next)
+    try {
+      localStorage.setItem(VIEW_KEY, next)
+    } catch {
+      // Not remembered; the choice still holds on this page.
+    }
+  }
+  return [view, setView]
+}
+
+function ViewSwitch({ view, onChange }: { view: ScheduleView; onChange: (view: ScheduleView) => void }) {
+  const options = [
+    { key: 'days', label: 'Day by day', icon: List },
+    { key: 'board', label: 'Stripboard', icon: Rows3 },
+  ] as const
+  return (
+    <div role="group" aria-label="Schedule view" className="inline-flex overflow-hidden rounded-lg border border-line">
+      {options.map(({ key, label, icon: Icon }) => (
+        <button
+          key={key}
+          type="button"
+          aria-pressed={view === key}
+          onClick={() => onChange(key)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold transition focus-visible:ring-4 focus-visible:ring-cue/30 focus-visible:outline-none ${
+            view === key ? 'bg-night text-white' : 'bg-paper text-graphite hover:text-ink'
+          }`}
+        >
+          <Icon aria-hidden className="size-4" />
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -247,13 +304,6 @@ function CastDays({ schedule }: { schedule: Schedule }) {
       </div>
     </section>
   )
-}
-
-const shortDayFormat = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
-
-/** "Mon 12 Oct", for a column heading. */
-function shortDay(isoDate: string): string {
-  return shortDayFormat.format(new Date(`${isoDate}T00:00:00Z`))
 }
 
 /**

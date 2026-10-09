@@ -60,6 +60,13 @@
   --color-stop-ink: #b42318;
   --color-stop-wash: #fef3f2;
 
+  /* Stripboard strips, in the colours a production board uses: interior/exterior by day/night. */
+  --color-strip-int-day: #ffffff;
+  --color-strip-ext-day: #fff2b3;
+  --color-strip-int-night: #d7e4ff;
+  --color-strip-ext-night: #d2f0d8;
+  --color-strip-unknown: #eceef1;
+
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05);
   --shadow-lift: 0 12px 28px -12px rgb(16 24 40 / 0.28), 0 2px 6px rgb(16 24 40 / 0.06);
 
@@ -117,6 +124,11 @@
     --color-go-wash: #0f241c;
     --color-stop-ink: #ff8f8f;
     --color-stop-wash: #2b1214;
+    --color-strip-int-day: #1d222a;
+    --color-strip-ext-day: #3a3311;
+    --color-strip-int-night: #16233d;
+    --color-strip-ext-night: #132d1c;
+    --color-strip-unknown: #191d24;
     --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-lift: 0 16px 32px -14px rgb(0 0 0 / 0.75), 0 2px 6px rgb(0 0 0 / 0.4);
     color-scheme: dark;
@@ -144,6 +156,11 @@
       --color-go-wash: #0f241c;
       --color-stop-ink: #ff8f8f;
       --color-stop-wash: #2b1214;
+      --color-strip-int-day: #1d222a;
+      --color-strip-ext-day: #3a3311;
+      --color-strip-int-night: #16233d;
+      --color-strip-ext-night: #132d1c;
+      --color-strip-unknown: #191d24;
       --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
       --shadow-lift: 0 16px 32px -14px rgb(0 0 0 / 0.75), 0 2px 6px rgb(0 0 0 / 0.4);
       color-scheme: dark;
