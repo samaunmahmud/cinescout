@@ -1,90 +1,255 @@
-# CineScout
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/hero-dark.png" />
+    <img src="docs/screenshots/hero.png" alt="CineScout on desktop and phone" width="100%" />
+  </picture>
+</p>
 
-[![CI](https://github.com/samaunmahmud/cinescout/actions/workflows/ci.yml/badge.svg)](https://github.com/samaunmahmud/cinescout/actions/workflows/ci.yml)
+<h1 align="center">CineScout: scout real filming locations from a script</h1>
 
-AI production and location scouting. A filmmaker submits a scene; the platform extracts the
-physical location requirements, finds real venues with grounded web search, assesses booking
-friction, computes shoot logistics (light, weather, noise risk, nearby services) and drafts
-outreach to venue owners.
+<p align="center">
+  Paste a screenplay. CineScout reads each scene for the place it needs, finds real venues on the web,<br>
+  scores how well each one fits, works out the light, weather and logistics on the shoot day,<br>
+  and drafts the email to the owner. Then it plans the shoot: schedule, call sheet, budget and permits.
+</p>
 
-**Try it:** https://cinescout-4zjm.onrender.com (free hosting: the first visit after a quiet spell takes about a
-minute to wake up).
+<p align="center">
+  <a href="https://github.com/samaunmahmud/cinescout/actions/workflows/ci.yml"><img src="https://github.com/samaunmahmud/cinescout/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+</p>
 
-| | |
-|---|---|
-| ![The login page: a chalk slate and stickers](docs/screenshots/login.jpg) | ![Productions pinned to the board](docs/screenshots/projects.jpg) |
-| ![A scene: what the script asks for, on tape](docs/screenshots/scene.jpg) | ![A venue through the viewfinder, with its score](docs/screenshots/location.jpg) |
+<p align="center">
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21" />
+  <img src="https://img.shields.io/badge/Spring_Boot_3.5-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot 3.5" />
+  <img src="https://img.shields.io/badge/WebFlux-6DB33F?style=flat-square&logo=spring&logoColor=white" alt="Spring WebFlux" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Flyway-CC0200?style=flat-square&logo=flyway&logoColor=white" alt="Flyway" />
+  <img src="https://img.shields.io/badge/IBM_watsonx-052FAD?style=flat-square&logo=ibm&logoColor=white" alt="IBM watsonx" />
+  <img src="https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4" />
+  <img src="https://img.shields.io/badge/Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white" alt="Leaflet" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Testcontainers-291A3F?style=flat-square&logo=testcontainers&logoColor=white" alt="Testcontainers" />
+</p>
 
-The schedule prints as a [call sheet](docs/screenshots/callsheet.jpg). The screenshots show made-up productions.
+<p align="center">
+  <a href="https://cinescout-4zjm.onrender.com"><b>Try the live demo →</b></a><br>
+  <sub>Make an account in a few seconds. The free server can take about a minute to wake up.</sub>
+</p>
+
+## Contents
+
+- [The problem](#the-problem)
+- [What it does](#what-it-does)
+- [Results in numbers](#results-in-numbers)
+- [Features](#features)
+- [More screenshots](#more-screenshots)
+- [How it works](#how-it-works)
+- [Security, testing and CI](#security-testing-and-ci)
+- [Getting started](#getting-started)
+- [API](#api)
+- [Project structure](#project-structure)
+- [Design decisions](#design-decisions)
+- [Limitations](#limitations)
+
+## The problem
+
+1. **A script says what a place feels like, not where it is.** "A cavernous waiting hall, half-lit, rain on tall
+   windows" has to become a search for real buildings someone can book.
+2. **Web search returns lists, not venues.** Most first results are "the 16 best rooftops in Brooklyn" pages,
+   booking-site listings and duplicates of the same place.
+3. **A good-looking place can still fail on the day.** The sun may be in the wrong part of the sky, it may rain,
+   the street may be too loud, or there may be nowhere to park the trucks.
+4. **The paperwork is scattered.** Contacts, quotes, holds, permits, call sheets and budgets usually live in
+   different spreadsheets and inboxes.
 
 ## What it does
 
-**Act one: bring the script.** Create a production and paste or import its screenplay; it is cut into scenes
-at the INT./EXT. headings, with the speaking parts read from the script's format. The AI (IBM watsonx.ai)
-reads each scene for the location it needs: the kind of place, the mood and light, the time of day, how
-quiet it must be, how many people will be on set.
+1. **Bring the script.** Paste or import a screenplay. It is cut into scenes at the `INT.`/`EXT.` headings, and the
+   speaking parts are read from the script's format. No AI is used for this step.
+2. **Read each scene.** IBM watsonx.ai reads a scene for the location it needs: the kind of place, mood, light, time
+   of day, how quiet it must be and how many people will be on set. You can also scout from a reference photo.
+3. **Find real places.** Parallel web search looks for venues in the production's area. Directory pages are
+   dropped, the venues they name are looked up one by one, and duplicates are merged.
+4. **Score them.** The model judges the kind of place and each stated requirement. The score itself is worked out in
+   code, so it is consistent and explainable.
+5. **Check the day.** For each venue: golden and blue hour, the sun's direction, the weather, noise risk, the nearest
+   services, a place for the unit base, and the drive between venues on the same day.
+6. **Lock it in.** Shortlist, compare side by side, record holds, draft the outreach email, track replies, and print
+   a call sheet the crew can open from a link without an account.
 
-**Act two: find the places.** Scouting searches the web (Parallel) for real venues in the production's area,
-has the AI rate how well each fits and who would have to say yes, drops directory pages and duplicates, and
-puts the venues on a map with a picture from their own web page. For each venue it works out the shoot
-days' golden and blue hours, the weather, the noise risk and the nearest services.
+## Results in numbers
 
-**Act three: lock them in.** Shortlist and compare venues side by side, keep each one's contact and quote,
-have the AI draft the email to the owner, and track who has answered. The schedule lays the shoot out by
-day, with a day-out-of-days report for the cast and a call sheet (light, weather and contacts included)
-that prints on one page and can be shared with the crew by a link that needs no account.
+These are counted from the repository or measured in live runs. Nothing is estimated.
 
-
-## Stack
-
-- Java 21, Spring Boot 3.5, Spring WebFlux
-- PostgreSQL, Spring Data JPA, Flyway (Flyway owns the schema; Hibernate only validates it)
-- JUnit 5, Mockito, WireMock, Testcontainers
-- Spring Security, springdoc OpenAPI, Resilience4j
-- Open-Meteo (weather) and OpenStreetMap via Overpass and Nominatim (places, geocoding), all keyless
-- Frontend: React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query; Vitest and Testing Library
-
-## Layout
-
-| Path | Contents |
+| | |
 |---|---|
-| `backend/` | Spring Boot application (`com.cinescout`) |
-| `frontend/` | React web app |
-| `backend/src/main/resources/db/migration/` | Flyway migrations |
-| `docs/architecture.md` | Entity relationships and schema decisions |
+| **840** | backend tests (JUnit 5, Mockito, WireMock, Testcontainers); 2 live smoke tests are skipped by default |
+| **306** | web app tests (Vitest, Testing Library) |
+| **133** | HTTP endpoints across 36 controllers |
+| **30** | Flyway migrations; Hibernate only validates the schema |
+| **36** | film offices in the permit guide: all 33 London boroughs, plus New York City, Los Angeles and Paris |
+| **76 to 1** | spread of fit scores in a live Brooklyn diner run once scoring moved into code (asked for a number directly, the model gave nearly every venue 60) |
+| **6 / 12** | distinct venues found in one live run each for a Brooklyn rooftop and a London warehouse scene |
 
-## Running
+## Features
 
-Requires JDK 21+ and Maven. The tests start PostgreSQL through Testcontainers, so Docker
-must be running.
+| | Feature | What it does |
+|---|---|---|
+| 📜 | **Script import** | Cuts a screenplay into scenes at its headings and reads the speaking parts |
+| 🧠 | **Scene reading** | watsonx.ai turns a scene into setting, mood, light, time of day, sound and crew size |
+| 📷 | **Scout from a photo** | A vision model reads a reference picture and describes the place to look for |
+| 🔎 | **Grounded scouting** | Real venues from Parallel web search, with directory pages and duplicates removed |
+| 🎯 | **Fit score in code** | The model gives a verdict per requirement; code turns it into a 0-100 score |
+| 📍 | **Near me and recce mode** | Scout around your current position; a phone view for notes and photos on site |
+| 🗺️ | **Maps** | Leaflet with OpenStreetMap tiles; pins coloured by fit, click to move a pin |
+| ☀️ | **Light and sun** | Golden and blue hour and the sun's direction at call time, computed locally (NOAA) |
+| 🌧️ | **Weather and plan B** | Forecasts with a fallback provider, daily weather watch alerts, up to five cover sets per scene |
+| 🔊 | **Noise and services** | Noise risk against the scene's needs, nearest hospital, food, toilets and parking |
+| 🚚 | **Unit base and moves** | Car parks for the trucks, drive times between venues on the same day |
+| ✉️ | **Outreach** | AI drafts the email to the owner, tracks sent and replied, flags follow-ups |
+| 📅 | **Schedule and call sheet** | Shoot days, clashes, day-out-of-days, a printable call sheet with a share link |
+| 💷 | **Budget and shot list** | Costs by category against a total, shots with size, camera bearing and time |
+| 🏛️ | **Permit guidance** | The filming office for a public venue and the date to apply by |
+| 📄 | **Location release and pack** | PDF release templates and a location pack, made with PDFBox |
+| 👥 | **Crew and roles** | Owner, editor and viewer; invites by email; comments with mentions; activity log |
+| 🎬 | **Director's link** | A shortlist the director can answer without an account |
+| 🗓️ | **Calendar feed** | An iCalendar link of every shoot day you are on |
+| 🌗 | **Light and dark themes** | A studio look in both, chosen before the first paint |
+
+## More screenshots
+
+<details>
+<summary>Dashboard, scene, venue, schedule, budget, call sheet and phone views</summary>
+<br>
+
+The screenshots show a made-up production with invented venues.
+
+| | |
+|---|---|
+| ![Dashboard](docs/screenshots/light-dashboard.jpg) | ![Dashboard in the dark theme](docs/screenshots/dark-dashboard.jpg) |
+| ![A scene with its requirements and venues](docs/screenshots/light-scene.jpg) | ![A scene in the dark theme](docs/screenshots/dark-scene.jpg) |
+| ![A venue with its fit score](docs/screenshots/light-venue.jpg) | ![A venue in the dark theme](docs/screenshots/dark-venue.jpg) |
+| ![The schedule](docs/screenshots/light-schedule.jpg) | ![The budget](docs/screenshots/light-budget.jpg) |
+| ![The call sheet](docs/screenshots/light-callsheet.jpg) | ![The login page](docs/screenshots/login.jpg) |
+
+<p align="center">
+  <img src="docs/screenshots/light-phone-scene.jpg" alt="A scene on a phone" width="30%" />
+  <img src="docs/screenshots/light-phone-recce.jpg" alt="Recce mode on a phone" width="30%" />
+  <img src="docs/screenshots/dark-phone-dashboard.jpg" alt="The dashboard on a phone, dark theme" width="30%" />
+</p>
+</details>
+
+## How it works
+
+```mermaid
+flowchart LR
+    U[Browser<br>React + TanStack Query] -->|cookie session| N[nginx<br>CSP, same origin]
+    N --> A[Spring Boot WebFlux API]
+    A -->|JPA on boundedElastic| DB[(PostgreSQL<br>Flyway)]
+    A --> P[Scouting pipeline]
+    P -->|extract, assess| W[IBM watsonx.ai]
+    P -->|search| S[Parallel]
+    A --> L[Logistics]
+    L --> M[Open-Meteo<br>MET Norway fallback]
+    L --> O[Overpass<br>OpenStreetMap]
+    L --> G[Nominatim]
+    L --> R[OSRM]
+    L --> SC[Solar maths, local]
+    A --> F[(File store<br>disk or S3)]
+    J[GitHub Actions<br>daily jobs] -->|X-Job-Secret| A
+```
+
+1. The web app talks to one origin. nginx serves the built app, sets the security headers and proxies `/api`.
+2. The API is reactive (WebFlux), so a scouting run can call the model, search and map services at the same time.
+   Database calls are blocking JPA, so they run on `Schedulers.boundedElastic()` and never on an event-loop thread.
+3. The scouting pipeline is extract, search, assess. Every external call goes through retry and a circuit breaker,
+   and calls to watsonx are spaced app-wide to stay under the plan's rate.
+4. Logistics reports are cached on the venue. If a weather or map service is down, the report still comes back with
+   that section marked unavailable.
+5. Scheduled jobs (follow-ups, weather watch) run on the app's own timer and from a daily GitHub Actions workflow,
+   because the free host sleeps when idle.
+
+## Security, testing and CI
+
+**Security**
+
+- Session cookie for the web app: `HttpOnly`, `SameSite=Strict`, `Secure` over HTTPS. The database stores only a
+  SHA-256 hash of the token.
+- CSRF defence: the cookie only counts on requests that also send `X-Requested-With: XMLHttpRequest`.
+- Logins take the same time whether or not the email exists.
+- Access is checked by project membership: a stranger gets `404`, a member without the right role gets `403`.
+- Rate limits per user on the AI and lookup features, and per address on logins, sign-ups and guest answers.
+- Venue pictures are fetched through a guard that only connects to public addresses, at DNS resolution time too,
+  so DNS rebinding cannot reach a private network.
+- Uploaded photos are re-encoded without their metadata and served through short-lived signed links.
+- nginx sets a strict Content-Security-Policy. Shared call sheets are `noindex` and `no-store`.
+- Errors are RFC 9457 problem details.
+
+**Testing**
+
+- Backend: JUnit 5 and Mockito for units, WireMock for every external API, Testcontainers for a real PostgreSQL.
+- Web: Vitest and Testing Library. The fake server fails any test that makes a request it was not told about.
+- Live smoke tests for watsonx and Parallel are opt-in, so the normal run needs no keys and costs nothing.
+
+**CI** (`.github/workflows/ci.yml`, on every push to `main` and every pull request)
+
+1. Backend: `mvn -B -ntp verify` on Java 21, with Docker for Testcontainers.
+2. Web: `npm ci`, lint (oxlint), tests and a production build on Node 22.
+3. Docker image builds for the backend, the web app and the single-container Render image.
+
+## Getting started
+
+**Prerequisites:** Docker. For local development also JDK 21+, Maven and Node.js 22.
+
+1. **Clone**
+
+   ```bash
+   git clone https://github.com/samaunmahmud/cinescout.git
+   cd cinescout
+   ```
+
+2. **Set the environment.** Copy the example and set at least `DB_PASSWORD`. The AI keys are optional: without
+   them the app runs, but scene reading, scouting and outreach answer `503`.
+
+   ```bash
+   cp .env.example .env
+   # DB_PASSWORD=<any long random string>
+   # WATSONX_API_KEY, WATSONX_PROJECT_ID, WATSONX_MODEL_ID, WATSONX_URL  (IBM watsonx.ai)
+   # PARALLEL_API_KEY                                                     (Parallel search)
+   ```
+
+3. **Start everything** (PostgreSQL, the API and nginx). Flyway creates the schema on first start.
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. **Open** http://localhost:8080 and make an account.
+
+**Or run the parts yourself** for development:
 
 ```bash
+# database
+docker run -d --name cinescout-db -e POSTGRES_DB=cinescout -e POSTGRES_USER=cinescout \
+  -e POSTGRES_PASSWORD=devpass -p 5432:5432 postgres:16-alpine
+
+# API on :8081 (tests need Docker running)
 cd backend
 mvn test
-DB_PASSWORD=... mvn spring-boot:run
-```
+DB_PASSWORD=devpass mvn spring-boot:run
 
-The web app needs Node.js 20.19+ (or 22.12+). With the backend running:
-
-```bash
-cd frontend
+# web app on :5173, proxies /api to :8081
+cd ../frontend
 npm install
-npm run dev      # http://localhost:5173, proxies /api to the backend
-npm test
-npm run build
+npm run dev
+npm test && npm run lint && npm run build
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the same checks on every push to `main` and every pull
-request: the backend tests, the web app's lint, tests and build, and both Docker image builds.
+<details>
+<summary>Advanced configuration</summary>
 
-The dev server proxies `/api` to `http://localhost:8081`; set `BACKEND_URL` to point it elsewhere. The web app
-logs in with a session cookie (see Authentication), so a reload keeps you logged in.
-
-Maps use Leaflet with OpenStreetMap's own tile server, which needs no key but is meant for light use only
-([tile usage policy](https://operations.osmfoundation.org/policies/tiles/)). For a real deployment, set
-`VITE_MAP_TILE_URL` (a `{z}/{x}/{y}` template) and `VITE_MAP_TILE_ATTRIBUTION` at build time to another provider.
-
-Configuration comes from the environment:
+### Database and server
 
 | Variable | Default |
 |---|---|
@@ -93,381 +258,214 @@ Configuration comes from the environment:
 | `DB_PASSWORD` | none, must be set |
 | `PORT` | `8081` |
 
-The LLM client (IBM watsonx.ai) is only created when `WATSONX_API_KEY` is set, so the app
-still starts without IBM credentials. When it is set, the other two are required:
+### AI and search
+
+The LLM client is only created when `WATSONX_API_KEY` is set; the other two are then required. Scouting needs both
+the watsonx and Parallel keys. Outreach needs only watsonx.
 
 | Variable | Default |
 |---|---|
 | `WATSONX_API_KEY` | none, IBM Cloud API key |
 | `WATSONX_PROJECT_ID` | none, must be set with the key |
 | `WATSONX_MODEL_ID` | none, must be set with the key |
-| `WATSONX_VISION_MODEL_ID` | `mistralai/mistral-small-3-1-24b-instruct-2503`: reads reference photos for "scout from a photo"; must offer image chat in your region |
-| `WATSONX_URL` | `https://us-south.ml.cloud.ibm.com` (the region your watsonx project is in, e.g. `https://eu-gb.ml.cloud.ibm.com` for London) |
-| `WATSONX_MAX_REQUESTS_PER_SECOND` | `2`, the free (Lite) plan's limit; raise it on a paid plan |
+| `WATSONX_VISION_MODEL_ID` | `mistralai/mistral-small-3-1-24b-instruct-2503`, for scouting from a photo |
+| `WATSONX_URL` | `https://us-south.ml.cloud.ibm.com` (e.g. `https://eu-gb.ml.cloud.ibm.com` for London) |
+| `WATSONX_MAX_REQUESTS_PER_SECOND` | `2`, the free Lite plan's limit |
+| `PARALLEL_API_KEY` | none, Parallel API key |
+| `PARALLEL_URL` | `https://api.parallel.ai` |
+| `YOUTUBE_API_KEY` | none; venue videos. Without it the page links to a YouTube search |
 
-Calls to the model are spaced out app-wide to stay under that rate: extra calls wait their turn
-(up to 30 seconds) instead of being refused by IBM, so a scouting run that assesses ten venues
-takes a few seconds longer rather than losing most of them.
-
-To check the client against the real service (skipped by default, billed to your project):
+Live checks against the real services (skipped by default, billed to you):
 
 ```bash
 WATSONX_LIVE_TEST=true WATSONX_API_KEY=... WATSONX_PROJECT_ID=... WATSONX_MODEL_ID=... \
   mvn test -Dtest=WatsonxLiveSmokeTest
-```
-
-Likewise the search client (Parallel) is only created when `PARALLEL_API_KEY` is set:
-
-| Variable | Default |
-|---|---|
-| `PARALLEL_API_KEY` | none, Parallel API key |
-| `PARALLEL_URL` | `https://api.parallel.ai` |
-
-```bash
 PARALLEL_LIVE_TEST=true PARALLEL_API_KEY=... mvn test -Dtest=ParallelLiveSmokeTest
 ```
 
-Scouting (extract requirements, search, assess venues, save candidates) needs **both** keys, so
-without them the app still starts but has no scouting beans. Outreach email generation needs only the
-watsonx.ai key.
+### How the fit score is made
 
-For many settings the web's first answers are directories ("The 16 best rooftop venues in Brooklyn")
-rather than venues. The model says which results are about one venue; the others are left out and
-counted in the result's `notVenues`, and the venues they name are looked up by name and assessed
-too. A venue found on several of its pages is saved once, and one that scores 0 (unusable, e.g. in
-another city) is left out and counted in `unsuitable`.
-
-The model does not pick the fit score. It says what kind of place the venue is next to the one the scene
-needs (exact, close, dressable, unsuitable) and, for each requirement the scene states (mood, lighting,
-time of day, sound, room for the crew), whether the page shows the venue meets it, fails it or does not
-say. `VenueVerdict.fitScore` turns that into 0-100: 70 for the right kind of place, up 6 for each
-requirement met, down 8 for each failed (12 for too small or too loud). Asked for a number directly,
-Llama gave nearly every venue 60. Optional tuning, all with defaults:
+The model does not pick the number. It says what kind of place the venue is next to the one the scene needs (exact,
+close, dressable, unsuitable) and, for each stated requirement, whether the venue meets it, fails it or the page does
+not say. `VenueVerdict.fitScore` turns that into 0-100: 70 for the right kind of place, up 6 for each requirement met,
+down 8 for each failed (12 for too small or too loud). A venue that scores 0 is left out.
 
 | Property | Default |
 |---|---|
-| `cinescout.scouting.assessment-concurrency` | `4` venues assessed by the LLM at once |
-| `cinescout.scouting.follow-up-venues` | `5` venues named on directory pages looked up per run (`0` turns it off) |
+| `cinescout.scouting.assessment-concurrency` | `4` venues assessed at once |
+| `cinescout.scouting.follow-up-venues` | `5` venues named on directory pages looked up per run |
 | `cinescout.resilience.max-attempts` | `3` tries per LLM or search call |
 | `cinescout.resilience.initial-backoff` / `max-backoff` | `500ms` / `5s` |
-| `cinescout.resilience.breaker-window-size` / `-minimum-calls` | `10` / `5` |
 | `cinescout.resilience.breaker-failure-rate-percent` | `50` |
 | `cinescout.resilience.breaker-open-duration` | `30s` |
 
-Shoot logistics (sun, weather, noise, nearby services) use free public services that need no keys, so
-they are always on. Their usage policies ask for an identifying User-Agent and light use; anything beyond
-that should point the base URLs at a private or commercial instance:
+### Logistics services
+
+All keyless. Their usage policies ask for an identifying User-Agent and light use.
 
 | Property | Default |
 |---|---|
-| `cinescout.logistics.user-agent` | `CineScout/0.1 (+https://github.com/samaunmahmud/cinescout)`; a deployment should put its own contact here |
-| `cinescout.logistics.max-days` | `14` shoot days per report |
-| `cinescout.logistics.open-meteo.forecast-url` / `archive-url` | `https://api.open-meteo.com` / `https://archive-api.open-meteo.com` (weather; free for non-commercial use) |
-| `cinescout.logistics.overpass.base-url` | `https://overpass-api.de` (OpenStreetMap places) |
-| `cinescout.logistics.overpass.fallback-url` | `https://overpass.openstreetmap.fr`: asked when the first server turns a query away at once (public servers refuse addresses over their limits, and a free host's address is shared); blank for none |
-| `cinescout.logistics.met-norway.enabled` | `true`: forecasts Open-Meteo turns away (its free tier counts calls per IP address, which a free host shares) come from MET Norway's keyless Locationforecast instead; those days are UTC dates and give rain amounts, not chances |
-| `cinescout.logistics.nominatim.base-url` | `https://nominatim.openstreetmap.org` (geocoding, at most one request a second) |
+| `cinescout.logistics.user-agent` | `CineScout/0.1 (+https://github.com/samaunmahmud/cinescout)`; put your own contact here |
+| `cinescout.logistics.open-meteo.forecast-url` | `https://api.open-meteo.com` |
+| `cinescout.logistics.met-norway.enabled` | `true`: MET Norway answers when Open-Meteo turns a request away |
+| `cinescout.logistics.overpass.base-url` | `https://overpass-api.de` |
+| `cinescout.logistics.overpass.fallback-url` | `https://overpass.openstreetmap.fr` |
+| `cinescout.logistics.overpass.unit-base-radius` | `1000` metres (200-3000) |
+| `cinescout.logistics.nominatim.base-url` | `https://nominatim.openstreetmap.org` (one request a second) |
+| `cinescout.logistics.osrm.base-url` | `https://router.project-osrm.org` |
+| `VITE_MAP_TILE_URL` / `VITE_MAP_TILE_ATTRIBUTION` | OpenStreetMap's own tiles; set another provider at build time for real traffic |
 
-## Venue videos
-
-With `YOUTUBE_API_KEY` set (a Google Cloud API key with the YouTube Data API v3 enabled),
-`GET /api/locations/{id}/videos` searches YouTube for the venue's name and address (or the project's area)
-and the location page shows the videos, playing them in place with YouTube's no-cookie player. A search
-costs 100 of the free 10,000 daily quota units, so results are cached on the location for a week
-(`cinescout.video.cache-ttl`), or until its name or address changes. Without a key the endpoint answers 503
-and the page links to a YouTube search instead.
-
-## Reply tracking
-
-Each outreach email can get its own reply address, `scout+<token>@<reply domain>`, which "Open in email app" puts
-in Cc. When an inbound-mail provider receives a reply there, it posts it to `POST /api/inbound/postmark`; the reply
-is filed against its email (sender, subject, time and up to 20 KB of plain text) and the email is marked replied.
-Reply text is never sent to the AI. Without a provider, replies are pasted in by hand ("Paste a reply or mark
-replied") and the webhook answers 404.
+### Files (recce photos, releases)
 
 | Variable | Default |
 |---|---|
-| `MAIL_REPLY_DOMAIN` | none: a domain whose mail the provider receives (Postmark: an inbound domain with its MX record) |
+| `FILES_STORE` | `local`, or `s3` for an S3-compatible bucket (Cloudflare R2, MinIO, AWS S3) |
+| `FILES_DIR` | `<tmp>/cinescout-files` |
+| `FILES_S3_ENDPOINT` / `FILES_S3_BUCKET` / `FILES_S3_REGION` | none / none / `auto` |
+| `FILES_S3_ACCESS_KEY` / `FILES_S3_SECRET_KEY` | none |
+| `FILES_SIGNING_KEY` | random at each start; set it so photo links survive a restart |
+
+### Reply tracking (optional)
+
+Each outreach email can carry its own reply address, `scout+<token>@<reply domain>`. Postmark posts replies to
+`POST /api/inbound/postmark`. Without a provider, replies are pasted in by hand.
+
+| Variable | Default |
+|---|---|
+| `MAIL_REPLY_DOMAIN` | none |
 | `MAIL_REPLY_LOCAL_PART` | `scout` |
 | `MAIL_INBOUND_PROVIDER` | none, or `postmark` |
-| `MAIL_INBOUND_USERNAME` / `MAIL_INBOUND_PASSWORD` | none: the HTTP Basic credentials put in the webhook URL set in Postmark, `https://<user>:<pass>@<host>/api/inbound/postmark` |
+| `MAIL_INBOUND_USERNAME` / `MAIL_INBOUND_PASSWORD` | none: Basic credentials in the webhook URL |
 
-## Follow-ups and scheduled jobs
+### Scheduled jobs
 
-An email marked as sent that has had no reply for a project's follow-up days (5 by default, set on the project's
-settings page) is flagged "Follow up" on its venue's Outreach tab, in the project's outreach list and on the project's
-poster. "Draft follow-up" has the AI write a short chaser as a new draft, from the first email's subject and the day it
-went only (never its text, notes or replies).
-
-The flagging is a scheduled job, which also alerts the project's owner and editors to each flagged email once.
-
-## Weather watch and alerts
-
-Every morning the weather watch fetches the Open-Meteo forecast at each confirmed venue (with a map position) whose
-scene shoots in the next seven days, and alerts the whole crew to each shoot day where the chance of rain or the day's
-highest wind reaches the project's thresholds (60% and 40 km/h by default, set on the settings page's Weather tab). The
-alert names the scene's cover sets, or says it has none. Each venue and day alerts once; alerts older than 90 days are
-forgotten. Alerts, weather and follow-ups alike, are in the bell at the top of every page, with the unread count.
-
-## Calendar feed
-
-On the account page, "Turn on the calendar feed" makes a secret link (`/api/public/calendars/<token>.ics`) that a
-calendar app subscribes to. It lists the shoot days of every active project you are on: a scene with a call time is one
-event a day from call to wrap (floating local time, as the venue keeps it), one without is an all-day event over its
-dates. Each event names the confirmed venue and address, who to call there, the call and wrap, and links to the call
-sheet. A new link stops the old one; turning the feed off stops it at once. The feed is RFC 5545 iCalendar, checked
-in the tests by parsing and validating it with ical4j.
-
-## Scheduled jobs
-
-Render's free tier sleeps when idle, so besides the app's own timer each job can be run through
-`POST /api/internal/jobs/<name>` (`follow-ups`, `weather-watch`) with the header `X-Job-Secret`, which the daily
-`.github/workflows/jobs.yml` workflow does when the repository has the secrets `CINESCOUT_URL` and `JOBS_SECRET`.
+`POST /api/internal/jobs/<name>` (`follow-ups`, `weather-watch`) with the header `X-Job-Secret`. The daily
+`.github/workflows/jobs.yml` calls it when the repository has the secrets `CINESCOUT_URL` and `JOBS_SECRET`.
 Running a job twice is harmless.
 
 | Variable | Default |
 |---|---|
-| `JOBS_SECRET` | none: the job endpoint answers 404 and only the app's own timer runs the jobs |
-| `JOBS_SCHEDULER` | `true`: also run the jobs on the app's own timer while it is awake |
+| `JOBS_SECRET` | none: the endpoint answers 404 and only the app's own timer runs the jobs |
+| `JOBS_SCHEDULER` | `true` |
 | `JOBS_FOLLOW_UPS_CRON` | `0 17 * * * *` (hourly) |
 | `JOBS_WEATHER_WATCH_CRON` | `0 23 6 * * *` (daily, 06:23 UTC) |
-| `JOBS_WEATHER_VENUES` | `40` forecasts a run, the earliest shoot first |
-
-## Sun direction
-
-The solar calculation (NOAA's equations, run locally) gives the sun's azimuth and elevation at any moment. Each shoot
-day of a logistics report carries the sun's position at the start, middle and end of the scene's call-to-wrap time (or
-its light window when no times are set), e.g. "Sun from SW (225°), 18° high at 16:00". The venue map shows them as a
-compass, and the Logistics tab and call sheet list them. Reports made before a call time was set or moved are redone by
-"Get light and weather".
-
-## Company moves
-
-On a shoot day with more than one confirmed venue, the Schedule tab and the call sheet show the drive from each venue to
-the next (scenes in call-time order, then script order), from the public OSRM demo server behind a `RoutingClient`
-interface: keyless, one request a second across the app, at most a few new pairs per request, and every answer kept for
-30 days (`route_cache`). Times are without traffic. A move over an hour is flagged. The shared call sheet only shows
-moves already worked out; it never calls the router.
-
-| Variable / property | Default |
-|---|---|
-| `cinescout.logistics.osrm.base-url` | `https://router.project-osrm.org` (point at an own OSRM for heavy use) |
-| `cinescout.moves.warn-after` | `60m` |
-| `cinescout.moves.max-lookups` | `8` new pairs a request |
-
-## Unit base
-
-The Logistics tab lists somewhere to park the trucks: open car parks, roadside bays (lay-bys) and rest areas from
-OpenStreetMap, found by the same single Overpass query as the noise and services. Multi-storey, underground and private
-car parks are left out. Sites are ranked by size where the map says (tagged capacity, else the outline's area), then
-by distance, and kept with the report. The map does not say whether trucks are allowed, so the tab says to ask.
-
-| Property | Default |
-|---|---|
-| `cinescout.logistics.overpass.unit-base-radius` | `1000` metres (200-3000) |
-
-## Holds and availability
-
-Each venue's Overview tab records its days: pencilled, held (optionally until a date the hold lapses), confirmed or
-unavailable, with a note. Scenes can carry a call and wrap time with their dates (a wrap at or before the call is the
-next morning). The Schedule tab lists clashes: a confirmed venue unavailable on a shoot day, a pencil or hold lapsing
-before its day, and, as a warning, two scenes at the same venue on one day at overlapping or unset times. The same
-venue on several scenes is matched by name or street address. Shared call sheets show the times but no holds.
-
-## Cover sets
-
-A scene can keep up to five backup venues, each one of its own candidates (a venue from your library joins the scene
-first), with a free-text trigger for when to switch, such as "if rain > 60%". The scene page lists and edits them; the
-Schedule tab and the call sheet show them under the scene with the trigger and who to call. A cover that is later
-confirmed for the scene drops off the schedule as a cover.
-
-## Location releases
-
-The venue's Outreach tab makes a location release as a PDF (Apache PDFBox, no external service): a clearly labelled
-template filled in from the production, the venue, its contact and quote, the scene's shoot dates, call and wrap times
-and estimated crew size, with blanks for the rest and "Template only — not legal advice. Have it reviewed before
-signing." on every page. Each one is a new version kept in the file store (30 a venue at most), downloaded by members
-only through `GET /api/agreements/{id}/file`.
-
-## Permit guidance
-
-A venue marked "Public space" (set on its page, or by scouting) shows the filming office for its area: the area is
-looked up once from its pin with Nominatim's reverse geocoding (zoom 10, which for London gives the borough and its
-ISO 3166-2 code) and kept until the venue moves. The offices live in
-`backend/src/main/resources/permits/filming-offices.yml`: all 33 London borough film services, from Film London's
-borough contacts and its borough lead-in times sheet (October 2021), plus New York City (the Mayor's Office of Media
-and Entertainment), Los Angeles (FilmLA) and Paris (Paris Film), from their own pages, with a common checklist; the
-rest of the UK gets "check with the local council". An office may set where a large crew starts (`largeCrewFrom`;
-Paris: 11 people), 30 otherwise. Each card shows when the file was last reviewed and links to editing it on GitHub
-(`cinescout.permits.edit-url`). To correct an entry, edit the file, set `lastReviewed`, and open a pull request; a
-broken file stops the app at start-up and fails `FilmingOfficesTest`. The schedule warns when to apply for a
-confirmed public-space venue (working days before its first shoot day, bank holidays not counted out), and flags it as
-a problem once that date has passed.
-
-## Recce photos
-
-Photos the crew upload to a venue (JPEG or PNG up to 10 MB, 30 a venue) are re-encoded without their metadata,
-after their GPS position is read to offer as the venue's pin; HEIC photos are turned into JPEG in the browser
-(iOS does it by itself). They are kept in a file store and shown through short-lived signed links.
-
-| Variable | Default |
-|---|---|
-| `FILES_STORE` | `local`: a directory on this machine. `s3`: an S3-compatible bucket (Cloudflare R2, MinIO, AWS S3) |
-| `FILES_DIR` | `<tmp>/cinescout-files`, the directory for `local` |
-| `FILES_S3_ENDPOINT` | none, e.g. `https://<account-id>.r2.cloudflarestorage.com` |
-| `FILES_S3_BUCKET` / `FILES_S3_REGION` | none / `auto` (R2's region) |
-| `FILES_S3_ACCESS_KEY` / `FILES_S3_SECRET_KEY` | none |
-| `FILES_SIGNING_KEY` | random at each start; set it so photo links survive a restart |
-
-Render's disk is wiped on every deploy, so there photos last only until the next one unless `FILES_STORE=s3`
-and the bucket is set. With `s3` but a missing setting the server logs a warning and uses the local disk.
-
-## Deploying
-
-`docker-compose.yml` runs the whole thing on one machine: PostgreSQL, the API, and nginx serving the web
-app and proxying `/api` to it on the same origin. Only the web port is published.
-
-```bash
-cp .env.example .env          # set DB_PASSWORD, and the API keys you have
-docker compose up -d --build  # http://localhost:8080
-```
-
-For a public host, point a DNS name at it and let Caddy fetch certificates:
-
-```bash
-DOMAIN=cinescout.example.com docker compose --profile https up -d --build
-```
-
-Every container has a health check (the API's is `GET /actuator/health`, the only actuator endpoint
-exposed). nginx sets `Content-Security-Policy` and the other usual headers, and passes on the scheme the
-browser used, so the session cookie is `Secure` over HTTPS. Before going public, set `REGISTRATION_OPEN=false`
-once your accounts exist, put your own contact in `OSM_USER_AGENT`, and consider a tile provider for the
-maps (see `.env.example`). Remove the `/v3/api-docs` and `/swagger-ui` blocks from `frontend/nginx.conf` to
-keep the API docs private.
-
-### On Render (one free service)
-
-`deploy/render/Dockerfile` builds a single container in which the backend serves the web app itself, with the
-same page headers nginx would set, sized for a 512 MB instance; `render.yaml` describes it as a Render
-Blueprint. The database is separate (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`), for example a free Neon
-Postgres, since Render keeps one free database per account. On the free plan the service sleeps after 15
-minutes without visitors and takes about a minute to wake. Render's edge (Cloudflare) sets `CF-Connecting-IP`
-itself and refuses requests that bring their own, so the per-address limits key on the real visitor.
-
-## Authentication
-
-Every endpoint needs a login except registering, logging in and out. There are two ways to log in, both
-against the `users` table:
-
-- **Session cookie (the web app).** `POST /api/auth/login` sets an `HttpOnly`, `SameSite=Strict` cookie
-  holding a random token; the database stores only its SHA-256 hash. It lasts
-  `cinescout.security.session-ttl` (14 days) or until `POST /api/auth/logout`. As a CSRF defence the cookie
-  only counts on requests that also send `X-Requested-With: XMLHttpRequest`. It is `Secure` when the request
-  came over HTTPS; set `cinescout.security.cookie-secure` to force it either way.
-- **HTTP Basic (scripts, Swagger UI).** Send the email and password with every request:
-
-```bash
-curl -X POST localhost:8081/api/auth/register -H 'Content-Type: application/json' \
-  -d '{"email":"ada@example.com","password":"a-long-password","displayName":"Ada"}'
-curl -u ada@example.com:a-long-password localhost:8081/api/auth/me
-```
-
-Errors are RFC 9457 problems (`application/problem+json`). Set `cinescout.security.registration-open=false`
-to stop new accounts being created on a deployment that should not be public. Both logins carry secrets,
-so run any deployment behind HTTPS.
+| `JOBS_WEATHER_VENUES` | `40` forecasts a run |
 
 ### Rate limits
 
-The paid and rate-limited services are protected per user, and logins and sign-ups per client address. Past a
-limit the API answers `429` with a `Retry-After` header and a problem saying when to try again. Each limit is a
-burst of `capacity` calls, refilled evenly over `period` (`cinescout.rate-limits.<name>.capacity` / `.period`):
+Past a limit the API answers `429` with `Retry-After`. Each is a burst of `capacity` calls refilled over `period`
+(`cinescout.rate-limits.<name>.capacity` / `.period`); `cinescout.rate-limits.enabled=false` turns them off.
 
 | Limit | Counts | Default |
 |---|---|---|
-| `ai` | scene parsing and outreach generation, per user | 30 an hour |
+| `ai` | scene reading and outreach, per user | 30 an hour |
 | `scouting` | scouting runs, per user | 10 an hour |
-| `lookups` | logistics runs and venue video searches, per user | 120 an hour |
-| `login` | failed logins (web app and HTTP Basic), per address | 20 per 10 minutes |
+| `lookups` | logistics, videos, pictures, per user | 120 an hour |
+| `login` | failed logins, per address | 20 per 10 minutes |
 | `register` | new accounts, per address | 5 an hour |
-| `guest` | answers through a director's shortlist link, per address | 60 an hour |
+| `guest` | director's link answers, per address | 60 an hour |
 
-The counts live in memory: a restart forgets them, and each instance counts on its own. Behind nginx the
-client address comes from `X-Forwarded-For`, which nginx sets itself (trusting it only from private networks,
-such as Caddy's). `cinescout.rate-limits.enabled=false` turns them all off.
+### Deploying
+
+- **Docker Compose** (above) for one machine. For a public host, Caddy fetches certificates:
+  `DOMAIN=cinescout.example.com docker compose --profile https up -d --build`. Set `REGISTRATION_OPEN=false` once
+  your accounts exist.
+- **Render**: `deploy/render/Dockerfile` builds one container in which the backend also serves the web app, sized for
+  a 512 MB instance; `render.yaml` describes it. The database is separate, for example a free Neon PostgreSQL.
+
+### Permit guide
+
+The offices live in `backend/src/main/resources/permits/filming-offices.yml`, with sources and a review date. To
+correct an entry, edit the file, set `lastReviewed` and open a pull request. A broken file stops the app at start-up
+and fails `FilmingOfficesTest`.
+
+</details>
 
 ## API
 
-Once running, the interactive documentation is at `/swagger-ui.html` and the OpenAPI description at
-`/v3/api-docs` (turn both off with `springdoc.api-docs.enabled=false`). Routes, all under `/api`:
+Interactive docs at `/swagger-ui.html`, the OpenAPI description at `/v3/api-docs`. All routes are under `/api`. Lists
+come a page at a time (`?page=`, `?size=` up to 100). Another user's resource is always `404`.
 
-| Area | Routes |
+| Area | Main routes |
 |---|---|
-| Accounts | `POST /auth/register` (public), `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `PUT /account`, `PUT /account/password`, `POST /account/delete` |
-| Projects | `POST /projects`, `GET /projects[?status=]`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress`, `GET /projects/{id}/schedule` |
-| Scenes | `POST /projects/{id}/scenes`, `GET /projects/{id}/scenes[?q=]`, `GET`/`PUT`/`DELETE /scenes/{id}`, `PUT /scenes/{id}/shoot-dates`, `POST /projects/{id}/scenes/import[/preview]` |
-| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `PUT /locations/{id}/contact`, `POST /locations/{id}/image`, `GET /projects/{id}/locations[?status=]`, `GET /projects/{id}/locations/export[?status=]` |
-| Logistics | `POST`/`GET /locations/{id}/logistics`, `POST /projects/{id}/logistics` |
-| Scouting | `POST /scenes/{id}/parse`, `POST /projects/{id}/scenes/parse`, `POST /scenes/{id}/scout[?maxResults=]` |
-| Call sheet sharing | `GET`/`POST`/`DELETE /projects/{id}/call-sheet-link`, `GET /public/call-sheets/{token}` (no login) |
-| Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET /projects/{id}/outreach-drafts[?status=]`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}` |
+| Accounts | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `PUT /account`, `PUT /account/password`, `POST /account/delete` |
+| Dashboard and search | `GET /dashboard`, `GET /search?q=`, `GET /alerts`, `GET /alerts/unread-count` |
+| Projects | `POST`/`GET /projects`, `GET`/`PUT`/`DELETE /projects/{id}`, `GET /projects/{id}/progress`, `GET`/`PUT /projects/{id}/settings` |
+| Crew | `GET`/`POST /projects/{id}/members`, `GET /projects/{id}/activity` |
+| Scenes | `POST`/`GET /projects/{id}/scenes`, `GET`/`PUT`/`DELETE /scenes/{id}`, `PUT /scenes/{id}/shoot-dates`, `POST /projects/{id}/scenes/import[/preview]` |
+| Scouting | `POST /scenes/{id}/parse`, `POST /projects/{id}/scenes/parse`, `POST /scenes/{id}/scout` |
+| Locations | `POST`/`GET /scenes/{id}/locations`, `GET`/`PUT`/`DELETE /locations/{id}`, `PUT /locations/{id}/coordinates`, `PUT /locations/{id}/contact`, `GET /projects/{id}/locations[/export]` |
+| Logistics | `POST`/`GET /locations/{id}/logistics`, `POST /projects/{id}/logistics`, `GET /locations/{id}/permit`, `GET /projects/{id}/moves` |
+| Planning | `GET /projects/{id}/schedule`, `GET`/`PUT /locations/{id}/availability`, `GET`/`POST /scenes/{id}/covers`, `GET`/`POST /scenes/{id}/shots`, `GET`/`PUT /projects/{id}/budget` |
+| Outreach | `POST /locations/{id}/outreach-drafts/generate`, `GET /locations/{id}/outreach-drafts`, `GET`/`PUT`/`DELETE /outreach-drafts/{id}`, `POST /outreach-drafts/{id}/follow-up` |
+| Files | `GET`/`POST /locations/{id}/photos`, `GET`/`POST /locations/{id}/agreements`, `GET /agreements/{id}/file` |
+| Library | `GET /library`, `GET /library/tags`, `POST /scenes/{id}/locations/from-library` |
+| Public (no login) | `GET /public/call-sheets/{token}`, `GET /public/shortlists/{token}`, `GET /public/calendars/{token}.ics` |
 
-The lists (projects, scenes, locations, outreach drafts) come a page at a time: `?page=` (zero-based,
-default `0`) and `?size=` (default `50`, at most `100`). The answer is
-`{ "items": [...], "page", "size", "totalItems", "totalPages" }`, each list in its own fixed order.
+## Project structure
 
-`PUT` is a full replacement. Someone else's resource is always a `404`. The scouting routes and
-`generate` call paid services and can take many seconds; they answer `503` when the server has no
-AI keys (`generate` needs only the watsonx.ai key), and `429` past the user's [rate limit](#rate-limits). Listing, editing and deleting drafts always works.
-The API never sends an email: a draft's `status` (`DRAFT`, `SENT`, `REPLIED`) is what the user reports.
+```
+cinescout/
+├── backend/                         Spring Boot API (com.cinescout)
+│   └── src/
+│       ├── main/java/com/cinescout/
+│       │   ├── ai/  llm/  search/   model and search clients, prompts, fit score
+│       │   ├── scouting/  script/   pipeline and screenplay splitting
+│       │   ├── logistics/           solar, weather, places, routing, unit base
+│       │   ├── outreach/  mail/     email drafts and reply tracking
+│       │   ├── permits/  calendar/  agreements/  pack/  photos/  files/
+│       │   ├── jobs/  ratelimit/  resilience/  security/
+│       │   ├── domain/  persistence/  repository/  dto/
+│       │   ├── service/             business logic and access checks
+│       │   └── web/                 REST controllers, error handling
+│       ├── main/resources/
+│       │   ├── db/migration/        Flyway V1 to V30
+│       │   └── permits/             filming offices
+│       └── test/                    JUnit, WireMock, Testcontainers
+├── frontend/                        React web app
+│   └── src/
+│       ├── api/  auth/              typed client, session
+│       ├── pages/  components/      screens and shared UI
+│       ├── lib/                     formatting, schedule, theme helpers
+│       └── test/                    fake server and fixtures
+├── deploy/render/                   single-container image
+├── docs/                            architecture notes, screenshots
+├── docker-compose.yml               PostgreSQL + API + nginx (+ Caddy)
+└── .github/workflows/               CI and daily jobs
+```
 
-`GET /projects/{id}/locations` is the project-wide view of the candidates: every scene's locations in one list,
-scene by scene in script order, each row naming its scene; `?status=SHORTLISTED` (or any other status) narrows
-it. `GET /projects/{id}/progress` counts the scenes, the ones with candidates and with a confirmed location,
-and the locations by status. `GET /projects/{id}/schedule` lays the scenes out by the day their
-shoot starts, each with its confirmed locations, and lists the undated ones separately. `GET /projects/{id}/locations/export` is the same list, all of it, as a CSV file
-(UTF-8, one venue a row) for people who do not use the app; cells a spreadsheet would run as a formula are defused.
+More on the schema and the entity relationships in [docs/architecture.md](docs/architecture.md).
 
-`PUT /account` changes the display name. `PUT /account/password` (`currentPassword`, `newPassword`) changes the
-password and ends the account's other sessions; `POST /account/delete` (`password`) deletes the account with
-everything it owns. Both answer `400` naming the field when the password given is wrong, and wrong passwords
-count against the same per-address limit as failed logins.
+## Design decisions
 
-`POST /projects/{id}/scenes/import` takes a whole screenplay as plain text (`{ "script": "..." }`, up to 500,000
-characters) and adds one scene per scene heading, the lines starting with `INT.` or `EXT.` (Fountain's forced
-headings and `#12#` scene numbers are understood too). The script's own scene numbers are kept when every
-scene has one and none is taken; otherwise the scenes are numbered on from the project's last one.
-`.../import/preview` returns the same cut without saving anything. No AI is involved: the scenes start
-unanalysed, like ones typed in. `POST /projects/{id}/scenes/parse` then analyses the scenes still waiting, up to
-20 a call in script order, and answers `{ "parsed", "failed", "remaining" }`: call it again while scenes remain.
-Each scene counts as one AI call against the user's rate limit.
+| Decision | Why |
+|---|---|
+| WebFlux for the web layer | A scouting run calls the model, search, geocoding and map services. Doing these at once keeps a run to seconds. |
+| Blocking JPA on `boundedElastic` | JPA and Flyway are mature and simple. Moving them off the event loop keeps WebFlux responsive without R2DBC. |
+| Flyway owns the schema, Hibernate validates | Every change is a reviewed SQL migration. A mismatch fails at start-up, not in production data. |
+| Fit score computed in code | Asked for a number, the model anchored at 60. A verdict per requirement is easier to check and gives a real spread. |
+| Provider-neutral interfaces (`LlmClient`, `LocationSearchClient`, `WeatherClient`, `RoutingClient`) | Providers changed during the build (Gemini to watsonx). Fallbacks for weather and places slot in behind the same interface. |
+| Keyless map and weather services | Anyone can run the app without accounts. Fallback servers cover the rate limits of a shared free host. |
+| Session cookie plus `X-Requested-With` | `HttpOnly` keeps the token from scripts; the header check stops cross-site requests without a CSRF token store. |
+| Logistics report cached on the venue | The public services are slow and limited. Reading the saved report avoids calling them again on every visit. |
+| Permit guide as a reviewed YAML file | Office details change. A file with sources and a review date can be corrected by a pull request and is validated at start-up. |
+| Dates on the shoot's own clock | Call times are local to the venue, so the calendar uses floating time and the reports use the venue's time zone. |
 
-`POST /locations/{id}/logistics` works out a location's shoot logistics and caches them on it (`GET` returns
-the cached report, `404` before the first run). For each shoot day it gives sunrise, sunset, golden and blue
-hours and the windows matching the scene's time of day (computed locally), the weather (a forecast up to
-about two weeks ahead; beyond that the weather recorded on the same date in an earlier year, labelled as
-such), a noise risk weighed against the scene's acoustic sensitivity, and the nearest services (hospital,
-parking, food, toilets...). A venue without coordinates is geocoded first (`409` if it cannot be found:
-set them with `PUT /locations/{id}/coordinates`). If the weather or map service is down, the report still
-comes back with that section marked `UNAVAILABLE`.
+## Limitations
 
-## Build history
+- **The live demo sleeps.** It runs on Render's free tier and takes about a minute to wake after a quiet spell.
+- **Uploaded files on the demo do not last.** Without an S3 or R2 bucket set, recce photos and releases are lost on each
+  redeploy.
+- **Replies are manual by default.** Automatic reply tracking needs a Postmark inbound domain.
+- **Some venues stay off the map.** Booking sites often hide the address, and Nominatim rarely finds a listing title,
+  so those venues need a pin set by hand.
+- **AI quota.** The watsonx Lite plan has a monthly token quota and 2 requests a second. When the quota runs out, AI
+  features answer `503` until it renews.
+- **Public map services are rate-limited.** Overpass, Nominatim and OSRM are shared servers; heavy use needs your own.
+- **Permit guidance covers London, New York City, Los Angeles and Paris only.** The rest of the UK gets a pointer to
+  the local council. It is guidance, not legal advice.
+- **Rate limits live in memory.** A restart forgets them, and each instance counts on its own.
 
-1. Schema and design - done
-2. Domain models and DTOs - done
-3. External API clients: LLM (watsonx.ai) and search (Parallel) - done, both checked against the live services
-4. Orchestration service (extract, search, assess, save) with retry and circuit breaker - done
-5. REST controllers, authentication, validation and OpenAPI docs - done
-6. Outreach email generator and draft management (module C) - done
-7. Shoot logistics: solar windows, weather, noise risk and nearby services (module B) - done
-8. Web app: accounts, projects, scenes, scouting, locations with logistics and maps, outreach - done
-9. Session logins for the web app, Docker Compose deployment - done
-10. Script import: a pasted screenplay is cut into scenes at its headings - done
-11. Project-wide locations: every scene's candidates in one list and map, by status, with progress counts - done
-12. Account page: display name, password change, account deletion - done
-13. Shoot schedule: scenes by shoot day with their confirmed venues, and what still lacks a date or a venue - done
-14. Project-wide outreach: every email with its venue and scene, by status - done
-15. Venue comparison: a scene's shortlist side by side (fit, booking, warnings, noise, light and weather) - done
-16. Scene search, and a contact (name, email, phone) and the venue's quote on each venue; outreach emails start from the contact - done
-17. Premiere-night look for the web app: gold-leaf titles, marquee lights, poster cards for projects - done, since replaced
-18. Fit scores worked out in code from the model's judgement of the setting and each requirement - done
-19. Location-department look: a bright board, ink panels, tape labels, rubber stamps, polaroids and a camera viewfinder - done
+<p align="center">
+  Built by Samaun Mahmud · Computer Science (AI), Brunel University London
+</p>
