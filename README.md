@@ -34,7 +34,8 @@
 
 <p align="center">
   <a href="https://cinescout-4zjm.onrender.com"><b>Try the live demo →</b></a><br>
-  <sub>Make an account in a few seconds. The free server can take about a minute to wake up.</sub>
+  <sub>Demo login: <code>maya.chen@demo.cinescout.test</code> / <code>Scout-Demo-2026</code>, or make your own account.<br>
+  The free server can take about a minute to wake up.</sub>
 </p>
 
 ## Contents
