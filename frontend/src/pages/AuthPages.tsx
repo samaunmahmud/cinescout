@@ -10,6 +10,7 @@ import { usePageTitle } from '../lib/usePageTitle'
 import { Button, ErrorAlert, TextField } from '../components/ui'
 import { AvatarStack } from '../components/Avatar'
 import { posterBackdrop } from '../lib/poster'
+import { Mail, MapPinned, ScrollText } from 'lucide-react'
 
 /** The slate on the login page: one scene, scouted, as an example of what the app does. */
 const exampleSlate = [
@@ -63,19 +64,37 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
 
       </aside>
 
-      <div className="relative flex items-center justify-center px-4 py-12">
+      {/* The other side of the set: night, the red light from the far corner, the form on frosted glass. */}
+      <div
+        className="theme-dark hero flex items-center justify-center px-4 py-12 text-ink"
+        style={{ background: 'radial-gradient(90% 70% at 100% 100%, hsl(8 82% 52% / 0.7), transparent 65%), radial-gradient(60% 50% at 0% 0%, hsl(36 90% 50% / 0.18), transparent 60%), #08090c' }}
+      >
         <div className="w-full max-w-sm animate-fade-in space-y-6">
           <span className="flex justify-center lg:hidden">
-            <Logo size="lg" onDark={false} />
+            <Logo size="lg" onDark />
           </span>
-          <div className="board-card relative rounded-lg bg-paper px-6 pt-10 pb-6">
-            <TapeLabel tilt={-2} className="absolute -top-4 left-1/2 -translate-x-1/2">
+          <div className="relative rounded-2xl bg-white/[0.06] px-6 pt-10 pb-6 shadow-[0_30px_60px_-30px_rgb(0_0_0/0.8)] ring-1 ring-white/12 backdrop-blur-xl">
+            <TapeLabel className="absolute -top-3.5 left-1/2 -translate-x-1/2 !bg-brand !text-white">
               {tape}
             </TapeLabel>
-            <h1 className="mb-5 font-display text-4xl leading-none font-bold">{title}</h1>
+            <h1 className="mb-5 font-display text-4xl leading-none font-bold text-white">{title}</h1>
             {children}
           </div>
-          <p className="text-center text-[15px] text-muted">{footer}</p>
+          <p className="text-center text-[15px] text-fog">{footer}</p>
+          <ul aria-label="What CineScout does" className="grid grid-cols-3 gap-2 pt-2 text-center text-xs text-fog">
+            <li className="flex flex-col items-center gap-2 rounded-xl bg-white/[0.04] px-2 py-3 ring-1 ring-white/10">
+              <ScrollText aria-hidden className="size-4 text-cue" />
+              Reads the scene
+            </li>
+            <li className="flex flex-col items-center gap-2 rounded-xl bg-white/[0.04] px-2 py-3 ring-1 ring-white/10">
+              <MapPinned aria-hidden className="size-4 text-cue" />
+              Finds real venues
+            </li>
+            <li className="flex flex-col items-center gap-2 rounded-xl bg-white/[0.04] px-2 py-3 ring-1 ring-white/10">
+              <Mail aria-hidden className="size-4 text-cue" />
+              Writes to owners
+            </li>
+          </ul>
         </div>
       </div>
     </div>

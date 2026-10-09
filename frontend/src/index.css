@@ -94,7 +94,8 @@
  * Dark mode: the person's choice (data-theme, set by public/theme.js before the page draws), or their system's
  * setting until they choose. Only the switching colours change; night stays night.
  */
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+.theme-dark {
     --color-ink: #eef1f5;
     --color-ink-soft: #1d222a;
     --color-ground: #0c0e12;
