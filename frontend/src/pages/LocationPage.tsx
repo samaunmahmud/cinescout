@@ -90,17 +90,17 @@ function LocationDetails({ location }: { location: Location }) {
   return (
     <ProjectRoleProvider role={role}>
     <div className="space-y-8">
-      <Link to={scenePath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
+      <Link to={scenePath} className="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {scene.data ? sceneLabel(scene.data) : 'Scene'}
       </Link>
 
       <header className="space-y-6">
         {/* The venue through the camera: its picture in the frame lines, its name over the foot of the shot. */}
-        <div className="relative min-h-72 overflow-hidden rounded-lg border border-line bg-[#1b222b] text-white sm:min-h-80">
+        <div className="hero min-h-80 rounded-2xl sm:min-h-[26rem]">
           {location.imageUrl && (
-            <div aria-hidden className="absolute inset-0">
-              <VenuePicture src={location.imageUrl} className="h-full w-full opacity-60" />
+            <div aria-hidden className="hero-picture">
+              <VenuePicture src={location.imageUrl} className="h-full w-full" />
             </div>
           )}
           <span aria-hidden className="vf-corner top-4 left-4 border-t-[3px] border-l-[3px]" />
@@ -114,7 +114,7 @@ function LocationDetails({ location }: { location: Location }) {
             </span>
             <span className="hidden sm:inline">24 FPS · 2.39:1</span>
           </div>
-          <div className="relative flex min-h-72 flex-col justify-end gap-2 bg-gradient-to-t from-ink/85 to-transparent p-8 sm:min-h-80">
+          <div className="relative flex min-h-80 flex-col justify-end gap-2 p-8 sm:min-h-[26rem]">
             <Eyebrow onDark icon={MapPinned}>Location</Eyebrow>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-display text-4xl leading-none font-bold sm:text-6xl">{location.name}</h1>
@@ -285,9 +285,7 @@ function Assessment({ location }: { location: Location }) {
     )
   }
   return (
-    // A scout's report on ruled paper, the score circled in marker.
-    <section aria-labelledby="assessment-heading" className="lined-paper relative space-y-5 rounded-md border border-line py-6 pr-6 pl-14">
-      <span aria-hidden className="absolute inset-y-0 left-10 w-0.5 bg-[#f4b4b4]" />
+    <section aria-labelledby="assessment-heading" className="relative space-y-5 rounded-2xl border border-line bg-white p-6 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>

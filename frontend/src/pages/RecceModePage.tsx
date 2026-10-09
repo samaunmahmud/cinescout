@@ -50,7 +50,7 @@ function RecceMode({ location }: { location: Location }) {
   return (
     <ProjectRoleProvider role={role}>
       <div className="mx-auto max-w-2xl space-y-8">
-        <Link to={venuePath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
+        <Link to={venuePath} className="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink">
           <ChevronLeft aria-hidden className="size-4" />
           Back to the venue
         </Link>

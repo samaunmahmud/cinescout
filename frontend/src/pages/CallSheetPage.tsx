@@ -45,7 +45,7 @@ export function CallSheetPage() {
     <div className="space-y-6">
       <div className="no-print flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-3">
-          <Link to={`/projects/${projectId}?tab=schedule`} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
+          <Link to={`/projects/${projectId}?tab=schedule`} className="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink">
             <ChevronLeft aria-hidden className="size-4" />
             {project.data.title}
           </Link>

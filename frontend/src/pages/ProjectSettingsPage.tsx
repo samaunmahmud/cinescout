@@ -54,7 +54,7 @@ function Settings({ project }: { project: Project }) {
     <div className="space-y-8">
       <Link
         to={`/projects/${project.id}`}
-        className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink"
+        className="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink"
       >
         <ChevronLeft aria-hidden className="size-4" />
         {project.title}

@@ -22,6 +22,9 @@ import { ProjectOutreachSection } from './ProjectOutreachSection'
 import { ScenesSection } from './ScenesSection'
 import { ScheduleSection } from './ScheduleSection'
 import { usePageTitle } from '../lib/usePageTitle'
+import { AvatarStack } from '../components/Avatar'
+import { VenuePicture } from '../components/VenuePicture'
+import { posterBackdrop } from '../lib/poster'
 
 export function ProjectPage() {
   const { projectId = '' } = useParams()
@@ -100,7 +103,7 @@ function ProjectDetails({ project }: { project: Project }) {
   return (
     <ProjectRoleProvider role={project.role}>
     <div className="space-y-8">
-      <Link to="/projects" className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
+      <Link to="/projects" className="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         Productions
       </Link>
@@ -126,41 +129,53 @@ function ProjectDetails({ project }: { project: Project }) {
         </Card>
       ) : (
         // The title card: the production's name on an ink panel, the film strip down its edge.
-        <header className="relative animate-fade-in overflow-hidden rounded-lg border border-line bg-ink text-white shadow-[var(--shadow-card)]">
-          <div aria-hidden className="absolute inset-y-0 left-2.5 flex w-3 flex-col justify-around opacity-40">
-            {Array.from({ length: 9 }, (_, i) => (
-              <span key={i} className="h-2.5 rounded-[2px] bg-white" />
-            ))}
-          </div>
-          <div className="space-y-5 py-7 pr-6 pl-11 sm:py-9 sm:pr-10 sm:pl-14">
+        // The title card: a still of one of its venues behind a slow push-in, or a lit backdrop.
+        <header
+          className="hero flex min-h-[22rem] animate-fade-in flex-col justify-end rounded-2xl"
+          style={project.posterImageUrl ? undefined : { background: posterBackdrop(project.title) }}
+        >
+          {project.posterImageUrl && (
+            <div aria-hidden className="hero-picture">
+              <VenuePicture src={project.posterImageUrl} className="h-full w-full" />
+            </div>
+          )}
+          <div className="space-y-5 p-6 sm:p-10">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-3">
                 <Eyebrow onDark icon={Clapperboard}>A CineScout production</Eyebrow>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="font-display text-5xl leading-[0.95] font-bold sm:text-7xl">{project.title}</h1>
+                  <h1 className="font-display text-4xl leading-[1] font-bold sm:text-6xl">{project.title}</h1>
                   {archived && <Stamp tone="ink" announce className="!bg-white text-sm">Archived</Stamp>}
                 </div>
-                <p className="flex items-center gap-1.5 font-script text-fog">
-                  <MapPin aria-hidden className="size-4 text-cue" />
-                  {project.locationArea ?? 'No location area set. Scouting needs one.'}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-fog">
+                  <p className="flex items-center gap-1.5">
+                    <MapPin aria-hidden className="size-4 text-cue" />
+                    {project.locationArea ?? 'No location area set. Scouting needs one.'}
+                  </p>
+                  {(project.crew ?? []).length > 0 && (
+                    <p className="flex items-center gap-2.5">
+                      <AvatarStack names={project.crew ?? []} max={5} />
+                      <span>{(project.crew ?? []).length === 1 ? 'Just you so far' : `${(project.crew ?? []).length} on the crew`}</span>
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link to={`/projects/${project.id}/settings`} className={linkButton('secondary')}>
+                <Link to={`/projects/${project.id}/settings`} className={`${linkButton('secondary')} !border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20`}>
                   <Users aria-hidden className="size-4" />
                   Crew
                 </Link>
                 {editor && (
-                  <Button variant="secondary" onClick={() => setEditing(true)}>
+                  <Button variant="secondary" className="!border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20" onClick={() => setEditing(true)}>
                     Edit
                   </Button>
                 )}
                 {owner && (
                   <>
-                    <Button variant="secondary" onClick={toggleArchived} busy={update.isPending}>
+                    <Button variant="secondary" className="!border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20" onClick={toggleArchived} busy={update.isPending}>
                       {archived ? 'Restore' : 'Archive'}
                     </Button>
-                    <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
+                    <Button variant="ghost" className="!text-fog hover:!bg-white/10 hover:!text-white" onClick={() => setConfirmingDelete(true)}>
                       Delete
                     </Button>
                   </>

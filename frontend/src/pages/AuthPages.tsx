@@ -4,10 +4,12 @@ import { ApiError } from '../api/client'
 import { useAuth } from '../auth/context'
 import { SessionCheck } from '../auth/SessionCheck'
 import { Logo } from '../components/Layout'
-import { AdmitOne, QuietOnSet, TapeLabel } from '../components/stickers'
+import { QuietOnSet, TapeLabel } from '../components/stickers'
 import { fieldErrors } from '../api/errors'
 import { usePageTitle } from '../lib/usePageTitle'
 import { Button, ErrorAlert, TextField } from '../components/ui'
+import { AvatarStack } from '../components/Avatar'
+import { posterBackdrop } from '../lib/poster'
 
 /** The slate on the login page: one scene, scouted, as an example of what the app does. */
 const exampleSlate = [
@@ -20,11 +22,11 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
   usePageTitle(title)
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.15fr_1fr]">
-      {/* The location department's door: the pitch on a chalk slate, with stickers on it. */}
-      <aside className="relative hidden flex-col justify-between gap-10 overflow-hidden bg-ink px-14 py-11 text-white lg:flex">
+      {/* The way in: the pitch over a lit set, with the slate of a scene CineScout has just scouted. */}
+      <aside className="hero hidden flex-col justify-between gap-10 px-14 py-11 lg:flex" style={{ background: posterBackdrop('the edit') }}>
         <div className="flex items-center justify-between">
           <Logo size="lg" onDark />
-          <span className="font-script text-[13px] tracking-[0.1em] text-ink-muted">LOCATION DEPT.</span>
+          <span className="text-xs font-semibold tracking-[0.14em] text-fog">LOCATION SCOUTING</span>
         </div>
 
         <div className="max-w-xl space-y-5">
@@ -37,22 +39,25 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
           </p>
         </div>
 
-        <div aria-hidden className="relative max-w-xl -rotate-[1.5deg]">
-          <QuietOnSet className="absolute -top-20 -right-4 z-10 !size-28" />
-          <AdmitOne className="absolute -right-5 -bottom-9 z-10" />
-          <div className="clapper h-11 rounded-t-lg border-[3px] border-white" />
-          <div className="grid grid-cols-3 rounded-b-lg border-[3px] border-t-0 border-white bg-[#1b222b] font-script">
-            <div className="col-span-3 flex items-baseline gap-4 border-b-2 border-ink-line px-5 py-3">
-              <span className="text-xs tracking-[0.1em] text-ink-muted">PROD.</span>
-              <span className="font-marker text-2xl text-paper">The Night Ferry</span>
+        <div aria-hidden className="relative max-w-xl">
+          <QuietOnSet className="absolute -top-14 -right-4 z-10 !size-24" />
+          <div className="overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur-md">
+            <div className="flex items-baseline gap-4 border-b border-white/10 px-6 py-4">
+              <span className="text-xs font-semibold tracking-[0.14em] text-fog">PROD.</span>
+              <span className="text-xl font-semibold text-white">The Night Ferry</span>
             </div>
-            {exampleSlate.map(({ label, value, cue }) => (
-              <div key={label} className="flex flex-col border-r-2 border-ink-line px-5 py-2.5 last:border-r-0">
-                <span className="text-xs tracking-[0.1em] text-ink-muted">{label}</span>
-                <span className={`font-marker text-3xl ${cue ? 'text-cue' : 'text-paper'}`}>{value}</span>
-              </div>
-            ))}
-            <div className="col-span-3 border-t-2 border-ink-line px-5 py-2.5 text-[15px] text-fog">INT. ALL-NIGHT DINER - NIGHT</div>
+            <div className="grid grid-cols-3">
+              {exampleSlate.map(({ label, value, cue }) => (
+                <div key={label} className="flex flex-col border-r border-white/10 px-6 py-3 last:border-r-0">
+                  <span className="text-xs font-semibold tracking-[0.14em] text-fog">{label}</span>
+                  <span className={`font-mono text-3xl font-medium ${cue ? 'text-cue' : 'text-white'}`}>{value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-4 border-t border-white/10 px-6 py-3 text-sm text-fog">
+              <span>INT. ALL-NIGHT DINER - NIGHT</span>
+              <AvatarStack names={['Maya Chen', 'Leo Okafor', 'Ruth Lane']} max={3} />
+            </div>
           </div>
         </div>
 
