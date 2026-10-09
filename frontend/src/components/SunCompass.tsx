@@ -19,7 +19,7 @@ export function SunCompass({ days }: { days: SolarDay[] }) {
   const path = day.sunPath ?? []
   return (
     <figure className="space-y-2">
-      <div aria-hidden className="pointer-events-none absolute top-2 right-2 z-[500] rounded-full bg-white/90 p-1 shadow-md ring-1 ring-ink/20">
+      <div aria-hidden className="pointer-events-none absolute top-2 right-2 z-[500] rounded-full bg-paper/90 p-1 shadow-md ring-1 ring-ink/20">
         <Compass path={path} />
       </div>
       <figcaption className="space-y-1 text-sm">

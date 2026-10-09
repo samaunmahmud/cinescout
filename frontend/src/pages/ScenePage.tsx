@@ -22,6 +22,7 @@ import { AvatarStack } from '../components/Avatar'
 import { VenuePicture } from '../components/VenuePicture'
 import { posterBackdrop } from '../lib/poster'
 import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
+import { StudioLight } from '../components/StudioLight'
 
 export function ScenePage() {
   const { sceneId = '' } = useParams()
@@ -114,6 +115,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
           className="hero flex min-h-[20rem] animate-fade-in flex-col justify-between gap-8 rounded-2xl p-6 sm:p-8"
           style={heroImage ? undefined : { background: posterBackdrop(scene.title) }}
         >
+          <StudioLight />
           {heroImage && (
             <div className="hero-picture">
               <VenuePicture src={heroImage} className="h-full w-full" />

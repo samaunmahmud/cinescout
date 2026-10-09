@@ -25,6 +25,7 @@ import { usePageTitle } from '../lib/usePageTitle'
 import { AvatarStack } from '../components/Avatar'
 import { VenuePicture } from '../components/VenuePicture'
 import { posterBackdrop } from '../lib/poster'
+import { StudioLight } from '../components/StudioLight'
 
 export function ProjectPage() {
   const { projectId = '' } = useParams()
@@ -128,12 +129,12 @@ function ProjectDetails({ project }: { project: Project }) {
           </section>
         </Card>
       ) : (
-        // The title card: the production's name on an ink panel, the film strip down its edge.
         // The title card: a still of one of its venues behind a slow push-in, or a lit backdrop.
         <header
           className="hero flex min-h-[22rem] animate-fade-in flex-col justify-end rounded-2xl"
           style={project.posterImageUrl ? undefined : { background: posterBackdrop(project.title) }}
         >
+          <StudioLight />
           {project.posterImageUrl && (
             <div aria-hidden className="hero-picture">
               <VenuePicture src={project.posterImageUrl} className="h-full w-full" />

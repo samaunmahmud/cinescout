@@ -63,7 +63,7 @@ export function Section({
 /** What a section shows before there is anything in it: what it is for, and what to do. */
 export function EmptyState({ icon: Icon, children }: { icon?: LucideIcon; children: ReactNode }) {
   return (
-    <div className="relative flex flex-col items-center gap-4 rounded-xl border border-dashed border-line bg-white/70 px-6 py-12 text-center text-muted">
+    <div className="relative flex flex-col items-center gap-4 rounded-xl border border-dashed border-line bg-paper/70 px-6 py-12 text-center text-muted">
       {Icon && (
         <span className="relative flex size-14 items-center justify-center rounded-2xl bg-night text-cue shadow-[var(--shadow-lift)]">
           <Icon aria-hidden className="size-6" />

@@ -6,9 +6,10 @@ import { useId } from 'react'
  * drawn in one frame, rotated together, so the light always leaves the lens. Decoration only: put it first inside a
  * `.hero` (or any positioned, isolated, overflow-hidden dark box); it sits behind the content and takes no clicks.
  *
- * @param aim where the lamp points, in degrees clockwise from pointing right (135 is down and to the left)
+ * @param aim  where the lamp points, in degrees clockwise from pointing right (135 is down and to the left)
+ * @param size `sm` for a small card (a poster), `lg` for a banner
  */
-export function StudioLight({ className = '', aim = 142 }: { className?: string; aim?: number }) {
+export function StudioLight({ className = '', aim = 142, size = 'lg' }: { className?: string; aim?: number; size?: 'sm' | 'lg' }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   const beam = `beam${id}`
   const core = `core${id}`
@@ -21,7 +22,7 @@ export function StudioLight({ className = '', aim = 142 }: { className?: string;
         viewBox="0 0 600 600"
         preserveAspectRatio="xMaxYMin meet"
         overflow="visible"
-        className="absolute top-0 right-0 h-auto w-[min(560px,75%)]"
+        className={`absolute top-0 right-0 h-auto ${size === 'sm' ? 'w-[min(300px,80%)]' : 'w-[min(560px,75%)]'}`}
       >
         <defs>
           <linearGradient id={beam} gradientUnits="userSpaceOnUse" x1="50" y1="0" x2="900" y2="0">

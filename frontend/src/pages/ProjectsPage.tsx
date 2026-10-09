@@ -18,6 +18,7 @@ import { DashboardHero, DashboardPanels } from './Dashboard'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { usePageTitle } from '../lib/usePageTitle'
 import { VenuePicture } from '../components/VenuePicture'
+import { StudioLight } from '../components/StudioLight'
 
 export function ProjectsPage() {
   const { api, user } = useSession()
@@ -156,6 +157,7 @@ function ProjectCard({ project }: { project: Project }) {
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
     >
       <div className="hero flex aspect-[16/10] flex-col justify-between p-4" style={project.posterImageUrl ? undefined : { background: posterBackdrop(project.title) }}>
+        <StudioLight size="sm" />
         {project.posterImageUrl && (
           // A still of one of its locations, slowly pushing in under the pointer.
           <div className="hero-picture [animation:none] transition-transform duration-[2500ms] ease-out group-hover:scale-110">
@@ -269,6 +271,7 @@ function SampleProjectButton() {
 function FirstReel({ onStart, creating }: { onStart: () => void; creating: boolean }) {
   return (
     <section aria-labelledby="first-reel" className="hero rounded-2xl px-6 py-14 text-center sm:px-12" style={{ background: posterBackdrop('first reel') }}>
+      <StudioLight />
       <div className="relative space-y-3">
         <p className="text-xs font-semibold tracking-[0.14em] text-cue uppercase">No projects yet</p>
         <h2 id="first-reel" className="font-display text-4xl leading-tight font-bold sm:text-5xl">

@@ -39,6 +39,7 @@ import { VideosSection } from './VideosSection'
 import { usePageTitle } from '../lib/usePageTitle'
 import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
 import { useCanEdit, useProjectRole } from '../components/projectRole'
+import { StudioLight } from '../components/StudioLight'
 
 export function LocationPage() {
   const { locationId = '' } = useParams()
@@ -98,6 +99,7 @@ function LocationDetails({ location }: { location: Location }) {
       <header className="space-y-6">
         {/* The venue through the camera: its picture in the frame lines, its name over the foot of the shot. */}
         <div className="hero min-h-80 rounded-2xl sm:min-h-[26rem]">
+          <StudioLight />
           {location.imageUrl && (
             <div aria-hidden className="hero-picture">
               <VenuePicture src={location.imageUrl} className="h-full w-full" />
