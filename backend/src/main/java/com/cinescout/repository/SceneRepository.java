@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -84,4 +85,11 @@ public interface SceneRepository extends JpaRepository<Scene, UUID> {
               and (s.shootDateStart is not null or s.shootDateEnd is not null)
             order by coalesce(s.shootDateStart, s.shootDateEnd) asc, s.id asc""")
     List<Scene> findDatedForMember(@Param("userId") UUID userId, Pageable pageable);
+
+    /** The scenes of these projects shooting on or after {@code from}, each with its project, soonest first. */
+    @Query("""
+            select s from Scene s join fetch s.project p
+            where p.id in :projectIds and coalesce(s.shootDateEnd, s.shootDateStart) >= :from
+            order by coalesce(s.shootDateStart, s.shootDateEnd) asc, s.callTime asc nulls last, s.id asc""")
+    List<Scene> findUpcoming(@Param("projectIds") Collection<UUID> projectIds, @Param("from") LocalDate from, Pageable pageable);
 }

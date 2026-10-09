@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,4 +37,11 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     /** The project whose call sheet is shared under {@code token}, with its owner (whose name the sheet carries). */
     @Query("select p from Project p join fetch p.owner where p.callSheetToken = :token")
     Optional<Project> findByCallSheetToken(@Param("token") String token);
+
+    /** The ids of the active projects the person is on: what the dashboard counts across. */
+    @Query("""
+            select p.id from Project p
+            where p.status = com.cinescout.domain.ProjectStatus.ACTIVE
+              and exists (select m.id from ProjectMember m where m.project = p and m.user.id = :userId)""")
+    List<UUID> findActiveIdsForMember(@Param("userId") UUID userId);
 }

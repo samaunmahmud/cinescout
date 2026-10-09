@@ -85,6 +85,10 @@ public class Activity {
         return actorId;
     }
 
+    public Project getProject() {
+        return project;
+    }
+
     public String getActorName() {
         return actorName;
     }

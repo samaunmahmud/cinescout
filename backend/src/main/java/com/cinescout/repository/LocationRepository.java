@@ -186,4 +186,15 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     /** The confirmed venues of these scenes, in the order they were added. */
     @Query("select l from Location l where l.scene.id in :sceneIds and l.status = com.cinescout.domain.LocationStatus.CONFIRMED order by l.createdAt asc, l.id asc")
     List<Location> findConfirmedByScenes(@Param("sceneIds") Collection<UUID> sceneIds);
+
+    /** How many venues of these projects are in one of {@code statuses}. */
+    @Query("select count(l) from Location l where l.scene.project.id in :projectIds and l.status in :statuses")
+    long countByProjectsAndStatuses(@Param("projectIds") Collection<UUID> projectIds, @Param("statuses") Collection<LocationStatus> statuses);
+
+    /** The best-scoring venues of these projects that nobody has looked at yet, each with its scene and project. */
+    @Query("""
+            select l from Location l join fetch l.scene s join fetch s.project
+            where s.project.id in :projectIds and l.status = com.cinescout.domain.LocationStatus.SUGGESTED and l.fitScore is not null
+            order by l.fitScore desc, l.createdAt desc, l.id asc""")
+    List<Location> findFreshFinds(@Param("projectIds") Collection<UUID> projectIds, Pageable pageable);
 }

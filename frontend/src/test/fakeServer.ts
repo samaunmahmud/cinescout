@@ -46,6 +46,9 @@ export function fakeServer(testRoutes: Record<string, Handler>, { loggedIn = fal
     'POST /api/auth/logout': () => new Response(null, { status: 204 }),
     // The header's alert bell asks on every page; no alerts unless a test says otherwise.
     'GET /api/alerts/unread-count': () => json({ unread: 0 }),
+    // The productions page opens with the dashboard; empty unless a test says otherwise.
+    'GET /api/dashboard': () =>
+      json({ totals: { productions: 0, scenes: 0, lockedScenes: 0, venuesInPlay: 0, followUps: 0 }, upcoming: [], freshFinds: [], activity: [] }),
     ...testRoutes,
   }
   const sessionRoutes: Record<string, Handler> = {

@@ -14,6 +14,7 @@ import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { posterBackdrop } from '../lib/poster'
 import { sampleProject, sampleScript } from '../lib/sampleScript'
 import { blankToNull } from '../lib/text'
+import { DashboardHero, DashboardPanels } from './Dashboard'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
 import { usePageTitle } from '../lib/usePageTitle'
 import { VenuePicture } from '../components/VenuePicture'
@@ -46,6 +47,7 @@ export function ProjectsPage() {
       }),
     onSuccess: (project) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
       queryClient.setQueryData(queryKeys.project(project.id), project)
       navigate(`/projects/${project.id}`)
     },
@@ -53,28 +55,24 @@ export function ProjectsPage() {
 
   return (
     <div className="space-y-10">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted">
-            {greeting()}, {user.displayName.split(' ')[0]}
-          </p>
-          <h1 className="font-display text-4xl leading-tight font-bold sm:text-5xl">Your productions</h1>
-          <p className="text-[17px] text-muted">Every production, with its scenes, its venues and its letters to their owners.</p>
-        </div>
-        {!creating && (
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/library" className={linkButton('ghost')}>
-              <BookMarked aria-hidden className="size-4" />
-              My locations
-            </Link>
-            {(projects.data?.items.length ?? 0) > 0 && <SampleProjectButton />}
-            <Button onClick={() => setCreating(true)}>
-              <Plus aria-hidden className="size-4" />
-              New project
-            </Button>
-          </div>
-        )}
-      </header>
+      <DashboardHero
+        greeting={`${greeting()}, ${user.displayName.split(' ')[0]}`}
+        actions={
+          !creating && (
+            <>
+              <Link to="/library" className={`${linkButton('ghost')} !text-fog hover:!bg-white/10 hover:!text-white`}>
+                <BookMarked aria-hidden className="size-4" />
+                My locations
+              </Link>
+              {(projects.data?.items.length ?? 0) > 0 && <SampleProjectButton />}
+              <Button onClick={() => setCreating(true)}>
+                <Plus aria-hidden className="size-4" />
+                New project
+              </Button>
+            </>
+          )
+        }
+      />
 
       {creating && (
         <Card className="p-6">
@@ -96,6 +94,10 @@ export function ProjectsPage() {
         </Card>
       )}
 
+      <DashboardPanels />
+
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h2 className="font-display text-2xl leading-tight font-semibold">The slate</h2>
       <div role="tablist" aria-label="Project status" className="inline-flex gap-1 rounded-[10px] bg-line-soft p-1">
         {(['ACTIVE', 'ARCHIVED'] as const).map((s) => (
           <button
@@ -111,6 +113,7 @@ export function ProjectsPage() {
             {s === 'ACTIVE' ? 'Active' : 'Archived'}
           </button>
         ))}
+      </div>
       </div>
 
       {projects.isPending ? (

@@ -1106,3 +1106,32 @@ export interface PhotoScoutingResult {
   look: PhotoLook
   result: ScoutingResult
 }
+
+/** The overview across the person's active productions. */
+export interface Dashboard {
+  totals: { productions: number; scenes: number; lockedScenes: number; venuesInPlay: number; followUps: number }
+  upcoming: {
+    sceneId: string
+    sceneNumber: number | null
+    sceneTitle: string
+    projectId: string
+    projectTitle: string
+    date: string
+    callTime: string | null
+    venueId: string | null
+    venueName: string | null
+    venueImageUrl: string | null
+  }[]
+  freshFinds: {
+    locationId: string
+    name: string
+    address: string | null
+    fitScore: number | null
+    imageUrl: string | null
+    status: LocationStatus
+    sceneId: string
+    sceneTitle: string
+    projectTitle: string
+  }[]
+  activity: { line: Activity; projectId: string; projectTitle: string }[]
+}

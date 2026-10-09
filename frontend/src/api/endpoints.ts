@@ -1,6 +1,7 @@
 import type { Coordinates } from '../lib/geo'
 import { ApiError, download, request } from './client'
 import type {
+  Dashboard,
   PhotoScoutingResult,
   PlanBResult,
   Shot,
@@ -366,6 +367,8 @@ export function createApi(onUnauthorized: () => void = () => {}) {
     /** Pencils a backup venue for a day the weather threatens and drafts the email asking its owner to hold it (one AI call). */
     planB: (locationId: string, body: { day: string; reason: string | null }) =>
       call<PlanBResult>(`/api/locations/${encodeURIComponent(locationId)}/plan-b`, { method: 'POST', body }),
+    /** Headline numbers, next shoot days, fresh finds and activity across your active productions. */
+    dashboard: () => call<Dashboard>('/api/dashboard'),
     budget: {
       get: (projectId: string) => call<Budget>(`/api/projects/${encodeURIComponent(projectId)}/budget`),
       settings: (projectId: string, body: { total: number | null; currency: string }) =>
