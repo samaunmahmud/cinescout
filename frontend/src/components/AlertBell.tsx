@@ -74,7 +74,7 @@ export function AlertBell() {
         <section
           id={panelId}
           aria-labelledby={`${panelId}-heading`}
-          className="fixed inset-x-4 top-[76px] z-40 overflow-hidden sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-lg border-2 border-ink bg-white text-ink shadow-[0_5px_0_var(--color-cue)]"
+          className="fixed inset-x-4 top-[76px] z-40 overflow-hidden sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-lg border border-line bg-white text-ink shadow-[var(--shadow-card)]"
         >
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <h2 id={`${panelId}-heading`} className="font-display text-xl leading-none">

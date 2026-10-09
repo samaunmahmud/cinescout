@@ -97,7 +97,7 @@ function LocationDetails({ location }: { location: Location }) {
 
       <header className="space-y-6">
         {/* The venue through the camera: its picture in the frame lines, its name over the foot of the shot. */}
-        <div className="relative min-h-72 overflow-hidden rounded-lg border-2 border-ink bg-[#1b222b] text-white sm:min-h-80">
+        <div className="relative min-h-72 overflow-hidden rounded-lg border border-line bg-[#1b222b] text-white sm:min-h-80">
           {location.imageUrl && (
             <div aria-hidden className="absolute inset-0">
               <VenuePicture src={location.imageUrl} className="h-full w-full opacity-60" />
@@ -117,7 +117,7 @@ function LocationDetails({ location }: { location: Location }) {
           <div className="relative flex min-h-72 flex-col justify-end gap-2 bg-gradient-to-t from-ink/85 to-transparent p-8 sm:min-h-80">
             <Eyebrow onDark icon={MapPinned}>Location</Eyebrow>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-display text-4xl leading-none font-extrabold sm:text-6xl">{location.name}</h1>
+              <h1 className="font-display text-4xl leading-none font-bold sm:text-6xl">{location.name}</h1>
               <LocationBadges location={location} />
             </div>
             {location.address && (
@@ -155,7 +155,7 @@ function LocationDetails({ location }: { location: Location }) {
             {canEdit && (
               <Link
                 to={`/locations/${location.id}/recce`}
-                className="inline-flex items-center gap-2 rounded-lg border-2 border-ink bg-white px-4 py-2 text-sm font-bold text-ink shadow-[0_3px_0_var(--color-ink)] hover:bg-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-ink shadow-[var(--shadow-card)] hover:bg-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <Smartphone aria-hidden className="size-4" />
                 Recce mode
@@ -269,7 +269,7 @@ function Assessment({ location }: { location: Location }) {
     return (
       <section aria-labelledby="assessment-heading" className="board-card space-y-3 rounded-lg bg-white p-5">
         <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
-        <h2 id="assessment-heading" className="font-display text-2xl leading-none font-extrabold">
+        <h2 id="assessment-heading" className="font-display text-2xl leading-none font-bold">
           Not assessed yet
         </h2>
         <p className="text-[15px] text-muted">
@@ -286,12 +286,12 @@ function Assessment({ location }: { location: Location }) {
   }
   return (
     // A scout's report on ruled paper, the score circled in marker.
-    <section aria-labelledby="assessment-heading" className="lined-paper relative space-y-5 rounded-md border-2 border-ink py-6 pr-6 pl-14">
+    <section aria-labelledby="assessment-heading" className="lined-paper relative space-y-5 rounded-md border border-line py-6 pr-6 pl-14">
       <span aria-hidden className="absolute inset-y-0 left-10 w-0.5 bg-[#f4b4b4]" />
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
-          <h2 id="assessment-heading" className="font-display text-3xl leading-none font-extrabold">
+          <h2 id="assessment-heading" className="font-display text-3xl leading-none font-bold">
             Scout’s report
           </h2>
           {canEdit && (
@@ -307,7 +307,7 @@ function Assessment({ location }: { location: Location }) {
           <ErrorAlert error={assess.error} />
         </div>
         <span aria-hidden className="relative flex h-16 w-20 shrink-0 items-center justify-center">
-          <span className="absolute inset-0 -rotate-6 rounded-[50%] border-[3px] border-go-mid" />
+          <span className="absolute inset-0 rounded-full border-[3px] border-go-mid" />
           <span className="font-marker text-4xl text-go-ink">{location.fitScore}</span>
         </span>
       </div>

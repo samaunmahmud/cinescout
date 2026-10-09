@@ -383,7 +383,7 @@ function useCrewChange<T, V = void>(projectId: string, mutationFn: (variables: V
 }
 
 const selectClass =
-  'rounded-lg border-2 border-ink bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50'
+  'rounded-lg border border-line bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50'
 
 function MemberRow({ project, member }: { project: Project; member: Member }) {
   const { api, user } = useSession()
@@ -539,7 +539,7 @@ function InviteLink({ invite }: { invite: Invite }) {
         Copy it now: it is not shown again.
       </p>
       <div className="flex gap-2">
-        <input readOnly value={url} aria-label="Invite link" onFocus={(e) => e.target.select()} className="min-w-0 flex-1 rounded-lg border-2 border-line bg-white px-2 py-1.5 font-mono text-xs" />
+        <input readOnly value={url} aria-label="Invite link" onFocus={(e) => e.target.select()} className="min-w-0 flex-1 rounded-lg border border-line bg-white px-2 py-1.5 font-mono text-xs" />
         <Button
           variant="secondary"
           onClick={() =>

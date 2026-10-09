@@ -122,7 +122,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   const searching = text.trim().length >= 2 && (results.isFetching || debounced !== text.trim())
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/50 px-4 pt-[12vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label="Search and jump" className="w-full max-w-xl overflow-hidden rounded-lg border-2 border-ink bg-white shadow-[0_6px_0_var(--color-cue)]">
+      <div role="dialog" aria-modal="true" aria-label="Search and jump" className="w-full max-w-xl overflow-hidden rounded-lg border border-line bg-white shadow-[var(--shadow-card)]">
         <div className="flex items-center gap-3 border-b-2 border-ink px-4">
           <Search aria-hidden className="size-5 shrink-0 text-cue-ink" />
           <input

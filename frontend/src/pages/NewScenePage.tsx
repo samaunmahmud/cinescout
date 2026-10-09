@@ -40,7 +40,7 @@ export function NewScenePage() {
         {project.data.title}
       </Link>
       <section aria-labelledby="new-scene" className="mx-auto max-w-3xl board-card rounded-lg bg-white p-6 sm:p-8">
-        <h1 id="new-scene" className="mb-6 font-extrabold font-display text-5xl leading-none">
+        <h1 id="new-scene" className="mb-6 font-bold font-display text-5xl leading-none">
           New scene
         </h1>
         <SceneForm

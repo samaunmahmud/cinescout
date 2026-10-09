@@ -27,7 +27,7 @@ const pinClasses: Record<PinTone, string> = {
 function pinIcon(tone: PinTone) {
   return divIcon({
     className: '',
-    html: `<span class="block size-5 rounded-full border-[3px] border-ink shadow-[0_2px_0_#0d1321] ${pinClasses[tone]}"></span>`,
+    html: `<span class="block size-5 rounded-full border-[3px] border-ink shadow-[var(--shadow-card)] ${pinClasses[tone]}"></span>`,
     iconSize: [20, 20],
     iconAnchor: [10, 10],
     popupAnchor: [0, -10],
@@ -39,7 +39,7 @@ export default function LeafletMap({ pins, label, onPick, className = 'h-80' }: 
   // MapContainer reads its view once, on mount; KeepPinsInView moves it after that.
   const [initial] = useState(() => initialView(pins))
   return (
-    <div role="region" aria-label={label} className={`cinescout-map overflow-hidden rounded-lg border-2 border-ink ${onPick ? 'picking' : ''} ${className}`}>
+    <div role="region" aria-label={label} className={`cinescout-map overflow-hidden rounded-lg border border-line ${onPick ? 'picking' : ''} ${className}`}>
       <MapContainer {...initial} className="size-full" scrollWheelZoom={false}>
         <TileLayer url={tiles.url} attribution={tiles.attribution} />
         {pins.map((pin) => (

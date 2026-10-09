@@ -14,7 +14,7 @@ import { changedAnswers, recceAnswerText, recceGroups, type RecceQuestion } from
 type Draft = Record<string, string | number | boolean | null>
 
 const inputClass =
-  'block w-full rounded-lg border-2 border-ink bg-white px-3 py-2 text-[15px] text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none'
+  'block w-full rounded-lg border border-line bg-white px-3 py-2 text-[15px] text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none'
 
 /**
  * The tech recce checklist, made to be filled in on a phone at the venue: every question optional, each answer
@@ -79,7 +79,7 @@ export function RecceSection({ location }: { location: Location }) {
           </fieldset>
         ))}
         {canEdit && (
-          <div className="sticky bottom-3 flex items-center justify-end gap-3 rounded-lg border-2 border-ink bg-paper px-4 py-3 shadow-[0_4px_0_var(--color-ink)]">
+          <div className="sticky bottom-3 flex items-center justify-end gap-3 rounded-lg border border-line bg-paper px-4 py-3 shadow-[var(--shadow-card)]">
             {saved && !dirty && (
               <span role="status" className="text-sm font-semibold text-go-ink">
                 Saved.

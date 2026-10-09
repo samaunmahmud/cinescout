@@ -42,7 +42,7 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <Eyebrow icon={Sparkles}>Read by the AI</Eyebrow>
-          <h2 id="requirements-heading" className="font-display text-3xl leading-none font-extrabold">
+          <h2 id="requirements-heading" className="font-display text-3xl leading-none font-bold">
             Location requirements
           </h2>
         </div>

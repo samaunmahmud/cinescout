@@ -154,7 +154,7 @@ export function ScoutFiltersForm({
             onKeyDown={typeKey}
             placeholder="e.g. church, nightclub"
             aria-describedby={`${ids}-type-hint`}
-            className="min-w-0 flex-1 rounded-lg border-2 border-ink bg-white px-3 py-2 text-[15px] text-ink placeholder:text-subtle focus:ring-4 focus:ring-cue/25 focus:outline-none"
+            className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2 text-[15px] text-ink placeholder:text-subtle focus:ring-4 focus:ring-cue/25 focus:outline-none"
           />
           <Button variant="secondary" onClick={addType} disabled={!typeDraft.trim() || types.length >= 10}>
             Add

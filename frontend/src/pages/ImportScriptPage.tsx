@@ -81,7 +81,7 @@ export function ImportScriptPage() {
       </Link>
       <section aria-labelledby="import-script" className="mx-auto max-w-3xl space-y-6 board-card rounded-lg bg-white p-6 sm:p-8">
         <div className="space-y-2">
-          <h1 id="import-script" className="font-extrabold font-display text-5xl leading-none">
+          <h1 id="import-script" className="font-bold font-display text-5xl leading-none">
             Import script
           </h1>
           <p className="max-w-prose text-sm text-muted">
@@ -149,7 +149,7 @@ function FoundScenes({ found, busy, onImport }: { found: ScriptImport; busy: boo
   return (
     <section aria-labelledby="found-scenes" className="space-y-4 border-t border-line pt-6">
       <div className="space-y-1">
-        <h2 id="found-scenes" className="font-extrabold font-display text-3xl leading-none">
+        <h2 id="found-scenes" className="font-bold font-display text-3xl leading-none">
           {count === 1 ? '1 scene found' : `${count} scenes found`}
         </h2>
         <p className="text-sm text-muted">
@@ -161,7 +161,7 @@ function FoundScenes({ found, busy, onImport }: { found: ScriptImport; busy: boo
       </div>
       <ol aria-label="Scenes found" className="max-h-96 space-y-2 overflow-y-auto pr-1">
         {found.scenes.map((scene, index) => (
-          <li key={index} className="flex items-center gap-3 rounded-lg border-2 border-line bg-white p-2 pr-4">
+          <li key={index} className="flex items-center gap-3 rounded-lg border border-line bg-white p-2 pr-4">
             <Slate number={scene.sceneNumber} className="scale-90" />
             <span className="sr-only">Scene {scene.sceneNumber}:</span>
             <span className="min-w-0 flex-1 truncate font-semibold text-ink">{scene.title}</span>

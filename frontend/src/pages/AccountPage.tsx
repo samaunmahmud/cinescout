@@ -18,7 +18,7 @@ export function AccountPage() {
     <div className="mx-auto max-w-2xl space-y-8">
       <header className="space-y-2">
         <Eyebrow icon={UserRound}>Account</Eyebrow>
-        <h1 className="font-extrabold font-display text-6xl leading-none">{user.displayName}</h1>
+        <h1 className="font-bold font-display text-6xl leading-none">{user.displayName}</h1>
         <p className="text-muted">{user.email}</p>
       </header>
       <ProfileForm />
@@ -35,7 +35,7 @@ function Panel({ titleId, title, icon, description, children }: { titleId: strin
     <Card className="p-6">
       <section aria-labelledby={titleId} className="space-y-4">
         <div className="space-y-1">
-          <h2 id={titleId} className="flex items-center gap-2 font-extrabold font-display text-3xl leading-none">
+          <h2 id={titleId} className="flex items-center gap-2 font-bold font-display text-3xl leading-none">
             <Icon aria-hidden className="size-5 text-cue-ink" />
             {title}
           </h2>
@@ -136,7 +136,7 @@ function CalendarFeed() {
               aria-label="Calendar feed link"
               value={url}
               onFocus={(e) => e.target.select()}
-              className="min-w-0 flex-1 rounded-lg border-2 border-line bg-ground px-3 py-2 font-mono text-xs text-ink"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-ground px-3 py-2 font-mono text-xs text-ink"
             />
             <Button
               variant="secondary"

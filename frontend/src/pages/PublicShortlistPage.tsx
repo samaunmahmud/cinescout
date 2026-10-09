@@ -71,7 +71,7 @@ export function PublicShortlistPage() {
       ) : shortlist.isError ? (
         isNotFound(shortlist.error) ? (
           <div role="alert" className="space-y-3 py-16 text-center">
-            <h1 className="font-display text-5xl leading-none font-extrabold">Not shared</h1>
+            <h1 className="font-display text-5xl leading-none font-bold">Not shared</h1>
             <p className="text-lg text-muted">This shortlist is not shared, or no longer is. Ask the production for a new link.</p>
           </div>
         ) : (
@@ -79,11 +79,11 @@ export function PublicShortlistPage() {
         )
       ) : (
         <>
-          <header className="relative space-y-3 rounded-lg border-2 border-ink bg-ink px-6 pt-10 pb-7 text-white shadow-[0_5px_0_var(--color-cue)]">
+          <header className="relative space-y-3 rounded-lg border border-line bg-ink px-6 pt-10 pb-7 text-white shadow-[var(--shadow-card)]">
             <TapeLabel tilt={-3} className="absolute -top-4 left-6">
               Director’s cut
             </TapeLabel>
-            <h1 className="font-display text-4xl leading-[0.95] font-extrabold sm:text-6xl">{shortlist.data.projectTitle}</h1>
+            <h1 className="font-display text-4xl leading-[0.95] font-bold sm:text-6xl">{shortlist.data.projectTitle}</h1>
             {shortlist.data.sceneTitle && <p className="font-script text-lg text-fog">{shortlist.data.sceneTitle}</p>}
             <p className="max-w-prose text-fog">
               {shortlist.data.sharedBy ? `${shortlist.data.sharedBy} sent you` : 'You have been sent'} the venues on the shortlist. Approve, say
@@ -137,7 +137,7 @@ function VenueCard({ token, venue, guestName, onAnswered }: { token: string; ven
   return (
     <article aria-labelledby={`venue-${venue.id}`} className="board-card space-y-5 rounded-lg bg-white p-5">
       <div className="flex flex-col gap-5 sm:flex-row">
-        <div aria-hidden className="polaroid relative w-full shrink-0 -rotate-1 sm:w-56">
+        <div aria-hidden className="polaroid relative w-full shrink-0 sm:w-56">
           <span className="tape-piece -top-2 left-1/2 z-10 w-14 -translate-x-1/2 -rotate-3" />
           <div className="relative h-40 bg-ground">
             {placed ? (

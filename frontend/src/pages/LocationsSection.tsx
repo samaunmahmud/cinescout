@@ -339,17 +339,18 @@ function LocationCard({ location }: { location: Location }) {
   return (
     <article
       aria-label={location.name}
-      className={`board-card relative space-y-3 rounded-lg bg-white p-5 ${location.status === 'REJECTED' ? 'opacity-60' : ''}`}
+      className={`group relative flex overflow-hidden rounded-2xl border border-line bg-white shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] ${location.status === 'REJECTED' ? 'opacity-60' : ''}`}
     >
-      <StatusStamp status={location.status} className="absolute top-3 right-40 hidden md:inline-block" />
+      <VenueStill location={location} />
+      <div className="min-w-0 flex-1 space-y-3 p-5">
       <div className="flex flex-wrap items-start gap-5">
-        <Polaroid location={location} />
         <div className="min-w-0 flex-1 basis-44 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
+            <StatusStamp status={location.status} className="sm:hidden" />
             <h3>
               <Link
                 to={`/locations/${location.id}`}
-                className="font-display text-[1.4rem] leading-tight font-extrabold text-ink decoration-cue decoration-2 underline-offset-4 hover:underline"
+                className="font-display text-xl leading-tight font-semibold text-ink decoration-cue-ink decoration-2 underline-offset-4 after:absolute after:inset-0 after:content-[''] hover:underline"
               >
                 {location.name}
               </Link>
@@ -357,19 +358,19 @@ function LocationCard({ location }: { location: Location }) {
             <LocationBadges location={location} />
           </div>
           {location.address && (
-            <p className="flex items-center gap-1.5 font-script text-sm text-muted">
+            <p className="flex items-center gap-1.5 text-sm text-muted">
               <PinIcon aria-hidden className="size-3.5 shrink-0 text-cue-ink" />
               {location.address}
             </p>
           )}
           {sourceUrl && (
-            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-cue-ink underline hover:text-cue-deep">
+            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="relative z-10 text-sm font-medium text-cue-ink underline-offset-2 hover:underline">
               {displayHost(sourceUrl)}
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           )}
         </div>
-        <div className="flex shrink-0 flex-col items-center gap-2">
+        <div className="relative z-10 flex shrink-0 flex-col items-center gap-2">
           {location.fitScore != null && (
             <>
               <FitScore score={location.fitScore} size="lg" />
@@ -384,22 +385,23 @@ function LocationCard({ location }: { location: Location }) {
       </div>
 
       {location.status === 'REJECTED' && location.rejectionReason && (
-        <p className="font-marker text-[15px] text-stop-ink">Passed: {location.rejectionReason}</p>
+        <p className="text-sm font-medium text-stop-ink">Passed: {location.rejectionReason}</p>
       )}
       {location.fitReason && <p className="text-[15px] leading-relaxed text-graphite">{location.fitReason}</p>}
       {location.frictionNote && <p className="text-sm text-muted">{location.frictionNote}</p>}
       {location.footprintWarnings.length > 0 && (
         <ul aria-label="Warnings" className="flex flex-wrap gap-2">
-          {location.footprintWarnings.map((warning, i) => (
-            <li key={warning} style={{ transform: `rotate(${i % 2 ? 0.8 : -0.8}deg)` }} className="tape flex items-center gap-1.5 !bg-highlight px-3 py-1 text-sm font-semibold">
+          {location.footprintWarnings.map((warning) => (
+            <li key={warning} className="flex items-center gap-1.5 rounded-lg bg-cue-wash px-2.5 py-1 text-[13px] font-medium text-cue-deep ring-1 ring-cue-soft ring-inset">
               <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
               {warning}
             </li>
           ))}
         </ul>
       )}
-      {location.notes && <p className="border-l-2 border-cue pl-3 font-marker text-[15px] whitespace-pre-line text-graphite">{location.notes}</p>}
+      {location.notes && <p className="rounded-lg bg-ground px-3 py-2 text-sm whitespace-pre-line text-graphite">{location.notes}</p>}
 
+      <div className="relative z-10 space-y-3">
       <MenuOutcome menu={menu} />
 
       {confirmingDelete ? (
@@ -422,27 +424,22 @@ function LocationCard({ location }: { location: Location }) {
           </div>
         )
       )}
+      </div>
+      </div>
     </article>
   )
-}
-
-/** A small tilt, stable per venue, so the board does not look ruled. */
-function tiltOf(id: string, range = 3): number {
-  let h = 0
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0
-  return ((Math.abs(h) % (range * 20 + 1)) - range * 10) / 10
 }
 
 /**
  * The venue's picture as a polaroid taped to the board, its name scrawled at the foot. Without a picture (or while
  * one loads, or if it fails), the street map round the venue; a blank one until it has either.
  */
-function Polaroid({ location }: { location: Location }) {
+/** The venue's still down the card's side: its picture, or the map round its pin; the status pill over it. */
+function VenueStill({ location }: { location: Location }) {
   const placed = location.latitude != null && location.longitude != null
   return (
-    <div aria-hidden style={{ transform: `rotate(${tiltOf(location.id)}deg)` }} className="polaroid relative hidden w-36 shrink-0 sm:block">
-      <span className="tape-piece -top-2 left-10 z-10 w-14 -rotate-3" />
-      <div className="relative h-24 bg-ground">
+    <div className="relative hidden w-44 shrink-0 overflow-hidden bg-ground sm:block">
+      <div aria-hidden className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105">
         {placed ? (
           <MapSnapshot latitude={location.latitude!} longitude={location.longitude!} />
         ) : (
@@ -452,7 +449,7 @@ function Polaroid({ location }: { location: Location }) {
         )}
         {location.imageUrl && <VenuePicture src={location.imageUrl} className="absolute inset-0 h-full w-full" />}
       </div>
-      <span className="absolute right-2 bottom-1 left-2 truncate font-marker text-[13px] text-graphite">{location.name}</span>
+      <StatusStamp status={location.status} className="absolute top-3 left-3 shadow-[var(--shadow-card)]" />
     </div>
   )
 }
@@ -460,15 +457,15 @@ function Polaroid({ location }: { location: Location }) {
 const stamps: Partial<Record<LocationStatus, { text: string; tone: 'cue' | 'go' | 'stop' | 'ink' }>> = {
   SHORTLISTED: { text: 'Shortlisted', tone: 'cue' },
   CONTACTED: { text: 'Contacted', tone: 'go' },
-  CONFIRMED: { text: 'Locked', tone: 'ink' },
+  CONFIRMED: { text: 'Confirmed', tone: 'go' },
   REJECTED: { text: 'Passed', tone: 'stop' },
 }
 
-/** The rubber stamp for where the venue stands; none while it is only a suggestion. The select says it in words. */
+/** The pill for where the venue stands; none while it is only a suggestion. The select says it in words. */
 function StatusStamp({ status, className = '' }: { status: LocationStatus; className?: string }) {
   const stamp = stamps[status]
   return stamp ? (
-    <Stamp tone={stamp.tone} className={`text-sm ${className}`}>
+    <Stamp tone={stamp.tone} className={className}>
       {stamp.text}
     </Stamp>
   ) : null

@@ -112,7 +112,7 @@ export function PhotosSection({ location, camera = false }: { location: Location
             )}
             <label
               htmlFor={inputId}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-ink bg-white px-4 py-2 text-sm font-bold text-ink shadow-[0_3px_0_var(--color-ink)] peer-focus-visible:ring-4 peer-focus-visible:ring-cue/40 peer-disabled:cursor-wait peer-disabled:opacity-60"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-ink shadow-[var(--shadow-card)] peer-focus-visible:ring-4 peer-focus-visible:ring-cue/40 peer-disabled:cursor-wait peer-disabled:opacity-60"
             >
               <ImagePlus aria-hidden className="size-4" />
               Add photos

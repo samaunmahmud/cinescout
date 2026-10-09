@@ -60,7 +60,7 @@ export function LibraryPicker({ sceneId }: { sceneId: string }) {
               </Link>
             </p>
           ) : (
-            <ul aria-label="Venues in your library" className="divide-y divide-line-soft rounded-lg border-2 border-ink bg-white">
+            <ul aria-label="Venues in your library" className="divide-y divide-line-soft rounded-lg border border-line bg-white">
               {venues.data.items.map((venue) => (
                 <li key={venue.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">

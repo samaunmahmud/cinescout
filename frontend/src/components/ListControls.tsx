@@ -31,7 +31,7 @@ export function ListControls({ state }: { state: ReturnType<typeof useVenueListV
           id={sortId}
           value={state.sort}
           onChange={(e) => state.setSort(e.target.value as LocationSort)}
-          className="rounded-lg border-2 border-ink bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none"
+          className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none"
         >
           {sorts.map((sort) => (
             <option key={sort} value={sort}>
@@ -39,7 +39,7 @@ export function ListControls({ state }: { state: ReturnType<typeof useVenueListV
             </option>
           ))}
         </select>
-        <div role="group" aria-label="Layout" className="flex overflow-hidden rounded-lg border-2 border-ink">
+        <div role="group" aria-label="Layout" className="flex overflow-hidden rounded-lg border border-line">
           {(['cards', 'list'] as const).map((view) => {
             const Icon = view === 'cards' ? LayoutGrid : List
             return (

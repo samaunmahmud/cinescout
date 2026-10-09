@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { isNotFound } from '../api/errors'
 import { queryKeys } from '../api/queryKeys'
-import type { Scene, SceneRequest } from '../api/types'
+import type { Location, Scene, SceneRequest } from '../api/types'
 import { useSession } from '../auth/context'
 import { ConfirmDelete } from '../components/ConfirmDelete'
 import { ParseStatusBadge } from '../components/ParseStatusBadge'
-import { CalendarDays, ChevronLeft, Clapperboard, ScrollText, Users } from 'lucide-react'
+import { CalendarDays, ChevronLeft, Clapperboard, ScrollText } from 'lucide-react'
 import { Eyebrow, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
@@ -18,6 +18,9 @@ import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
 import { SceneForm } from './SceneForm'
 import { usePageTitle } from '../lib/usePageTitle'
+import { AvatarStack } from '../components/Avatar'
+import { VenuePicture } from '../components/VenuePicture'
+import { posterBackdrop } from '../lib/poster'
 import { ProjectRoleProvider } from '../components/ProjectRoleProvider'
 
 export function ScenePage() {
@@ -42,6 +45,9 @@ function SceneDetails({ scene }: { scene: Scene }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   // For the breadcrumb and the scouting area; the page works without it.
   const project = useQuery({ queryKey: queryKeys.project(scene.projectId), queryFn: () => api.projects.get(scene.projectId) })
+  // The same first page the venue list shows (shared cache): its best picture is the hero's backdrop.
+  const venues = useQuery({ queryKey: queryKeys.locationPage(scene.id, 0), queryFn: () => api.locations.list(scene.id, 0) })
+  const heroImage = heroPicture(venues.data?.items ?? [])
   const projectPath = `/projects/${scene.projectId}`
 
   const update = useMutation({
@@ -69,14 +75,14 @@ function SceneDetails({ scene }: { scene: Scene }) {
   return (
     <ProjectRoleProvider role={project.data?.role}>
     <div className="space-y-8">
-      <Link to={projectPath} className="inline-flex items-center gap-1 font-script text-sm font-bold tracking-[0.06em] text-muted uppercase hover:text-ink">
+      <Link to={projectPath} className="inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink">
         <ChevronLeft aria-hidden className="size-4" />
         {project.data?.title ?? 'Project'}
       </Link>
 
       {editing ? (
         <section aria-labelledby="edit-scene" className="board-card rounded-lg bg-white p-6">
-          <h1 id="edit-scene" className="mb-4 font-display text-4xl leading-none font-extrabold">
+          <h1 id="edit-scene" className="mb-4 font-display text-3xl leading-tight font-bold">
             Edit scene
           </h1>
           <SceneForm
@@ -103,23 +109,45 @@ function SceneDetails({ scene }: { scene: Scene }) {
           />
         </section>
       ) : (
-        // The scene's slate, as it would be held up before the take.
-        <header className="relative flex animate-fade-in flex-wrap items-start justify-between gap-6 rounded-lg border-2 border-ink bg-ink p-6 text-white shadow-[0_5px_0_var(--color-cue)] sm:p-8">
-          <div className="flex min-w-0 items-start gap-5">
-            <Slate number={scene.sceneNumber} className="w-24 -rotate-3 border-white" />
-            <div className="min-w-0 space-y-2">
+        // The scene's opening shot: its best venue's picture behind a slow push-in, the slate and the title over it.
+        <header
+          className="hero flex min-h-[20rem] animate-fade-in flex-col justify-between gap-8 rounded-2xl p-6 sm:p-8"
+          style={heroImage ? undefined : { background: posterBackdrop(scene.title) }}
+        >
+          {heroImage && (
+            <div className="hero-picture">
+              <VenuePicture src={heroImage} className="h-full w-full" />
+            </div>
+          )}
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Slate number={scene.sceneNumber} className="ring-1 ring-white/15" />
               <Eyebrow onDark icon={Clapperboard}>{project.data?.title ?? 'Scene'}</Eyebrow>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="font-display text-3xl leading-none font-extrabold break-words sm:text-5xl">{sceneLabel(scene)}</h1>
-                <ParseStatusBadge status={scene.parseStatus} />
+            </div>
+            {canEdit && (
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" className="!border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20" onClick={() => setEditing(true)}>
+                  Edit
+                </Button>
+                <Button variant="ghost" className="!text-fog hover:!bg-white/10 hover:!text-white" onClick={() => setConfirmingDelete(true)}>
+                  Delete
+                </Button>
               </div>
-              <p className="flex items-center gap-1.5 font-script text-fog">
+            )}
+          </div>
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-3xl leading-[1.05] font-bold break-words sm:text-5xl">{sceneLabel(scene)}</h1>
+              <ParseStatusBadge status={scene.parseStatus} />
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-fog">
+              <p className="flex items-center gap-1.5">
                 <CalendarDays aria-hidden className="size-4 text-cue" />
                 {shootWindow ?? 'No shoot dates yet'}
               </p>
               {scene.characters.length > 0 && (
-                <p className="flex items-start gap-1.5 font-script text-fog">
-                  <Users aria-hidden className="mt-0.5 size-4 shrink-0 text-cue" />
+                <p className="flex items-center gap-2.5">
+                  <AvatarStack names={scene.characters.map(titleCase)} max={5} />
                   <span>
                     <span className="sr-only">Speaking parts: </span>
                     {scene.characters.join(', ')}
@@ -128,16 +156,6 @@ function SceneDetails({ scene }: { scene: Scene }) {
               )}
             </div>
           </div>
-          {canEdit && (
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => setEditing(true)}>
-                Edit
-              </Button>
-              <Button variant="ghost" className="!text-fog hover:!bg-ink-soft hover:!text-white" onClick={() => setConfirmingDelete(true)}>
-                Delete
-              </Button>
-            </div>
-          )}
         </header>
       )}
 
@@ -164,20 +182,28 @@ function SceneDetails({ scene }: { scene: Scene }) {
           </div>
           <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
             <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>
-            <h2 id="script-heading" className="font-display text-3xl leading-none font-extrabold">
+            <h2 id="script-heading" className="font-display text-2xl leading-tight font-semibold">
               Script
             </h2>
-            {/* A page of the script, as it came off the printer, taped to the board. */}
-            <div className="relative rotate-1 pt-2">
-              <span aria-hidden className="tape-piece -top-0 right-10 z-10 w-24 rotate-6" />
-              <pre className="max-h-[70vh] overflow-auto rounded-sm bg-paper px-6 py-7 font-script text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[0_18px_30px_-18px_rgb(13_19_33/0.55)] ring-1 ring-line">
-                {scene.sourceText}
-              </pre>
-            </div>
+            {/* A page of the script, set as a screenplay is: monospaced, on white. */}
+            <pre className="max-h-[70vh] overflow-auto rounded-xl border border-line bg-white px-6 py-7 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[var(--shadow-card)]">
+              {scene.sourceText}
+            </pre>
           </section>
         </div>
       )}
     </div>
     </ProjectRoleProvider>
   )
+}
+
+/** The picture to open the scene on: its confirmed venue's, else its best-fitting venue's that has one. */
+function heroPicture(venues: Location[]): string | null {
+  const pictured = venues.filter((venue) => venue.imageUrl)
+  return (pictured.find((venue) => venue.status === 'CONFIRMED') ?? pictured.find((venue) => venue.status !== 'REJECTED'))?.imageUrl ?? null
+}
+
+/** "JUNE" -> "June": names in a script are in capitals; avatars read better in title case. */
+function titleCase(name: string): string {
+  return name.toLowerCase().replace(/\b\p{L}/gu, (letter) => letter.toUpperCase())
 }

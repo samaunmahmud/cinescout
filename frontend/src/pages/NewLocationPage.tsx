@@ -73,7 +73,7 @@ export function NewLocationPage() {
         {sceneLabel(scene.data)}
       </Link>
       <section aria-labelledby="new-location" className="mx-auto max-w-3xl board-card rounded-lg bg-white p-6 sm:p-8">
-        <h1 id="new-location" className="mb-2 font-extrabold font-display text-5xl leading-none">
+        <h1 id="new-location" className="mb-2 font-bold font-display text-5xl leading-none">
           Add a venue
         </h1>
         <p className="mb-4 text-sm text-muted">A place you found yourself. It is saved without an AI assessment.</p>

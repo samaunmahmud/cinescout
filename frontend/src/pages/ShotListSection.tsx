@@ -61,7 +61,7 @@ export function ShotListSection({ scene }: { scene: Scene }) {
         ) : shots.data.length === 0 ? (
           !adding && <EmptyState icon={Camera}>No shots yet. List them in the order you will shoot them.</EmptyState>
         ) : (
-          <ol aria-label="Shots" className="divide-y divide-line rounded-lg border-2 border-ink bg-white">
+          <ol aria-label="Shots" className="divide-y divide-line rounded-lg border border-line bg-white">
             {shots.data.map((shot, index) => (
               <ShotRow key={shot.id} shot={shot} first={index === 0} last={index === shots.data.length - 1} onSaved={store} />
             ))}
@@ -225,7 +225,7 @@ function ShotForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-lg border-2 border-ink bg-white p-4" noValidate>
+    <form onSubmit={submit} className="space-y-3 rounded-lg border border-line bg-white p-4" noValidate>
       <ErrorAlert error={mutation.error} />
       <TextField
         label="What the shot is"

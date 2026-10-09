@@ -106,7 +106,7 @@ export function ActionMenu({ label, actions, className = '' }: { label: string; 
           aria-label={label}
           onKeyDown={onKeyDown}
           style={{ left: offset }}
-          className={`absolute z-30 mt-1 w-60 overflow-hidden rounded-lg border-2 border-ink bg-white py-1 shadow-[0_4px_0_var(--color-ink)]`}
+          className={`absolute z-30 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-white py-1 shadow-[var(--shadow-card)]`}
         >
           {shown.map((action) => {
             const Icon = action.icon

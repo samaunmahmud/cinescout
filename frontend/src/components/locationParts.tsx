@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useState, type CSSProperties } from 'react'
 import type { BookingFriction, Location, LocationStatus } from '../api/types'
 import { fitBand, frictionLabel, type FitBand } from '../lib/fit'
 import { statusLabels } from '../lib/status'
@@ -40,7 +40,7 @@ export function StatusSelect({
           if (status === 'REJECTED') setRejecting(true)
           else update.mutate({ status, notes: location.notes })
         }}
-        className="rounded-lg border-2 border-ink bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
+        className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
       >
         {Object.entries(statusLabels).map(([value, label]) => (
           <option key={value} value={value}>
@@ -83,7 +83,7 @@ function RejectPanel({
       onKeyDown={(e) => {
         if (e.key === 'Escape') onCancel()
       }}
-      className="absolute top-full right-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] space-y-3 rounded-lg border-2 border-ink bg-white p-4 text-left shadow-[0_4px_0_var(--color-ink)]"
+      className="absolute top-full right-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] space-y-3 rounded-lg border border-line bg-white p-4 text-left shadow-[var(--shadow-card)]"
     >
       <p id={titleId} className="font-display text-lg leading-tight text-ink">
         Why pass on {venue}?
@@ -141,20 +141,22 @@ export function FitScore({ score, size = 'md' }: { score: number; size?: 'md' | 
       title="How well the venue suits the scene, out of 100"
     >
       <svg viewBox="0 0 48 48" aria-hidden className="absolute inset-0 size-full -rotate-90">
-        <circle cx="24" cy="24" r={r} fill="white" strokeWidth="5" className="stroke-line-soft" />
+        <circle cx="24" cy="24" r={r} fill="white" strokeWidth="4.5" className="stroke-line-soft" />
         <circle
           cx="24"
           cy="24"
           r={r}
           fill="none"
-          strokeWidth="5"
-          strokeLinecap="butt"
+          strokeWidth="4.5"
+          strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - Math.max(0, Math.min(100, score)) / 100)}
-          className={colour.stroke}
+          // Drawn in when it first shows.
+          style={{ '--ring-length': `${circumference}` } as CSSProperties}
+          className={`animate-ring ${colour.stroke}`}
         />
       </svg>
-      <span aria-hidden className={`relative font-display leading-none font-extrabold text-ink ${size === 'lg' ? 'text-4xl' : 'text-xl'}`}>
+      <span aria-hidden className={`relative font-display leading-none font-bold text-ink ${size === 'lg' ? 'text-3xl' : 'text-lg'}`}>
         {score}
       </span>
     </span>

@@ -20,7 +20,7 @@ export function MapSnapshot({ latitude, longitude }: { latitude: number; longitu
           style={{ left: `calc(50% + ${tile.left}px)`, top: `calc(50% + ${tile.top}px)` }}
         />
       ))}
-      <span className="absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-ink bg-stop shadow-[0_2px_0_#0d1321]" />
+      <span className="absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-ink bg-stop shadow-[var(--shadow-card)]" />
     </div>
   )
 }

@@ -144,7 +144,7 @@ function SceneSearch({ current, onSearch }: { current: string; onSearch: (search
           maxLength={100}
           onChange={(e) => setText(e.target.value)}
           placeholder="Search titles, scripts and settings"
-          className="w-full rounded-lg border-2 border-line bg-white py-2 pr-3 pl-9 text-sm text-ink placeholder:text-subtle focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none"
+          className="w-full rounded-lg border border-line bg-white py-2 pr-3 pl-9 text-sm text-ink placeholder:text-subtle focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none"
         />
       </label>
       <Button type="submit" variant="secondary">

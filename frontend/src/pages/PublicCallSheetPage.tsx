@@ -35,7 +35,7 @@ export function PublicCallSheetPage() {
       ) : sheet.isError ? (
         isNotFound(sheet.error) ? (
           <div role="alert" className="space-y-3 py-16 text-center">
-            <h1 className="font-extrabold font-display text-5xl leading-none">Not shared</h1>
+            <h1 className="font-bold font-display text-5xl leading-none">Not shared</h1>
             <p className="text-lg text-muted">This call sheet is not shared, or no longer is. Ask the production for a new link.</p>
           </div>
         ) : (

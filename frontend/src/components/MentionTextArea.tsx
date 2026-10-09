@@ -95,7 +95,7 @@ export function MentionTextArea({
         }}
         onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
         onKeyDown={keyDown}
-        className="block w-full rounded-lg border-2 border-ink bg-white px-3 py-2 text-[15px] text-ink placeholder:text-subtle focus:ring-4 focus:ring-cue/25 focus:outline-none"
+        className="block w-full rounded-lg border border-line bg-white px-3 py-2 text-[15px] text-ink placeholder:text-subtle focus:ring-4 focus:ring-cue/25 focus:outline-none"
       />
       <p id={`${id}-hint`} className="text-xs text-muted">
         Type @ to mention someone on the crew.
@@ -105,7 +105,7 @@ export function MentionTextArea({
         role="listbox"
         aria-label="Crew to mention"
         hidden={!open}
-        className="absolute z-20 mt-1 w-64 overflow-hidden rounded-lg border-2 border-ink bg-white shadow-[0_4px_0_var(--color-ink)]"
+        className="absolute z-20 mt-1 w-64 overflow-hidden rounded-lg border border-line bg-white shadow-[var(--shadow-card)]"
       >
         {matches.map((member, index) => (
           <li

@@ -108,7 +108,7 @@ function ProjectDetails({ project }: { project: Project }) {
       {editing ? (
         <Card className="p-6">
           <section aria-labelledby="edit-project">
-            <h1 id="edit-project" className="mb-4 font-display text-4xl leading-none font-extrabold">
+            <h1 id="edit-project" className="mb-4 font-display text-4xl leading-none font-bold">
               Edit project
             </h1>
             <ProjectForm
@@ -126,7 +126,7 @@ function ProjectDetails({ project }: { project: Project }) {
         </Card>
       ) : (
         // The title card: the production's name on an ink panel, the film strip down its edge.
-        <header className="relative animate-fade-in overflow-hidden rounded-lg border-2 border-ink bg-ink text-white shadow-[0_5px_0_var(--color-cue)]">
+        <header className="relative animate-fade-in overflow-hidden rounded-lg border border-line bg-ink text-white shadow-[var(--shadow-card)]">
           <div aria-hidden className="absolute inset-y-0 left-2.5 flex w-3 flex-col justify-around opacity-40">
             {Array.from({ length: 9 }, (_, i) => (
               <span key={i} className="h-2.5 rounded-[2px] bg-white" />
@@ -137,7 +137,7 @@ function ProjectDetails({ project }: { project: Project }) {
               <div className="space-y-3">
                 <Eyebrow onDark icon={Clapperboard}>A CineScout production</Eyebrow>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="font-display text-5xl leading-[0.95] font-extrabold sm:text-7xl">{project.title}</h1>
+                  <h1 className="font-display text-5xl leading-[0.95] font-bold sm:text-7xl">{project.title}</h1>
                   {archived && <Stamp tone="ink" announce className="!bg-white text-sm">Archived</Stamp>}
                 </div>
                 <p className="flex items-center gap-1.5 font-script text-fog">

@@ -28,7 +28,7 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
         </div>
 
         <div className="max-w-xl space-y-5">
-          <p className="font-display text-6xl leading-[0.98] font-extrabold xl:text-[4rem]">
+          <p className="font-display text-6xl leading-[0.98] font-bold xl:text-[4rem]">
             Find the place your scene was <span className="text-cue">written for.</span>
           </p>
           <p className="max-w-lg text-lg leading-relaxed text-fog">
@@ -67,7 +67,7 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
             <TapeLabel tilt={-2} className="absolute -top-4 left-1/2 -translate-x-1/2">
               {tape}
             </TapeLabel>
-            <h1 className="mb-5 font-display text-4xl leading-none font-extrabold">{title}</h1>
+            <h1 className="mb-5 font-display text-4xl leading-none font-bold">{title}</h1>
             {children}
           </div>
           <p className="text-center text-[15px] text-muted">{footer}</p>

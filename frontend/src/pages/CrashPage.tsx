@@ -13,10 +13,10 @@ export function CrashPage() {
   const outdated = error instanceof Error && /dynamically imported module|Loading chunk|Importing a module script failed/i.test(error.message)
   return (
     <div role="alert" className="mx-auto max-w-xl animate-fade-in space-y-6 px-4 py-24 text-center">
-      <p aria-hidden className="font-display font-extrabold text-7xl leading-none text-ink">
+      <p aria-hidden className="font-display font-bold text-7xl leading-none text-ink">
         Reel jam
       </p>
-      <h1 className="font-extrabold font-display text-5xl leading-none">Something went wrong</h1>
+      <h1 className="font-bold font-display text-5xl leading-none">Something went wrong</h1>
       <p className="text-lg text-muted">
         {outdated
           ? 'CineScout has been updated since this page was opened. Reload to get the new version.'
