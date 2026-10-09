@@ -46,6 +46,26 @@ class AccountApiTest extends ApiTest {
     }
 
     @Test
+    void aSharedDemoAccountKeepsItsNameAndPasswordAndCannotBeDeleted() {
+        String email = "shared-demo@example.com"; // listed in the test config in other capitals
+        web.post().uri("/api/auth/register")
+                .bodyValue(Map.of("email", email, "password", PASSWORD, "displayName", "Demo"))
+                .exchange().expectStatus().isCreated();
+        WebTestClient demo = as(email, PASSWORD);
+
+        demo.put().uri("/api/account").bodyValue(Map.of("displayName", "Taken over"))
+                .exchange().expectStatus().isForbidden();
+        demo.put().uri("/api/account/password").bodyValue(Map.of("currentPassword", PASSWORD, "newPassword", NEW_PASSWORD))
+                .exchange().expectStatus().isForbidden();
+        demo.post().uri("/api/account/delete").bodyValue(Map.of("password", PASSWORD))
+                .exchange().expectStatus().isForbidden();
+
+        demo.get().uri("/api/auth/me").exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.displayName").isEqualTo("Demo");
+        demo.get().uri("/api/projects").exchange().expectStatus().isOk();
+    }
+
+    @Test
     void changingThePasswordNeedsTheCurrentOneAndThenOnlyTheNewOneWorks() {
         Account ada = register("Ada");
 

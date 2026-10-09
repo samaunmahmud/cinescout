@@ -371,6 +371,8 @@ Past a limit the API answers `429` with `Retry-After`. Each is a burst of `capac
 - **Docker Compose** (above) for one machine. For a public host, Caddy fetches certificates:
   `DOMAIN=cinescout.example.com docker compose --profile https up -d --build`. Set `REGISTRATION_OPEN=false` once
   your accounts exist.
+- **A shared demo login**: list its email in `CINESCOUT_SECURITY_LOCKEDACCOUNTS` (comma-separated). Its name and
+  password then stay as they are and it cannot be deleted (`403`), so one visitor cannot lock the others out.
 - **Render**: `deploy/render/Dockerfile` builds one container in which the backend also serves the web app, sized for
   a 512 MB instance; `render.yaml` describes it. The database is separate, for example a free Neon PostgreSQL.
 
