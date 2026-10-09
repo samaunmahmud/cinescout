@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 
-/** A panel on the board: white card with an ink outline and a hard shadow. */
+/** A panel on the working surface: a white card with a hairline border. */
 export function Card({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
     <div className={`board-card rounded-lg bg-white ${className}`}>
@@ -10,10 +10,10 @@ export function Card({ className = '', children }: { className?: string; childre
   )
 }
 
-/** The typed line above a title, like the department on a call sheet. */
+/** The small line above a title, like the department on a call sheet. */
 export function Eyebrow({ icon: Icon, onDark = false, children }: { icon?: LucideIcon; onDark?: boolean; children: ReactNode }) {
   return (
-    <p className={`flex items-center gap-1.5 font-script text-[13px] font-bold tracking-[0.1em] uppercase ${onDark ? 'text-cue' : 'text-cue-ink'}`}>
+    <p className={`flex items-center gap-1.5 text-xs font-semibold tracking-[0.08em] uppercase ${onDark ? 'text-cue' : 'text-cue-ink'}`}>
       {Icon && <Icon aria-hidden className="size-3.5" />}
       {children}
     </p>
@@ -45,10 +45,10 @@ export function Section({
 }) {
   return (
     <section aria-labelledby={titleId} className={`animate-fade-in space-y-4 ${className}`}>
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
         <div className="space-y-1">
           {eyebrow && <Eyebrow icon={icon}>{eyebrow}</Eyebrow>}
-          <h2 id={titleId} className="font-display text-[2rem] leading-none font-extrabold">
+          <h2 id={titleId} className="font-display text-2xl leading-tight font-semibold">
             {title}
           </h2>
           {description && <p className="max-w-prose pt-1 text-[15px] text-muted">{description}</p>}
@@ -63,10 +63,9 @@ export function Section({
 /** What a section shows before there is anything in it: what it is for, and what to do. */
 export function EmptyState({ icon: Icon, children }: { icon?: LucideIcon; children: ReactNode }) {
   return (
-    // An empty spot on the board, waiting for something to be pinned to it.
-    <div className="relative flex flex-col items-center gap-4 rounded-lg border-2 border-dashed border-line bg-white/60 px-6 py-12 text-center text-muted">
+    <div className="relative flex flex-col items-center gap-4 rounded-xl border border-dashed border-line bg-white/70 px-6 py-12 text-center text-muted">
       {Icon && (
-        <span className="relative flex size-14 -rotate-6 items-center justify-center rounded-full border-2 border-ink bg-tape text-ink">
+        <span className="relative flex size-14 items-center justify-center rounded-2xl bg-ink text-cue shadow-[var(--shadow-lift)]">
           <Icon aria-hidden className="size-6" />
         </span>
       )}
@@ -136,7 +135,7 @@ export function Tabs<K extends string>({
         role="tablist"
         aria-label={label}
         onKeyDown={onKeyDown}
-        className="sticky top-[82px] z-20 -mx-4 flex gap-1 overflow-x-auto overflow-y-hidden bg-ground/90 px-4 py-2 backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="sticky top-16 z-20 -mx-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line bg-ground/90 px-4 backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {items.map(({ key, label: text, icon: Icon }) => {
           const active = key === selected
@@ -153,11 +152,11 @@ export function Tabs<K extends string>({
               aria-controls={panelId}
               tabIndex={active ? 0 : -1}
               onClick={() => onSelect(key)}
-              className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2 text-[15px] font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
-                active ? 'border-ink bg-ink text-white' : 'border-transparent text-graphite hover:border-ink hover:bg-white'
+              className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink ${
+                active ? 'border-ink text-ink' : 'border-transparent text-muted hover:border-line hover:text-ink'
               }`}
             >
-              {Icon && <Icon aria-hidden className={`size-4 ${active ? 'text-cue' : ''}`} />}
+              {Icon && <Icon aria-hidden className={`size-4 ${active ? 'text-cue-ink' : ''}`} />}
               {text}
             </button>
           )
@@ -170,15 +169,12 @@ export function Tabs<K extends string>({
   )
 }
 
-/** A clapperboard: the scene number chalked on a slate, with the striped sticks on top. */
+/** The scene number as a slate chip: "SC 01". */
 export function Slate({ number, className = '' }: { number: number | null; className?: string }) {
   return (
-    <div aria-hidden className={`w-20 shrink-0 overflow-hidden rounded-md border-2 border-ink bg-ink ${className}`}>
-      <div className="clapper h-3.5 border-b-2 border-ink [background-size:auto]" />
-      <div className="px-2 pt-1 pb-1.5 text-center">
-        <div className="border-b border-ink-line pb-0.5 font-script text-[9px] font-bold tracking-[0.2em] text-ink-muted">SCENE</div>
-        <div className="pt-1 font-marker text-3xl leading-none text-paper">{number ?? '—'}</div>
-      </div>
+    <div aria-hidden className={`flex shrink-0 flex-col items-center justify-center rounded-lg bg-ink px-2.5 py-1.5 text-white ${className}`}>
+      <div className="text-[10px] font-semibold tracking-[0.14em] text-ink-muted">SCENE</div>
+      <div className="font-mono text-xl leading-tight font-medium text-cue">{number == null ? '—' : String(number).padStart(2, '0')}</div>
     </div>
   )
 }
@@ -186,10 +182,12 @@ export function Slate({ number, className = '' }: { number: number | null; class
 /** One figure in a row of facts: a label, a value, an optional icon. */
 export function Fact({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border-[1.5px] border-line bg-white px-3 py-2.5">
-      <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-cue-ink" />
+    <div className="flex items-start gap-3 rounded-xl border border-line bg-white px-3.5 py-3 shadow-[var(--shadow-card)]">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-tape">
+        <Icon aria-hidden className="size-4 text-cue-ink" />
+      </span>
       <div className="min-w-0">
-        <dt className="font-script text-[12px] font-bold tracking-[0.08em] text-muted uppercase">{label}</dt>
+        <dt className="text-xs font-medium text-muted">{label}</dt>
         <dd className="mt-0.5 text-sm font-semibold text-ink">{children}</dd>
       </div>
     </div>

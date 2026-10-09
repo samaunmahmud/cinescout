@@ -1,55 +1,63 @@
 @import "tailwindcss";
 
 /*
- * CineScout's look: the location department's office. A bright working board with an ink-dark band at the top
- * of each page, things taped and pinned to it, paperwork in Courier, notes in marker, and rubber stamps on what
- * has been decided. Colours come from the teal-and-orange grade: orange cues the action, teal says "good fit".
+ * CineScout's look: a clean studio, with the pictures doing the talking. Light working surfaces in Geist, one ink
+ * colour for text and the main actions, and dark cinematic heroes (a venue's picture behind a slow camera push) at
+ * the top of the pages that are about a place. Orange cues the action; green says "good fit".
  */
 @theme {
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Instrument Sans", ui-sans-serif, sans-serif;
-  --font-script: "Courier Prime", ui-monospace, "Courier New", monospace;
-  --font-marker: "Permanent Marker", "Bricolage Grotesque Variable", cursive;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Labels and eyebrows: the same family, set small and spaced. */
+  --font-script: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Once a marker pen; now the display face, for numbers and short notes that should stand out. */
+  --font-marker: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
 
-  /* Ink: the dark bands, the outlines, the text. Lighter steps are for things drawn on ink. */
-  --color-ink: #0d1321;
-  --color-ink-soft: #182133;
+  /* Ink: text, the main buttons, the cinematic heroes. Lighter steps are for things drawn on ink. */
+  --color-ink: #0e1116;
+  --color-ink-soft: #1a1f27;
   --color-ink-line: #3a4250;
-  --color-ink-muted: #98a2b3;
-  --color-fog: #c7ccd6;
+  --color-ink-muted: #9aa4b2;
+  --color-fog: #c9d1db;
 
-  /* The board and the paper on it. */
-  --color-ground: #eef0f2;
-  --color-paper: #fcfcfa;
-  --color-line: #d0d5dd;
-  --color-line-soft: #e4e7ec;
-  --color-graphite: #344054;
-  --color-muted: #475467;
-  --color-subtle: #667085;
-  --color-tape: #f1e6c8;
-  --color-highlight: #facc15;
+  /* The working surface and the cards on it. */
+  --color-ground: #f4f5f7;
+  --color-paper: #ffffff;
+  --color-line: #dfe2e7;
+  --color-line-soft: #eceef1;
+  --color-graphite: #2a2f37;
+  --color-muted: #5b6270;
+  --color-subtle: #6b7280;
+  --color-tape: #f1f2f4;
+  --color-highlight: #fff1dc;
 
-  /* Orange cues the action. `cue` is a fill under ink text; `cue-ink` is orange text on paper (AA). */
-  --color-cue: #ff7a3d;
-  --color-cue-ink: #c2410c;
-  --color-cue-deep: #9a3412;
-  --color-cue-soft: #ffe4d6;
-  --color-cue-wash: #fff1ea;
+  /* Orange cues the action. `cue` reads on ink; `cue-ink` is orange text on white (AA). */
+  --color-cue: #ffb27a;
+  --color-cue-ink: #b8470a;
+  --color-cue-deep: #8a3e06;
+  --color-cue-soft: #ffe2cc;
+  --color-cue-wash: #fff6ec;
 
-  /* Teal says it fits. */
-  --color-go: #2dd4bf;
-  --color-go-mid: #0f9d8a;
-  --color-go-ink: #0b7a6b;
-  --color-go-soft: #ccfbf1;
-  --color-go-wash: #e6faf6;
+  /* Green says it fits. `go` reads on ink. */
+  --color-go: #4ade9f;
+  --color-go-mid: #0f7b5f;
+  --color-go-ink: #0f6b53;
+  --color-go-soft: #cdefe3;
+  --color-go-wash: #e9f7f1;
 
-  /* Red for stop, delete and the light over the stage door. */
+  /* Red for stop and delete. */
   --color-stop: #e5484d;
   --color-stop-ink: #b42318;
   --color-stop-wash: #fef3f2;
 
-  --animate-fade-in: fade-in 0.4s ease-out both;
-  --animate-reel: reel 1.1s linear infinite;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-lift: 0 12px 28px -12px rgb(16 24 40 / 0.28), 0 2px 6px rgb(16 24 40 / 0.06);
+
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-reel: reel 1s linear infinite;
+  --animate-push-in: push-in 22s ease-out both;
+  --animate-ring: ring 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(6px); }
@@ -57,6 +65,15 @@
   }
   @keyframes reel {
     to { transform: rotate(360deg); }
+  }
+  /* A slow dolly in on a hero picture. */
+  @keyframes push-in {
+    from { transform: scale(1.02); }
+    to { transform: scale(1.12); }
+  }
+  /* A fit ring drawing itself. */
+  @keyframes ring {
+    from { stroke-dashoffset: var(--ring-length); }
   }
 }
 
@@ -71,6 +88,10 @@ body {
 ::selection {
   background: var(--color-cue-soft);
   color: var(--color-ink);
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -105,104 +126,143 @@ body {
   @page { margin: 14mm; }
 }
 
-/* In the components layer, so a utility on the same element (hidden, bg-cue, a rotation) wins over these. */
+/* In the components layer, so a utility on the same element (hidden, a colour, a size) wins over these. */
 @layer components {
 .font-display {
   letter-spacing: -0.025em;
-  font-weight: 800;
+  font-weight: 700;
 }
 
-/* Marker on tape reads a touch small at the same size as the text around it. */
 .font-marker {
-  letter-spacing: 0.01em;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
-/* A strip of masking tape, torn at both ends. Write on it in marker. */
+/* A small neutral chip (once masking tape). */
 .tape {
   background-color: var(--color-tape);
   color: var(--color-ink);
-  clip-path: polygon(0 12%, 3% 0, 97% 0, 100% 14%, 98% 50%, 100% 86%, 97% 100%, 3% 100%, 0 88%, 2% 50%);
-}
-
-/* A plain piece of tape holding something to the board (no text): put it over the top edge. */
-.tape-piece {
-  position: absolute;
-  height: 1.1rem;
-  background-color: rgb(241 230 200 / 0.92);
-  pointer-events: none;
-}
-
-/* A rubber stamp: a ruled box of spaced capitals, set down not quite straight. */
-.stamp {
-  display: inline-block;
-  border: 3px solid currentColor;
   border-radius: 6px;
-  padding: 0.05rem 0.55rem;
-  font-family: var(--font-script);
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  transform: rotate(-8deg);
-  opacity: 0.9;
 }
 
-/* The perforated edge of a film strip, along the foot of the header. */
+/* Decorative tape holding a picture down: retired. */
+.tape-piece {
+  display: none;
+}
+
+/* A status pill (once a rubber stamp). */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  background: rgb(255 255 255 / 0.9);
+}
+
+/* The film-strip edge under the header: retired. */
 .sprockets {
-  height: 14px;
-  border-top: 1px solid var(--color-ink-soft);
-  background-color: var(--color-ink);
-  background-image: repeating-linear-gradient(90deg, var(--color-ink-line) 0 10px, transparent 10px 22px);
-  background-size: 100% 6px;
-  background-position: 0 50%;
-  background-repeat: no-repeat;
+  display: none;
 }
 
-/* The black-and-white sticks of a clapperboard. */
 .clapper {
-  background-image: repeating-linear-gradient(-55deg, #fff 0 18px, var(--color-ink) 18px 36px);
+  background: var(--color-ink);
 }
 
-/* Ruled notebook paper, for a scout's report. */
 .lined-paper {
   background-color: var(--color-paper);
-  background-image: repeating-linear-gradient(180deg, transparent 0 31px, #dce6f0 31px 32px);
 }
 
-/* Something solid on the board: an ink outline and a hard shadow below, like a card cut from board. */
+/* A card on the working surface: a hairline, a whisper of shadow, and a lift when it can be opened. */
 .board-card {
-  border: 2px solid var(--color-ink);
-  box-shadow: 0 5px 0 var(--color-ink);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.board-card:has(a:hover, > a:focus-visible) {
+  border-color: #c9ced6;
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
 }
 
-/* A polaroid: a white frame, deeper at the foot for a caption. */
+/* A picture card (once a polaroid): the picture fills the top, the caption sits below. */
 .polaroid {
   background: #fff;
-  padding: 0.4rem 0.4rem 1.6rem;
-  box-shadow: 0 2px 0 var(--color-line), 0 8px 18px -10px rgb(13 19 33 / 0.5);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
-/* The corners of a camera's frame lines, drawn over a picture. Put four children with .vf-corner on a relative box. */
+/* Camera frame lines over a hero picture: kept, finer. */
 .vf-corner {
   position: absolute;
-  width: 2.2rem;
-  height: 2.2rem;
-  border-color: #fff;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-color: rgb(255 255 255 / 0.55);
   pointer-events: none;
 }
 
-/* The main button: cue orange with an ink outline that presses down. */
+/* The main button: ink, white text. */
 .btn-cue {
-  background-color: var(--color-cue);
-  color: var(--color-ink);
-  border: 2px solid var(--color-ink);
-  box-shadow: 0 4px 0 var(--color-ink);
-  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background-color 0.15s;
+  background-color: var(--color-ink);
+  color: #fff;
+  border: 1px solid var(--color-ink);
+  transition: background-color 0.15s, transform 0.08s ease-out;
 }
 .btn-cue:hover:not(:disabled) {
-  background-color: #ff8f5c;
+  background-color: #262c36;
 }
 .btn-cue:active:not(:disabled) {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--color-ink);
+  transform: translateY(1px);
+}
+
+/*
+ * A cinematic hero: a dark band with a picture behind a slow push-in, a soft vignette and fine film grain, the
+ * words over its foot. Put the picture in a child with .hero-picture.
+ */
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: #fff;
+}
+.hero-picture {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  animation: var(--animate-push-in);
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgb(14 17 22 / 0.15) 0%, rgb(14 17 22 / 0.35) 45%, rgb(14 17 22 / 0.92) 100%),
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.45) 100%);
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.12;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Something that can be opened: lifts a little under the pointer. */
+.lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
 }
 }

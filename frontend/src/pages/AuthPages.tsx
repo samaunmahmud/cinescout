@@ -23,7 +23,7 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
       {/* The location department's door: the pitch on a chalk slate, with stickers on it. */}
       <aside className="relative hidden flex-col justify-between gap-10 overflow-hidden bg-ink px-14 py-11 text-white lg:flex">
         <div className="flex items-center justify-between">
-          <Logo size="lg" />
+          <Logo size="lg" onDark />
           <span className="font-script text-[13px] tracking-[0.1em] text-ink-muted">LOCATION DEPT.</span>
         </div>
 
