@@ -145,7 +145,7 @@ describe('projects', () => {
 
     const list = await screen.findByRole('list')
     expect(within(list).getByRole('link', { name: /Night Shift/ })).toHaveAttribute('href', '/projects/p1')
-    expect(within(list).getByText('No location area set')).toBeInTheDocument()
+    expect(within(list).getByText('No area yet')).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: 'Archived' }))
     expect(await screen.findByRole('link', { name: /Old Film/ })).toBeInTheDocument()

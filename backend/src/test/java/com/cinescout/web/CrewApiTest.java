@@ -97,6 +97,9 @@ class CrewApiTest extends ApiTest {
         Account eddie = register("Eddie");
         String project = project(ada);
         add(ada, project, eddie, "EDITOR");
+        // The crew's names come with the project, the owner first, for its avatars.
+        eddie.client().get().uri("/api/projects?status=ACTIVE").exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.items[0].crew[0]").isEqualTo("Ada").jsonPath("$.items[0].crew[1]").isEqualTo("Eddie");
 
         String scene = scene(eddie, project);
         String location = location(eddie, scene);

@@ -11,7 +11,20 @@ function colourFor(name: string): string {
 }
 
 /** A person's initials on their colour. Decorative unless `label` is given. */
-export function Avatar({ name, size = 'md', label, className = '' }: { name: string; size?: 'sm' | 'md' | 'lg'; label?: string; className?: string }) {
+export function Avatar({
+  name,
+  size = 'md',
+  label,
+  className = '',
+  layer,
+}: {
+  name: string
+  size?: 'sm' | 'md' | 'lg'
+  label?: string
+  className?: string
+  /** Stacking order in an avatar stack: the first person sits on top. */
+  layer?: number
+}) {
   const sizes = { sm: 'size-7 text-[11px]', md: 'size-9 text-[13px]', lg: 'size-12 text-base' }
   return (
     <span
@@ -19,7 +32,7 @@ export function Avatar({ name, size = 'md', label, className = '' }: { name: str
       aria-label={label}
       aria-hidden={label ? undefined : true}
       title={name}
-      style={{ backgroundColor: colourFor(name) }}
+      style={{ backgroundColor: colourFor(name), zIndex: layer }}
       className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ring-2 ring-white ${sizes[size]} ${className}`}
     >
       {initialsOf(name)}
@@ -35,7 +48,7 @@ export function AvatarStack({ names, max = 4, size = 'sm' }: { names: string[]; 
   return (
     <span role="img" aria-label={label} className="inline-flex items-center">
       {shown.map((name, index) => (
-        <Avatar key={`${name}-${index}`} name={name} size={size} className={index > 0 ? '-ml-2' : ''} />
+        <Avatar key={`${name}-${index}`} name={name} size={size} layer={shown.length - index} className={`relative ${index > 0 ? '-ml-2' : ''}`} />
       ))}
       {more > 0 && (
         <span aria-hidden className={`-ml-2 inline-flex items-center justify-center rounded-full bg-tape font-semibold text-graphite ring-2 ring-white ${size === 'sm' ? 'size-7 text-[11px]' : 'size-9 text-[13px]'}`}>

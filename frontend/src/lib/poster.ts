@@ -1,4 +1,4 @@
-/** A small, stable hash of a string: the same title always gets the same colours. */
+/** A small, stable hash of a string: the same title always gets the same look. */
 function hash(text: string): number {
   let h = 2166136261
   for (let i = 0; i < text.length; i++) {
@@ -8,28 +8,16 @@ function hash(text: string): number {
   return h >>> 0
 }
 
-/** The colours of a production's card: a panel, the text on it, and its film strip's holes. */
-export interface PosterColours {
-  panel: string
-  text: string
-  holes: string
-}
-
-// The board's own colours, each with the text that reads on it (AA): ink, cue orange, teal, tape, highlighter.
-const palettes: PosterColours[] = [
-  { panel: 'bg-ink', text: 'text-white', holes: 'bg-white' },
-  { panel: 'bg-cue', text: 'text-ink', holes: 'bg-ink' },
-  { panel: 'bg-go', text: 'text-ink', holes: 'bg-ink' },
-  { panel: 'bg-tape', text: 'text-ink', holes: 'bg-ink' },
-  { panel: 'bg-highlight', text: 'text-ink', holes: 'bg-ink' },
-]
-
-/** The colours for a production, chosen from its title so each one keeps its own look. */
-export function posterColours(title: string): PosterColours {
-  return palettes[hash(title) % palettes.length]
-}
-
-/** A small tilt for a card pinned to the board, -0.8 to 0.8 degrees, stable per title. */
-export function posterTilt(title: string): number {
-  return (((hash(title) >>> 8) % 17) - 8) / 10
+/**
+ * A cinematic backdrop for a production with no venue picture yet: two pools of coloured light on ink, like a
+ * lit set seen from the dark, in hues chosen from its title so each production keeps its own look.
+ */
+export function posterBackdrop(title: string): string {
+  const hue = hash(title) % 360
+  const second = (hue + 40) % 360
+  return [
+    `radial-gradient(110% 85% at 15% 0%, hsl(${hue} 80% 52% / 0.85), transparent 62%)`,
+    `radial-gradient(90% 75% at 95% 100%, hsl(${second} 85% 48% / 0.7), transparent 66%)`,
+    '#0e1116',
+  ].join(', ')
 }

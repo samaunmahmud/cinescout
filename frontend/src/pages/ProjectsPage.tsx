@@ -4,14 +4,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Page, Project, ProjectStatus } from '../api/types'
 import { useSession } from '../auth/context'
-import { BookMarked, Clapperboard, Film, MapPin, Plus } from 'lucide-react'
+import { ArrowUpRight, BookMarked, Clapperboard, Film, Mail, MapPin, Plus } from 'lucide-react'
 import { linkButton } from '../components/buttonStyles'
 import { Pager } from '../components/Pager'
 import { previousPageOf, usePageParam, useStayInRange } from '../components/paging'
 import { Card, EmptyState } from '../components/surfaces'
-import { Stamp, TapeLabel } from '../components/stickers'
+import { AvatarStack } from '../components/Avatar'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
-import { posterColours, posterTilt } from '../lib/poster'
+import { posterBackdrop } from '../lib/poster'
 import { sampleProject, sampleScript } from '../lib/sampleScript'
 import { blankToNull } from '../lib/text'
 import { ProjectForm, type ProjectFormValues } from './ProjectForm'
@@ -54,10 +54,12 @@ export function ProjectsPage() {
   return (
     <div className="space-y-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-3">
-          <TapeLabel tilt={-2}>{greeting()}, {user.displayName.split(' ')[0]}</TapeLabel>
-          <h1 className="font-display text-5xl leading-none font-extrabold sm:text-[3.5rem]">Your productions</h1>
-          <p className="text-lg text-muted">Every production, with its scenes, its venues and its letters to their owners.</p>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted">
+            {greeting()}, {user.displayName.split(' ')[0]}
+          </p>
+          <h1 className="font-display text-4xl leading-tight font-bold sm:text-5xl">Your productions</h1>
+          <p className="text-[17px] text-muted">Every production, with its scenes, its venues and its letters to their owners.</p>
         </div>
         {!creating && (
           <div className="flex flex-wrap items-center gap-3">
@@ -66,7 +68,7 @@ export function ProjectsPage() {
               My locations
             </Link>
             {(projects.data?.items.length ?? 0) > 0 && <SampleProjectButton />}
-            <Button onClick={() => setCreating(true)} className="py-3">
+            <Button onClick={() => setCreating(true)}>
               <Plus aria-hidden className="size-4" />
               New project
             </Button>
@@ -77,7 +79,7 @@ export function ProjectsPage() {
       {creating && (
         <Card className="p-6">
           <section aria-labelledby="new-project">
-            <h2 id="new-project" className="mb-4 font-display text-3xl leading-none font-extrabold">
+            <h2 id="new-project" className="mb-4 font-display text-2xl leading-tight font-semibold">
               New project
             </h2>
             <ProjectForm
@@ -94,7 +96,7 @@ export function ProjectsPage() {
         </Card>
       )}
 
-      <div role="tablist" aria-label="Project status" className="inline-flex gap-1 rounded-full border-2 border-ink bg-white p-1">
+      <div role="tablist" aria-label="Project status" className="inline-flex gap-1 rounded-[10px] bg-line-soft p-1">
         {(['ACTIVE', 'ARCHIVED'] as const).map((s) => (
           <button
             key={s}
@@ -102,8 +104,8 @@ export function ProjectsPage() {
             role="tab"
             aria-selected={status === s}
             onClick={() => setParams(s === 'ACTIVE' ? {} : { status: s })}
-            className={`rounded-full px-4 py-1.5 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
-              status === s ? 'bg-ink text-white' : 'text-graphite hover:bg-ground'
+            className={`rounded-[8px] px-4 py-1.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+              status === s ? 'bg-white text-ink shadow-[var(--shadow-card)]' : 'text-muted hover:text-ink'
             }`}
           >
             {s === 'ACTIVE' ? 'Active' : 'Archived'}
@@ -123,8 +125,8 @@ export function ProjectsPage() {
         )
       ) : (
         <>
-          {/* Each production is a card pinned to the board, its name on a strip of tape. */}
-          <ul className="grid gap-x-7 gap-y-10 pt-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Each production is a poster: a still of one of its venues, or a lit backdrop, with its title on it. */}
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {projects.data.items.map((project) => (
               <li key={project.id}>
                 <ProjectCard project={project} />
@@ -145,48 +147,47 @@ function greeting(): string {
 }
 
 function ProjectCard({ project }: { project: Project }) {
-  const colours = posterColours(project.title)
   return (
     <Link
       to={`/projects/${project.id}`}
-      style={{ transform: `rotate(${posterTilt(project.title)}deg)` }}
-      className="group board-card relative flex h-full flex-col rounded-lg bg-white transition duration-200 hover:!rotate-0 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
     >
-      <TapeLabel tilt={-3} announce className="absolute -top-4 left-5 z-10 max-w-[75%] overflow-hidden text-ellipsis">
-        {project.locationArea ?? 'No area yet'}
-      </TapeLabel>
-      <div className={`relative flex h-44 flex-col justify-end overflow-hidden rounded-t-md px-5 pt-8 pb-4 pl-9 ${colours.panel} ${colours.text}`}>
+      <div className="hero flex aspect-[16/10] flex-col justify-between p-4" style={project.posterImageUrl ? undefined : { background: posterBackdrop(project.title) }}>
         {project.posterImageUrl && (
-          // A still of one of its locations, printed in the card's colour.
-          <VenuePicture
-            src={project.posterImageUrl}
-            className="absolute inset-0 h-full w-full opacity-35 mix-blend-luminosity grayscale transition duration-500 group-hover:opacity-50"
-          />
+          // A still of one of its locations, slowly pushing in under the pointer.
+          <div className="hero-picture [animation:none] transition-transform duration-[2500ms] ease-out group-hover:scale-110">
+            <VenuePicture src={project.posterImageUrl} className="h-full w-full" />
+          </div>
         )}
-        <div aria-hidden className="absolute inset-y-0 left-2 flex w-3 flex-col justify-around opacity-50">
-          {Array.from({ length: 7 }, (_, i) => (
-            <span key={i} className={`h-2.5 rounded-[2px] ${colours.holes}`} />
-          ))}
+        <div className="flex items-start justify-between gap-2">
+          <span className="inline-flex max-w-[70%] items-center gap-1.5 truncate rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur">
+            <MapPin aria-hidden className="size-3.5 shrink-0" />
+            <span className="truncate">{project.locationArea ?? 'No area yet'}</span>
+          </span>
+          {project.followUpCount > 0 && (
+            // Emails gone unanswered too long.
+            <span className="inline-flex items-center gap-1 rounded-full bg-cue px-2.5 py-1 text-xs font-semibold text-ink">
+              <Mail aria-hidden className="size-3.5" />
+              {project.followUpCount === 1 ? '1 to follow up' : `${project.followUpCount} to follow up`}
+            </span>
+          )}
         </div>
-        <h2 className="relative font-display text-[2.1rem] leading-[0.95] font-extrabold break-words">{project.title}</h2>
-        {project.followUpCount > 0 && (
-          // Emails gone unanswered too long: stamped across the poster's corner.
-          <Stamp tone="stop" announce className="absolute top-3 right-3 rotate-6 text-xs">
-            {project.followUpCount === 1 ? '1 to follow up' : `${project.followUpCount} to follow up`}
-          </Stamp>
-        )}
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="font-display text-[1.7rem] leading-[1.05] font-bold break-words text-white">{project.title}</h2>
+          <ArrowUpRight aria-hidden className="size-5 shrink-0 text-white/70 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
+        </div>
       </div>
       <div className="flex flex-1 flex-col gap-4 p-5">
         {project.description ? (
           <p className="line-clamp-2 text-[15px] leading-relaxed text-graphite">{project.description}</p>
         ) : (
-          <p className="flex items-center gap-1.5 text-[15px] text-muted">
-            <MapPin aria-hidden className="size-4" />
-            {project.locationArea ?? 'No location area set'}
-          </p>
+          <p className="text-[15px] text-muted">No logline yet.</p>
         )}
-        <div className="mt-auto">
-          <PosterProgress project={project} />
+        <div className="mt-auto flex items-end justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <PosterProgress project={project} />
+          </div>
+          {(project.crew ?? []).length > 0 && <AvatarStack names={project.crew ?? []} max={3} />}
         </div>
       </div>
     </Link>
@@ -196,13 +197,13 @@ function ProjectCard({ project }: { project: Project }) {
 /** The foot of a card: how many scenes, and how many of them have their location locked, a cell per scene. */
 function PosterProgress({ project }: { project: Project }) {
   const { sceneCount, confirmedSceneCount } = project
-  if (sceneCount === 0) return <p className="font-script text-sm text-muted">No scenes yet</p>
+  if (sceneCount === 0) return <p className="text-sm text-muted">No scenes yet</p>
   // A cell per scene reads well up to a reel's worth; past that, a bar.
   const cells = sceneCount <= 16
   return (
     <div className="space-y-2">
-      <p className="text-sm font-bold">
-        {sceneCount === 1 ? '1 scene' : `${sceneCount} scenes`} · {confirmedSceneCount} locked
+      <p className="text-sm font-semibold">
+        {sceneCount === 1 ? '1 scene' : `${sceneCount} scenes`} <span className="font-normal text-muted">· {confirmedSceneCount} locked</span>
       </p>
       <div
         role="progressbar"
@@ -210,11 +211,11 @@ function PosterProgress({ project }: { project: Project }) {
         aria-valuemin={0}
         aria-valuemax={sceneCount}
         aria-valuenow={confirmedSceneCount}
-        className={cells ? 'flex gap-1' : 'h-2.5 overflow-hidden rounded-[3px] bg-line-soft'}
+        className={cells ? 'flex gap-1' : 'h-1.5 overflow-hidden rounded-full bg-line-soft'}
       >
         {cells ? (
           Array.from({ length: sceneCount }, (_, i) => (
-            <span key={i} className={`h-2.5 flex-1 rounded-[2px] ${i < confirmedSceneCount ? 'bg-go-mid' : 'bg-line-soft'}`} />
+            <span key={i} className={`h-1.5 flex-1 rounded-full ${i < confirmedSceneCount ? 'bg-go-mid' : 'bg-line-soft'}`} />
           ))
         ) : (
           <div className="h-full bg-go-mid" style={{ width: `${(confirmedSceneCount / sceneCount) * 100}%` }} />
@@ -264,26 +265,28 @@ function SampleProjectButton() {
 
 function FirstReel({ onStart, creating }: { onStart: () => void; creating: boolean }) {
   return (
-    <section aria-labelledby="first-reel" className="relative rounded-lg border-2 border-dashed border-line bg-white/60 px-6 py-12 text-center sm:px-12">
+    <section aria-labelledby="first-reel" className="hero rounded-2xl px-6 py-14 text-center sm:px-12" style={{ background: posterBackdrop('first reel') }}>
       <div className="relative space-y-3">
-        <TapeLabel tilt={-2}>No projects yet</TapeLabel>
-        <h2 id="first-reel" className="font-display text-5xl leading-none font-extrabold">
+        <p className="text-xs font-semibold tracking-[0.14em] text-cue uppercase">No projects yet</p>
+        <h2 id="first-reel" className="font-display text-4xl leading-tight font-bold sm:text-5xl">
           Your first production
         </h2>
-        <p className="mx-auto max-w-xl text-lg text-muted">From the page to the right location, in three acts.</p>
+        <p className="mx-auto max-w-xl text-lg text-fog">From the page to the right location, in three acts.</p>
       </div>
       <ol className="relative mt-10 grid gap-6 text-left sm:grid-cols-3">
         {acts.map(({ act, title, text }, i) => (
-          <li key={act} className="board-card space-y-2 rounded-lg bg-white p-5" style={{ transform: `rotate(${[-0.8, 0.5, -0.3][i]}deg)` }}>
-            <p className="font-script text-[13px] font-bold tracking-[0.1em] text-cue-ink uppercase">{act}</p>
-            <h3 className="font-display text-2xl leading-none font-extrabold">{title}</h3>
-            <p className="text-sm leading-relaxed text-graphite">{text}</p>
+          <li key={act} className="space-y-2 rounded-xl bg-white/10 p-5 ring-1 ring-white/15 backdrop-blur">
+            <p className="text-xs font-semibold tracking-[0.12em] text-cue uppercase">
+              {String(i + 1).padStart(2, '0')} · {act}
+            </p>
+            <h3 className="font-display text-xl leading-tight font-semibold text-white">{title}</h3>
+            <p className="text-sm leading-relaxed text-fog">{text}</p>
           </li>
         ))}
       </ol>
       {!creating && (
         <div className="relative mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={onStart} className="py-3">
+          <Button onClick={onStart} className="!bg-white !text-ink hover:!bg-fog">
             <Plus aria-hidden className="size-4" />
             Create your first project
           </Button>

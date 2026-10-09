@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +25,7 @@ class DtoJsonTest {
     @Test
     void timestampsAreWrittenAsIsoStrings() throws Exception {
         ProjectResponse response = new ProjectResponse(UUID.randomUUID(), "Neon Nights", null, null,
-                ProjectStatus.ACTIVE, 0, 0, null, ProjectRole.OWNER, 0, Instant.parse("2026-09-20T10:00:00Z"), Instant.parse("2026-09-20T11:00:00Z"));
+                ProjectStatus.ACTIVE, 0, 0, null, ProjectRole.OWNER, 0, Instant.parse("2026-09-20T10:00:00Z"), Instant.parse("2026-09-20T11:00:00Z"), List.of());
 
         assertThat(json.writeValueAsString(response)).contains("\"createdAt\":\"2026-09-20T10:00:00Z\"");
     }

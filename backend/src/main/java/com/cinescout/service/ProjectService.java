@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -131,20 +132,27 @@ public class ProjectService {
     }
 
     /**
-     * The scene counts, poster pictures and the user's roles for a page of projects, in five queries however many
+     * The scene counts, poster pictures, the user's roles and the crew's names for a page of projects, in six queries however many
      * projects there are.
      */
     private Counts counts(UUID userId, List<UUID> projectIds) {
         if (projectIds.isEmpty()) {
-            return new Counts(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+            return new Counts(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
         }
         Map<UUID, String> images = new HashMap<>();
         locations.findImagesByProjects(projectIds).forEach(image -> images.putIfAbsent(image.getProjectId(), image.getImageUrl()));
         Map<UUID, ProjectRole> roles = members.findRoles(userId, projectIds).stream()
                 .collect(Collectors.toMap(ProjectMemberRepository.ProjectRoleRow::getProjectId, ProjectMemberRepository.ProjectRoleRow::getRole));
+        Map<UUID, List<String>> crew = new HashMap<>();
+        members.findCrewNames(projectIds).forEach(row -> {
+            List<String> names = crew.computeIfAbsent(row.getProjectId(), id -> new ArrayList<>());
+            if (names.size() < ProjectResponse.MAX_CREW) {
+                names.add(row.getName());
+            }
+        });
         return new Counts(byProject(scenes.countByProjects(projectIds)),
                 byProject(locations.countScenesByProjectsAndStatus(projectIds, LocationStatus.CONFIRMED)), images, roles,
-                byProject(drafts.countDueForFollowUpByProjects(projectIds)));
+                byProject(drafts.countDueForFollowUpByProjects(projectIds)), crew);
     }
 
     private static Map<UUID, Long> byProject(List<SceneRepository.ProjectCount> counts) {
@@ -152,10 +160,11 @@ public class ProjectService {
     }
 
     private record Counts(Map<UUID, Long> scenes, Map<UUID, Long> confirmed, Map<UUID, String> images, Map<UUID, ProjectRole> roles,
-                          Map<UUID, Long> followUps) {
+                          Map<UUID, Long> followUps, Map<UUID, List<String>> crew) {
         ProjectResponse respond(Project project) {
             return ProjectResponse.from(project, scenes.getOrDefault(project.getId(), 0L), confirmed.getOrDefault(project.getId(), 0L),
-                    images.get(project.getId()), roles.get(project.getId()), followUps.getOrDefault(project.getId(), 0L));
+                    images.get(project.getId()), roles.get(project.getId()), followUps.getOrDefault(project.getId(), 0L),
+                    crew.getOrDefault(project.getId(), List.of()));
         }
     }
 

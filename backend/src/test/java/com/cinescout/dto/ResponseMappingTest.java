@@ -86,7 +86,7 @@ class ResponseMappingTest {
         ProjectResponse response = ProjectResponse.from(project, 12, 3, "https://cdn.example/a.jpg", ProjectRole.EDITOR, 2);
 
         assertThat(response).isEqualTo(new ProjectResponse(project.getId(), "Neon Nights", "A neo-noir short",
-                "Brooklyn, New York", project.getStatus(), 12, 3, "https://cdn.example/a.jpg", ProjectRole.EDITOR, 2, CREATED, UPDATED));
+                "Brooklyn, New York", project.getStatus(), 12, 3, "https://cdn.example/a.jpg", ProjectRole.EDITOR, 2, CREATED, UPDATED, List.of()));
     }
 
     @Test

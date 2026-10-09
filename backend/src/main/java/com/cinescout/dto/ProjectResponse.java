@@ -5,6 +5,7 @@ import com.cinescout.domain.ProjectRole;
 import com.cinescout.domain.ProjectStatus;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,13 +29,27 @@ public record ProjectResponse(
         ProjectRole role,
         long followUpCount,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        List<String> crew
 ) {
+
+    public ProjectResponse {
+        crew = crew == null ? List.of() : List.copyOf(crew);
+    }
 
     public static ProjectResponse from(Project project, long sceneCount, long confirmedSceneCount, String posterImageUrl,
                                        ProjectRole role, long followUpCount) {
+        return from(project, sceneCount, confirmedSceneCount, posterImageUrl, role, followUpCount, List.of());
+    }
+
+    /** @param crew the names of the people on it, the owner first, for avatars; at most {@link #MAX_CREW} */
+    public static ProjectResponse from(Project project, long sceneCount, long confirmedSceneCount, String posterImageUrl,
+                                       ProjectRole role, long followUpCount, List<String> crew) {
         return new ProjectResponse(project.getId(), project.getTitle(), project.getDescription(),
                 project.getLocationArea(), project.getStatus(), sceneCount, confirmedSceneCount, posterImageUrl, role, followUpCount,
-                project.getCreatedAt(), project.getUpdatedAt());
+                project.getCreatedAt(), project.getUpdatedAt(), crew);
     }
+
+    /** How many names {@code crew} carries. */
+    public static final int MAX_CREW = 6;
 }

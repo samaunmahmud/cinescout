@@ -55,6 +55,8 @@ export interface Project {
   followUpCount: number
   createdAt: string
   updatedAt: string
+  /** The people on it, the owner first, for avatars (at most 6). */
+  crew?: string[]
 }
 
 /** What a member may do, weakest first: VIEWER reads, EDITOR changes the work, OWNER also runs the project and its crew. */

@@ -1,9 +1,18 @@
 import type { ReactNode } from 'react'
 
 /*
- * The props on the location department's board: tape, stamps and stickers. They are decoration, hidden from
- * screen readers, unless one is told to announce itself; whatever they say is also said in the page's text.
+ * Small labels and badges: chips, status pills and a few cinematic marks. They are decoration, hidden from screen
+ * readers, unless one is told to announce itself; whatever they say is also said in the page's text. Nothing is
+ * set crooked any more: a `tilt` or a rotate class from older callers is ignored.
  */
+
+/** The class list without rotations: the studio look sets nothing at an angle. */
+function straight(className: string): string {
+  return className
+    .split(/\s+/)
+    .filter((name) => !/^!?-?rotate-/.test(name) && !/^hover:!?rotate-/.test(name))
+    .join(' ')
+}
 
 /** The logo: a clapperboard with its sticks open, in cue orange. */
 export function ClapperMark({ className = '' }: { className?: string }) {
@@ -18,14 +27,14 @@ export function ClapperMark({ className = '' }: { className?: string }) {
   )
 }
 
-/** A strip of masking tape with a word on it in marker, stuck on slightly crooked. */
+/** A small neutral chip with a short word on it (once a strip of masking tape). */
 export function TapeLabel({
   children,
-  tilt = -2,
   announce = false,
   className = '',
 }: {
   children: ReactNode
+  /** Ignored: kept so older callers still compile. */
   tilt?: number
   announce?: boolean
   className?: string
@@ -33,8 +42,7 @@ export function TapeLabel({
   return (
     <span
       aria-hidden={announce ? undefined : true}
-      style={{ transform: `rotate(${tilt}deg)` }}
-      className={`tape inline-block px-3.5 py-1 font-marker text-[15px] leading-tight whitespace-nowrap ${className}`}
+      className={`tape inline-flex items-center gap-1.5 px-2.5 py-1 text-xs leading-tight font-semibold whitespace-nowrap text-graphite ${straight(className)}`}
     >
       {children}
     </span>
@@ -42,7 +50,7 @@ export function TapeLabel({
 }
 
 /**
- * A rubber stamp, e.g. SHORTLISTED. `tone` picks the ink. Decoration by default; pass `announce` when the stamp
+ * A status pill, e.g. Shortlisted. `tone` picks the colour. Decoration by default; pass `announce` when the pill
  * is the only place the page says it.
  */
 export function Stamp({
@@ -58,21 +66,21 @@ export function Stamp({
 }) {
   const inks = { cue: 'text-cue-ink', go: 'text-go-ink', stop: 'text-stop-ink', ink: 'text-ink' }
   return (
-    <span aria-hidden={announce ? undefined : true} className={`stamp bg-white/85 ${inks[tone]} ${className}`}>
+    <span aria-hidden={announce ? undefined : true} className={`stamp ${inks[tone]} ${straight(className)}`}>
       {children}
     </span>
   )
 }
 
-/** The red "Quiet on set" sticker. */
+/** The red "Quiet on set" light. */
 export function QuietOnSet({ className = '' }: { className?: string }) {
   return (
     <span
       aria-hidden
-      className={`flex size-32 rotate-12 flex-col items-center justify-center rounded-full border-4 border-white bg-stop text-white shadow-[0_6px_0_rgb(0_0_0/0.25)] ${className}`}
+      className={`flex size-28 flex-col items-center justify-center rounded-full bg-stop text-white shadow-[0_0_0_6px_rgb(229_72_77/0.18),var(--shadow-lift)] ${straight(className)}`}
     >
-      <span className="font-display text-xl leading-none font-extrabold">QUIET</span>
-      <span className="font-script text-xs font-bold tracking-[0.12em]">ON SET</span>
+      <span className="font-display text-lg leading-none font-bold">QUIET</span>
+      <span className="text-[11px] font-semibold tracking-[0.14em]">ON SET</span>
     </span>
   )
 }
@@ -80,12 +88,12 @@ export function QuietOnSet({ className = '' }: { className?: string }) {
 /** An "Admit one" ticket stub, torn at the perforation. */
 export function AdmitOne({ className = '' }: { className?: string }) {
   return (
-    <span aria-hidden className={`flex -rotate-6 drop-shadow-[0_6px_0_rgb(0_0_0/0.25)] ${className}`}>
-      <span className="flex flex-col items-center rounded-l-lg bg-cue px-4 py-3 font-script text-ink">
-        <span className="text-[11px] font-bold tracking-[0.14em]">ADMIT</span>
-        <span className="font-display text-2xl leading-none font-extrabold">ONE</span>
+    <span aria-hidden className={`flex drop-shadow-[0_10px_18px_rgb(16_24_40/0.25)] ${straight(className)}`}>
+      <span className="flex flex-col items-center rounded-l-lg bg-ink px-4 py-3 text-white">
+        <span className="text-[11px] font-semibold tracking-[0.14em] text-cue">ADMIT</span>
+        <span className="font-display text-2xl leading-none font-bold">ONE</span>
       </span>
-      <span className="rounded-r-lg border-l-2 border-dashed border-ink bg-cue px-3 py-3 font-script text-[11px] font-bold text-ink [writing-mode:vertical-rl]">
+      <span className="rounded-r-lg border-l-2 border-dashed border-ink-line bg-ink px-3 py-3 text-[11px] font-semibold text-fog [writing-mode:vertical-rl]">
         CREW
       </span>
     </span>

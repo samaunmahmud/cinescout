@@ -29,6 +29,18 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     List<ProjectMember> findCrew(@Param("projectId") UUID projectId);
 
     /** The user's role in each of the given projects. */
+    /** The people on these projects, each project's owner first, then in the order they joined. */
+    @Query("""
+            select m.project.id as projectId, u.displayName as name from ProjectMember m join m.user u
+            where m.project.id in :projectIds
+            order by m.project.id, case when m.role = com.cinescout.domain.ProjectRole.OWNER then 0 else 1 end, m.joinedAt asc, m.id asc""")
+    List<CrewNameRow> findCrewNames(@Param("projectIds") Collection<UUID> projectIds);
+
+    interface CrewNameRow {
+        UUID getProjectId();
+        String getName();
+    }
+
     @Query("select m.project.id as projectId, m.role as role from ProjectMember m where m.user.id = :userId and m.project.id in :projectIds")
     List<ProjectRoleRow> findRoles(@Param("userId") UUID userId, @Param("projectIds") Collection<UUID> projectIds);
 
