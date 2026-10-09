@@ -121,8 +121,8 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
 
   const searching = text.trim().length >= 2 && (results.isFetching || debounced !== text.trim())
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/50 px-4 pt-[12vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label="Search and jump" className="w-full max-w-xl overflow-hidden rounded-lg border border-line bg-white shadow-[var(--shadow-card)]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-night/50 px-4 pt-[12vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div role="dialog" aria-modal="true" aria-label="Search and jump" className="w-full max-w-xl overflow-hidden rounded-lg border border-line bg-paper shadow-[var(--shadow-card)]">
         <div className="flex items-center gap-3 border-b-2 border-ink px-4">
           <Search aria-hidden className="size-5 shrink-0 text-cue-ink" />
           <input
@@ -161,7 +161,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
                   aria-selected={index === current}
                   onMouseMove={() => setActive(index)}
                   onClick={() => open(entry)}
-                  className={`mx-2 flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 ${index === current ? 'bg-ink text-white' : 'text-ink'}`}
+                  className={`mx-2 flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 ${index === current ? 'bg-night text-white' : 'text-ink'}`}
                 >
                   <Icon aria-hidden className={`size-4 shrink-0 ${index === current ? 'text-cue' : 'text-cue-ink'}`} />
                   <span className="min-w-0 flex-1 truncate font-semibold">{entry.label}</span>

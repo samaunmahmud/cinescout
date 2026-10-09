@@ -28,7 +28,7 @@ const statuses = outreachStatusLabels
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
 const selectClass =
-  'rounded-md border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-ink focus:ring-1 focus:ring-cue/25 focus:outline-none disabled:opacity-50'
+  'rounded-md border border-line bg-paper px-2 py-1.5 text-sm text-ink focus:border-ink focus:ring-1 focus:ring-cue/25 focus:outline-none disabled:opacity-50'
 
 /** Emails to the venue's owner: written by the AI, edited by the user, sent from their own email app. */
 export function OutreachSection({ location }: { location: Location }) {
@@ -155,7 +155,7 @@ function GenerateForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Write an email" className="space-y-4 board-card rounded-lg bg-white p-5" noValidate>
+    <form onSubmit={submit} aria-label="Write an email" className="space-y-4 board-card rounded-lg bg-paper p-5" noValidate>
       <ErrorAlert error={error} />
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-graphite">Tone</legend>
@@ -288,7 +288,7 @@ function DraftCard({ draft }: { draft: OutreachDraft }) {
   const recipient = [draft.recipientName, draft.recipientEmail && `<${draft.recipientEmail}>`].filter(Boolean).join(' ')
 
   return (
-    <article aria-label={draft.subject} className="space-y-3 board-card rounded-lg bg-white p-5">
+    <article aria-label={draft.subject} className="space-y-3 board-card rounded-lg bg-paper p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="font-semibold">{draft.subject}</h3>
@@ -425,7 +425,7 @@ function EditDraftForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Edit email" className="space-y-4 rounded-xl border border-cue bg-white p-5" noValidate>
+    <form onSubmit={submit} aria-label="Edit email" className="space-y-4 rounded-xl border border-cue bg-paper p-5" noValidate>
       <ErrorAlert error={error} />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Recipient name" maxLength={200} value={values.recipientName} onChange={set('recipientName')} error={server.recipientName} />

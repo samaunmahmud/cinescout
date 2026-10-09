@@ -33,7 +33,7 @@ export function Avatar({
       aria-hidden={label ? undefined : true}
       title={name}
       style={{ backgroundColor: colourFor(name), zIndex: layer }}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ring-2 ring-white ${sizes[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ring-2 ring-paper ${sizes[size]} ${className}`}
     >
       {initialsOf(name)}
     </span>
@@ -51,7 +51,7 @@ export function AvatarStack({ names, max = 4, size = 'sm' }: { names: string[]; 
         <Avatar key={`${name}-${index}`} name={name} size={size} layer={shown.length - index} className={`relative ${index > 0 ? '-ml-2' : ''}`} />
       ))}
       {more > 0 && (
-        <span aria-hidden className={`-ml-2 inline-flex items-center justify-center rounded-full bg-tape font-semibold text-graphite ring-2 ring-white ${size === 'sm' ? 'size-7 text-[11px]' : 'size-9 text-[13px]'}`}>
+        <span aria-hidden className={`-ml-2 inline-flex items-center justify-center rounded-full bg-tape font-semibold text-graphite ring-2 ring-paper ${size === 'sm' ? 'size-7 text-[11px]' : 'size-9 text-[13px]'}`}>
           +{more}
         </span>
       )}

@@ -14,7 +14,7 @@ import { changedAnswers, recceAnswerText, recceGroups, type RecceQuestion } from
 type Draft = Record<string, string | number | boolean | null>
 
 const inputClass =
-  'block w-full rounded-lg border border-line bg-white px-3 py-2 text-[15px] text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none'
+  'block w-full rounded-lg border border-line bg-paper px-3 py-2 text-[15px] text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none'
 
 /**
  * The tech recce checklist, made to be filled in on a phone at the venue: every question optional, each answer
@@ -60,7 +60,7 @@ export function RecceSection({ location }: { location: Location }) {
       <form onSubmit={submit} className="space-y-6" noValidate>
         <ErrorAlert error={Object.keys(errors).length > 0 ? null : save.error} />
         {recceGroups.map((group) => (
-          <fieldset key={group.title} className="board-card space-y-4 rounded-lg bg-white p-4">
+          <fieldset key={group.title} className="board-card space-y-4 rounded-lg bg-paper p-4">
             <legend className="sr-only">{group.title}</legend>
             <h3 aria-hidden className="font-script text-xs font-bold tracking-[0.08em] text-muted uppercase">
               {group.title}
@@ -155,7 +155,7 @@ function Question({
               <label
                 key={option.text}
                 className={`flex min-w-11 cursor-pointer items-center justify-center rounded-lg border-2 px-3 py-2 text-sm font-bold has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-cue/40 ${
-                  picked ? 'border-ink bg-cue text-ink' : 'border-line bg-white text-graphite hover:border-ink'
+                  picked ? 'border-ink bg-cue text-night' : 'border-line bg-paper text-graphite hover:border-ink'
                 }`}
               >
                 <input type="radio" name={id} checked={picked} onChange={() => onChange(option.value)} className="sr-only" />

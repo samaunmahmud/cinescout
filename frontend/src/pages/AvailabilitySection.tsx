@@ -83,7 +83,7 @@ export function AvailabilitySection({ location, shootStart, shootEnd }: { locati
         )
       ) : (
         <>
-          <ul aria-label="Days at this venue" className="divide-y divide-line-soft board-card rounded-lg bg-white">
+          <ul aria-label="Days at this venue" className="divide-y divide-line-soft board-card rounded-lg bg-paper">
             {days.data.items.map((day) => (
               <li key={day.id}>
                 <DayRow day={day} canEdit={canEdit} busy={clear.isPending && clear.variables === day.day} onClear={() => clear.mutate(day.day)} />
@@ -160,7 +160,7 @@ function DayForm({
   }
 
   return (
-    <form onSubmit={submit} aria-label="Set a day" className="space-y-4 board-card rounded-lg bg-white p-5" noValidate>
+    <form onSubmit={submit} aria-label="Set a day" className="space-y-4 board-card rounded-lg bg-paper p-5" noValidate>
       <ErrorAlert error={error} />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Day" type="date" required value={from} onChange={(e) => setFrom(e.target.value)} error={server.from} />

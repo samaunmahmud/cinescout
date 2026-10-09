@@ -144,7 +144,7 @@ function SceneSearch({ current, onSearch }: { current: string; onSearch: (search
           maxLength={100}
           onChange={(e) => setText(e.target.value)}
           placeholder="Search titles, scripts and settings"
-          className="w-full rounded-lg border border-line bg-white py-2 pr-3 pl-9 text-sm text-ink placeholder:text-subtle focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none"
+          className="w-full rounded-lg border border-line bg-paper py-2 pr-3 pl-9 text-sm text-ink placeholder:text-subtle focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none"
         />
       </label>
       <Button type="submit" variant="secondary">
@@ -187,7 +187,7 @@ function SceneRow({ scene, projectId }: { scene: Scene; projectId: string }) {
       <div className="relative">
         <Link
           to={`/scenes/${scene.id}`}
-          className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 board-card rounded-lg bg-white p-3 pr-14 transition hover:border-ink hover:bg-ground focus-visible:outline-2 focus-visible:outline-ink sm:flex sm:pr-16"
+          className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-2 board-card rounded-lg bg-paper p-3 pr-14 transition hover:border-ink hover:bg-ground focus-visible:outline-2 focus-visible:outline-ink sm:flex sm:pr-16"
         >
           <Slate number={scene.sceneNumber} />
           <span className="min-w-0 flex-1 space-y-1">

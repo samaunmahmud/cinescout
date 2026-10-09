@@ -150,7 +150,7 @@ function LaterMoves({ moves, schedule }: { moves?: Moves; schedule: Schedule }) 
   const later = moves.days.filter((day) => !listed.has(day.date) && day.moves.length > 0)
   if (later.length === 0) return null
   return (
-    <section aria-labelledby="later-moves" className="overflow-hidden board-card rounded-lg bg-white">
+    <section aria-labelledby="later-moves" className="overflow-hidden board-card rounded-lg bg-paper">
       <h3 id="later-moves" className="border-b border-line px-4 py-3 font-semibold text-cue-ink">Company moves on later shoot days</h3>
       {later.map((day) => (
         <div key={day.date}>
@@ -181,7 +181,7 @@ function Day({
 }) {
   const Icon = dated ? CalendarDays : CalendarOff
   return (
-    <section aria-labelledby={titleId} className="overflow-hidden board-card rounded-lg bg-white">
+    <section aria-labelledby={titleId} className="overflow-hidden board-card rounded-lg bg-paper">
       <h3 id={titleId} className={`flex items-center gap-2 border-b border-line px-4 py-3 font-semibold ${dated ? 'text-cue-ink' : 'text-muted'}`}>
         <Icon aria-hidden className="size-4" />
         {title}
@@ -208,7 +208,7 @@ function CastDays({ schedule }: { schedule: Schedule }) {
         <Users aria-hidden className="size-5 text-cue-ink" />
         Day out of days
       </h3>
-      <div className="overflow-x-auto board-card rounded-lg bg-white">
+      <div className="overflow-x-auto board-card rounded-lg bg-paper">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Which of the cast works on which shoot day</caption>
           <thead>

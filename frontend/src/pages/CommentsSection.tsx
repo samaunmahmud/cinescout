@@ -64,7 +64,7 @@ function Thread({ thread, locationId, members }: { thread: VenueComment; locatio
   const canEdit = useCanEdit()
   const [replying, setReplying] = useState(false)
   return (
-    <article className="board-card space-y-3 rounded-lg bg-white p-4">
+    <article className="board-card space-y-3 rounded-lg bg-paper p-4">
       <CommentBody comment={thread} members={members} />
       {thread.replies.length > 0 && (
         <ul aria-label={`Replies to ${thread.authorName ?? 'a former member'}`} className="space-y-3 border-l-4 border-line-soft pl-4">

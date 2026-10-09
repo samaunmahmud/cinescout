@@ -40,7 +40,7 @@ export function StatusSelect({
           if (status === 'REJECTED') setRejecting(true)
           else update.mutate({ status, notes: location.notes })
         }}
-        className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
+        className="rounded-lg border border-line bg-paper px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
       >
         {Object.entries(statusLabels).map(([value, label]) => (
           <option key={value} value={value}>
@@ -83,7 +83,7 @@ function RejectPanel({
       onKeyDown={(e) => {
         if (e.key === 'Escape') onCancel()
       }}
-      className="absolute top-full right-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] space-y-3 rounded-lg border border-line bg-white p-4 text-left shadow-[var(--shadow-card)]"
+      className="absolute top-full right-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] space-y-3 rounded-lg border border-line bg-paper p-4 text-left shadow-[var(--shadow-card)]"
     >
       <p id={titleId} className="font-display text-lg leading-tight text-ink">
         Why pass on {venue}?
@@ -141,7 +141,7 @@ export function FitScore({ score, size = 'md' }: { score: number; size?: 'md' | 
       title="How well the venue suits the scene, out of 100"
     >
       <svg viewBox="0 0 48 48" aria-hidden className="absolute inset-0 size-full -rotate-90">
-        <circle cx="24" cy="24" r={r} fill="white" strokeWidth="4.5" className="stroke-line-soft" />
+        <circle cx="24" cy="24" r={r} strokeWidth="4.5" className="fill-paper stroke-line-soft" />
         <circle
           cx="24"
           cy="24"

@@ -14,14 +14,18 @@
   --font-marker: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
 
-  /* Ink: text, the main buttons, the cinematic heroes. Lighter steps are for things drawn on ink. */
+  /* Night: the always-dark surfaces (the header, the cinematic heroes, dark panels), the same in both modes. */
+  --color-night: #08090c;
+  --color-night-soft: #14171d;
+
+  /* Ink: the text colour (light in dark mode). Lighter steps are for things drawn on night. */
   --color-ink: #0e1116;
   --color-ink-soft: #1a1f27;
   --color-ink-line: #3a4250;
   --color-ink-muted: #9aa4b2;
   --color-fog: #c9d1db;
 
-  /* The working surface and the cards on it. */
+  /* The working surface and the cards on it (dark in dark mode). */
   --color-ground: #f4f5f7;
   --color-paper: #ffffff;
   --color-line: #dfe2e7;
@@ -32,14 +36,19 @@
   --color-tape: #f1f2f4;
   --color-highlight: #fff1dc;
 
-  /* Orange cues the action. `cue` reads on ink; `cue-ink` is orange text on white (AA). */
-  --color-cue: #ffb27a;
-  --color-cue-ink: #b8470a;
-  --color-cue-deep: #8a3e06;
-  --color-cue-soft: #ffe2cc;
-  --color-cue-wash: #fff6ec;
+  /*
+   * The brand light: the red-orange of a lit set. `brand` fills the main buttons (white text, AA); `cue` reads on
+   * night; `cue-ink` is the accent as text on the working surface (AA).
+   */
+  --color-brand: #d13a21;
+  --color-brand-hover: #b5301a;
+  --color-cue: #ff6b4a;
+  --color-cue-ink: #c2381d;
+  --color-cue-deep: #962a15;
+  --color-cue-soft: #ffd9cf;
+  --color-cue-wash: #fff3ef;
 
-  /* Green says it fits. `go` reads on ink. */
+  /* Green says it fits. `go` reads on night. */
   --color-go: #4ade9f;
   --color-go-mid: #0f7b5f;
   --color-go-ink: #0f6b53;
@@ -79,6 +88,65 @@
 
 :root {
   color-scheme: light;
+}
+
+/*
+ * Dark mode: the person's choice (data-theme, set by public/theme.js before the page draws), or their system's
+ * setting until they choose. Only the switching colours change; night stays night.
+ */
+:root[data-theme="dark"] {
+    --color-ink: #eef1f5;
+    --color-ink-soft: #1d222a;
+    --color-ground: #0c0e12;
+    --color-paper: #15191f;
+    --color-line: #29303a;
+    --color-line-soft: #1e232b;
+    --color-graphite: #cfd6df;
+    --color-muted: #a3acb8;
+    --color-subtle: #8d97a5;
+    --color-tape: #1f242c;
+    --color-highlight: #3b2410;
+    --color-cue-ink: #ff8a70;
+    --color-cue-deep: #ffb4a3;
+    --color-cue-soft: #4d1f15;
+    --color-cue-wash: #24120d;
+    --color-go-mid: #2bb583;
+    --color-go-ink: #5ee0a8;
+    --color-go-soft: #14402f;
+    --color-go-wash: #0f241c;
+    --color-stop-ink: #ff8f8f;
+    --color-stop-wash: #2b1214;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-lift: 0 16px 32px -14px rgb(0 0 0 / 0.75), 0 2px 6px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      --color-ink: #eef1f5;
+      --color-ink-soft: #1d222a;
+      --color-ground: #0c0e12;
+      --color-paper: #15191f;
+      --color-line: #29303a;
+      --color-line-soft: #1e232b;
+      --color-graphite: #cfd6df;
+      --color-muted: #a3acb8;
+      --color-subtle: #8d97a5;
+      --color-tape: #1f242c;
+      --color-highlight: #3b2410;
+      --color-cue-ink: #ff8a70;
+      --color-cue-deep: #ffb4a3;
+      --color-cue-soft: #4d1f15;
+      --color-cue-wash: #24120d;
+      --color-go-mid: #2bb583;
+      --color-go-ink: #5ee0a8;
+      --color-go-soft: #14402f;
+      --color-go-wash: #0f241c;
+      --color-stop-ink: #ff8f8f;
+      --color-stop-wash: #2b1214;
+      --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+      --shadow-lift: 0 16px 32px -14px rgb(0 0 0 / 0.75), 0 2px 6px rgb(0 0 0 / 0.4);
+      color-scheme: dark;
+  }
 }
 
 body {
@@ -161,7 +229,7 @@ h1, h2, h3 {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0;
-  background: rgb(255 255 255 / 0.9);
+  background: var(--color-paper);
 }
 
 /* The film-strip edge under the header: retired. */
@@ -170,7 +238,7 @@ h1, h2, h3 {
 }
 
 .clapper {
-  background: var(--color-ink);
+  background: var(--color-night);
 }
 
 .lined-paper {
@@ -184,14 +252,14 @@ h1, h2, h3 {
   transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 .board-card:has(a:hover, > a:focus-visible) {
-  border-color: #c9ced6;
+  border-color: var(--color-subtle);
   box-shadow: var(--shadow-lift);
   transform: translateY(-2px);
 }
 
 /* A picture card (once a polaroid): the picture fills the top, the caption sits below. */
 .polaroid {
-  background: #fff;
+  background: var(--color-paper);
   border: 1px solid var(--color-line);
   border-radius: 12px;
   overflow: hidden;
@@ -207,15 +275,17 @@ h1, h2, h3 {
   pointer-events: none;
 }
 
-/* The main button: ink, white text. */
+/* The main button: the brand light, white text. */
 .btn-cue {
-  background-color: var(--color-ink);
+  background-color: var(--color-brand);
   color: #fff;
-  border: 1px solid var(--color-ink);
-  transition: background-color 0.15s, transform 0.08s ease-out;
+  border: 1px solid var(--color-brand);
+  box-shadow: 0 6px 16px -8px rgb(209 58 33 / 0.6);
+  transition: background-color 0.15s, transform 0.08s ease-out, box-shadow 0.15s;
 }
 .btn-cue:hover:not(:disabled) {
-  background-color: #262c36;
+  background-color: var(--color-brand-hover);
+  box-shadow: 0 8px 20px -8px rgb(209 58 33 / 0.75);
 }
 .btn-cue:active:not(:disabled) {
   transform: translateY(1px);
@@ -229,7 +299,7 @@ h1, h2, h3 {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: var(--color-ink);
+  background: var(--color-night);
   color: #fff;
 }
 .hero-picture {

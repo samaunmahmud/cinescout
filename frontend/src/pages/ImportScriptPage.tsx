@@ -79,7 +79,7 @@ export function ImportScriptPage() {
         <ChevronLeft aria-hidden className="size-4" />
         {project.data.title}
       </Link>
-      <section aria-labelledby="import-script" className="mx-auto max-w-3xl space-y-6 board-card rounded-lg bg-white p-6 sm:p-8">
+      <section aria-labelledby="import-script" className="mx-auto max-w-3xl space-y-6 board-card rounded-lg bg-paper p-6 sm:p-8">
         <div className="space-y-2">
           <h1 id="import-script" className="font-bold font-display text-5xl leading-none">
             Import script
@@ -161,7 +161,7 @@ function FoundScenes({ found, busy, onImport }: { found: ScriptImport; busy: boo
       </div>
       <ol aria-label="Scenes found" className="max-h-96 space-y-2 overflow-y-auto pr-1">
         {found.scenes.map((scene, index) => (
-          <li key={index} className="flex items-center gap-3 rounded-lg border border-line bg-white p-2 pr-4">
+          <li key={index} className="flex items-center gap-3 rounded-lg border border-line bg-paper p-2 pr-4">
             <Slate number={scene.sceneNumber} className="scale-90" />
             <span className="sr-only">Scene {scene.sceneNumber}:</span>
             <span className="min-w-0 flex-1 truncate font-semibold text-ink">{scene.title}</span>

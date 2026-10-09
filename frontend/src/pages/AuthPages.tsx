@@ -68,7 +68,7 @@ function AuthCard({ title, tape, children, footer }: { title: string; tape: stri
           <span className="flex justify-center lg:hidden">
             <Logo size="lg" onDark={false} />
           </span>
-          <div className="board-card relative rounded-lg bg-white px-6 pt-10 pb-6">
+          <div className="board-card relative rounded-lg bg-paper px-6 pt-10 pb-6">
             <TapeLabel tilt={-2} className="absolute -top-4 left-1/2 -translate-x-1/2">
               {tape}
             </TapeLabel>

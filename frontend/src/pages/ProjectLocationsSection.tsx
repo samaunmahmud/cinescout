@@ -212,7 +212,7 @@ function LocationRow({ location, onSaved }: { location: ProjectLocation; onSaved
   return (
     <article
       aria-label={location.name}
-      className={`space-y-2 board-card rounded-lg bg-white p-4 transition hover:border-ink ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
+      className={`space-y-2 board-card rounded-lg bg-paper p-4 transition hover:border-ink ${location.status === 'REJECTED' ? 'opacity-55' : ''}`}
     >
       <div className="flex flex-wrap items-start gap-4">
         {location.imageUrl && <VenuePicture src={location.imageUrl} className="hidden h-20 w-32 shrink-0 rounded-md ring-1 ring-line sm:block" />}

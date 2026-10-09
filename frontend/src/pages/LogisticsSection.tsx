@@ -151,7 +151,7 @@ const panelIcons: Record<string, LucideIcon> = { Light: Sunset, Weather: CloudSu
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   const Icon = panelIcons[title]
   return (
-    <section aria-label={title} className="space-y-4 board-card rounded-lg bg-white p-5">
+    <section aria-label={title} className="space-y-4 board-card rounded-lg bg-paper p-5">
       <h3 className="flex items-center gap-2 font-display text-2xl leading-none text-ink">
         {Icon && (
           <span className="flex size-8 items-center justify-center rounded-full bg-cue-wash text-cue-ink ring-1 ring-cue">

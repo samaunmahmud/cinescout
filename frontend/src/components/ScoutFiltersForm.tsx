@@ -137,7 +137,7 @@ export function ScoutFiltersForm({
                   type="button"
                   onClick={() => setTypes(types.filter((t) => t !== type))}
                   aria-label={`Stop leaving out ${type}`}
-                  className="rounded-full p-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-ink"
+                  className="rounded-full p-0.5 hover:bg-paper focus-visible:outline-2 focus-visible:outline-ink"
                 >
                   <X aria-hidden className="size-3.5" />
                 </button>
@@ -154,7 +154,7 @@ export function ScoutFiltersForm({
             onKeyDown={typeKey}
             placeholder="e.g. church, nightclub"
             aria-describedby={`${ids}-type-hint`}
-            className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2 text-[15px] text-ink placeholder:text-subtle focus:ring-4 focus:ring-cue/25 focus:outline-none"
+            className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-3 py-2 text-[15px] text-ink placeholder:text-subtle focus:ring-4 focus:ring-cue/25 focus:outline-none"
           />
           <Button variant="secondary" onClick={addType} disabled={!typeDraft.trim() || types.length >= 10}>
             Add

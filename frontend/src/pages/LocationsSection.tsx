@@ -210,7 +210,7 @@ export function LocationsSection({ scene, locationArea }: { scene: Scene; locati
             <LocationsMap locations={locations.data.items} paged={locations.data.totalPages > 1} />
           )}
           {listView.view === 'list' ? (
-            <ul aria-label="Candidate locations" className="divide-y divide-line-soft overflow-visible board-card rounded-lg bg-white">
+            <ul aria-label="Candidate locations" className="divide-y divide-line-soft overflow-visible board-card rounded-lg bg-paper">
               {locations.data.items.map((location) => (
                 <li key={location.id}>
                   <LocationRow location={location} />
@@ -339,7 +339,7 @@ function LocationCard({ location }: { location: Location }) {
   return (
     <article
       aria-label={location.name}
-      className={`group relative flex overflow-hidden rounded-2xl border border-line bg-white shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] ${location.status === 'REJECTED' ? 'opacity-60' : ''}`}
+      className={`group relative flex overflow-hidden rounded-2xl border border-line bg-paper shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] ${location.status === 'REJECTED' ? 'opacity-60' : ''}`}
     >
       <VenueStill location={location} />
       <div className="min-w-0 flex-1 space-y-3 p-5">

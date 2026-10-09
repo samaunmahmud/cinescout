@@ -71,7 +71,7 @@ export function ActivitySection({ projectId }: { projectId: string }) {
         </EmptyState>
       ) : (
         <>
-          <ol aria-label="Activity, newest first" className="board-card divide-y divide-line-soft rounded-lg bg-white">
+          <ol aria-label="Activity, newest first" className="board-card divide-y divide-line-soft rounded-lg bg-paper">
             {activity.data.items.map((line) => {
               const Icon = iconOf(line)
               return (

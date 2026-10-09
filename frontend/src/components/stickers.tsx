@@ -89,11 +89,11 @@ export function QuietOnSet({ className = '' }: { className?: string }) {
 export function AdmitOne({ className = '' }: { className?: string }) {
   return (
     <span aria-hidden className={`flex drop-shadow-[0_10px_18px_rgb(16_24_40/0.25)] ${straight(className)}`}>
-      <span className="flex flex-col items-center rounded-l-lg bg-ink px-4 py-3 text-white">
+      <span className="flex flex-col items-center rounded-l-lg bg-night px-4 py-3 text-white">
         <span className="text-[11px] font-semibold tracking-[0.14em] text-cue">ADMIT</span>
         <span className="font-display text-2xl leading-none font-bold">ONE</span>
       </span>
-      <span className="rounded-r-lg border-l-2 border-dashed border-ink-line bg-ink px-3 py-3 text-[11px] font-semibold text-fog [writing-mode:vertical-rl]">
+      <span className="rounded-r-lg border-l-2 border-dashed border-ink-line bg-night px-3 py-3 text-[11px] font-semibold text-fog [writing-mode:vertical-rl]">
         CREW
       </span>
     </span>

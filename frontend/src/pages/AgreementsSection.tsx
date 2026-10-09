@@ -50,7 +50,7 @@ export function AgreementsSection({ location }: { location: Location }) {
       description="A template filled in from the venue’s contact and quote and the scene’s dates, times and crew, with blanks for the rest. It is not legal advice: have it reviewed before anyone signs."
     >
       {canEdit && (
-        <form onSubmit={submit} aria-label="Make a location release" className="flex flex-wrap items-end gap-3 board-card rounded-lg bg-white p-4" noValidate>
+        <form onSubmit={submit} aria-label="Make a location release" className="flex flex-wrap items-end gap-3 board-card rounded-lg bg-paper p-4" noValidate>
           <TextField
             label="Production company"
             className="min-w-56 flex-1"
@@ -74,7 +74,7 @@ export function AgreementsSection({ location }: { location: Location }) {
       ) : agreements.data.items.length === 0 ? (
         <EmptyState icon={FileText}>No release yet. Add the venue’s contact and quote first, and set the scene’s dates and times, so it comes out filled in.</EmptyState>
       ) : (
-        <ul aria-label="Versions of the release" className="divide-y divide-line-soft board-card rounded-lg bg-white">
+        <ul aria-label="Versions of the release" className="divide-y divide-line-soft board-card rounded-lg bg-paper">
           {agreements.data.items.map((agreement) => (
             <li key={agreement.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <p className="min-w-0 text-sm text-muted">

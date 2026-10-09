@@ -60,7 +60,7 @@ function RecceMode({ location }: { location: Location }) {
           <p className="text-muted">Standing there? Pin it, shoot it, check it. Everything saves as you go.</p>
         </header>
         {role === 'VIEWER' ? (
-          <p role="note" className="rounded-lg border border-line bg-white p-4 text-[15px]">
+          <p role="note" className="rounded-lg border border-line bg-paper p-4 text-[15px]">
             You can look at this venue but not record a recce: ask the project’s owner to make you an editor.
           </p>
         ) : (

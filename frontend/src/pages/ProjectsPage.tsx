@@ -105,7 +105,7 @@ export function ProjectsPage() {
             aria-selected={status === s}
             onClick={() => setParams(s === 'ACTIVE' ? {} : { status: s })}
             className={`rounded-[8px] px-4 py-1.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
-              status === s ? 'bg-white text-ink shadow-[var(--shadow-card)]' : 'text-muted hover:text-ink'
+              status === s ? 'bg-paper text-ink shadow-[var(--shadow-card)]' : 'text-muted hover:text-ink'
             }`}
           >
             {s === 'ACTIVE' ? 'Active' : 'Archived'}
@@ -150,7 +150,7 @@ function ProjectCard({ project }: { project: Project }) {
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
     >
       <div className="hero flex aspect-[16/10] flex-col justify-between p-4" style={project.posterImageUrl ? undefined : { background: posterBackdrop(project.title) }}>
         {project.posterImageUrl && (
@@ -166,7 +166,7 @@ function ProjectCard({ project }: { project: Project }) {
           </span>
           {project.followUpCount > 0 && (
             // Emails gone unanswered too long.
-            <span className="inline-flex items-center gap-1 rounded-full bg-cue px-2.5 py-1 text-xs font-semibold text-ink">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cue px-2.5 py-1 text-xs font-semibold text-night">
               <Mail aria-hidden className="size-3.5" />
               {project.followUpCount === 1 ? '1 to follow up' : `${project.followUpCount} to follow up`}
             </span>
@@ -286,7 +286,7 @@ function FirstReel({ onStart, creating }: { onStart: () => void; creating: boole
       </ol>
       {!creating && (
         <div className="relative mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={onStart} className="!bg-white !text-ink hover:!bg-fog">
+          <Button onClick={onStart} className="!bg-paper !text-ink hover:!bg-fog">
             <Plus aria-hidden className="size-4" />
             Create your first project
           </Button>

@@ -145,7 +145,7 @@ function ProjectDetails({ project }: { project: Project }) {
                 <Eyebrow onDark icon={Clapperboard}>A CineScout production</Eyebrow>
                 <div className="flex flex-wrap items-center gap-3">
                   <h1 className="font-display text-4xl leading-[1] font-bold sm:text-6xl">{project.title}</h1>
-                  {archived && <Stamp tone="ink" announce className="!bg-white text-sm">Archived</Stamp>}
+                  {archived && <Stamp tone="ink" announce className="!bg-paper text-sm">Archived</Stamp>}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-fog">
                   <p className="flex items-center gap-1.5">

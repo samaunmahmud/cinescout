@@ -145,7 +145,7 @@ function LibraryCard({ venue }: { venue: LibraryVenue }) {
   const placed = venue.latitude != null && venue.longitude != null
 
   return (
-    <article aria-labelledby={`library-${venue.id}`} className="board-card flex h-full flex-col overflow-hidden rounded-lg bg-white">
+    <article aria-labelledby={`library-${venue.id}`} className="board-card flex h-full flex-col overflow-hidden rounded-lg bg-paper">
       <div aria-hidden className="relative h-36 bg-ground">
         {placed ? (
           <MapSnapshot latitude={venue.latitude!} longitude={venue.longitude!} />
@@ -257,7 +257,7 @@ function EditLibraryVenue({ venue, onDone, onSaved }: { venue: LibraryVenue; onD
                   type="button"
                   onClick={() => setTags(tags.filter((t) => t !== tag))}
                   aria-label={`Remove the tag ${tag}`}
-                  className="rounded-full p-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-ink"
+                  className="rounded-full p-0.5 hover:bg-paper focus-visible:outline-2 focus-visible:outline-ink"
                 >
                   <X aria-hidden className="size-3.5" />
                 </button>

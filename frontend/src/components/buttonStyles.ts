@@ -3,7 +3,7 @@ export type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
 export const variants: Record<Variant, string> = {
   // Ink with white text: the one action the page is asking for.
   primary: 'btn-cue focus-visible:outline-ink',
-  secondary: 'border border-line bg-white text-ink shadow-[var(--shadow-card)] hover:border-[#c9ced6] hover:bg-ground focus-visible:outline-ink',
+  secondary: 'border border-line bg-paper text-ink shadow-[var(--shadow-card)] hover:border-subtle hover:bg-ground focus-visible:outline-ink',
   danger: 'border border-stop-ink bg-stop text-white hover:bg-stop-ink focus-visible:outline-stop-ink',
   ghost: 'text-graphite hover:bg-ink/5 hover:text-ink focus-visible:outline-ink',
 }

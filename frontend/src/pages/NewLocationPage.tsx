@@ -72,7 +72,7 @@ export function NewLocationPage() {
         <ChevronLeft aria-hidden className="size-4" />
         {sceneLabel(scene.data)}
       </Link>
-      <section aria-labelledby="new-location" className="mx-auto max-w-3xl board-card rounded-lg bg-white p-6 sm:p-8">
+      <section aria-labelledby="new-location" className="mx-auto max-w-3xl board-card rounded-lg bg-paper p-6 sm:p-8">
         <h1 id="new-location" className="mb-2 font-bold font-display text-5xl leading-none">
           Add a venue
         </h1>

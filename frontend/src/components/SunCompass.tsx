@@ -31,7 +31,7 @@ export function SunCompass({ days }: { days: SolarDay[] }) {
               <select
                 value={Math.min(selected, withSun.length - 1)}
                 onChange={(e) => setSelected(Number(e.target.value))}
-                className="rounded-md border border-line bg-white px-1 py-0.5 text-sm text-ink"
+                className="rounded-md border border-line bg-paper px-1 py-0.5 text-sm text-ink"
               >
                 {withSun.map((d, i) => (
                   <option key={d.date} value={i}>

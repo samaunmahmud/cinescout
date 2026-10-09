@@ -65,7 +65,7 @@ export function AlertBell() {
       >
         <Bell aria-hidden className="size-5" />
         {unread > 0 && (
-          <span aria-hidden className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cue px-1 text-xs font-bold text-ink">
+          <span aria-hidden className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-cue px-1 text-xs font-bold text-night">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
@@ -74,7 +74,7 @@ export function AlertBell() {
         <section
           id={panelId}
           aria-labelledby={`${panelId}-heading`}
-          className="fixed inset-x-4 top-[76px] z-40 overflow-hidden sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-lg border border-line bg-white text-ink shadow-[var(--shadow-card)]"
+          className="fixed inset-x-4 top-[76px] z-40 overflow-hidden sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 rounded-lg border border-line bg-paper text-ink shadow-[var(--shadow-card)]"
         >
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <h2 id={`${panelId}-heading`} className="font-display text-xl leading-none">

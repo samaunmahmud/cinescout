@@ -155,7 +155,7 @@ function LocationDetails({ location }: { location: Location }) {
             {canEdit && (
               <Link
                 to={`/locations/${location.id}/recce`}
-                className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-ink shadow-[var(--shadow-card)] hover:bg-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="inline-flex items-center gap-2 rounded-lg border border-line bg-paper px-4 py-2 text-sm font-bold text-ink shadow-[var(--shadow-card)] hover:bg-ground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <Smartphone aria-hidden className="size-4" />
                 Recce mode
@@ -267,7 +267,7 @@ function Assessment({ location }: { location: Location }) {
   if (location.fitScore == null) {
     if (!canEdit) return null
     return (
-      <section aria-labelledby="assessment-heading" className="board-card space-y-3 rounded-lg bg-white p-5">
+      <section aria-labelledby="assessment-heading" className="board-card space-y-3 rounded-lg bg-paper p-5">
         <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
         <h2 id="assessment-heading" className="font-display text-2xl leading-none font-bold">
           Not assessed yet
@@ -285,7 +285,7 @@ function Assessment({ location }: { location: Location }) {
     )
   }
   return (
-    <section aria-labelledby="assessment-heading" className="relative space-y-5 rounded-2xl border border-line bg-white p-6 shadow-[var(--shadow-card)]">
+    <section aria-labelledby="assessment-heading" className="relative space-y-5 rounded-2xl border border-line bg-paper p-6 shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <Eyebrow icon={Sparkles}>The AI’s read</Eyebrow>
@@ -585,7 +585,7 @@ function Position({ location }: { location: Location }) {
     >
 
       {editing ? (
-        <form onSubmit={save} className="space-y-3 board-card rounded-lg bg-white p-5" noValidate>
+        <form onSubmit={save} className="space-y-3 board-card rounded-lg bg-paper p-5" noValidate>
           <ErrorAlert error={relocate.error} />
           <TextField
             label="Coordinates"

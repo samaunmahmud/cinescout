@@ -17,7 +17,7 @@ const WORLD = { center: [20, 0] as [number, number], zoom: 2 }
 const pinClasses: Record<PinTone, string> = {
   good: 'bg-go',
   fair: 'bg-cue',
-  poor: 'bg-white',
+  poor: 'bg-paper',
   neutral: 'bg-tape',
   muted: 'bg-line',
 }

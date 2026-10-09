@@ -39,7 +39,7 @@ export function NewScenePage() {
         <ChevronLeft aria-hidden className="size-4" />
         {project.data.title}
       </Link>
-      <section aria-labelledby="new-scene" className="mx-auto max-w-3xl board-card rounded-lg bg-white p-6 sm:p-8">
+      <section aria-labelledby="new-scene" className="mx-auto max-w-3xl board-card rounded-lg bg-paper p-6 sm:p-8">
         <h1 id="new-scene" className="mb-6 font-bold font-display text-5xl leading-none">
           New scene
         </h1>

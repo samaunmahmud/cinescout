@@ -79,7 +79,7 @@ export function PublicShortlistPage() {
         )
       ) : (
         <>
-          <header className="relative space-y-3 rounded-lg border border-line bg-ink px-6 pt-10 pb-7 text-white shadow-[var(--shadow-card)]">
+          <header className="relative space-y-3 rounded-lg border border-line bg-night px-6 pt-10 pb-7 text-white shadow-[var(--shadow-card)]">
             <TapeLabel tilt={-3} className="absolute -top-4 left-6">
               Director’s cut
             </TapeLabel>
@@ -104,7 +104,7 @@ export function PublicShortlistPage() {
           </div>
 
           {shortlist.data.venues.items.length === 0 ? (
-            <p className="rounded-lg border-2 border-dashed border-line bg-white px-6 py-10 text-center text-muted">
+            <p className="rounded-lg border-2 border-dashed border-line bg-paper px-6 py-10 text-center text-muted">
               Nothing is on the shortlist yet. Come back to this link once the production has picked some venues.
             </p>
           ) : (
@@ -135,7 +135,7 @@ function ShortlistMap({ venues }: { venues: ShortlistVenue[] }) {
 function VenueCard({ token, venue, guestName, onAnswered }: { token: string; venue: ShortlistVenue; guestName: string; onAnswered: () => void }) {
   const placed = venue.latitude != null && venue.longitude != null
   return (
-    <article aria-labelledby={`venue-${venue.id}`} className="board-card space-y-5 rounded-lg bg-white p-5">
+    <article aria-labelledby={`venue-${venue.id}`} className="board-card space-y-5 rounded-lg bg-paper p-5">
       <div className="flex flex-col gap-5 sm:flex-row">
         <div aria-hidden className="polaroid relative w-full shrink-0 sm:w-56">
           <span className="tape-piece -top-2 left-1/2 z-10 w-14 -translate-x-1/2 -rotate-3" />
@@ -244,7 +244,7 @@ function CallForm({ token, venue, guestName, onAnswered }: { token: string; venu
               <label
                 key={choice.verdict}
                 className={`flex cursor-pointer items-center gap-1.5 rounded-lg border-2 px-4 py-2 text-sm font-bold has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-cue/40 ${
-                  picked ? choice.picked : 'border-line bg-white text-graphite hover:border-ink'
+                  picked ? choice.picked : 'border-line bg-paper text-graphite hover:border-ink'
                 }`}
               >
                 <input

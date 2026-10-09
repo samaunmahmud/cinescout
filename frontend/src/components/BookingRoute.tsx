@@ -29,7 +29,7 @@ export function BookingRoute({ location }: { location: Location }) {
         value={location.bookingFriction ?? ''}
         disabled={save.isPending}
         onChange={(e) => save.mutate((e.target.value || null) as BookingFriction | null)}
-        className="-ml-1 w-full rounded-md border border-line bg-white px-1 py-0.5 font-semibold text-ink focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
+        className="-ml-1 w-full rounded-md border border-line bg-paper px-1 py-0.5 font-semibold text-ink focus:border-ink focus:ring-2 focus:ring-cue/25 focus:outline-none disabled:opacity-50"
       >
         <option value="">Unknown</option>
         {routes.map((route) => (

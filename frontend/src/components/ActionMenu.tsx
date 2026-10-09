@@ -94,7 +94,7 @@ export function ActionMenu({ label, actions, className = '' }: { label: string; 
             setOpen(true)
           }
         }}
-        className="flex size-9 items-center justify-center rounded-lg border-2 border-transparent text-graphite transition hover:border-ink hover:bg-white hover:text-ink focus-visible:ring-4 focus-visible:ring-cue/30 focus-visible:outline-none aria-expanded:border-ink aria-expanded:bg-white aria-expanded:text-ink"
+        className="flex size-9 items-center justify-center rounded-lg border-2 border-transparent text-graphite transition hover:border-ink hover:bg-paper hover:text-ink focus-visible:ring-4 focus-visible:ring-cue/30 focus-visible:outline-none aria-expanded:border-ink aria-expanded:bg-paper aria-expanded:text-ink"
       >
         <MoreHorizontal aria-hidden className="size-5" />
       </button>
@@ -106,7 +106,7 @@ export function ActionMenu({ label, actions, className = '' }: { label: string; 
           aria-label={label}
           onKeyDown={onKeyDown}
           style={{ left: offset }}
-          className={`absolute z-30 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-white py-1 shadow-[var(--shadow-card)]`}
+          className={`absolute z-30 mt-1 w-60 overflow-hidden rounded-lg border border-line bg-paper py-1 shadow-[var(--shadow-card)]`}
         >
           {shown.map((action) => {
             const Icon = action.icon

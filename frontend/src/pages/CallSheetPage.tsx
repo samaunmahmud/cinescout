@@ -102,7 +102,7 @@ function SharePanel({ projectId }: { projectId: string }) {
   }
 
   return (
-    <section aria-labelledby="share-heading" className="no-print mx-auto max-w-4xl space-y-3 board-card rounded-lg bg-white p-5">
+    <section aria-labelledby="share-heading" className="no-print mx-auto max-w-4xl space-y-3 board-card rounded-lg bg-paper p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <h2 id="share-heading" className="flex items-center gap-2 font-display text-2xl leading-none text-ink">

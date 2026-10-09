@@ -32,7 +32,7 @@ export function RepliesPanel({ draft }: { draft: OutreachDraft }) {
             Replies to this address come back to CineScout. “Open in email app” puts it in Cc, so the venue’s reply-all reaches it.
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <code className="min-w-0 truncate rounded bg-white px-2 py-1 font-mono text-xs text-ink ring-1 ring-line">{draft.replyTo}</code>
+            <code className="min-w-0 truncate rounded bg-paper px-2 py-1 font-mono text-xs text-ink ring-1 ring-line">{draft.replyTo}</code>
             <Button
               variant="ghost"
               className="!px-2 !py-1 text-xs"
@@ -65,7 +65,7 @@ export function RepliesPanel({ draft }: { draft: OutreachDraft }) {
           ) : (
             <ul className="space-y-3">
               {replies.data.items.map((reply) => (
-                <li key={reply.id} className="space-y-1 rounded-md bg-white p-3 ring-1 ring-line">
+                <li key={reply.id} className="space-y-1 rounded-md bg-paper p-3 ring-1 ring-line">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="font-semibold text-ink">{reply.fromName ?? reply.fromAddress ?? 'The venue'}</span>
                     {reply.fromName && reply.fromAddress && <span className="text-muted">&lt;{reply.fromAddress}&gt;</span>}

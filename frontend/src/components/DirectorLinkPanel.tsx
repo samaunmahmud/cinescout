@@ -103,7 +103,7 @@ export function DirectorLinkPanel({ scope }: { scope: DirectorScope }) {
                 aria-label="Director link"
                 value={url}
                 onFocus={(e) => e.target.select()}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2 font-mono text-xs text-ink"
+                className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-3 py-2 font-mono text-xs text-ink"
               />
               <Button variant="secondary" onClick={copy}>
                 {copied ? "Copied" : "Copy link"}

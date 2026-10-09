@@ -38,7 +38,7 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
   )
 
   return (
-    <section aria-labelledby="requirements-heading" className="board-card relative space-y-5 rounded-lg bg-white p-6">
+    <section aria-labelledby="requirements-heading" className="board-card relative space-y-5 rounded-lg bg-paper p-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <Eyebrow icon={Sparkles}>Read by the AI</Eyebrow>

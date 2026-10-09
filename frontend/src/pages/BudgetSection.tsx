@@ -76,7 +76,7 @@ export function BudgetSection({ projectId }: { projectId: string }) {
         {data.items.length === 0 ? (
           <EmptyState icon={Wallet}>No lines yet. Add the venues’ fees, permits, deposits and the rest as they come in.</EmptyState>
         ) : (
-          <ul aria-label="Budget lines" className="divide-y divide-line rounded-lg border border-line bg-white">
+          <ul aria-label="Budget lines" className="divide-y divide-line rounded-lg border border-line bg-paper">
             {data.items.map((item) => (
               <LineRow key={item.id} projectId={projectId} item={item} currency={data.currency} onSaved={store} />
             ))}
@@ -123,7 +123,7 @@ function Summary({ projectId, budget, onSaved }: { projectId: string; budget: Bu
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-line bg-white p-5">
+    <div className="space-y-4 rounded-lg border border-line bg-paper p-5">
       {editing ? (
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end" noValidate>
           <TextField label="Total budget" inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} error={errors.total} autoFocus />
@@ -284,7 +284,7 @@ function LineRow({ projectId, item, currency, onSaved }: { projectId: string; it
               value={item.status}
               disabled={setStatus.isPending}
               onChange={(e) => setStatus.mutate(e.target.value as BudgetStatus)}
-              className="rounded-md border border-line bg-white px-2 py-1 text-sm font-semibold"
+              className="rounded-md border border-line bg-paper px-2 py-1 text-sm font-semibold"
             >
               {budgetStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -367,7 +367,7 @@ function LineForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-lg border border-line bg-white p-4" noValidate>
+    <form onSubmit={submit} className="space-y-3 rounded-lg border border-line bg-paper p-4" noValidate>
       <ErrorAlert error={save.error} />
       <div className="grid gap-3 sm:grid-cols-2">
         <TextField label="What for" required maxLength={200} value={label} onChange={(e) => setLabel(e.target.value)} error={errors.label} autoFocus />

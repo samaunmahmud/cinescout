@@ -109,7 +109,7 @@ function OutreachRow({ draft }: { draft: ProjectOutreach }) {
   return (
     <article
       aria-label={draft.subject}
-      className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 board-card rounded-lg bg-white p-4"
+      className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 board-card rounded-lg bg-paper p-4"
     >
       <div className="min-w-0 flex-1 space-y-1">
         <h3 className="font-semibold">

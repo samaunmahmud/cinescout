@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 're
 /** A panel on the working surface: a white card with a hairline border. */
 export function Card({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={`board-card rounded-lg bg-white ${className}`}>
+    <div className={`board-card rounded-lg bg-paper ${className}`}>
       {children}
     </div>
   )
@@ -65,7 +65,7 @@ export function EmptyState({ icon: Icon, children }: { icon?: LucideIcon; childr
   return (
     <div className="relative flex flex-col items-center gap-4 rounded-xl border border-dashed border-line bg-white/70 px-6 py-12 text-center text-muted">
       {Icon && (
-        <span className="relative flex size-14 items-center justify-center rounded-2xl bg-ink text-cue shadow-[var(--shadow-lift)]">
+        <span className="relative flex size-14 items-center justify-center rounded-2xl bg-night text-cue shadow-[var(--shadow-lift)]">
           <Icon aria-hidden className="size-6" />
         </span>
       )}
@@ -172,7 +172,7 @@ export function Tabs<K extends string>({
 /** The scene number as a slate chip: "SC 01". */
 export function Slate({ number, className = '' }: { number: number | null; className?: string }) {
   return (
-    <div aria-hidden className={`flex shrink-0 flex-col items-center justify-center rounded-lg bg-ink px-2.5 py-1.5 text-white ${className}`}>
+    <div aria-hidden className={`flex shrink-0 flex-col items-center justify-center rounded-lg bg-night px-2.5 py-1.5 text-white ${className}`}>
       <div className="text-[10px] font-semibold tracking-[0.14em] text-ink-muted">SCENE</div>
       <div className="font-mono text-xl leading-tight font-medium text-cue">{number == null ? '—' : String(number).padStart(2, '0')}</div>
     </div>
@@ -182,7 +182,7 @@ export function Slate({ number, className = '' }: { number: number | null; class
 /** One figure in a row of facts: a label, a value, an optional icon. */
 export function Fact({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-line bg-white px-3.5 py-3 shadow-[var(--shadow-card)]">
+    <div className="flex items-start gap-3 rounded-xl border border-line bg-paper px-3.5 py-3 shadow-[var(--shadow-card)]">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-tape">
         <Icon aria-hidden className="size-4 text-cue-ink" />
       </span>

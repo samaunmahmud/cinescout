@@ -7,7 +7,7 @@ const LeafletMap = lazy(() => import('./LeafletMap'))
 export function VenueMap(props: MapProps) {
   const className = props.className ?? 'h-80'
   return (
-    <Suspense fallback={<div aria-hidden className={`animate-pulse rounded-lg border border-line bg-white ${className}`} />}>
+    <Suspense fallback={<div aria-hidden className={`animate-pulse rounded-lg border border-line bg-paper ${className}`} />}>
       <LeafletMap {...props} />
     </Suspense>
   )

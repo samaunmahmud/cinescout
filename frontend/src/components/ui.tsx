@@ -40,7 +40,7 @@ export function Spinner({ label }: { label?: string }) {
 }
 
 const inputClass =
-  'w-full rounded-[9px] border border-line bg-white px-3 py-2 text-[15px] text-ink shadow-[var(--shadow-card)] placeholder:text-subtle transition hover:border-[#c9ced6] focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10 aria-invalid:border-stop-ink'
+  'w-full rounded-[9px] border border-line bg-paper px-3 py-2 text-[15px] text-ink shadow-[var(--shadow-card)] placeholder:text-subtle transition hover:border-subtle focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10 aria-invalid:border-stop-ink'
 
 interface FieldProps {
   label: string

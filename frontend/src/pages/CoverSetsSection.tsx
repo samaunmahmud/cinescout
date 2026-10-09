@@ -53,7 +53,7 @@ export function CoverSetsSection({ scene }: { scene: Scene }) {
       ) : covers.data.items.length === 0 ? (
         !adding && <EmptyState icon={Umbrella}>No cover set yet. Pick a backup venue in case of rain, wind or a cancellation.</EmptyState>
       ) : (
-        <ul aria-label="Cover sets" className="divide-y divide-line-soft board-card rounded-lg bg-white">
+        <ul aria-label="Cover sets" className="divide-y divide-line-soft board-card rounded-lg bg-paper">
           {covers.data.items.map((cover) => (
             <li key={cover.id}>
               <CoverRow cover={cover} defaultDay={scene.shootDateStart} />

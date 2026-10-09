@@ -66,7 +66,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
   return (
     <ul aria-label="Videos of the venue" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {videos.map((video) => (
-        <li key={video.id} className="overflow-hidden board-card rounded-lg bg-white transition hover:border-ink">
+        <li key={video.id} className="overflow-hidden board-card rounded-lg bg-paper transition hover:border-ink">
           <div className="relative aspect-video bg-black">
             {playing === video.id ? (
               <iframe
@@ -82,7 +82,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
                 <img src={thumbnailUrl(video.id)} alt="" loading="lazy" className="size-full object-cover transition group-hover:opacity-80" />
                 <span
                   aria-hidden
-                  className="absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-ink/70 text-white ring-2 ring-ink transition group-hover:scale-110 group-hover:bg-stop-ink"
+                  className="absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-night/70 text-white ring-2 ring-ink transition group-hover:scale-110 group-hover:bg-stop-ink"
                 >
                   ▶
                 </span>

@@ -81,7 +81,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
       </Link>
 
       {editing ? (
-        <section aria-labelledby="edit-scene" className="board-card rounded-lg bg-white p-6">
+        <section aria-labelledby="edit-scene" className="board-card rounded-lg bg-paper p-6">
           <h1 id="edit-scene" className="mb-4 font-display text-3xl leading-tight font-bold">
             Edit scene
           </h1>
@@ -186,7 +186,7 @@ function SceneDetails({ scene }: { scene: Scene }) {
               Script
             </h2>
             {/* A page of the script, set as a screenplay is: monospaced, on white. */}
-            <pre className="max-h-[70vh] overflow-auto rounded-xl border border-line bg-white px-6 py-7 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[var(--shadow-card)]">
+            <pre className="max-h-[70vh] overflow-auto rounded-xl border border-line bg-paper px-6 py-7 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[var(--shadow-card)]">
               {scene.sourceText}
             </pre>
           </section>

@@ -9,7 +9,7 @@ export function ListControls({ state }: { state: ReturnType<typeof useVenueListV
   const sortId = useId()
   const chip = (active: boolean) =>
     `rounded-full border-2 px-3 py-1 text-sm font-semibold transition focus-visible:ring-4 focus-visible:ring-cue/30 focus-visible:outline-none ${
-      active ? 'border-ink bg-ink text-white' : 'border-line bg-white text-graphite hover:border-ink hover:text-ink'
+      active ? 'border-ink bg-night text-white' : 'border-line bg-paper text-graphite hover:border-ink hover:text-ink'
     }`
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -31,7 +31,7 @@ export function ListControls({ state }: { state: ReturnType<typeof useVenueListV
           id={sortId}
           value={state.sort}
           onChange={(e) => state.setSort(e.target.value as LocationSort)}
-          className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none"
+          className="rounded-lg border border-line bg-paper px-2 py-1.5 text-sm font-semibold text-ink focus:ring-4 focus:ring-cue/25 focus:outline-none"
         >
           {sorts.map((sort) => (
             <option key={sort} value={sort}>
@@ -51,7 +51,7 @@ export function ListControls({ state }: { state: ReturnType<typeof useVenueListV
                 title={view === 'cards' ? 'Cards' : 'Compact list'}
                 onClick={() => state.setView(view)}
                 className={`flex size-8 items-center justify-center transition focus-visible:ring-4 focus-visible:ring-cue/30 focus-visible:outline-none ${
-                  state.view === view ? 'bg-ink text-white' : 'bg-white text-graphite hover:text-ink'
+                  state.view === view ? 'bg-night text-white' : 'bg-paper text-graphite hover:text-ink'
                 }`}
               >
                 <Icon aria-hidden className="size-4" />
