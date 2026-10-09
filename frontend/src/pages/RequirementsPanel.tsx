@@ -84,10 +84,9 @@ function RequirementsList({ requirements: r }: { requirements: SceneRequirements
   const tapes: Record<string, string> = { Lighting: 'bg-cue', Sound: 'bg-go' }
   return (
     <dl className="flex flex-wrap gap-x-3 gap-y-4 pt-1">
-      {rows.map(([label, value], i) => (
+      {rows.map(([label, value]) => (
         <div
           key={label}
-          style={{ transform: `rotate(${[-1.5, 1.2, -0.8, 1.5, -1.2, 0.8][i]}deg)` }}
           className={`tape flex flex-col px-4 pt-1.5 pb-1 ${tapes[label] ?? ''}`}
         >
           <dt className="font-script text-[11px] font-bold tracking-[0.1em] uppercase">{label}</dt>

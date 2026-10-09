@@ -330,8 +330,8 @@ function Assessment({ location }: { location: Location }) {
         <div className="space-y-2">
           <h3 className="font-script text-xs font-bold tracking-[0.1em] text-muted uppercase">Watch out for</h3>
           <ul aria-label="Warnings" className="flex flex-wrap gap-2">
-            {location.footprintWarnings.map((warning, i) => (
-              <li key={warning} style={{ transform: `rotate(${i % 2 ? 0.8 : -0.8}deg)` }} className="tape flex items-center gap-1.5 !bg-highlight px-3 py-1 text-sm font-semibold">
+            {location.footprintWarnings.map((warning) => (
+              <li key={warning} className="tape flex items-center gap-1.5 !bg-highlight px-3 py-1 text-sm font-semibold">
                 <TriangleAlert aria-hidden className="size-4 shrink-0" />
                 {warning}
               </li>
