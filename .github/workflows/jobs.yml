@@ -42,3 +42,12 @@ jobs:
           # Fetches a forecast per confirmed venue shooting this week, one after another: allow a few minutes.
           curl --fail-with-body --silent --show-error --retry 4 --retry-delay 20 --retry-all-errors --max-time 300 \
             -X POST -H "X-Job-Secret: $JOBS_SECRET" "$CINESCOUT_URL/api/internal/jobs/weather-watch"
+      - name: Demo reset
+        run: |
+          if [ -z "$CINESCOUT_URL" ] || [ -z "$JOBS_SECRET" ]; then
+            echo "CINESCOUT_URL or JOBS_SECRET is not set; nothing to do."
+            exit 0
+          fi
+          # Puts the shared demo login's productions back as they were when its snapshot was taken.
+          curl --fail-with-body --silent --show-error --retry 4 --retry-delay 20 --retry-all-errors --max-time 120 \
+            -X POST -H "X-Job-Secret: $JOBS_SECRET" "$CINESCOUT_URL/api/internal/jobs/demo-reset"

@@ -31,6 +31,7 @@ cinescout:
     scheduler: ${JOBS_SCHEDULER:true}                 # also run them on the app's own timer while it is awake
     follow-ups: ${JOBS_FOLLOW_UPS_CRON:0 17 * * * *}  # hourly
     weather-watch: ${JOBS_WEATHER_WATCH_CRON:0 23 6 * * *}  # daily, 06:23 UTC
+    demo-reset: ${JOBS_DEMO_RESET_CRON:0 41 3 * * *}  # nightly, 03:41 UTC: locked (demo) accounts back to their snapshot
     weather-venues: ${JOBS_WEATHER_VENUES:40}         # forecasts fetched a run, earliest shoot first
   files:                       # uploaded files (recce photos). Render's disk is wiped on every deploy: set FILES_STORE=s3
     store: ${FILES_STORE:local}                       # local | s3 (Cloudflare R2 or any S3-compatible store)

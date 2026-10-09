@@ -42,7 +42,7 @@ class JobController {
     }
 
     /** 404 when the endpoint is off (no secret configured) or there is no such job; 401 when the secret is wrong. */
-    @Operation(summary = "Run a scheduled job", description = "Jobs: follow-ups. Needs the X-Job-Secret header.")
+    @Operation(summary = "Run a scheduled job", description = "Jobs: follow-ups, weather-watch, demo-reset, demo-snapshot. Needs the X-Job-Secret header.")
     @SecurityRequirements
     @PostMapping("/api/internal/jobs/{name}")
     Mono<ResponseEntity<JobRun>> run(@PathVariable String name, @RequestHeader(name = SECRET_HEADER, required = false) String secret) {

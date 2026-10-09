@@ -44,6 +44,12 @@ class JobsConfig {
             run("weather-watch");
         }
 
+        /** Nightly: puts the shared demo account back as its snapshot left it. */
+        @Scheduled(cron = "${cinescout.jobs.demo-reset:0 41 3 * * *}", zone = "UTC")
+        void demoReset() {
+            run("demo-reset");
+        }
+
         private void run(String name) {
             jobs.stream().filter(job -> job.name().equals(name)).findFirst().ifPresent(job -> {
                 try {

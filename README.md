@@ -168,7 +168,7 @@ flowchart LR
    and calls to watsonx are spaced app-wide to stay under the plan's rate.
 4. Logistics reports are cached on the venue. If a weather or map service is down, the report still comes back with
    that section marked unavailable.
-5. Scheduled jobs (follow-ups, weather watch) run on the app's own timer and from a daily GitHub Actions workflow,
+5. Scheduled jobs (follow-ups, weather watch, demo reset) run on the app's own timer and from a daily GitHub Actions workflow,
    because the free host sleeps when idle.
 
 ## Security, testing and CI
@@ -340,7 +340,7 @@ Each outreach email can carry its own reply address, `scout+<token>@<reply domai
 
 ### Scheduled jobs
 
-`POST /api/internal/jobs/<name>` (`follow-ups`, `weather-watch`) with the header `X-Job-Secret`. The daily
+`POST /api/internal/jobs/<name>` (`follow-ups`, `weather-watch`, `demo-reset`, `demo-snapshot`) with the header `X-Job-Secret`. The daily
 `.github/workflows/jobs.yml` calls it when the repository has the secrets `CINESCOUT_URL` and `JOBS_SECRET`.
 Running a job twice is harmless.
 
@@ -351,6 +351,7 @@ Running a job twice is harmless.
 | `JOBS_FOLLOW_UPS_CRON` | `0 17 * * * *` (hourly) |
 | `JOBS_WEATHER_WATCH_CRON` | `0 23 6 * * *` (daily, 06:23 UTC) |
 | `JOBS_WEATHER_VENUES` | `40` forecasts a run |
+| `JOBS_DEMO_RESET_CRON` | `0 41 3 * * *` (nightly, 03:41 UTC) |
 
 ### Rate limits
 
@@ -372,7 +373,9 @@ Past a limit the API answers `429` with `Retry-After`. Each is a burst of `capac
   `DOMAIN=cinescout.example.com docker compose --profile https up -d --build`. Set `REGISTRATION_OPEN=false` once
   your accounts exist.
 - **A shared demo login**: list its email in `CINESCOUT_SECURITY_LOCKEDACCOUNTS` (comma-separated). Its name and
-  password then stay as they are and it cannot be deleted (`403`), so one visitor cannot lock the others out.
+  password then stay as they are and it cannot be deleted (`403`), so one visitor cannot lock the others out. Once
+  its productions look right, run the `demo-snapshot` job: the nightly `demo-reset` job then puts them back as they
+  were, undoing whatever visitors changed. Uploaded photos and releases are not part of the snapshot.
 - **Render**: `deploy/render/Dockerfile` builds one container in which the backend also serves the web app, sized for
   a 512 MB instance; `render.yaml` describes it. The database is separate, for example a free Neon PostgreSQL.
 
