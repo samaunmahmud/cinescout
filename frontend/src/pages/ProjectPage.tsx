@@ -162,21 +162,21 @@ function ProjectDetails({ project }: { project: Project }) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link to={`/projects/${project.id}/settings`} className={`${linkButton('secondary')} !border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20`}>
+                <Link to={`/projects/${project.id}/settings`} className={`${linkButton('secondary')} !border-white/15 !bg-black/50 !text-white backdrop-blur-md hover:!bg-black/70`}>
                   <Users aria-hidden className="size-4" />
                   Crew
                 </Link>
                 {editor && (
-                  <Button variant="secondary" className="!border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20" onClick={() => setEditing(true)}>
+                  <Button variant="secondary" className="!border-white/15 !bg-black/50 !text-white backdrop-blur-md hover:!bg-black/70" onClick={() => setEditing(true)}>
                     Edit
                   </Button>
                 )}
                 {owner && (
                   <>
-                    <Button variant="secondary" className="!border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20" onClick={toggleArchived} busy={update.isPending}>
+                    <Button variant="secondary" className="!border-white/15 !bg-black/50 !text-white backdrop-blur-md hover:!bg-black/70" onClick={toggleArchived} busy={update.isPending}>
                       {archived ? 'Restore' : 'Archive'}
                     </Button>
-                    <Button variant="ghost" className="!text-fog hover:!bg-white/10 hover:!text-white" onClick={() => setConfirmingDelete(true)}>
+                    <Button variant="ghost" className="!bg-black/30 !text-fog backdrop-blur-md hover:!bg-black/60 hover:!text-white" onClick={() => setConfirmingDelete(true)}>
                       Delete
                     </Button>
                   </>

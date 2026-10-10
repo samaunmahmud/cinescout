@@ -11,7 +11,7 @@ import { DirectorsCall } from '../components/DirectorsCall'
 import { SunCompass } from '../components/SunCompass'
 import { SaveToLibrary } from '../components/SaveToLibrary'
 import { useStoreLocation, useUpdateLocation } from '../components/locationHooks'
-import { Banknote, ChevronLeft, Clapperboard, ClipboardCheck, Contact as Contact2, Crosshair, ExternalLink, Gauge, Gavel, KeyRound, LayoutGrid, Mail, MapPin as PinIcon, MapPinned, MessagesSquare, NotebookPen, Phone, Quote, Smartphone, Sparkles, Sun, TriangleAlert, UserRound } from 'lucide-react'
+import { Banknote, ChevronLeft, Clapperboard, ClipboardCheck, Contact as Contact2, Crosshair, ExternalLink, Gavel, KeyRound, LayoutGrid, Mail, MapPin as PinIcon, MapPinned, MessagesSquare, NotebookPen, Phone, Quote, Smartphone, Sparkles, Sun, TriangleAlert, UserRound } from 'lucide-react'
 import { FitLabel, FitScore, LocationBadges, StatusSelect } from '../components/locationParts'
 import { Stamp } from '../components/stickers'
 import { Eyebrow, Fact, Section, Tabs, type TabItem } from '../components/surfaces'
@@ -136,8 +136,8 @@ function LocationDetails({ location }: { location: Location }) {
               </a>
             )}
           </div>
-          {location.status === 'SHORTLISTED' && <Stamp className="absolute top-12 right-6 text-sm !text-cue !bg-transparent sm:top-16 sm:right-8 sm:text-lg">Shortlisted</Stamp>}
-          {location.status === 'CONFIRMED' && <Stamp className="absolute top-12 right-6 text-sm !text-go !bg-transparent sm:top-16 sm:right-8 sm:text-lg">Locked</Stamp>}
+          {location.status === 'SHORTLISTED' && <Stamp className="absolute top-14 left-8 text-sm !text-cue !bg-transparent sm:top-16 sm:left-10 sm:text-base">Shortlisted</Stamp>}
+          {location.status === 'CONFIRMED' && <Stamp className="absolute top-14 left-8 text-sm !text-go !bg-transparent sm:top-16 sm:left-10 sm:text-base">Locked</Stamp>}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -173,8 +173,8 @@ function LocationDetails({ location }: { location: Location }) {
         </div>
 
         <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Fact icon={Gauge} label="Fit">
-            {location.fitScore != null ? `${location.fitScore} / 100` : 'Not assessed'}
+          <Fact icon={Banknote} label="Their quote">
+            {location.quote ?? 'Not asked yet'}
           </Fact>
           <Fact icon={KeyRound} label="Booking">
             <BookingRoute location={location} />
@@ -498,10 +498,20 @@ function Contact({ location }: { location: Location }) {
           </div>
         </form>
       ) : known ? (
-        <dl className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-[1fr_1.4fr_1fr]">
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           <Fact icon={UserRound} label="Name">
             {location.contactName ?? '—'}
           </Fact>
+          <Fact icon={Phone} label="Phone">
+            {location.contactPhone ? (
+              <a href={`tel:${location.contactPhone.replace(/[^0-9+]/g, '')}`} className="whitespace-nowrap text-cue-ink underline hover:text-cue-deep">
+                {location.contactPhone}
+              </a>
+            ) : (
+              '—'
+            )}
+          </Fact>
+          <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2">
           <Fact icon={Mail} label="Email">
             {location.contactEmail ? (
               <a href={`mailto:${location.contactEmail}`} className="break-words text-cue-ink underline hover:text-cue-deep">
@@ -511,22 +521,7 @@ function Contact({ location }: { location: Location }) {
               '—'
             )}
           </Fact>
-          <Fact icon={Phone} label="Phone">
-            {location.contactPhone ? (
-              <a href={`tel:${location.contactPhone.replace(/[^0-9+]/g, '')}`} className="text-cue-ink underline hover:text-cue-deep">
-                {location.contactPhone}
-              </a>
-            ) : (
-              '—'
-            )}
-          </Fact>
-          {location.quote && (
-            <div className="sm:col-span-3 lg:col-span-1 xl:col-span-3">
-              <Fact icon={Banknote} label="Their quote">
-                {location.quote}
-              </Fact>
-            </div>
-          )}
+          </div>
         </dl>
       ) : (
         <p className="text-sm text-muted">Nobody yet. Add who to talk to here, and emails to this venue start out addressed to them.</p>

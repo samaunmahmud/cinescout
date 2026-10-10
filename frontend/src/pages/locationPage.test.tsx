@@ -98,7 +98,7 @@ describe('a location', () => {
 
     expect(await contact.findByRole('link', { name: 'tom@toms-diner.example' })).toHaveAttribute('href', 'mailto:tom@toms-diner.example')
     expect(contact.getByText('Tom Miller')).toBeInTheDocument()
-    expect(contact.getByText('$425 an hour')).toBeInTheDocument()
+    expect(screen.getByText('$425 an hour')).toBeInTheDocument()
     expect(contact.getByRole('button', { name: 'Edit contact' })).toBeInTheDocument()
     expect(requests.find((r) => r.method === 'PUT')?.body).toEqual({ name: 'Tom Miller', email: 'tom@toms-diner.example', phone: null, quote: '$425 an hour' })
   })
