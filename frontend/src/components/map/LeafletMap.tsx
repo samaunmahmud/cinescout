@@ -46,10 +46,26 @@ export default function LeafletMap({ pins, label, onPick, className = 'h-80' }: 
           <PinMarker key={pin.id} pin={pin} />
         ))}
         <KeepPinsInView pins={pins} refitOnNewPins={!onPick} />
+        <FollowSize />
         {onPick && <PickHandler onPick={onPick} />}
       </MapContainer>
     </div>
   )
+}
+
+/**
+ * Leaflet measures its box once, when it starts; a box that settles later (a tab shown, a column growing as the
+ * page lays out) would leave tiles over part of it only. Measure again whenever the box changes size.
+ */
+function FollowSize() {
+  const map = useMap()
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => map.invalidateSize())
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [map])
+  return null
 }
 
 function PinMarker({ pin }: { pin: MapPin }) {

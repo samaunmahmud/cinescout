@@ -8,7 +8,8 @@ import { snapshotTiles } from '../lib/snapshot'
 export function MapSnapshot({ latitude, longitude }: { latitude: number; longitude: number }) {
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden bg-[#e3ebe6]">
-      {snapshotTiles(latitude, longitude).map((tile) => (
+      {/* Wide enough for the widest card it fills. */}
+      {snapshotTiles(latitude, longitude, 16, 720).map((tile) => (
         <img
           key={tile.url}
           src={tile.url}

@@ -28,4 +28,12 @@ describe('snapshotTiles', () => {
       expect(tile.url).toMatch(/^https:\/\/tile\.openstreetmap\.org\/16\/\d+\/\d+\.png$/)
     }
   })
+
+  it('covers a wider box when asked, still two tiles high at most', () => {
+    const wide = snapshotTiles(40.676434, -73.959241, 16, 720)
+    const lefts = [...new Set(wide.map((t) => t.left))].sort((a, b) => a - b)
+    expect(lefts[0]).toBeLessThanOrEqual(-360)
+    expect(lefts[lefts.length - 1] + 256).toBeGreaterThanOrEqual(360)
+    expect(new Set(wide.map((t) => t.top)).size).toBeLessThanOrEqual(2)
+  })
 })

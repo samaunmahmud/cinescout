@@ -118,7 +118,7 @@ export function LibraryPage() {
         </EmptyState>
       ) : (
         <>
-          <ul aria-label="Your locations" className="grid gap-5 md:grid-cols-2">
+          <ul aria-label="Your locations" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {venues.data.items.map((venue) => (
               <li key={venue.id}>
                 <LibraryCard venue={venue} />
