@@ -1,12 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useId, useState, type DragEvent, type ReactNode } from 'react'
-import { CalendarOff, CalendarPlus, GripVertical, MapPin, Users } from 'lucide-react'
+import { CalendarOff, CalendarPlus, GripVertical, MapPin, Printer, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { queryKeys } from '../api/queryKeys'
 import type { Schedule, ScheduledScene } from '../api/types'
 import { useSession } from '../auth/context'
 import { useCanEdit } from '../components/projectRole'
-import { ErrorAlert } from '../components/ui'
+import { Button, ErrorAlert } from '../components/ui'
 import { formatDay, shortDay } from '../lib/format'
 import { movedTo, nextDay, pagesLabel, pagesText, stripColour, stripKind, stripLabel } from '../lib/stripboard'
 
@@ -17,12 +17,15 @@ const OFF_BOARD = 'off'
  * The schedule as a production stripboard: a coloured strip per scene (white interior day, yellow exterior day, blue
  * interior night, green exterior night), the shoot days as day breaks. Strips are dragged to another day, a new day at
  * the end, or off the board; the "Move to" select on each strip does the same from the keyboard or on a phone.
+ * Printed, it is the one-line shooting schedule: the board alone, in its colours, without the controls.
  */
 export function Stripboard({ projectId, schedule }: { projectId: string; schedule: Schedule }) {
   const canEdit = useCanEdit()
   const { api } = useSession()
   const queryClient = useQueryClient()
   const [over, setOver] = useState<string | null>(null)
+  // Already loaded by the project page; only the printed heading needs it.
+  const project = useQuery({ queryKey: queryKeys.project(projectId), queryFn: () => api.projects.get(projectId) })
   const scenes = new Map([...schedule.days.flatMap((day) => day.scenes), ...schedule.unscheduled].map((scene) => [scene.id, scene]))
   const newDay = schedule.days.length > 0 ? nextDay(schedule.days[schedule.days.length - 1].date) : null
   const targets = [
@@ -84,16 +87,30 @@ export function Stripboard({ projectId, schedule }: { projectId: string; schedul
 
   return (
     <div className="space-y-3">
-      <Legend />
+      <div className="no-print flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-graphite">{summary(schedule)}</p>
+        <Button variant="secondary" onClick={() => window.print()}>
+          <Printer aria-hidden className="size-4" />
+          Print schedule
+        </Button>
+      </div>
       {canEdit && (
-        <p className="text-sm text-muted">Drag a strip to another day, or use its Move to list. A scene over several days keeps its length.</p>
+        <p className="no-print text-sm text-muted">Drag a strip to another day, or use its Move to list. A scene over several days keeps its length.</p>
       )}
-      <ErrorAlert error={move.error} />
+      <div className="no-print">
+        <ErrorAlert error={move.error} />
+      </div>
       {move.isPending && (
         <p role="status" className="sr-only">
           Moving {move.variables?.scene.title}
         </p>
       )}
+      <div className="print-sheet space-y-3 [print-color-adjust:exact]">
+        <header className="hidden space-y-1 border-b border-ink pb-2 print:block">
+          <h2 className="font-display text-2xl font-bold">Shooting schedule{project.data && `: ${project.data.title}`}</h2>
+          <p className="text-xs">{summary(schedule)}</p>
+        </header>
+        <Legend />
       <div className="overflow-hidden rounded-lg border border-line bg-paper">
         {schedule.days.map((day, i) => (
           <DayBlock key={day.date} id={`strip-day-${day.date}`} highlighted={over === day.date} zone={zone(day.date)}
@@ -104,19 +121,29 @@ export function Stripboard({ projectId, schedule }: { projectId: string; schedul
         {canEdit && newDay && (
           <div
             {...zone(newDay)}
-            className={`flex items-center gap-2 border-b border-dashed border-line px-4 py-3 text-sm text-muted transition-colors ${over === newDay ? 'bg-cue-wash text-cue-ink' : ''}`}
+            className={`no-print flex items-center gap-2 border-b border-dashed border-line px-4 py-3 text-sm text-muted transition-colors ${over === newDay ? 'bg-cue-wash text-cue-ink' : ''}`}
           >
             <CalendarPlus aria-hidden className="size-4" />
             Drop here for a new day, {formatDay(newDay)}
           </div>
         )}
         <DayBlock id="strip-day-unscheduled" highlighted={over === OFF_BOARD} zone={zone(OFF_BOARD)} title="Not scheduled"
-          detail={schedule.unscheduled.length > 0 ? count(schedule.unscheduled) : 'Drop a strip here to take its dates off'} muted>
+          detail={schedule.unscheduled.length > 0 ? count(schedule.unscheduled) : 'Drop a strip here to take its dates off'} muted
+          className={schedule.unscheduled.length > 0 ? '' : 'no-print'}>
           {schedule.unscheduled.map((scene) => strip(scene, OFF_BOARD))}
         </DayBlock>
       </div>
+      </div>
     </div>
   )
+}
+
+/** "3 shoot days · 4 2/8 pages · 1 scene not scheduled": the whole board in a line. */
+function summary(schedule: Schedule) {
+  const eighths = schedule.days.reduce((sum, day) => sum + day.scenes.reduce((s, scene) => s + scene.pageEighths, 0), 0)
+  const days = schedule.days.length === 1 ? '1 shoot day' : `${schedule.days.length} shoot days`
+  const waiting = schedule.unscheduled.length
+  return [days, pagesLabel(eighths), waiting > 0 && `${waiting === 1 ? '1 scene' : `${waiting} scenes`} not scheduled`].filter(Boolean).join(' · ')
 }
 
 /** "2 scenes · 1 3/8 pages": what a day of the board holds. */
@@ -132,6 +159,7 @@ function DayBlock({
   highlighted,
   zone,
   muted = false,
+  className = '',
   children,
 }: {
   id: string
@@ -140,11 +168,12 @@ function DayBlock({
   highlighted: boolean
   zone: object
   muted?: boolean
+  className?: string
   children: ReactNode
 }) {
   const Icon = muted ? CalendarOff : null
   return (
-    <section aria-labelledby={id} {...zone} className={`transition-colors ${highlighted ? 'bg-cue-wash ring-2 ring-cue ring-inset' : ''}`}>
+    <section aria-labelledby={id} {...zone} className={`transition-colors ${className} ${highlighted ? 'bg-cue-wash ring-2 ring-cue ring-inset' : ''}`}>
       <h3 id={id} className={`flex items-baseline gap-3 px-4 py-2 text-sm ${muted ? 'border-y border-line bg-tape text-muted' : 'bg-night text-white'}`}>
         {Icon && <Icon aria-hidden className="size-4 self-center" />}
         <span className="font-mono font-semibold tracking-wider uppercase">{title}</span>
@@ -190,7 +219,7 @@ function Strip({
       aria-busy={moving || undefined}
       className={`flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2 text-ink sm:flex-nowrap ${stripColour(kind)} ${dragging || moving ? 'opacity-50' : ''} ${canEdit ? 'cursor-grab active:cursor-grabbing' : ''}`}
     >
-      {canEdit && <GripVertical aria-hidden className="hidden size-4 shrink-0 text-subtle sm:block" />}
+      {canEdit && <GripVertical aria-hidden className="hidden size-4 shrink-0 text-subtle sm:block print:hidden" />}
       <span className="w-10 shrink-0 font-mono text-sm font-bold">{scene.sceneNumber ?? '–'}</span>
       <span className="w-12 shrink-0 font-mono text-xs text-graphite" title={pagesLabel(scene.pageEighths)}>
         {pagesText(scene.pageEighths)}
@@ -216,7 +245,7 @@ function Strip({
         </span>
       </span>
       {canEdit && (
-        <span className="flex shrink-0 items-center gap-2">
+        <span className="no-print flex shrink-0 items-center gap-2">
           <label htmlFor={selectId} className="text-xs text-muted">
             Move to<span className="sr-only"> for {scene.title}</span>
           </label>
@@ -256,7 +285,7 @@ function Legend() {
     <ul aria-label="Strip colours" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
       {items.map(([colour, text]) => (
         <li key={text} className="inline-flex items-center gap-1.5">
-          <span aria-hidden className={`size-3 rounded-sm ring-1 ring-line ${colour}`} />
+          <span aria-hidden className={`size-3 rounded-sm border border-line ${colour}`} />
           {text}
         </li>
       ))}

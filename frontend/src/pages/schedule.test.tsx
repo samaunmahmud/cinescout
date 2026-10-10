@@ -1,5 +1,5 @@
 import { createEvent, fireEvent, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Schedule } from '../api/types'
 import { fakeServer, json } from '../test/fakeServer'
 import { ada, logIn, pageOf, project, scene, schedule, scheduled } from '../test/fixtures'
@@ -232,6 +232,22 @@ describe('the stripboard', () => {
 
     expect(await within(screen.getByRole('region', { name: /^Day 2/ })).findByText('INT. CAR - DAY')).toBeInTheDocument()
     expect(requests.find((r) => r.method === 'PUT')).toMatchObject({ path: '/api/scenes/s4/shoot-dates', body: { shootDateStart: '2026-10-20' } })
+  })
+
+  it('sums up the board and prints it as the shooting schedule', async () => {
+    board()
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {})
+    renderApp('/projects/p1?tab=schedule')
+    const user = await logIn()
+    await user.click(await screen.findByRole('button', { name: 'Stripboard' }))
+
+    expect(screen.getAllByText('2 shoot days · 1 1/8 pages · 1 scene not scheduled')).toHaveLength(2)
+    expect(screen.getByRole('heading', { name: 'Shooting schedule: Night Shift' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /^Shooting schedule/ }).closest('.print-sheet')).not.toBeNull()
+    expect(screen.getByLabelText('Move to for INT. DINER - NIGHT').closest('.no-print')).not.toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Print schedule' }))
+    expect(print).toHaveBeenCalled()
+    print.mockRestore()
   })
 
   it('is read only for a viewer', async () => {

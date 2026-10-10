@@ -208,7 +208,35 @@ h1, h2, h3 {
     transform: none;
   }
   .no-print { display: none !important; }
+  /* What holds no sheet takes no room either, so the page's own height adds no blank sheets of paper. */
+  body *:not(.print-sheet, .print-sheet *, :has(.print-sheet)) { display: none !important; }
+  *:has(.print-sheet) { min-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+  /* A finished animation can leave a transform behind, which would make its element the sheet's frame. */
+  *, *::before, *::after { animation: none !important; }
   .print-sheet tr, .print-sheet section { break-inside: avoid; }
+  /* Paper is white whatever the screen's theme: a sheet takes the light colours back. */
+  .print-sheet {
+    color-scheme: light;
+    color: var(--color-ink);
+    --color-ink: #0e1116;
+    --color-ink-soft: #1a1f27;
+    --color-ground: #f4f5f7;
+    --color-paper: #ffffff;
+    --color-line: #dfe2e7;
+    --color-line-soft: #eceef1;
+    --color-graphite: #2a2f37;
+    --color-muted: #5b6270;
+    --color-subtle: #6b7280;
+    --color-tape: #f1f2f4;
+    --color-cue-ink: #c2381d;
+    --color-go-ink: #0f6b53;
+    --color-stop-ink: #b42318;
+    --color-strip-int-day: #ffffff;
+    --color-strip-ext-day: #fff2b3;
+    --color-strip-int-night: #d7e4ff;
+    --color-strip-ext-night: #d2f0d8;
+    --color-strip-unknown: #eceef1;
+  }
   @page { margin: 14mm; }
 }
 
