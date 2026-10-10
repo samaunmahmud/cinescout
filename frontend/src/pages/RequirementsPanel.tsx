@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { queryKeys } from '../api/queryKeys'
 import type { AcousticSensitivity, Scene, SceneRequirements } from '../api/types'
 import { useSession } from '../auth/context'
-import { Sparkles } from 'lucide-react'
+import { Lightbulb, MapPin, Mic, Palette, Sparkles, SunMedium, Users, type LucideIcon } from 'lucide-react'
 import { Eyebrow } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { useCanEdit } from '../components/projectRole'
@@ -71,26 +71,34 @@ export function RequirementsPanel({ scene }: { scene: Scene }) {
 }
 
 function RequirementsList({ requirements: r }: { requirements: SceneRequirements }) {
-  const rows: [string, ReactNode][] = [
-    ['Setting', r.settingType],
-    ['Time of day', r.timeOfDay],
-    ['Visual mood', r.visualMood],
-    ['Lighting', r.lightingNeeds],
-    ['Sound', r.acousticSensitivity && sensitivity[r.acousticSensitivity]],
-    ['Cast and crew', r.estimatedCastAndCrewSize != null && `About ${r.estimatedCastAndCrewSize} people`],
+  const rows: [string, LucideIcon, ReactNode][] = [
+    ['Setting', MapPin, r.settingType],
+    ['Time of day', SunMedium, r.timeOfDay],
+    ['Visual mood', Palette, r.visualMood],
+    ['Lighting', Lightbulb, r.lightingNeeds],
+    ['Sound', Mic, r.acousticSensitivity && sensitivity[r.acousticSensitivity]],
+    ['Cast and crew', Users, r.estimatedCastAndCrewSize != null && `About ${r.estimatedCastAndCrewSize} people`],
   ]
-  // Each requirement on its own strip of tape, as a scout would label the board; the ones the venue hunt turns on
-  // (the light, the sound) in the board's colours.
-  const tapes: Record<string, string> = { Lighting: 'bg-cue', Sound: 'bg-go' }
+  // A spec sheet: what the venue hunt turns on, one tile each; what the script does not say stays quiet.
   return (
-    <dl className="flex flex-wrap gap-x-3 gap-y-4 pt-1">
-      {rows.map(([label, value]) => (
+    <dl className="grid gap-3 pt-1 sm:grid-cols-2 xl:grid-cols-3">
+      {rows.map(([label, Icon, value]) => (
         <div
           key={label}
-          className={`tape flex flex-col px-4 pt-1.5 pb-1 ${tapes[label] ?? ''}`}
+          className={`flex items-start gap-3 rounded-lg px-3.5 py-3 ${value ? 'bg-ground ring-1 ring-line' : 'border border-dashed border-line'}`}
         >
-          <dt className="font-script text-[11px] font-bold tracking-[0.1em] uppercase">{label}</dt>
-          <dd className="font-marker text-[17px] leading-snug">{value || <span className="opacity-60">Not specified</span>}</dd>
+          <span
+            aria-hidden
+            className={`grid size-8 shrink-0 place-items-center rounded-md ${value ? 'bg-paper text-cue-ink ring-1 ring-line' : 'text-subtle'}`}
+          >
+            <Icon className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <dt className="text-[11px] font-semibold tracking-wider text-muted uppercase">{label}</dt>
+            <dd className={`text-sm leading-snug break-words ${value ? 'font-semibold text-ink first-letter:uppercase' : 'text-subtle'}`}>
+              {value || 'Not in the script'}
+            </dd>
+          </div>
         </div>
       ))}
     </dl>

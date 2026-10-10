@@ -13,6 +13,7 @@ import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { formatShootWindow, sceneLabel } from '../lib/format'
 import { CoverSetsSection } from './CoverSetsSection'
 import { LocationsSection } from './LocationsSection'
+import { SceneGlance } from './SceneGlance'
 import { ShotListSection } from './ShotListSection'
 import { NotFoundPage } from './NotFoundPage'
 import { RequirementsPanel } from './RequirementsPanel'
@@ -128,10 +129,10 @@ function SceneDetails({ scene }: { scene: Scene }) {
             </div>
             {canEdit && (
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" className="!border-white/20 !bg-white/10 !text-white backdrop-blur hover:!bg-white/20" onClick={() => setEditing(true)}>
+                <Button variant="secondary" className="!border-white/15 !bg-black/50 !text-white backdrop-blur-md hover:!bg-black/70" onClick={() => setEditing(true)}>
                   Edit
                 </Button>
-                <Button variant="ghost" className="!text-fog hover:!bg-white/10 hover:!text-white" onClick={() => setConfirmingDelete(true)}>
+                <Button variant="ghost" className="!bg-black/30 !text-fog backdrop-blur-md hover:!bg-black/60 hover:!text-white" onClick={() => setConfirmingDelete(true)}>
                   Delete
                 </Button>
               </div>
@@ -182,16 +183,19 @@ function SceneDetails({ scene }: { scene: Scene }) {
             <CoverSetsSection scene={scene} />
             <ShotListSection scene={scene} />
           </div>
-          <section aria-labelledby="script-heading" className="space-y-3 lg:sticky lg:top-24">
+          <aside aria-label="The scene at a glance" className="order-first space-y-6 lg:sticky lg:top-24 lg:order-none">
+          <SceneGlance scene={scene} venues={venues.data} />
+          <section aria-labelledby="script-heading" className="space-y-3">
             <Eyebrow icon={ScrollText}>Screenplay</Eyebrow>
             <h2 id="script-heading" className="font-display text-2xl leading-tight font-semibold">
               Script
             </h2>
             {/* A page of the script, set as a screenplay is: monospaced, on white. */}
-            <pre className="max-h-[70vh] overflow-auto rounded-xl border border-line bg-paper px-6 py-7 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[var(--shadow-card)]">
+            <pre className="max-h-48 overflow-auto lg:max-h-[50vh] rounded-xl border border-line bg-paper px-6 py-7 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink shadow-[var(--shadow-card)]">
               {scene.sourceText}
             </pre>
           </section>
+          </aside>
         </div>
       )}
     </div>

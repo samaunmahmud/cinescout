@@ -14,6 +14,7 @@ import { linkButton } from '../components/buttonStyles'
 import { EmptyState, Section, Slate } from '../components/surfaces'
 import { Button, ErrorAlert, Spinner } from '../components/ui'
 import { batchParseSummary, formatShootWindow, sceneLabel } from '../lib/format'
+import { stripColour, stripKind, stripLabel } from '../lib/stripboard'
 import { useCanEdit } from '../components/projectRole'
 
 /** A project's scenes in script order, each as a slate. */
@@ -181,6 +182,8 @@ function SceneRow({ scene, projectId }: { scene: Scene; projectId: string }) {
     },
   })
   const label = sceneLabel(scene)
+  const kind = stripKind({ title: scene.title, settingType: scene.requirements?.settingType ?? null, timeOfDay: scene.requirements?.timeOfDay ?? null })
+  const strip = stripLabel(kind)
 
   return (
     <div className="space-y-2">
@@ -191,8 +194,14 @@ function SceneRow({ scene, projectId }: { scene: Scene; projectId: string }) {
         >
           <Slate number={scene.sceneNumber} />
           <span className="min-w-0 flex-1 space-y-1">
-            <span className="line-clamp-2 text-lg leading-snug font-semibold text-ink group-hover:text-cue-ink sm:line-clamp-1">{label}</span>
+            <span className="line-clamp-2 text-lg leading-snug font-semibold text-ink group-hover:text-cue-ink sm:line-clamp-1">
+              {/* The slate shows the number; a screen reader hears it with the title. */}
+              {scene.sceneNumber != null && <span className="sr-only">Scene {scene.sceneNumber}:</span>} {scene.title}
+            </span>
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+              {strip && (
+                <span className={`rounded border border-line px-1.5 py-px font-mono text-[11px] font-semibold text-ink ${stripColour(kind)}`}>{strip}</span>
+              )}
               {scene.requirements?.settingType && <span className="text-graphite">{scene.requirements.settingType}</span>}
               <span className="inline-flex items-center gap-1">
                 <CalendarDays aria-hidden className="size-3.5" />
@@ -200,10 +209,12 @@ function SceneRow({ scene, projectId }: { scene: Scene; projectId: string }) {
               </span>
             </span>
           </span>
-          {/* On a phone the badge sits under the title instead of squeezing it. */}
-          <span className="col-start-2 sm:col-auto">
-            <ParseStatusBadge status={scene.parseStatus} />
-          </span>
+          {/* Only a scene that still needs the AI's read says so; on a phone, under the title. */}
+          {scene.parseStatus !== 'PARSED' && (
+            <span className="col-start-2 sm:col-auto">
+              <ParseStatusBadge status={scene.parseStatus} />
+            </span>
+          )}
           <ChevronRight aria-hidden className="hidden size-5 text-subtle transition group-hover:translate-x-0.5 group-hover:text-cue-ink sm:block" />
         </Link>
         <ActionMenu
