@@ -47,7 +47,7 @@ describe('my locations', () => {
 
     const list = await screen.findByRole('list', { name: 'Your locations' })
     expect(within(list).getAllByRole('heading').map((h) => h.textContent)).toEqual(['Neon Bar', 'Moonlight Diner'])
-    expect(screen.getByRole('link', { name: 'My locations' })).toHaveAttribute('aria-current', 'page')
+    expect(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'My locations' })).toHaveAttribute('aria-current', 'page')
 
     await user.click(screen.getByRole('button', { name: /^night/ }))
     await vi.waitFor(() => expect(within(screen.getByRole('list', { name: 'Your locations' })).getAllByRole('heading')).toHaveLength(1))

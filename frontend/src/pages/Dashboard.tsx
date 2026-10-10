@@ -51,7 +51,7 @@ export function DashboardHero({ greeting, actions }: { greeting: string; actions
       </div>
       <dl className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map(({ label, value, icon: Icon, alert }) => (
-          <div key={label} className={`rounded-2xl px-4 py-4 ring-1 backdrop-blur ${alert ? 'bg-brand/25 ring-cue/40' : 'bg-white/[0.07] ring-white/12'}`}>
+          <div key={label} className={`rounded-2xl px-4 py-4 max-sm:last:odd:col-span-2 ring-1 backdrop-blur ${alert ? 'bg-brand/25 ring-cue/40' : 'bg-white/[0.07] ring-white/12'}`}>
             <dt className="flex items-center gap-1.5 text-xs font-medium text-fog">
               <Icon aria-hidden className="size-3.5 text-cue" />
               {label}

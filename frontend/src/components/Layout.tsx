@@ -1,4 +1,4 @@
-import { BookMarked, Clapperboard, LogOut, Search } from 'lucide-react'
+import { BookMarked, Clapperboard, LogOut, Search, UserRound, type LucideIcon } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useAuth, useSession } from '../auth/context'
@@ -67,13 +67,13 @@ export function Layout() {
               </NavLink>
             </nav>
           </div>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-1 text-sm sm:gap-2">
             <button
               type="button"
               onClick={openSearch}
               aria-label="Search (Ctrl+K)"
               aria-keyshortcuts="Control+K Meta+K"
-              className="flex h-10 items-center gap-2.5 rounded-[9px] border border-white/12 bg-white/6 px-3 text-fog transition hover:border-white/25 hover:text-white focus-visible:outline-2 focus-visible:outline-cue lg:min-w-60"
+              className="hidden h-10 items-center gap-2.5 rounded-[9px] border border-white/12 bg-white/6 px-3 text-fog transition hover:border-white/25 hover:text-white focus-visible:outline-2 focus-visible:outline-cue sm:flex lg:min-w-60"
             >
               <Search aria-hidden className="size-4" />
               <span className="hidden lg:inline">Search productions, venues</span>
@@ -92,7 +92,7 @@ export function Layout() {
             <button
               type="button"
               onClick={logOut}
-              className="inline-flex h-10 items-center gap-2 rounded-[9px] px-3 font-semibold text-fog transition hover:bg-white/8 hover:text-white focus-visible:outline-2 focus-visible:outline-cue"
+              className="inline-flex h-10 items-center gap-2 rounded-[9px] px-2.5 font-semibold text-fog sm:px-3 transition hover:bg-white/8 hover:text-white focus-visible:outline-2 focus-visible:outline-cue"
             >
               <LogOut aria-hidden className="size-4" />
               <span className="sr-only sm:not-sr-only">Log out</span>
@@ -104,13 +104,39 @@ export function Layout() {
       <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 focus:outline-none">
         <Outlet />
       </main>
+      <PhoneTabs onSearch={openSearch} />
       {/* The end credits. */}
-      <footer className="mt-10 border-t border-white/10 bg-night py-8">
+      <footer className="mt-10 border-t border-white/10 bg-night pt-8 pb-24 sm:pb-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 text-sm text-fog">
           <Logo onDark />
           <p>Find the place your scene was written for.</p>
         </div>
       </footer>
     </div>
+  )
+}
+
+/** On a phone, the main places sit under the thumb: a tab bar along the bottom, as a phone app has. */
+function PhoneTabs({ onSearch }: { onSearch: () => void }) {
+  const item = 'flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-semibold transition focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-cue'
+  const tab = (to: string, label: string, Icon: LucideIcon) => (
+    <NavLink to={to} className={({ isActive }) => `${item} ${isActive ? 'text-cue' : 'text-fog hover:text-white'}`}>
+      <Icon aria-hidden className="size-5" />
+      {label}
+    </NavLink>
+  )
+  return (
+    <nav
+      aria-label="Main on phones"
+      className="no-print fixed inset-x-0 bottom-0 z-30 flex border-t border-white/10 bg-night/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
+    >
+      {tab('/projects', 'Productions', Clapperboard)}
+      {tab('/library', 'My locations', BookMarked)}
+      <button type="button" onClick={onSearch} className={`${item} text-fog hover:text-white`}>
+        <Search aria-hidden className="size-5" />
+        Search
+      </button>
+      {tab('/account', 'Account', UserRound)}
+    </nav>
   )
 }

@@ -79,7 +79,7 @@ export function RecceSection({ location }: { location: Location }) {
           </fieldset>
         ))}
         {canEdit && (
-          <div className="sticky bottom-3 flex items-center justify-end gap-3 rounded-lg border border-line bg-paper px-4 py-3 shadow-[var(--shadow-card)]">
+          <div className="sticky bottom-20 flex items-center justify-end sm:bottom-3 gap-3 rounded-lg border border-line bg-paper px-4 py-3 shadow-[var(--shadow-card)]">
             {saved && !dirty && (
               <span role="status" className="text-sm font-semibold text-go-ink">
                 Saved.
