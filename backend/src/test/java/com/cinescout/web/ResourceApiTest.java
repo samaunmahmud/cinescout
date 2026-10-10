@@ -379,6 +379,7 @@ class ResourceApiTest extends ApiTest {
         assertThat(scene.path("characters").toString()).isEqualTo("[\"MARA\",\"JONES\"]");
         JsonNode schedule = json(ada.client().get().uri("/api/projects/" + project + "/schedule").exchange().expectStatus().isOk());
         assertThat(schedule.path("days").get(0).path("scenes").get(0).path("characters").toString()).isEqualTo("[\"MARA\",\"JONES\"]");
+        assertThat(schedule.path("days").get(0).path("scenes").get(0).path("pageEighths").asInt()).isEqualTo(1);
     }
 
     @Test

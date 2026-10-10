@@ -261,6 +261,8 @@ export interface ScheduledScene {
   timeOfDay: string | null
   /** The speaking parts, from the script. */
   characters: string[]
+  /** How long the scene runs on the page, in eighths (at least 1). */
+  pageEighths: number
   /** The scene's confirmed locations; empty while none is confirmed. */
   venues: ScheduledVenue[]
   /** How many candidate locations the scene has in all. */

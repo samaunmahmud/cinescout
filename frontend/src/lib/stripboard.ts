@@ -68,6 +68,18 @@ export function movedTo(scene: ScheduledScene, day: string | null) {
   return { shootDateStart: day, shootDateEnd: length === null ? null : addDays(day, Math.max(length, 0)), ...times }
 }
 
+/** A page count as a stripboard writes it, in eighths left unreduced: "3/8", "1", "1 4/8". */
+export function pagesText(eighths: number): string {
+  const whole = Math.floor(eighths / 8)
+  const rest = eighths % 8
+  return [whole > 0 && String(whole), rest > 0 && `${rest}/8`].filter(Boolean).join(' ') || '0'
+}
+
+/** "3/8 page", "1 page", "2 1/8 pages". */
+export function pagesLabel(eighths: number): string {
+  return `${pagesText(eighths)} ${eighths > 8 ? 'pages' : 'page'}`
+}
+
 /** The day after the given ISO date, for a new day at the end of the board. */
 export function nextDay(isoDate: string): string {
   return addDays(isoDate, 1)

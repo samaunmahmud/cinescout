@@ -8,7 +8,7 @@ import { useSession } from '../auth/context'
 import { useCanEdit } from '../components/projectRole'
 import { ErrorAlert } from '../components/ui'
 import { formatDay, shortDay } from '../lib/format'
-import { movedTo, nextDay, stripColour, stripKind, stripLabel } from '../lib/stripboard'
+import { movedTo, nextDay, pagesLabel, pagesText, stripColour, stripKind, stripLabel } from '../lib/stripboard'
 
 const SCENE_TYPE = 'application/x-cinescout-scene'
 const OFF_BOARD = 'off'
@@ -97,7 +97,7 @@ export function Stripboard({ projectId, schedule }: { projectId: string; schedul
       <div className="overflow-hidden rounded-lg border border-line bg-paper">
         {schedule.days.map((day, i) => (
           <DayBlock key={day.date} id={`strip-day-${day.date}`} highlighted={over === day.date} zone={zone(day.date)}
-            title={`Day ${i + 1}`} detail={`${formatDay(day.date)} · ${count(day.scenes.length)}`}>
+            title={`Day ${i + 1}`} detail={`${formatDay(day.date)} · ${count(day.scenes)}`}>
             {day.scenes.map((scene) => strip(scene, day.date))}
           </DayBlock>
         ))}
@@ -111,7 +111,7 @@ export function Stripboard({ projectId, schedule }: { projectId: string; schedul
           </div>
         )}
         <DayBlock id="strip-day-unscheduled" highlighted={over === OFF_BOARD} zone={zone(OFF_BOARD)} title="Not scheduled"
-          detail={schedule.unscheduled.length > 0 ? count(schedule.unscheduled.length) : 'Drop a strip here to take its dates off'} muted>
+          detail={schedule.unscheduled.length > 0 ? count(schedule.unscheduled) : 'Drop a strip here to take its dates off'} muted>
           {schedule.unscheduled.map((scene) => strip(scene, OFF_BOARD))}
         </DayBlock>
       </div>
@@ -119,8 +119,10 @@ export function Stripboard({ projectId, schedule }: { projectId: string; schedul
   )
 }
 
-function count(scenes: number) {
-  return scenes === 1 ? '1 scene' : `${scenes} scenes`
+/** "2 scenes · 1 3/8 pages": what a day of the board holds. */
+function count(scenes: ScheduledScene[]) {
+  const eighths = scenes.reduce((sum, scene) => sum + scene.pageEighths, 0)
+  return `${scenes.length === 1 ? '1 scene' : `${scenes.length} scenes`} · ${pagesLabel(eighths)}`
 }
 
 function DayBlock({
@@ -190,6 +192,10 @@ function Strip({
     >
       {canEdit && <GripVertical aria-hidden className="hidden size-4 shrink-0 text-subtle sm:block" />}
       <span className="w-10 shrink-0 font-mono text-sm font-bold">{scene.sceneNumber ?? '–'}</span>
+      <span className="w-12 shrink-0 font-mono text-xs text-graphite" title={pagesLabel(scene.pageEighths)}>
+        {pagesText(scene.pageEighths)}
+        <span className="sr-only"> {scene.pageEighths > 8 ? 'pages' : 'page'}</span>
+      </span>
       <span className="w-24 shrink-0 font-mono text-xs font-semibold tracking-wide text-graphite uppercase">{label ?? 'Not read yet'}</span>
       <span className="min-w-0 flex-1 basis-48">
         <Link to={`/scenes/${scene.id}`} className="block truncate font-semibold hover:underline" draggable={false}>

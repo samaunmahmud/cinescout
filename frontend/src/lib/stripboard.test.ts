@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { scheduled } from '../test/fixtures'
-import { movedTo, nextDay, stripColour, stripKind, stripLabel } from './stripboard'
+import { movedTo, nextDay, pagesLabel, pagesText, stripColour, stripKind, stripLabel } from './stripboard'
 
 const kind = (title: string, settingType: string | null = null, timeOfDay: string | null = null) => stripKind({ title, settingType, timeOfDay })
 
@@ -51,5 +51,17 @@ describe('movedTo', () => {
 
   it('counts on across months', () => {
     expect(nextDay('2026-10-31')).toBe('2026-11-01')
+  })
+})
+
+describe('page counts', () => {
+  it('are written in eighths, left unreduced', () => {
+    expect(pagesText(3)).toBe('3/8')
+    expect(pagesText(4)).toBe('4/8')
+    expect(pagesText(8)).toBe('1')
+    expect(pagesText(17)).toBe('2 1/8')
+    expect(pagesLabel(3)).toBe('3/8 page')
+    expect(pagesLabel(8)).toBe('1 page')
+    expect(pagesLabel(12)).toBe('1 4/8 pages')
   })
 })

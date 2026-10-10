@@ -7,6 +7,7 @@ import com.cinescout.domain.SceneCover;
 import com.cinescout.domain.VenueAvailability;
 import com.cinescout.domain.Scene;
 import com.cinescout.script.ScriptCharacters;
+import com.cinescout.script.ScriptPages;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
@@ -62,6 +63,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
      * @param shootDateStart null when the scene has only a last day
      * @param shootDateEnd   null when the scene has only a first day
      * @param settingType    the kind of place the scene needs, once it has been analysed
+     * @param pageEighths    how long the scene runs on the page, in eighths ({@link ScriptPages})
      * @param venues         the scene's confirmed locations; empty while none is confirmed
      * @param candidates     how many candidate locations the scene has in all
      * @param covers         the scene's backup venues, in the order they were added; a cover since confirmed is left out
@@ -77,6 +79,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
             String settingType,
             String timeOfDay,
             List<String> characters,
+            int pageEighths,
             List<Venue> venues,
             long candidates,
             List<Cover> covers
@@ -98,7 +101,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
                     scene.getShootDateStart(), scene.getShootDateEnd(), scene.getCallTime(), scene.getWrapTime(),
                     requirements == null ? null : requirements.settingType(),
                     requirements == null ? null : requirements.timeOfDay(),
-                    ScriptCharacters.in(scene.getSourceText()),
+                    ScriptCharacters.in(scene.getSourceText()), ScriptPages.eighths(scene.getSourceText()),
                     confirmed.stream().map(location -> Venue.from(location, dayOf(scene), holds.get(location.getId()))).toList(), candidates,
                     covers.stream().filter(cover -> cover.getLocation().getStatus() != LocationStatus.CONFIRMED).map(Cover::from).toList());
         }
@@ -109,7 +112,7 @@ public record ScheduleResponse(List<ShootDay> days, List<ScheduledScene> unsched
 
         ScheduledScene withoutBookings() {
             return new ScheduledScene(id, sceneNumber, title, shootDateStart, shootDateEnd, callTime, wrapTime, settingType, timeOfDay,
-                    characters, venues.stream().map(Venue::withoutBookings).toList(), candidates, covers);
+                    characters, pageEighths, venues.stream().map(Venue::withoutBookings).toList(), candidates, covers);
         }
     }
 

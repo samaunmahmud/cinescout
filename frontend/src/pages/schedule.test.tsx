@@ -182,6 +182,8 @@ describe('the stripboard', () => {
     expect(diner).toHaveTextContent('INT. NIGHT')
     expect(diner).toHaveTextContent('Tom’s Diner')
     expect(diner).toHaveTextContent('2 cast')
+    expect(diner).toHaveTextContent('3/8 page')
+    expect(screen.getByRole('heading', { name: /^Day 1/ })).toHaveTextContent('2 scenes · 6/8 page')
     expect(within(diner).getByRole('link', { name: 'INT. DINER - NIGHT' })).toHaveAttribute('href', '/scenes/s1')
     expect(rooftop).toHaveClass('bg-strip-ext-day')
     expect(rooftop).toHaveTextContent('3 days')
