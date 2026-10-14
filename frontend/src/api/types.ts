@@ -185,6 +185,19 @@ export interface PermitOffice {
 }
 
 /** One version of a venue's location release (a PDF template). */
+/** What the letter to a venue's neighbours says that CineScout does not know; null leaves it worded round. */
+export interface ResidentsLetterRequest {
+  productionCompany: string | null
+  /** Who neighbours can call; the user's own name when null. */
+  contactName: string | null
+  contactPhone: string | null
+  contactEmail: string | null
+  /** How the production will park; a plain promise to park legally when null. */
+  parking: string | null
+  /** Anything else neighbours should know. */
+  note: string | null
+}
+
 export interface Agreement {
   id: string
   locationId: string

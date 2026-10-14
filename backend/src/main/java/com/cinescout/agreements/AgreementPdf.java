@@ -16,7 +16,6 @@ import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -253,65 +252,16 @@ public final class AgreementPdf {
 
     // --- text -----------------------------------------------------------------------------------
 
-    /** Words laid into lines no wider than {@code max}; a word longer than a line is cut. Never empty. */
-    List<String> wrap(String text, PDFont font, float size, float max) throws IOException {
-        List<String> lines = new ArrayList<>();
-        for (String paragraph : safe(text, font).split("\n")) {
-            StringBuilder line = new StringBuilder();
-            for (String word : paragraph.trim().split("\\s+")) {
-                while (width(word, font, size) > max) {
-                    int cut = word.length() - 1;
-                    while (cut > 1 && width(word.substring(0, cut), font, size) > max) {
-                        cut--;
-                    }
-                    if (!line.isEmpty()) {
-                        lines.add(line.toString());
-                        line.setLength(0);
-                    }
-                    lines.add(word.substring(0, cut));
-                    word = word.substring(cut);
-                }
-                String candidate = line.isEmpty() ? word : line + " " + word;
-                if (!line.isEmpty() && width(candidate, font, size) > max) {
-                    lines.add(line.toString());
-                    line.setLength(0);
-                    line.append(word);
-                } else {
-                    line.setLength(0);
-                    line.append(candidate);
-                }
-            }
-            lines.add(line.toString());
-        }
-        return lines;
+    private List<String> wrap(String text, PDFont font, float size, float max) throws IOException {
+        return PdfText.wrap(text, font, size, max);
     }
 
     private static float width(String text, PDFont font, float size) throws IOException {
-        return font.getStringWidth(text) / 1000 * size;
+        return PdfText.width(text, font, size);
     }
 
-    /** The text with what the standard fonts cannot show replaced by "?", and tabs and returns by spaces. */
-    String safe(String text, PDFont font) {
-        if (text == null) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder(text.length());
-        text.codePoints().forEach(point -> {
-            if (point == '\n') {
-                out.append('\n');
-            } else if (Character.isWhitespace(point) || Character.isISOControl(point)) {
-                out.append(' ');
-            } else {
-                String character = new String(Character.toChars(point));
-                try {
-                    font.encode(character);
-                    out.append(character);
-                } catch (IOException | IllegalArgumentException e) {
-                    out.append('?');
-                }
-            }
-        });
-        return out.toString();
+    private String safe(String text, PDFont font) {
+        return PdfText.safe(text, font);
     }
 
     public static String dates(LocalDate start, LocalDate end) {

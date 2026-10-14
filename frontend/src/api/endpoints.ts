@@ -58,6 +58,7 @@ import type {
   PublicCallSheet,
   PublicShortlist,
   RecceAnswers,
+  ResidentsLetterRequest,
   RegisterRequest,
   Scene,
   SearchResults,
@@ -355,6 +356,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The PDF, to save. */
       download: (id: string) => guarded(() => download(`/api/agreements/${encodeURIComponent(id)}/file`, 'application/pdf')),
       remove: (id: string) => call<void>(`/api/agreements/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      /** The letter to the venue's neighbours, as a PDF to save; made on request, never stored. */
+      residentsLetter: (locationId: string, body: ResidentsLetterRequest) =>
+        guarded(() => download(`/api/locations/${encodeURIComponent(locationId)}/residents-letter`, 'application/pdf', { method: 'POST', body })),
     },
     shots: {
       list: (sceneId: string) => call<Shot[]>(`/api/scenes/${encodeURIComponent(sceneId)}/shots`),

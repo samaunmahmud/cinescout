@@ -34,6 +34,7 @@ import { NotFoundPage } from './NotFoundPage'
 import { OutreachSection } from './OutreachSection'
 import { PermitSection } from './PermitSection'
 import { PhotosSection } from './PhotosSection'
+import { ResidentsLetterSection } from './ResidentsLetterSection'
 import { RecceSection } from './RecceSection'
 import { VideosSection } from './VideosSection'
 import { usePageTitle } from '../lib/usePageTitle'
@@ -237,6 +238,7 @@ function LocationDetails({ location }: { location: Location }) {
           <div className="space-y-10">
             <OutreachSection location={location} />
             <AgreementsSection location={location} />
+            <ResidentsLetterSection location={location} />
           </div>
         )}
       </Tabs>
