@@ -359,6 +359,9 @@ export function createApi(onUnauthorized: () => void = () => {}) {
       /** The letter to the venue's neighbours, as a PDF to save; made on request, never stored. */
       residentsLetter: (locationId: string, body: ResidentsLetterRequest) =>
         guarded(() => download(`/api/locations/${encodeURIComponent(locationId)}/residents-letter`, 'application/pdf', { method: 'POST', body })),
+      /** A draft risk assessment from the scene, the recce and the cached logistics, as a PDF to save; never stored. */
+      riskAssessment: (locationId: string) =>
+        guarded(() => download(`/api/locations/${encodeURIComponent(locationId)}/risk-assessment`, 'application/pdf')),
     },
     shots: {
       list: (sceneId: string) => call<Shot[]>(`/api/scenes/${encodeURIComponent(sceneId)}/shots`),

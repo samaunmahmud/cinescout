@@ -77,4 +77,33 @@ describe('the tech recce', () => {
     expect(within(toilets).getByText('Yes')).toBeInTheDocument()
     expect(within(toilets).getByText('Not checked')).toBeInTheDocument()
   })
+
+  it('downloads a draft risk assessment from the saved answers, for viewers too', async () => {
+    server('VIEWER', answered, {
+      'GET /api/locations/l1/risk-assessment': () =>
+        new Response('%PDF-1.4', { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="risk-assessment-toms-diner.pdf"' } }),
+    })
+    const saved: string[] = []
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:pdf'), revokeObjectURL: vi.fn() }))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      saved.push(this.download)
+    })
+    renderApp('/locations/l1?tab=recce')
+    const user = await logIn()
+
+    await user.click(await screen.findByRole('button', { name: 'Risk assessment (PDF)' }))
+
+    await vi.waitFor(() => expect(saved).toEqual(['risk-assessment-toms-diner.pdf']))
+    click.mockRestore()
+  })
+
+  it('waits for unsaved answers before writing the risk assessment', async () => {
+    server('EDITOR', answered)
+    renderApp('/locations/l1?tab=recce')
+    const user = await logIn()
+
+    await user.type(await screen.findByLabelText('Ceiling height (m)'), '3.4')
+
+    expect(screen.getByRole('button', { name: 'Risk assessment (PDF)' })).toBeDisabled()
+  })
 })

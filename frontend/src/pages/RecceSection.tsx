@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { ClipboardCheck } from 'lucide-react'
+import { ClipboardCheck, ShieldAlert } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { fieldErrors } from '../api/errors'
 import type { Location } from '../api/types'
@@ -9,6 +9,7 @@ import { useCanEdit } from '../components/projectRole'
 import { Section } from '../components/surfaces'
 import { Button, ErrorAlert } from '../components/ui'
 import { formatDate } from '../lib/format'
+import { saveFile } from '../lib/saveFile'
 import { changedAnswers, recceAnswerText, recceGroups, type RecceQuestion } from '../lib/recce'
 
 type Draft = Record<string, string | number | boolean | null>
@@ -37,6 +38,10 @@ export function RecceSection({ location }: { location: Location }) {
     },
   })
   const errors = fieldErrors(save.error)
+  const risk = useMutation({
+    mutationFn: () => api.agreements.riskAssessment(location.id),
+    onSuccess: (file) => saveFile(file.blob, file.filename ?? 'risk-assessment.pdf'),
+  })
 
   function set(name: string, value: string | number | boolean | null) {
     setSaved(false)
@@ -56,8 +61,21 @@ export function RecceSection({ location }: { location: Location }) {
       eyebrow="On the visit"
       icon={ClipboardCheck}
       description={answered > 0 ? `${answered} of ${recceGroups.reduce((n, g) => n + g.questions.length, 0)} answered` : 'Nothing checked yet. Every question is optional.'}
+      actions={
+        <Button
+          variant="secondary"
+          busy={risk.isPending}
+          disabled={dirty}
+          title={dirty ? 'Save the recce first: the draft is written from saved answers' : 'A draft risk assessment from the scene, these answers and the logistics'}
+          onClick={() => risk.mutate()}
+        >
+          {!risk.isPending && <ShieldAlert aria-hidden className="size-4" />}
+          Risk assessment (PDF)
+        </Button>
+      }
     >
       <form onSubmit={submit} className="space-y-6" noValidate>
+        <ErrorAlert error={risk.error} />
         <ErrorAlert error={Object.keys(errors).length > 0 ? null : save.error} />
         {recceGroups.map((group) => (
           <fieldset key={group.title} className="board-card space-y-4 rounded-lg bg-paper p-4">

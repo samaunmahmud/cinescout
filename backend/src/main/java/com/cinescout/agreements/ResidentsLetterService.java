@@ -39,14 +39,11 @@ public class ResidentsLetterService {
         this.db = db;
     }
 
-    public Mono<LetterFile> letter(UUID userId, UUID locationId, ResidentsLetterRequest request) {
+    public Mono<PdfFile> letter(UUID userId, UUID locationId, ResidentsLetterRequest request) {
         ResidentsLetterRequest given = request == null ? new ResidentsLetterRequest(null, null, null, null, null, null) : request;
         return db.call(() -> facts(userId, locationId, given))
-                .flatMap(facts -> Mono.fromCallable(() -> new LetterFile(filename(facts.venueName()), ResidentsLetterPdf.write(facts)))
+                .flatMap(facts -> Mono.fromCallable(() -> new PdfFile(filename(facts.venueName()), ResidentsLetterPdf.write(facts)))
                         .subscribeOn(Schedulers.boundedElastic()));
-    }
-
-    public record LetterFile(String filename, byte[] content) {
     }
 
     private ResidentsLetterFacts facts(UUID userId, UUID locationId, ResidentsLetterRequest given) {
@@ -64,7 +61,8 @@ public class ResidentsLetterService {
                 scene.getCallTime(),
                 scene.getWrapTime(),
                 needs == null ? null : needs.estimatedCastAndCrewSize(),
-                night(needs == null ? null : needs.timeOfDay(), scene.getCallTime(), scene.getWrapTime()),
+                night(needs == null || needs.timeOfDay() == null ? SceneHeading.timeOfDay(SceneHeading.of(scene.getTitle(), scene.getSourceText()))
+                        : needs.timeOfDay(), scene.getCallTime(), scene.getWrapTime()),
                 contactName,
                 given.contactPhone(),
                 given.contactEmail(),
@@ -73,7 +71,7 @@ public class ResidentsLetterService {
                 LocalDate.ofInstant(DatabaseTime.now(), ZoneOffset.UTC));
     }
 
-    /** A night scene, a wrap after 22:00, or one past midnight. */
+    /** A night scene (by the parsed time of day, else the heading), a wrap after 22:00, or one past midnight. */
     static boolean night(String timeOfDay, LocalTime call, LocalTime wrap) {
         if (timeOfDay != null && timeOfDay.toLowerCase(Locale.ROOT).contains("night")) {
             return true;
@@ -86,11 +84,7 @@ public class ResidentsLetterService {
 
     /** "letter-to-neighbours-starlite-diner.pdf". */
     static String filename(String venue) {
-        String slug = venue == null ? "" : venue.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
-        if (slug.length() > 60) {
-            slug = slug.substring(0, 60).replaceAll("-$", "");
-        }
-        return "letter-to-neighbours-" + (slug.isEmpty() ? "venue" : slug) + ".pdf";
+        return PdfFile.named("letter-to-neighbours", venue, "");
     }
 
     private static boolean blank(String text) {

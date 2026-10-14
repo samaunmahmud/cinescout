@@ -24,7 +24,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -138,10 +137,6 @@ public class AgreementService {
 
     /** "location-release-starlite-diner-v2.pdf". */
     static String filename(String venue, int version) {
-        String slug = venue == null ? "" : venue.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
-        if (slug.length() > 60) {
-            slug = slug.substring(0, 60).replaceAll("-$", "");
-        }
-        return "location-release-" + (slug.isEmpty() ? "venue" : slug) + "-v" + version + ".pdf";
+        return PdfFile.named("location-release", venue, "-v" + version);
     }
 }
